@@ -1,2 +1,2 @@
-# LDPLab
+# LDPLAB
 
