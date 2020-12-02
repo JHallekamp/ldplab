@@ -1,7 +1,7 @@
 #include "ThreadPool.hpp"
 
 ldplab::ThreadPool::BatchHandle::BatchHandle(
-    std::shared_ptr<IJob> job, unsigned int size)
+    std::unique_ptr<IJob> job, unsigned int size)
     :
     m_job{ std::move(job) },
     m_batch_size{ size },
@@ -79,13 +79,13 @@ ldplab::ThreadPool::~ThreadPool()
 
 std::shared_ptr<ldplab::ThreadPool::BatchHandle>
     ldplab::ThreadPool::submitJobBatch(
-        std::shared_ptr<IJob> job, unsigned int batch_size)
+        std::unique_ptr<IJob> job, unsigned int batch_size)
 {
     if (batch_size < 1 || size() < 1)
         return nullptr;
 
-    std::shared_ptr<BatchHandle> batch =
-        std::make_shared<BatchHandle>(job, batch_size);
+    std::shared_ptr<BatchHandle> batch{ 
+        new BatchHandle{std::move(job), batch_size} };
 
     std::unique_lock<std::mutex> lck{ m_thread_control_mutex };
     if (m_threads_state == State::threads_terminating)
@@ -99,13 +99,13 @@ std::shared_ptr<ldplab::ThreadPool::BatchHandle>
 }
 
 void ldplab::ThreadPool::executeJobBatch(
-    std::shared_ptr<IJob> job, unsigned int batch_size)
+    std::unique_ptr<IJob> job, unsigned int batch_size)
 {
     if (batch_size < 1 || size() < 1)
         return;
 
-    std::shared_ptr<BatchHandle> batch =
-        std::make_shared<BatchHandle>(job, batch_size);
+    std::shared_ptr<BatchHandle> batch{ 
+        new BatchHandle{std::move(job), batch_size} };
 
     std::unique_lock<std::mutex> lck{ m_thread_control_mutex };
     if (m_threads_state == State::threads_terminating)
