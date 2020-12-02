@@ -7,24 +7,24 @@
 #include <list>
 
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
-#define LDPLAB_LOG_FATAL(format, ...) ldplab::Log::logFatal(format, __VA_ARGS__)
-#define LDPLAB_LOG_ERROR(format, ...) ldplab::Log::logError(format, __VA_ARGS__)
-#define LDPLAB_LOG_WARNING(format, ...) ldplab::Log::logWarning(format, __VA_ARGS__)
-#define LDPLAB_LOG_INFO(format, ...) ldplab::Log::logInfo(format, __VA_ARGS__)
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
-#define LDPLAB_LOG_DEBUG(format, ...) ldplab::Log::logDebug(format, __VA_ARGS__)
-#define LDPLAB_LOG_TRACE(format, ...) ldplab::Log::logTrace(format, __VA_ARGS__)
-#else // LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
-#define LDPLAB_LOG_DEBUG(format, ...)
-#define LDPLAB_LOG_TRACE(format, ...)
-#endif // LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
+#   define LDPLAB_LOG_FATAL(format, ...) ldplab::Log::logFatal(format, __VA_ARGS__)
+#   define LDPLAB_LOG_ERROR(format, ...) ldplab::Log::logError(format, __VA_ARGS__)
+#   define LDPLAB_LOG_WARNING(format, ...) ldplab::Log::logWarning(format, __VA_ARGS__)
+#   define LDPLAB_LOG_INFO(format, ...) ldplab::Log::logInfo(format, __VA_ARGS__)
+#   ifdef LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
+#       define LDPLAB_LOG_DEBUG(format, ...) ldplab::Log::logDebug(format, __VA_ARGS__)
+#       define LDPLAB_LOG_TRACE(format, ...) ldplab::Log::logTrace(format, __VA_ARGS__)
+#   else // LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
+#       define LDPLAB_LOG_DEBUG(format, ...)
+#       define LDPLAB_LOG_TRACE(format, ...)
+#   endif // LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
 #else // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
-#define LDPLAB_LOG_FATAL(format, ...)
-#define LDPLAB_LOG_ERROR(format, ...)
-#define LDPLAB_LOG_WARNING(format, ...)
-#define LDPLAB_LOG_INFO(format, ...)
-#define LDPLAB_LOG_DEBUG(format, ...)
-#define LDPLAB_LOG_TRACE(format, ...)
+#   define LDPLAB_LOG_FATAL(format, ...)
+#   define LDPLAB_LOG_ERROR(format, ...)
+#   define LDPLAB_LOG_WARNING(format, ...)
+#   define LDPLAB_LOG_INFO(format, ...)
+#   define LDPLAB_LOG_DEBUG(format, ...)
+#   define LDPLAB_LOG_TRACE(format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 
 namespace ldplab
