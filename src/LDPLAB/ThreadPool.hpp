@@ -1,7 +1,10 @@
 #ifndef WWU_LDPLAB_THREAD_POOL_HPP
 #define WWU_LDPLAB_THREAD_POOL_HPP
 
+#include "Utils/UID.hpp"
+
 #include <condition_variable>
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -28,7 +31,7 @@ namespace ldplab
              * @param[in] job_id The ID of the job inside its batch (ranging
              *                   from 0 to batch size - 1).
              */
-            virtual void execute(unsigned int job_id) = 0;
+            virtual void execute(size_t job_id) = 0;
         };
         /** 
          * @brief Used to manage a batch of jobs that were submitted to the
@@ -68,19 +71,20 @@ namespace ldplab
              */
             State state();
         private:
-            BatchHandle(std::unique_ptr<IJob> job, unsigned int size);
+            BatchHandle(std::unique_ptr<IJob> job, size_t size);
             void runJob(bool& remove_batch_from_queue);
             void prepareJob(
-                unsigned int& job_id, bool& remove_batch_from_queue);
+                size_t& job_id, bool& remove_batch_from_queue);
             void finishJob();
         private:
             std::mutex m_mutex;
             const std::unique_ptr<IJob> m_job;
-            const unsigned int m_batch_size;
-            unsigned int m_next_job_id;
-            unsigned int m_running_jobs;
-            unsigned int m_completed_jobs;
+            const size_t m_batch_size;
+            size_t m_next_job_id;
+            size_t m_running_jobs;
+            size_t m_completed_jobs;
             std::condition_variable m_batch_join;
+            UID<BatchHandle> m_uid;
         };
     public:
         /**
@@ -88,7 +92,7 @@ namespace ldplab
          * @param[in] size The number of threads inside the pool. 
          * @warning Parameter size cannot be 0.
          */
-        ThreadPool(unsigned int size);
+        ThreadPool(size_t size);
         ~ThreadPool();
         /**
          * @brief Enqueues a batch of jobs which will be executed asynchronous
@@ -99,13 +103,13 @@ namespace ldplab
          *       batch handle.
          */
         std::shared_ptr<BatchHandle> submitJobBatch(
-            std::unique_ptr<IJob> job, unsigned int batch_size);
+            std::unique_ptr<IJob> job, size_t batch_size);
         /**
          * @brief Enqueues a batch of jobs and waits until the batch is 
          *        finished.
          */
         void executeJobBatch(
-            std::unique_ptr<IJob> job, unsigned int batch_size);
+            std::unique_ptr<IJob> job, size_t batch_size);
         /** @brief Returns the number of threads in the thread pool. */
         unsigned int size() const;
         /** @brief Returns the number of enqueued batches. */
@@ -133,6 +137,7 @@ namespace ldplab
         std::vector<std::thread> m_worker_threads;
         State m_threads_state;
         std::condition_variable m_idle_worker;
+        UID<ThreadPool> m_uid;
     };
 }
 

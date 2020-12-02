@@ -21,9 +21,9 @@ namespace ldplab
         /** @brief Immeadiatly constructs a UID. */
         UID();
         /** @brief Implicit conversion of instance to UID integer. */
-        operator size_t();
+        operator size_t() const;
     private:
-        const size_t m_uid;
+        size_t m_uid;
     };
 
     template<class SUPERSET_TYPE>
@@ -34,7 +34,7 @@ namespace ldplab
     }
 
     template<class SUPERSET_TYPE>
-    inline UID<SUPERSET_TYPE>::operator size_t()
+    inline UID<SUPERSET_TYPE>::operator size_t() const
     {
         return m_uid;
     }
