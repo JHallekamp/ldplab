@@ -54,6 +54,7 @@ namespace ldplab
                 cancelled
             };
         public:
+            ~BatchHandle();
             /** 
              * @brief Stops execution of the calling thread until the batch
              *        is executed completely.
@@ -111,24 +112,29 @@ namespace ldplab
         void executeJobBatch(
             std::unique_ptr<IJob> job, size_t batch_size);
         /** @brief Returns the number of threads in the thread pool. */
-        unsigned int size() const;
+        size_t size() const;
         /** @brief Returns the number of enqueued batches. */
-        unsigned int numBatches();
+        size_t numBatches();
+        /** @brief Joins all remaining batches before termination. */
+        void join();
         /** @brief Terminates the threads. */
         void terminate();
     private:
         void enqueueBatch(std::shared_ptr<BatchHandle> batch);
+        std::shared_ptr<BatchHandle> getUnjoinedBatch();
         void startThreads();
         void workerThread();
         void workerThreadDequeueBatch(std::shared_ptr<BatchHandle> batch);
         std::shared_ptr<BatchHandle> workerThreadGetCurrentBatch();
         bool workerThreadRunning();
+        bool workerThreadCanIdle();
     private:
         enum class State
         {
             threads_inactive,
             threads_active,
-            threads_terminating
+            threads_terminating,
+            threads_joining
         };
     private:
         std::list<std::shared_ptr<BatchHandle>> m_batch_queue;
