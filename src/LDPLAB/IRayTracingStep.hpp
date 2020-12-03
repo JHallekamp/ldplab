@@ -19,7 +19,7 @@ namespace ldplab
         /**
          * @brief Begin ray tracing simulation.
          */
-        virtual void start();
+        virtual void start() = 0;
     };
 }
 

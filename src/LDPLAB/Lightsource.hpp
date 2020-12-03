@@ -6,6 +6,8 @@
 #include "ILightPolarization.hpp"
 #include "Geometry.hpp"
 
+#include <memory>
+
 namespace ldplab
 {
     /**
@@ -16,11 +18,11 @@ namespace ldplab
         /**
          * @brief Direction of the individual rays. 
          */
-        ILightDirection direction;
+        std::shared_ptr<ILightDirection> direction;
         /**
          * @brief Distribution of the light intensity.
          */
-        ILightDistribution intensity_distribution;
+        std::shared_ptr<ILightDistribution> intensity_distribution;
         /**
          * @brief Position of the light source in the world coordinate system.
          */
@@ -36,7 +38,7 @@ namespace ldplab
         /**
          * @brief Polarization state of the Light source.
          */
-        ILightPolarisation polarisation;
+        std::shared_ptr<ILightPolarisation> polarisation;
         
     };
 }

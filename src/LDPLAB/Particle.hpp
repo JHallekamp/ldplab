@@ -5,6 +5,8 @@
 #include "IParticleGeometry.hpp"
 #include "IParticleMaterial.hpp"
 
+#include <memory>
+
 namespace ldplab
 {
     /**
@@ -15,8 +17,8 @@ namespace ldplab
         BoundingBox bouding_volume;
         Vec3 position;
         Vec3 orientation;
-        IParticleGeometry geometry;
-        IParticleMaterial material;
+        std::shared_ptr<IParticleGeometry> geometry;
+        std::shared_ptr<IParticleMaterial> material;
     };
 }
 

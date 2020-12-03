@@ -9,15 +9,16 @@ namespace
      */
     class ILightPolarisation
     {
-    private:
-        enum class Type { unpolarized } type;
+    public:
+        enum class Type { unpolarized };
     public:
         /**
          * @brief The destructor is virtual since classes inherit from
          *        ILightPolarisation.
          */
         virtual ~ILightPolarisation() { }
-        Type getType() { return type; }
+        /** @brief Returns the type of the instance. */
+        virtual Type type() const = 0;
     };
 }
 

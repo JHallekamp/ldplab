@@ -9,15 +9,16 @@ namespace
      */
     class ILightDistribution
     {
-        private:
-            enum class Type { homogenous } type;
+        public:
+            enum class Type { homogenous };
         public:
         /**
          * @brief The destructor is virtual since classes inherit from
          *        ILightDirection.
          */
         virtual ~ILightDistribution() { }
-        Type getType() { return type; }
+        /** @brief Returns the type of the instance. */
+        virtual Type type() const = 0;
     };
 }
 

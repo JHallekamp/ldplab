@@ -5,15 +5,16 @@ namespace ldplab
 {
     class ILightDirection
     {
-	private:
-		enum class Type { homogenous } type;
+	public:
+		enum class Type { homogenous };
 	public:
 		/**
 		 * @brief The destructor is virtual since classes inherit from
 		 *        ILightDirection.
 		 */
 		virtual ~ILightDirection() { }
-		Type getType() { return type; }
+		/** @brief Returns the type of the instance. */
+		virtual Type type() const = 0;
     }
 }
 

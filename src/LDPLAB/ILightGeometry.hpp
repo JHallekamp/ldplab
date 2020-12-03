@@ -8,15 +8,16 @@ namespace
      */
     class ILightGeometry
     {
-    private:
-        enum class Type { square } type;
+    public:
+        enum class Type { square };
     public:
         /**
          * @brief The destructor is virtual since classes inherit from
          *        ILightGeometry.
          */
         virtual ~ILightGeometry() { }
-        Type getType() { return type; }
+        /** @brief Returns the type of the instance. */
+        virtual Type type() const = 0;
     };
 }
 

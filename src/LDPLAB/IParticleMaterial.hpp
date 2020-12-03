@@ -5,15 +5,16 @@ namespace ldplab
 {
 	class IParticleMaterial
 	{
-	private:
-		enum class Type { homogenous } type;
+	public:
+		enum class Type { homogenous };
 	public:
 		/**
 		 * @brief The destructor is virtual since classes inherit from 
 		 *        IParticleMaterial.
 		 */
 		virtual ~IParticleMaterial() { }
-		Type getType() { return type; }
+		/** @brief Returns the type of the instance. */
+		virtual Type type() const = 0;
 	};
 }
 

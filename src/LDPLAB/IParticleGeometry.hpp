@@ -5,15 +5,16 @@ namespace ldplab
 {
 	class IParticleGeometry
 	{
-	private:
-		enum class Type { shpere } type;
+	public:
+		enum class Type { shpere };
 	public:
 		/**
 		 * @brief The destructor is virtual since classes inherit from
 		 *        IParticleGeometry.
 		 */
 		virtual ~IParticleGeometry() { }
-		Type getType() { return type; }
+		/** @brief Returns the type of the instance. */
+		virtual Type type() const = 0;
 	};
 }
 
