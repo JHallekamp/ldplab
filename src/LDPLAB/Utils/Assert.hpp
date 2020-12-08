@@ -5,10 +5,10 @@
 #   define LDPLAB_ASSERT(expression) 
 #else // LDPLAB_BUILD_OPTION_ENABLE_ASSERT
 #   ifdef NDEBUG
-#       define NDEBUG
+#       undef NDEBUG
 #       include <cassert>
 #       define LDPLAB_ASSERT(expression) assert(expression)
-#       undef NDEBUG
+#       define NDEBUG
 #   else // NDEBUG
 #       include <cassert>
 #       define LDPLAB_ASSERT(expression) assert(expression)
