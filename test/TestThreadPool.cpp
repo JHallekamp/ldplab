@@ -28,9 +28,9 @@ int main()
     flog.subscribe();
     clog.subscribe();
 
-    constexpr unsigned int num_threads = 8;
-    constexpr unsigned int batch_size = 64;
-    constexpr unsigned int num_batches = 16;
+    constexpr unsigned int num_threads = 4;
+    constexpr unsigned int batch_size = 16;
+    constexpr unsigned int num_batches = 4;
 
     // Create a thread pool with num_threads threads.
     ldplab::ThreadPool tp0{ num_threads };

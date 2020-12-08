@@ -18,6 +18,16 @@ namespace ldplab
         Vec3 min;
         Vec3 max;
     };
+
+    /**
+     * @brief Structure modelling light rays.
+     */
+    struct Ray
+    {
+        Vec3 origin;
+        Vec3 direction;
+        double intensity;
+    };
 }
 
 #endif
