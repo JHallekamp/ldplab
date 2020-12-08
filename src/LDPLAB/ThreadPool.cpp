@@ -186,10 +186,10 @@ void ldplab::ThreadPool::executeJobBatch(
     if (batch_size < 1 || size() < 1)
     {
         if (batch_size < 1)
-            LDPLAB_LOG_WARNING("Thread pool %i: Reject submission of an empty "\
+            LDPLAB_LOG_WARNING("Thread pool %i: Reject execution of an empty "\
                 "batch", m_uid);
         if (size() < 1)
-            LDPLAB_LOG_ERROR("Thread pool %i: Reject batch submission, thread "\
+            LDPLAB_LOG_ERROR("Thread pool %i: Reject batch execution, thread "\
                 "pool owns no threads");
         return;
     }
