@@ -1,9 +1,9 @@
 #ifndef WWU_LDPLAB_LIGHTSOUCRE_HPP
 #define WWU_LDPLAB_LIGHTSOUCRE_HPP
 
-#include "ILightDirection.hpp"
-#include "ILightDistribution.hpp"
-#include "ILightPolarization.hpp"
+#include "LightDirection.hpp"
+#include "LightDistribution.hpp"
+#include "LightPolarization.hpp"
 #include "../Geometry.hpp"
 
 #include <memory>

@@ -8,6 +8,7 @@ namespace ldplab
     /**
      * @brief Structure modeling a 3D vertex.
      */
+    typedef glm::dvec2 Vec2;
     typedef glm::dvec3 Vec3;
 
     /**

@@ -5,6 +5,7 @@
 #include "Data.hpp"
 
 #include "..\..\Geometry.hpp"
+#include "..\..\ExperimentalSetup\Lightsource.hpp"
 #include "..\..\ExperimentalSetup\Particle.hpp"
 
 #include <mutex>
@@ -27,12 +28,17 @@ namespace ldplab
             /**
              * @brief Stores the particles present in the experimental setup. 
              */
-            std::vector<Particle> m_particles;
+            std::vector<Particle> particles;
+            /**
+             * @brief Stores the light sources present in the expermental 
+             *        setup.
+             */
+            std::vector<LightSource> light_sources;
             /**
              * @brief Stores the temporary rays of the tracing of a single ray
              *        batch.
              */
-            std::vector<Ray> m_batch_rays;
+            std::vector<Ray> batch_rays;
         };
     }
 }

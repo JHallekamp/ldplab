@@ -4,6 +4,8 @@
 #include "Context.hpp"
 #include "Data.hpp"
 
+#include <vector>
+
 namespace ldplab
 {
     namespace rtscpu
@@ -29,6 +31,9 @@ namespace ldplab
              *                                      store the created rays.
              * @param[out] particle_index The index of the particle which 
              *                            bounding volume is hit by the ray.
+             * @returns true, if there are still rays to be created. Otherwise
+             *          false, in which case the ray tracing is finished after
+             *          the current batch.
              */
             virtual bool createBatch(RayBuffer& initial_batch_buffer,
                 size_t& particle_index) = 0;
@@ -36,12 +41,13 @@ namespace ldplab
 
         /**
          * @brief Implements the initial stage interface for experimental
-         *        setups using spheres as their particle bounding volume.
+         *        setups using spheres as their particle bounding volume
+         *        and 
          */
-        class InitialStageBoundingSpheres : public IInitialStage
+        class InitialStageBoundingSpheresHomogenousLight : public IInitialStage
         {
         public:
-            InitialStageBoundingSpheres(
+            InitialStageBoundingSpheresHomogenousLight(
                 std::shared_ptr<Context> context);
             /** @brief Inherited via ldplab::rtscpu::IInitialStage. */
             void setup() override;
@@ -49,8 +55,22 @@ namespace ldplab
             bool createBatch(RayBuffer& initial_batch_buffer, 
                 size_t& particle_index) override;
         private:
+            struct Projection
+            {
+                // Center relative to the light source plane origin
+                Vec2 center;
+                double radius;
+                double depth;
+                // Particle index
+                size_t particle_index;
+                // Overlapping projections that overlay this projection 
+                // partially
+                std::vector<Projection*> overlaps;
+            };
+        private:
             std::shared_ptr<Context> m_context;
-
+            // Projections for each particle
+            std::vector<std::vector<Projection>> m_projections_per_particle;
         };
     }
 }
