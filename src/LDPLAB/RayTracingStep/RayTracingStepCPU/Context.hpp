@@ -13,25 +13,28 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        class Context
+        /**
+         * @brief Holds context data for a ray tracer run.
+         * @details The context data consists of configuration, the state of
+         *          the experimental setup and memory container instances for
+         *          storing the temporary data during ray tracer execution.
+         */
+        struct Context
         {
-            friend class RayTracingStepFactory;
-        public:
-            // Initial ray buffer
-            void initialRayBufferReset(size_t num_rays);
-            RayBuffer initialRayBufferGetBuffer();
-        private:
+            /**
+             * @brief Stores the particles present in the experimental setup. 
+             */
             std::vector<Particle> m_particles;
-            // Configuration
-            size_t m_ray_buffer_size;
-            // Ray buffers
+            /**
+             * @brief Stores the initial rays that hit a particle bounding 
+             *        volume.
+             */
             std::vector<Ray> m_initial_rays;
-            size_t m_initial_rays_offset;
-            size_t m_initial_rays_count;
+            /**
+             * @brief Stores the temporary rays of the tracing of a single ray
+             *        batch.
+             */
             std::vector<Ray> m_batch_rays;
-            size_t m_batch_rays_offset;
-            size_t m_batch_rays_count;
-            std::mutex m_ray_buffer_queue_mutex;
         };
     }
 }
