@@ -123,7 +123,11 @@ ldplab::ThreadPool::ThreadPool(size_t size)
     m_threads_state{ State::threads_inactive }
 {
     LDPLAB_ASSERT(size > 0);
-    LDPLAB_LOG_INFO("Thread pool %i: Created with %i threads", m_uid, size);
+    if (size > 0)
+        LDPLAB_LOG_INFO("Thread pool %i: Created with %i threads", m_uid, size);
+    else
+        LDPLAB_LOG_ERROR("Thread pool %i: Not functional, number of threads "\
+            "is 0", m_uid);
 }
 
 ldplab::ThreadPool::~ThreadPool()
@@ -137,7 +141,15 @@ std::shared_ptr<ldplab::ThreadPool::BatchHandle>
         std::unique_ptr<IJob> job, size_t batch_size)
 {
     if (batch_size < 1 || size() < 1)
+    {
+        if (batch_size < 1)
+            LDPLAB_LOG_WARNING("Thread pool %i: Reject submission of an empty "\
+                "batch", m_uid);
+        if (size() < 1)
+            LDPLAB_LOG_ERROR("Thread pool %i: Reject batch submission, thread "\
+                "pool owns no threads");
         return nullptr;
+    }
 
     std::shared_ptr<BatchHandle> batch{ 
         new BatchHandle{std::move(job), batch_size} };
@@ -172,7 +184,15 @@ void ldplab::ThreadPool::executeJobBatch(
     std::unique_ptr<IJob> job, size_t batch_size)
 {
     if (batch_size < 1 || size() < 1)
+    {
+        if (batch_size < 1)
+            LDPLAB_LOG_WARNING("Thread pool %i: Reject execution of an empty "\
+                "batch", m_uid);
+        if (size() < 1)
+            LDPLAB_LOG_ERROR("Thread pool %i: Reject batch execution, thread "\
+                "pool owns no threads");
         return;
+    }
 
     std::shared_ptr<BatchHandle> batch{ 
         new BatchHandle{std::move(job), batch_size} };
