@@ -1,6 +1,6 @@
-#include "RayTracingStepCPUContext.hpp"
+#include "Context.hpp"
 
-void ldplab::RayTracingStepCPUContext::initialRayBufferReset(
+void ldplab::rtscpu::Context::initialRayBufferReset(
     size_t num_rays)
 {
     std::unique_lock<std::mutex> lck(m_ray_buffer_queue_mutex);
@@ -11,7 +11,7 @@ void ldplab::RayTracingStepCPUContext::initialRayBufferReset(
     }
 }
 
-ldplab::RayBuffer ldplab::RayTracingStepCPUContext::initialRayBufferGetBuffer()
+ldplab::rtscpu::RayBuffer ldplab::rtscpu::Context::initialRayBufferGetBuffer()
 {
     std::unique_lock<std::mutex> lck(m_ray_buffer_queue_mutex);
     

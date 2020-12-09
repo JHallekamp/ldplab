@@ -20,7 +20,16 @@ namespace ldplab
     };
 
     /**
-     * @brief Structure modelling light rays.
+     * @brief Structure modeling a bounding sphere.
+     */
+    struct BoundingSphere
+    {
+        Vec3 origin;
+        double radius;
+    };
+
+    /**
+     * @brief Structure modeling light rays.
      */
     struct Ray
     {

@@ -5,7 +5,7 @@ namespace ldplab
 {
 	struct IParticleGeometry
 	{
-		enum class Type { shpere };
+		enum class Type { shpere, sphere_capped_cylinder };
 		/**
 		 * @brief The destructor is virtual since classes inherit from
 		 *        IParticleGeometry.
