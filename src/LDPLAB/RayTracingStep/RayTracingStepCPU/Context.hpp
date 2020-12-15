@@ -30,6 +30,11 @@ namespace ldplab
              */
             std::vector<Particle> particles;
             /**
+             * @brief Stores the particle geometrical representation of rode 
+             *        like particles with analytical representation.
+             */
+            std::vector<RodeParticle> rode_particle_geometry;
+            /**
              * @brief Stores the light sources present in the expermental 
              *        setup.
              */

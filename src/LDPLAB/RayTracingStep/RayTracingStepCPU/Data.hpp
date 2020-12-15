@@ -16,10 +16,25 @@ namespace ldplab
             size_t branching_depth;
         };
 
+        struct IntersectionBuffer
+        {
+            Vec3* point;
+            Vec3* normal;
+            size_t num_intersections;
+        };
+
+        /**
+         * @brief Structure models the geometries of a rode like particle. The 
+         *        particle is cylindric shaped with a spherical cap and a 
+         *        spherical indent at the bottom.
+         */
         struct RodeParticle
         {
-            double radius;
-
+            double cylinder_radius;
+            double cylinder_length;
+            double sphere_radius;
+            Vec3 origin_cap;
+            Vec3 origin_indentation;
         };
     }
 }
