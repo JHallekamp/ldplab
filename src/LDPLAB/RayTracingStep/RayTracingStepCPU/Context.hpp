@@ -7,6 +7,7 @@
 #include "..\..\Geometry.hpp"
 #include "..\..\ExperimentalSetup\Lightsource.hpp"
 #include "..\..\ExperimentalSetup\Particle.hpp"
+#include "..\..\Utils\UID.hpp"
 
 #include <mutex>
 
@@ -39,6 +40,8 @@ namespace ldplab
              *        batch.
              */
             std::vector<Ray> batch_rays;
+            /** @brief The ID of the context. */
+            UID<Context> uid;
         };
     }
 }
