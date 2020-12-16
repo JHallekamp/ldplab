@@ -51,6 +51,8 @@ namespace ldplab
             double intensity_cutoff;
             /** @brief The ID of the context. */
             UID<Context> uid;
+            /** @brief Number of rays per world space unit. */
+            size_t number_rays_per_unit;
         };
     }
 }

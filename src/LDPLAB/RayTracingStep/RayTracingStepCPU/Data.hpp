@@ -15,6 +15,7 @@ namespace ldplab
             size_t index;
             size_t num_rays;
             size_t branching_depth;
+            size_t size;
         };
 
         /**
