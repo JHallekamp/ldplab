@@ -13,7 +13,7 @@ namespace ldplab
         /**
          * @brief Initial stage interface.
          * @detail The initial stage is responsible for projecting particles
-         *         on lightsources and create
+         *         on lightsources and create batches of rays.
          */
         class IInitialStage
         {
@@ -42,7 +42,7 @@ namespace ldplab
         /**
          * @brief Implements the initial stage interface for experimental
          *        setups using spheres as their particle bounding volume
-         *        and 
+         *        and having a homogenous direction.
          */
         class InitialStageBoundingSpheresHomogenousLight : public IInitialStage
         {
@@ -57,20 +57,33 @@ namespace ldplab
         private:
             struct Projection
             {
-                // Center relative to the light source plane origin
                 Vec2 center;
                 double radius;
-                double depth;
-                // Particle index
-                size_t particle_index;
-                // Overlapping projections that overlay this projection 
-                // partially
+                size_t light_index;
+                // Pointers to overlapping projections
                 std::vector<Projection*> overlaps;
             };
+        private:
+            bool projLightOverlap(
+                const Vec2& center,
+                const double radius,
+                const LightSource& light_source) const;
+            bool hasToCreateRay(
+                const Projection& projection,
+                const LightSource& light_source) const;
+            void advBatchCreationLight(size_t& li);
         private:
             std::shared_ptr<Context> m_context;
             // Projections for each particle
             std::vector<std::vector<Projection>> m_projections_per_particle;
+            size_t m_batch_creation_particle_index;
+            size_t m_batch_creation_light_index;
+            bool m_batch_creation_particle_initialized;
+            double m_rasterization_x;
+            double m_rasterization_y;
+            bool m_rasterization_up;
+            bool m_rasterization_right;
+            double m_rasterization_step_size;
         };
     }
 }

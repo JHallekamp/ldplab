@@ -17,13 +17,10 @@ namespace ldplab
 		virtual Type type() const = 0;
 	};
 
+    /** @brief Light is emited in the direction of the plane. */
     struct LightDirectionHomogenous : public ILightDirection
     {
         Type type() const override { return Type::homogenous; }
-        /**
-         * @brief The direction in which rays are emitted by the light source.
-         */
-        Vec3 direction;
     };
 }
 

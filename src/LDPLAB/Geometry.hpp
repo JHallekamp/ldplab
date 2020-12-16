@@ -12,24 +12,6 @@ namespace ldplab
     typedef glm::dvec3 Vec3;
 
     /**
-     * @brief Structure modeling a axially parallel bounding box.
-     */
-    struct BoundingBox
-    {
-        Vec3 min;
-        Vec3 max;
-    };
-
-    /**
-     * @brief Structure modeling a bounding sphere.
-     */
-    struct BoundingSphere
-    {
-        Vec3 origin;
-        double radius;
-    };
-
-    /**
      * @brief Structure modeling light rays.
      */
     struct Ray

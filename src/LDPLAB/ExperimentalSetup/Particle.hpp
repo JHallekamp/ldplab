@@ -2,8 +2,9 @@
 #define WWU_LDPLAB_PARTICLE_HPP
 
 #include "../Geometry.hpp"
-#include "IParticleGeometry.hpp"
-#include "IParticleMaterial.hpp"
+#include "BoundingVolume.hpp"
+#include "ParticleGeometry.hpp"
+#include "ParticleMaterial.hpp"
 
 #include <memory>
 #include <string>
@@ -16,7 +17,7 @@ namespace ldplab
     struct Particle
     {
         std::string particle_id;
-        BoundingBox bouding_volume;
+        std::shared_ptr<IBoundingVolume> bounding_volume;
         Vec3 position;
         Vec3 orientation;
         std::shared_ptr<IParticleGeometry> geometry;

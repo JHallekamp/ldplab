@@ -18,6 +18,16 @@ namespace
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
     };
+
+    /**
+     * @brief Homogenous light distribution over a complete light source.
+     */
+    struct LightDistributionHomogenous : public ILightDistribution
+    {
+        Type type() const override { return Type::homogenous; }
+        /** @brief Light intensity emited by the light source. */
+        double intensity;
+    };
 }
 
 #endif
