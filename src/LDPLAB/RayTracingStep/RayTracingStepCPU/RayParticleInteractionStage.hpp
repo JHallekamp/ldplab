@@ -47,15 +47,17 @@ namespace ldplab
         };
         /**
          * @brief Class implementing the ray particle interaction for 
-         *        unpolarized light.
+         *        unpolarized light and a linear index of refraction gradient 
+         *        in one direction. 
          * @note The reflection and refraction does not lead to polarization.
          *       The model is simplified so that the light stays always 
          *       unpolarized.
          */
-        class UnpolirzedLightInteraction : IRayParticleInteractionStage
+        class UnpolirzedLight1DLinearIndexGradientInteraction : 
+            public IRayParticleInteractionStage
         {
         public:
-            UnpolirzedLightInteraction(
+            UnpolirzedLight1DLinearIndexGradientInteraction(
                 std::shared_ptr<Context> context);
             /**
              * @brief Inherited via ldplab::rtscpu::IRayParticleInteractionStage.
@@ -81,7 +83,10 @@ namespace ldplab
                 RayBuffer& input_outer_rays,
                 RayBuffer& inner_rays) override;
         private:
+            double reflectance(double cos_alpha, double cos_beta, double n_r);
+        private:
             std::shared_ptr<Context> m_context;
+        
         };
     }
 }

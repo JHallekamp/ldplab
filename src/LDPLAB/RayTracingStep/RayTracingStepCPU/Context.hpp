@@ -36,7 +36,7 @@ namespace ldplab
              */
             std::vector<RodeParticle> rode_particle_geometry;
             /**
-             * @brief Stores the light sources present in the expermental 
+             * @brief Stores the light sources present in the experimental 
              *        setup.
              */
             std::vector<LightSource> light_sources;
