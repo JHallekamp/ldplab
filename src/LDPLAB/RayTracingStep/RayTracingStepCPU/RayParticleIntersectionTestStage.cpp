@@ -29,17 +29,23 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
         " test on batch %i",
         m_context->uid, input_hit_rays.index);
 
+    input_hit_rays.branching_depth++;
+    missed_rays.branching_depth = input_hit_rays.branching_depth;
+
     RodeParticle& particle_geometrie = 
         m_context->rode_particle_geometry[state->particles[particle].type];
     double cap_hight = particle_geometrie.origin_cap.z + 
         particle_geometrie.sphere_radius - particle_geometrie.cylinder_length;
 
-    for (int i = 0; i < input_hit_rays.num_rays; i++)
+    for (int i = 0; i < input_hit_rays.size; i++)
     {
         Ray& ray = input_hit_rays.data[i];
         Ray& missed_ray = missed_rays.data[i];
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
+
+        if (ray.intensity <= 0)
+            continue;
 
         if(!intersectionTest(
             ray,
