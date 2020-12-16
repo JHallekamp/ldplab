@@ -5,7 +5,6 @@
 
 #include "../../SimulationState.hpp"
 #include "../../Log.hpp"
-#include "../../Utils/Assert.hpp"
 
 #include "../../../../libs/glm/glm.hpp"
 
