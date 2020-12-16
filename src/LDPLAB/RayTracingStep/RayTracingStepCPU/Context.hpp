@@ -45,6 +45,10 @@ namespace ldplab
              *        batch.
              */
             std::vector<Ray> batch_rays;
+            /** 
+             * @brief Under this cutoff intensity rays are not further traced. 
+             */
+            double intensity_cutoff;
             /** @brief The ID of the context. */
             UID<Context> uid;
         };
