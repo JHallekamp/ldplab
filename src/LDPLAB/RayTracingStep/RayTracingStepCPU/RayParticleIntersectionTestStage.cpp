@@ -3,6 +3,7 @@
 #include "Context.hpp"
 #include "Data.hpp"
 
+#include "../../SimulationState.hpp"
 #include "../../Log.hpp"
 #include "../../Utils/Assert.hpp"
 
@@ -10,17 +11,10 @@
 
 #include <cmath>
 
-ldplab::rtscpu::IRayParticleIntersectionTestStage::
-    IRayParticleIntersectionTestStage(std::shared_ptr<Context> context)
-    :
-    m_context{ context }
-{
-}
-
 ldplab::rtscpu::RodeParticleIntersectionTest::
     RodeParticleIntersectionTest(std::shared_ptr<Context> context)
     :
-    IRayParticleIntersectionTestStage{ context }
+    m_context{ context }
 {
 }
 
@@ -31,6 +25,10 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
     RayBuffer& missed_rays,
     IntersectionBuffer& intersection)
 {
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray particle intersection"\
+        " test on batch %i",
+        m_context->uid, input_hit_rays.index);
+
     RodeParticle& particle_geometrie = 
         m_context->rode_particle_geometry[state->particles[particle].type];
     double cap_hight = particle_geometrie.origin_cap.z + 
@@ -52,8 +50,17 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
             // Ray missed particle
             missed_ray = ray;
             ray.intensity = -1;
+            input_hit_rays.num_rays--;
+            missed_rays.num_rays++;
         }
     }
+
+    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i contains %i rays that "\
+        "hit the particle", m_context->uid, input_hit_rays.num_rays, 
+        input_hit_rays.index);
+    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i contains %i rays that "\
+        "missed the particle", m_context->uid, missed_rays.num_rays,
+        missed_rays.index);
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
@@ -237,8 +244,8 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
 bool ldplab::rtscpu::RodeParticleIntersectionTest::indentationIntersection(
     const RodeParticle& particle_geometrie,
     const Ray& ray,
-    Vec3& inter_point,
-    Vec3& inter_normal)
+    Vec3& intersection_point,
+    Vec3& intersection_normal)
 {
     double intersec_first = 0;
     double intersec_second = 0;
@@ -250,9 +257,9 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::indentationIntersection(
         intersec_first,
         intersec_second))
     {
-        inter_point = ray.origin + intersec_second * ray.direction;
-        inter_normal = glm::normalize(
-            particle_geometrie.origin_indentation - inter_point);
+        intersection_point = ray.origin + intersec_second * ray.direction;
+        intersection_normal = glm::normalize(
+            particle_geometrie.origin_indentation - intersection_point);
         return true;
     }
     return false;
