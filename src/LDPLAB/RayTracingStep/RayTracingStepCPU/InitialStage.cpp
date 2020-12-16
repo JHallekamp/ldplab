@@ -1,4 +1,5 @@
 #include "InitialStage.hpp"
+#include "Context.hpp"
 #include "../../Log.hpp"
 
 ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::

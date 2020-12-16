@@ -37,7 +37,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
     input_outer_rays.branching_depth++;
     inner_rays.branching_depth = input_outer_rays.branching_depth;
 
-    for (int i = 0; i < input_outer_rays.size; i++)
+    for (size_t i = 0; i < input_outer_rays.size; i++)
     {
         Ray& ray = input_outer_rays.data[i];
         Ray& refracted_ray = inner_rays.data[i];

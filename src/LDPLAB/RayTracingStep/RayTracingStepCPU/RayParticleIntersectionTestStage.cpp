@@ -36,7 +36,7 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
     double cap_hight = particle_geometrie.origin_cap.z + 
         particle_geometrie.sphere_radius - particle_geometrie.cylinder_length;
 
-    for (int i = 0; i < input_hit_rays.size; i++)
+    for (size_t i = 0; i < input_hit_rays.size; i++)
     {
         Ray& ray = input_hit_rays.data[i];
         Ray& missed_ray = missed_rays.data[i];

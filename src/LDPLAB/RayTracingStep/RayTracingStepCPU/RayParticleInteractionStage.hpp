@@ -13,7 +13,7 @@ namespace ldplab
         struct RayBuffer;
         struct IntersectionBuffer;
         struct RodeParticle;
-        class Context;
+        struct Context;
         /**
          * @brief Ray particle interaction stage interface
          * @detail The ray particle interaction stage is responsible for 
