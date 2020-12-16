@@ -58,7 +58,7 @@ namespace ldplab
          *        spherical indent at the bottom.
          */
         class RodeParticleIntersectionTest :
-            IRayParticleIntersectionTestStage
+            public IRayParticleIntersectionTestStage
         {
         public:
             RodeParticleIntersectionTest(

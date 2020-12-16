@@ -36,7 +36,7 @@ namespace ldplab
              */
             std::vector<RodeParticle> rode_particle_geometry;
             /**
-             * @brief Stores the light sources present in the expermental 
+             * @brief Stores the light sources present in the experimental 
              *        setup.
              */
             std::vector<LightSource> light_sources;
@@ -45,6 +45,10 @@ namespace ldplab
              *        batch.
              */
             std::vector<Ray> batch_rays;
+            /** 
+             * @brief Under this cutoff intensity rays are not further traced. 
+             */
+            double intensity_cutoff;
             /** @brief The ID of the context. */
             UID<Context> uid;
             /** @brief Number of rays per world space unit. */
