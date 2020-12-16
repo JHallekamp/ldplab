@@ -5,7 +5,6 @@
 
 #include "../../SimulationState.hpp"
 #include "../../Log.hpp"
-#include "../../Utils/Assert.hpp"
 
 #include "../../../../libs/glm/glm.hpp"
 
@@ -15,6 +14,9 @@ ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
     :
     m_context{ context }
 {
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "UnpolirzedLight1DLinearIndexGradientInteraction instance created",
+        m_context->uid);
 }
 
 void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
@@ -24,6 +26,10 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
     RayBuffer& input_outer_rays, 
     RayBuffer& inner_rays)
 {
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray particle interaction"\
+        "on batch %i",
+        m_context->uid, input_outer_rays.index);
+
     ParticleMaterialLinearOneDirectional* material =
         (ParticleMaterialLinearOneDirectional*) m_context->
             particles[particle].material.get();
@@ -49,8 +55,8 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         {
             double cos_b = std::sqrt(1 - nr * (1 - cos_a * cos_a));
             double R = reflectance(cos_a, cos_b, nr);
+            
             // refracted ray
-
             refracted_ray.intensity = ray.intensity * R;
             if (refracted_ray.intensity > m_context->intensity_cutoff)
             {
@@ -85,7 +91,11 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
         }
     }
-    
+
+    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i reflected rays"
+        m_context->uid, input_outer_rays.num_rays, input_outer_rays.index);
+    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i refracted rays"
+        m_context->uid, inner_rays.num_rays, inner_rays.index);
 }
 
 double ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
