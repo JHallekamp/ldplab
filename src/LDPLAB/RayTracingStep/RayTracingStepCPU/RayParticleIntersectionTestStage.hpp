@@ -1,12 +1,15 @@
 #ifndef WWU_LDPLAB_RTSCPU_RAY_PARTICLE_INTERSECTION_TEST_STAGE_HPP
 #define WWU_LDPLAB_RTSCPU_RAY_PARTICLE_INTERSECTION_TEST_STAGE_HPP
 
-#include "../../SimulationState.hpp"
+#include "../../Geometry.hpp"
 
 #include <memory>
 
 namespace ldplab
 {
+    // Prototype
+    struct SimulationState;
+
     namespace rtscpu
     {   
         // Prototype
@@ -14,6 +17,7 @@ namespace ldplab
         struct IntersectionBuffer;
         struct RodeParticle;
         class Context;
+
         /**
          * @brief Ray particle intersection test stage interface.
          * @detail The ray particle intersection test stage calculates the 
@@ -137,7 +141,7 @@ namespace ldplab
              * @warning Only the correct hight of the intersection point is 
              *          checked. It is assumed that the intersection point is 
              *          inside the infinite cylinder.
-             * @param[in] particle Specifies the particle geometry.
+             * @param[in] particle_geometrie Specifies the particle geometry.
              * @param[in] ray Specifies the ray.
              * @param[out] intersection_point Resulting intersection point with
              *                                the cap.

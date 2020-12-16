@@ -3,6 +3,7 @@
 #include "Context.hpp"
 #include "Data.hpp"
 
+#include "../../SimulationState.hpp"
 #include "../../Log.hpp"
 #include "../../Utils/Assert.hpp"
 
