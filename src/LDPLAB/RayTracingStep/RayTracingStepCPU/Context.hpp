@@ -47,6 +47,8 @@ namespace ldplab
             std::vector<Ray> batch_rays;
             /** @brief The ID of the context. */
             UID<Context> uid;
+            /** @brief Number of rays per world space unit. */
+            size_t number_rays_per_unit;
         };
     }
 }
