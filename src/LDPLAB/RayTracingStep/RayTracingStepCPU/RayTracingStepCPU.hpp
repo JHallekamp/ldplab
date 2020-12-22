@@ -11,7 +11,7 @@ namespace ldplab
     namespace rtscpu
     {
         // Prototype
-        class Context;
+        struct Context;
 
         /**
          * @brief Class implementing IRaytracingStep on the CPU. It is non

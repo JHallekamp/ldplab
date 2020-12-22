@@ -16,7 +16,7 @@ namespace ldplab
         struct RayBuffer;
         struct IntersectionBuffer;
         struct RodeParticle;
-        class Context;
+        struct Context;
 
         /**
          * @brief Ray particle intersection test stage interface.

@@ -13,7 +13,8 @@ namespace ldplab
         struct RayBuffer;
         struct IntersectionBuffer;
         struct RodeParticle;
-        class Context;
+        struct Context;
+
         /**
          * @brief Ray particle interaction stage interface
          * @detail The ray particle interaction stage is responsible for 
@@ -83,6 +84,13 @@ namespace ldplab
                 RayBuffer& input_outer_rays,
                 RayBuffer& inner_rays) override;
         private:
+            /** 
+             * @brief Calculates the reflectance coefficient for unpolarized 
+             *        light.
+             * @param cos_alpha Cosine of the incidence angle.
+             * @param cos_beta Cosine of the angle of refraction
+             * @param ratio of the index of reflection
+             */
             double reflectance(double cos_alpha, double cos_beta, double n_r);
         private:
             std::shared_ptr<Context> m_context;

@@ -1,8 +1,8 @@
 #ifndef WWU_LDPLAB_RTSCPU_INITIAL_STAGE_HPP
 #define WWU_LDPLAB_RTSCPU_INITIAL_STAGE_HPP
 
-#include "Context.hpp"
 #include "Data.hpp"
+#include "..\..\ExperimentalSetup\Lightsource.hpp"
 
 #include <mutex>
 #include <vector>
@@ -11,10 +11,13 @@ namespace ldplab
 {
     namespace rtscpu
     {
+        //Prototype
+        struct Context;
+
         /**
          * @brief Initial stage interface.
          * @detail The initial stage is responsible for projecting particles
-         *         on lightsources and create batches of rays.
+         *         on light sources and create batches of rays.
          */
         class IInitialStage
         {
@@ -43,7 +46,7 @@ namespace ldplab
         /**
          * @brief Implements the initial stage interface for experimental
          *        setups using spheres as their particle bounding volume
-         *        and having a homogenous direction.
+         *        and having a homogeneous direction.
          */
         class InitialStageBoundingSpheresHomogenousLight : public IInitialStage
         {
