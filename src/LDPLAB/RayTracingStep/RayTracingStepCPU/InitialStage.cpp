@@ -225,6 +225,8 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::advBatchCreatio
 bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
     RayBuffer& initial_batch_buffer, size_t& particle_index)
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
     LDPLAB_LOG_TRACE("RTSCPU context %i: Create initial batch rays for"\
         " batch buffer %i", 
         m_context->uid, 

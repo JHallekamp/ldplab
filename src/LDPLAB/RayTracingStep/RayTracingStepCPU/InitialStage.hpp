@@ -4,6 +4,7 @@
 #include "Context.hpp"
 #include "Data.hpp"
 
+#include <mutex>
 #include <vector>
 
 namespace ldplab
@@ -84,6 +85,7 @@ namespace ldplab
             bool m_rasterization_up;
             bool m_rasterization_right;
             double m_rasterization_step_size;
+            std::mutex m_mutex;
         };
     }
 }
