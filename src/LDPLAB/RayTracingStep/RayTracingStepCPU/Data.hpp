@@ -3,19 +3,37 @@
 
 #include "../../Geometry.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace ldplab
 {
     namespace rtscpu
     {
+        /** @brief Holds the data of a batch of rays. */
         struct RayBuffer
         {
-            Ray* data;
-            size_t index;
-            size_t num_rays;
-            size_t branching_depth;
-            size_t size;
+            RayBuffer(size_t index, size_t depth, size_t size)
+                :
+                index{ index },
+                depth{ depth },
+                size{ size },
+                ray_data{ nullptr },
+                index_data{ nullptr },
+                active_rays{ 0 }
+            { }
+            /** @brief Array containing size Ray element. */
+            Ray* ray_data;
+            /** @brief Array containing size (particle) indices. */
+            int32_t* index_data;
+            /** @brief Counter for the still active rays inside this. */
+            size_t active_rays;
+            /** @brief Index of this buffer. */
+            const size_t index;
+            /** @brief Branching depth (number of times rays split before). */
+            const size_t depth;
+            /** @brief Number of elements in ray_data and index_data arrays. */
+            const size_t size;
         };
 
         /**

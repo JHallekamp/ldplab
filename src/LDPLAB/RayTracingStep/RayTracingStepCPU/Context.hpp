@@ -41,18 +41,27 @@ namespace ldplab
              */
             std::vector<LightSource> light_sources;
             /**
-             * @brief Stores the temporary rays of the tracing of a single ray
-             *        batch.
+             * @brief Stores the rays during the processing of the ray tracing
+             *        pipeline and is used as the data source for the ray 
+             *        buffers.
+             * @note This amounts to number_rays_per_buffer^branching_depth
+             *       rays.
              */
             std::vector<Ray> batch_rays;
+            /** @brief Stores the initial batch rays. */
+            RayBuffer batch_buffer;
             /** 
              * @brief Under this cutoff intensity rays are not further traced. 
              */
             double intensity_cutoff;
             /** @brief The ID of the context. */
             UID<Context> uid;
+            /** @brief Number of rays per buffer. */
+            size_t number_rays_per_buffer;
             /** @brief Number of rays per world space unit. */
             size_t number_rays_per_unit;
+            /** @brief Maximum number of times a ray can split. */
+            size_t maximum_depth;
         };
     }
 }
