@@ -72,6 +72,8 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
                     x, 
                     inter_point, 
                     inter_normal);
+                ray.direction = glm::normalize(x.w);
+                ray.origin = x.r;
                 return;
             }
             else
