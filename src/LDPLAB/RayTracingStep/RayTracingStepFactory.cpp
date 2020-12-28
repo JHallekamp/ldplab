@@ -40,12 +40,12 @@ void ldplab::RayTracingStepFactory::initGeometry(
                 (h + geometry->cylinder_radius * geometry->cylinder_radius / h) / 2.0;
             Vec3 origin_cap{ 0,0, geometry->cylinder_hight + h - sphere_radius };
             Vec3 origin_indentation{ 0,0,h - sphere_radius };
-            context->rode_particle_geometry.emplace_back(
+            context->rode_particle_geometry.push_back(rtscpu::RodeParticle{
                 geometry->cylinder_radius,
                 geometry->cylinder_hight,
                 sphere_radius,
                 origin_cap,
-                origin_indentation);
+                origin_indentation });
         }
         else
         {
