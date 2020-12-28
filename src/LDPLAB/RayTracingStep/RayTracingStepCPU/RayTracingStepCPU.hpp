@@ -8,6 +8,9 @@
 
 namespace ldplab
 {
+    // Protoype
+    class RayTracingStepFactory;
+
     namespace rtscpu
     {
         // Prototype
@@ -19,7 +22,7 @@ namespace ldplab
          */
         class RayTracingStepCPU : public IRayTracingStep
         {
-            friend class RayTracingStepFactory;
+            friend RayTracingStepFactory;
         public:
             /**
              * @brief Inherited via IRayTracingStep. Starts the ray tracing
