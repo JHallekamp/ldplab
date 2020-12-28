@@ -23,13 +23,10 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
     RayBuffer& rays,
     IntersectionBuffer& intersection)
 {
-    // TODO: if(intersection.num_intersections == 0) ?
     for (size_t i = 0; i < rays.size; i++)
     {
         if (rays.index_data[i] < 0 && 
             rays.index_data[i] >= m_context->particles.size())
-            continue;
-        if (rays.ray_data[i].intensity <= 0)
             continue;
 
         rayPropagation(
@@ -37,7 +34,6 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
             rays.ray_data[i], 
             intersection.point[i], 
             intersection.normal[i]);
-        intersection.num_intersections++;
     }
 }
 
