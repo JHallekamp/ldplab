@@ -27,24 +27,21 @@ namespace ldplab
              * @brief Calculating resulting rays of the interaction of the 
              *        incident ray with a particle surface.
              * @param[in] state Pointer to the state of the simulation.
-             * @param[in] particle Index of the particle.
              * @param[in] intersection Information about the intersection point
              *              and corresponding normal.
-             * @param[in,out] input_outer_rays RayBuffer holding rays that hit 
-             *                  the particle surface.
-             *                  The output RayBuffer holds all rays that 
-             *                  propagate outside the particle after the 
-             *                  interaction.
-             * @param[out] inner_rays RayBuffer collecting rays that 
-             *                  propagate inside the particle after the 
-             *                  interaction.
+             * @param[in] rays RayBuffer holding rays that hit 
+             *                 the particle surface.
+             * @param[out] reflected_rays RayBuffer holds all rays that are 
+             *                            reflected from the particle surface. 
+             * @param[out] refracted_rays RayBuffer holds all rays that are 
+             *                            refracted from the particle surface. 
              */
             virtual void execute(
                 const SimulationState* state,
-                const size_t particle,
                 const IntersectionBuffer& intersection,
-                RayBuffer& input_outer_rays,
-                RayBuffer& inner_rays) = 0;
+                const RayBuffer& rays,
+                RayBuffer& reflected_rays,
+                RayBuffer& refracted_rays) = 0;
         };
         /**
          * @brief Class implementing the ray particle interaction for 
@@ -65,24 +62,21 @@ namespace ldplab
              * @brief Calculating resulting rays of the interaction of the 
              *        incident ray with a particle surface.
              * @param[in] state Pointer to the state of the simulation.
-             * @param[in] particle Index of the particle.
              * @param[in] intersection Information about the intersection point
              *              and corresponding normal.
-             * @param[in,out] input_outer_rays RayBuffer holding rays that hit 
-             *                  the particle surface.
-             *                  The output RayBuffer holds all rays that 
-             *                  propagate outside the particle after the 
-             *                  interaction.
-             * @param[out] inner_rays RayBuffer collecting rays that 
-             *                  propagate inside the particle after the 
-             *                  interaction.
+             * @param[in] rays RayBuffer holding rays that hit 
+             *                 the particle surface.
+             * @param[out] reflected_rays RayBuffer holds all rays that are 
+             *                            reflected from the particle surface. 
+             * @param[out] refracted_rays RayBuffer holds all rays that are 
+             *                            refracted from the particle surface. 
              */
             void execute(
                 const SimulationState* state,
-                const size_t particle,
                 const IntersectionBuffer& intersection,
-                RayBuffer& input_outer_rays,
-                RayBuffer& inner_rays) override;
+                const RayBuffer& rays,
+                RayBuffer& reflected_rays,
+                RayBuffer& refracted_rays) override;
         private:
             /** 
              * @brief Calculates the reflectance coefficient for unpolarized 

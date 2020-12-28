@@ -20,35 +20,36 @@ ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
 }
 
 void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
-    const SimulationState* state, 
-    const size_t particle, 
+    const SimulationState* state,
     const IntersectionBuffer& intersection, 
-    RayBuffer& input_outer_rays, 
-    RayBuffer& inner_rays)
+    const RayBuffer& rays,
+    RayBuffer& reflected_rays,
+    RayBuffer& refracted_rays)
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction"\
         "on batch %i",
         m_context->uid, input_outer_rays.index);
 
-    ParticleMaterialLinearOneDirectional* material =
-        (ParticleMaterialLinearOneDirectional*) m_context->
-            particles[particle].material.get();
+    reflected_rays.inner_particle_rays = rays.inner_particle_rays;
+    refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
 
-    input_outer_rays.branching_depth++;
-    inner_rays.branching_depth = input_outer_rays.branching_depth;
-
-    for (size_t i = 0; i < input_outer_rays.size; i++)
+    for (size_t i = 0; i < rays.size; i++)
     {
-        Ray& ray = input_outer_rays.data[i];
-        Ray& refracted_ray = inner_rays.data[i];
+        if (rays.index_data[i] < 0 &&
+            rays.index_data[i] >= m_context->particles.size())
+            continue;
+
+        ParticleMaterialLinearOneDirectional* material =
+            (ParticleMaterialLinearOneDirectional*)m_context->
+            particles[rays.index_data[i]].material.get();
+
+        Ray& ray = rays.ray_data[i];
+        Ray& reflected_ray = reflected_rays.ray_data[i];
+        Ray& refracted_ray = refracted_rays.ray_data[i];
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
         
-        if (ray.intensity <= 0)
-            continue;
-
         double nr = material->indexOfRefraction(inter_point);
-        
         double cos_a = glm::dot(ray.direction, inter_normal);
 
         if (1 - nr * (1 - cos_a * cos_a) >= 0)
@@ -57,45 +58,42 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             double R = reflectance(cos_a, cos_b, nr);
             
             // refracted ray
-            refracted_ray.intensity = ray.intensity * R;
+            refracted_ray.intensity = ray.intensity * (1 - R);
             if (refracted_ray.intensity > m_context->intensity_cutoff)
             {
                 refracted_ray.origin = inter_point;
                 refracted_ray.direction = nr * ray.direction +
                     inter_normal * (-cos_b + nr * cos_a);
-                refracted_ray.intensity = ray.intensity * R;
-
-                inner_rays.num_rays++;
+                refracted_rays.active_rays++;
             }
             else
-            {
-                refracted_ray.intensity = -1;
-            }
+                refracted_rays.index_data[i] = -1;
+
             // reflected ray
-            ray.intensity = ray.intensity * (1 - R);
+            reflected_ray.intensity = ray.intensity * R;
             if (ray.intensity > m_context->intensity_cutoff)
             {
-                ray.origin = inter_point;
-                ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
+                reflected_ray.origin = inter_point;
+                reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
+                reflected_rays.active_rays++;
             }
             else
-            {
-                ray.intensity = -1;
-                input_outer_rays.num_rays--;
-            }
+                reflected_rays.index_data[i] = -1;
         }
         else
         {
             // total reflected ray
-            ray.origin = inter_point;
-            ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
+            reflected_ray.origin = inter_point;
+            reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
+            reflected_ray.intensity = ray.intensity;
+            reflected_rays.active_rays++;
         }
     }
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i reflected rays"
-        m_context->uid, input_outer_rays.num_rays, input_outer_rays.index);
+        m_context->uid, reflected_rays.index, reflected_rays.active_rays);
     LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i refracted rays"
-        m_context->uid, inner_rays.num_rays, inner_rays.index);
+        m_context->uid, refracted_rays.index, refracted_rays.active_rays);
 }
 
 double ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
