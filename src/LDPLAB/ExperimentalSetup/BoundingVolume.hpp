@@ -17,7 +17,10 @@ namespace ldplab
         virtual Type type() const = 0;
     };
 
-    /** @brief Contains bounding sphere data. */
+    /**
+     * @brief Contains parameters of bounding sphere which is centered at the
+     *        particle origin.
+     */
     struct BoundingVolumeSphere : public IBoundingVolume
     {
         /** 
@@ -25,10 +28,10 @@ namespace ldplab
          * @returns IBoundingVolume::Type::sphere
          */
         Type type() const override { return Type::sphere; }
-        /** @brief Center point of the sphere. */
-        Vec3 center;
         /** @brief Radius of the sphere. */
         double radius;
+        // Center of the sphere is always the center of the particle
+        //Vec3 center;
     };
 
     /** 
