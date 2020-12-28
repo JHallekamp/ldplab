@@ -48,6 +48,37 @@ namespace ldplab
         };
 
         /**
+         * @brief Holds data that is used to transform world space rays into
+         *        particle space or the other way around.
+         */
+        struct ParticleTransformation
+        {
+            /** 
+             * @brief Vector from particle space origin (in world space) to 
+             *        world space origin.
+             */
+            Vec3 w2p_translation;
+            /**
+             * @brief Matrix that transforms a world space vector (when the
+             *        vector is applied to the matrix from the right-hand side) 
+             *        by first rotating and then scaling it into particle space
+             *        (safe for translation).
+             */
+            Mat3 w2p_rotation_scale;
+            /**
+             * @brief Vector to the particle space (in world space)
+             */
+            Vec3 p2w_translation;
+            /**
+             * @brief Matrix that transforms a particle space vector (when the
+             *        vector is applied to the matrix from the right-hand side)
+             *        by first scaling and then rotating it into world space
+             *        (safe for translation).
+             */
+            Mat3 p2w_scale_rotation;
+        };
+
+        /**
          * @brief Structure models the geometries of a rode like particle. The 
          *        particle is cylindric shaped with a spherical cap and a 
          *        spherical indent at the bottom.

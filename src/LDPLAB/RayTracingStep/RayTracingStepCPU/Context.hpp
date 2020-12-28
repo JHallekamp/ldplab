@@ -31,6 +31,13 @@ namespace ldplab
              */
             std::vector<Particle> particles;
             /**
+             * @brief Stores the particle transformations for the current 
+             *        state of the experimental setup.
+             * @details The index of a particle transformation directly
+             *          corresponds to the index of the related particle.
+             */
+            std::vector<ParticleTransformation> particle_transformations;
+            /**
              * @brief Stores the particle geometrical representation of rode 
              *        like particles with analytical representation.
              */

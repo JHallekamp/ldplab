@@ -5,15 +5,15 @@
 
 namespace ldplab
 {
-    /**
-     * @brief Structure modeling a 3D vertex.
-     */
-    typedef glm::dvec2 Vec2;
+    /** @brief Structure modeling a 2 dimensional vector. */
     typedef glm::dvec3 Vec3;
+    /** @brief Structure modeling a 3 dimensional vector. */
+    typedef glm::dvec3 Vec3;
+    
+    /** @brief Structure modeling a 3x3 matrix. */
+    typedef glm::dmat3 Mat3;
 
-    /**
-     * @brief Structure modeling light rays.
-     */
+    /** @brief Structure modeling light rays. */
     struct Ray
     {
         Vec3 origin;

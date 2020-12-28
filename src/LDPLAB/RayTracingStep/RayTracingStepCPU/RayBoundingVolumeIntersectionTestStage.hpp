@@ -61,7 +61,8 @@ namespace ldplab
              */
             void execute(RayBuffer& buffer) override;
         private:
-            void transformRayFromWorldToParticleSpace(Ray& ray, size_t pidx);
+            inline void transformRayFromWorldToParticleSpace(
+                Ray& ray, size_t pidx) const;
         private:
             std::shared_ptr<Context> m_context;
         };
