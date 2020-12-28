@@ -24,8 +24,12 @@ namespace ldplab
             /**
              * @brief Inherited via IRayTracingStep. Starts the ray tracing
              *        simulation.
+             * @param[in] input The current simulation state.
+             * @param[out] output Results of the ray tracing step execution.
              */
-            void start() override;
+            void execute(
+                const SimulationState& input,
+                RayTracingStepOutput& output) override;
         private:
             /**
             * @brief Constructor

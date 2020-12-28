@@ -1,6 +1,9 @@
 #ifndef WWU_LDPLAB_RAY_TRACING_STEP_RAY_TRACING_STEP_INTERFACE_HPP
 #define WWU_LDPLAB_RAY_TRACING_STEP_RAY_TRACING_STEP_INTERFACE_HPP
 
+#include "RayTracingStepOutput.hpp"
+#include "../SimulationState.hpp"
+
 namespace ldplab
 {
     /**
@@ -13,13 +16,17 @@ namespace ldplab
     public:
         /**
          * @brief The destructor is virtual since class inhered from 
-         *        IRayTracingStep
+         *        IRayTracingStep.
          */
         virtual ~IRayTracingStep() { };
         /**
          * @brief Begin ray tracing simulation.
+         * @param[in] input The current simulation state.
+         * @param[out] output Results of the ray tracing step execution.
          */
-        virtual void start() = 0;
+        virtual void execute(
+            const SimulationState& input,
+            RayTracingStepOutput& output) = 0;
     };
 }
 
