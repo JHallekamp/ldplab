@@ -42,9 +42,21 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
             RayBuffer& transmission_buffer =
                 buffer_control.getTransmissionBuffer(initial_batch_buffer);
 
-            if (reflection_buffer.index != buffer_control.dummyBufferIndex() &&
-                transmission_buffer.index != buffer_control.dummyBufferIndex())
+            m_ray_particle_intersection_test_stage->execute(
+                initial_batch_buffer,
+                intersection_buffer);
+
+            m_ray_particle_interaction_stage->execute(
+                intersection_buffer,
+                initial_batch_buffer,
+                reflection_buffer,
+                transmission_buffer);
+
+            while (initial_batch_buffer.active_rays > 0)
             {
+                m_ray_bounding_volume_intersection_test_stage->execute(
+                    initial_batch_buffer);
+
                 m_ray_particle_intersection_test_stage->execute(
                     initial_batch_buffer,
                     intersection_buffer);
@@ -54,23 +66,11 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
                     initial_batch_buffer,
                     reflection_buffer,
                     transmission_buffer);
+            }
 
-                while (initial_batch_buffer.active_rays > 0)
-                {
-                    m_ray_bounding_volume_intersection_test_stage->execute(
-                        initial_batch_buffer);
-
-                    m_ray_particle_intersection_test_stage->execute(
-                        initial_batch_buffer,
-                        intersection_buffer);
-
-                    m_ray_particle_interaction_stage->execute(
-                        intersection_buffer,
-                        initial_batch_buffer,
-                        reflection_buffer,
-                        transmission_buffer);
-                }
-
+            if (reflection_buffer.index != buffer_control.dummyBufferIndex() &&
+                transmission_buffer.index != buffer_control.dummyBufferIndex())
+            {
                 processBatch(reflection_buffer, buffer_control);
                 processBatch(transmission_buffer, buffer_control);
             }
