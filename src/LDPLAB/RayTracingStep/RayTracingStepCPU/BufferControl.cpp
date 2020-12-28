@@ -19,6 +19,8 @@ ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
         (exp2i(m_context->maximum_depth + 1));
     m_ray_data.resize(num_rays);
     m_index_data.resize(num_rays);
+    m_point_data.resize(context->number_rays_per_buffer);
+    m_normal_data.resize(context->number_rays_per_buffer);
     initializeBuffers();
 
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
@@ -58,6 +60,17 @@ ldplab::rtscpu::RayBuffer&
     return m_buffers[2 * buffer.index + 2];
 }
 
+ldplab::rtscpu::IntersectionBuffer& 
+    ldplab::rtscpu::BufferControl::getIntersectionBuffer()
+{
+    // TODO: insert return statement here
+}
+
+size_t ldplab::rtscpu::BufferControl::dummyBufferIndex()
+{
+    return m_dummy.index;
+}
+
 void ldplab::rtscpu::BufferControl::initializeBuffers()
 {
     for (size_t i = 0; i <= m_context->maximum_depth; ++i)
@@ -79,4 +92,8 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
     const size_t offset = m_dummy.index * m_context->number_rays_per_buffer;
     m_dummy.ray_data = m_ray_data.data() + offset;
     m_dummy.index_data = m_index_data.data() + offset;
+
+    m_intersection_buffer.size = m_context->number_rays_per_buffer;
+    m_intersection_buffer.point = m_point_data.data();
+    m_intersection_buffer.normal = m_normal_data.data();
 }

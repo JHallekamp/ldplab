@@ -47,6 +47,17 @@ namespace ldplab
              *          maximum depth.
              */
             RayBuffer& getTransmissionBuffer(RayBuffer& buffer);
+            /**
+             * @brief Provides a temporary intersection buffer. 
+             * @warning This always provides the same buffer.
+             * @returns The intersection buffer.
+             */
+            IntersectionBuffer& getIntersectionBuffer();
+            /**
+             * @brief Provides the buffer index to identify a dummy buffer.
+             * @returns The dummy buffer index.
+             */
+            size_t dummyBufferIndex();
         private:
             void initializeBuffers();
         private:
@@ -55,6 +66,9 @@ namespace ldplab
             std::vector<Ray> m_ray_data;
             std::vector<int32_t> m_index_data;
             RayBuffer m_dummy;
+            std::vector<Vec3> m_point_data;
+            std::vector<Vec3> m_normal_data;
+            IntersectionBuffer m_intersection_buffer;
         };
     }
 }

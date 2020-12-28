@@ -20,7 +20,7 @@ namespace ldplab
      *         cylinder with a half sphere as a cap. At the bottom the same 
      *         half is subtracted.
      */
-    struct RodParticleGeometry : IParticleGeometry
+    struct RodeParticleGeometry : IParticleGeometry
     {
         /** @brief Radius of the cylinder. */
         double cylinder_radius;

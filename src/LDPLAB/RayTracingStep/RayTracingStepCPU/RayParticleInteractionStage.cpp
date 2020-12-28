@@ -3,7 +3,6 @@
 #include "Context.hpp"
 #include "Data.hpp"
 
-#include "../../SimulationState.hpp"
 #include "../../Log.hpp"
 
 #include "../../../../libs/glm/glm.hpp"
@@ -20,7 +19,6 @@ ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
 }
 
 void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
-    const SimulationState* state,
     const IntersectionBuffer& intersection, 
     const RayBuffer& rays,
     RayBuffer& reflected_rays,
@@ -28,7 +26,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction"\
         "on batch %i",
-        m_context->uid, input_outer_rays.index);
+        m_context->uid, rays.index);
 
     reflected_rays.inner_particle_rays = rays.inner_particle_rays;
     refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
@@ -90,9 +88,9 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         }
     }
 
-    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i reflected rays"
+    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i reflected rays",
         m_context->uid, reflected_rays.index, reflected_rays.active_rays);
-    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i refracted rays"
+    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i refracted rays",
         m_context->uid, refracted_rays.index, refracted_rays.active_rays);
 }
 

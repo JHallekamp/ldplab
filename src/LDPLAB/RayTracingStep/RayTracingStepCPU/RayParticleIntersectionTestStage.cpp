@@ -18,8 +18,6 @@ ldplab::rtscpu::RodeParticleIntersectionTest::
 }
 
 void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
-    const SimulationState* state,
-    const size_t particle,
     RayBuffer& rays,
     IntersectionBuffer& intersection)
 {
@@ -36,7 +34,7 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
             continue;
 
         RodeParticle& geometry = m_context->
-            rode_particle_geometry[state->particles[rays.index_data[i]].type];
+            rode_particle_geometry[rays.index_data[i]];
         double cap_hight = geometry.origin_cap.z +
             geometry.sphere_radius - geometry.cylinder_length;
 

@@ -40,8 +40,6 @@ namespace ldplab
                          about the intersection points.
              */
             virtual void execute(
-                const SimulationState* state,
-                const size_t particle,
                 RayBuffer& rays,
                 IntersectionBuffer& intersection) = 0;
         };
@@ -74,8 +72,6 @@ namespace ldplab
              *                          about the intersection points.
              */
             void execute(
-                const SimulationState* state,
-                const size_t particle,
                 RayBuffer& rays,
                 IntersectionBuffer& intersection) override;
         private:

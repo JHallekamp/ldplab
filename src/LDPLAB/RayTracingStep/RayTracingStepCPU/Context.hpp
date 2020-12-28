@@ -69,6 +69,8 @@ namespace ldplab
             size_t number_rays_per_unit;
             /** @brief Maximum number of times a ray can split. */
             size_t maximum_depth;
+            /** @brief Number of parallel pipeline instances. */
+            size_t number_parallel_pipelines;
         };
     }
 }

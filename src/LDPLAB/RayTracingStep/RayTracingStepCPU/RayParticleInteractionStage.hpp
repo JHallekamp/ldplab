@@ -23,10 +23,10 @@ namespace ldplab
          */
         class IRayParticleInteractionStage
         {
+        public:
             /**
              * @brief Calculating resulting rays of the interaction of the 
              *        incident ray with a particle surface.
-             * @param[in] state Pointer to the state of the simulation.
              * @param[in] intersection Information about the intersection point
              *              and corresponding normal.
              * @param[in] rays RayBuffer holding rays that hit 
@@ -37,7 +37,6 @@ namespace ldplab
              *                            refracted from the particle surface. 
              */
             virtual void execute(
-                const SimulationState* state,
                 const IntersectionBuffer& intersection,
                 const RayBuffer& rays,
                 RayBuffer& reflected_rays,
@@ -61,7 +60,6 @@ namespace ldplab
              * @brief Inherited via ldplab::rtscpu::IRayParticleInteractionStage.
              * @brief Calculating resulting rays of the interaction of the 
              *        incident ray with a particle surface.
-             * @param[in] state Pointer to the state of the simulation.
              * @param[in] intersection Information about the intersection point
              *              and corresponding normal.
              * @param[in] rays RayBuffer holding rays that hit 
@@ -72,7 +70,6 @@ namespace ldplab
              *                            refracted from the particle surface. 
              */
             void execute(
-                const SimulationState* state,
                 const IntersectionBuffer& intersection,
                 const RayBuffer& rays,
                 RayBuffer& reflected_rays,
