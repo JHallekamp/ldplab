@@ -42,8 +42,10 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
 {
     LDPLAB_ASSERT(input.particles.size() == m_context.particles.size());
     
+    // Update context
     for (size_t i = 0; i < input.particles.size(); ++i)
     {
+        // Set particle current transformation
         m_context->particle_transformations[i].w2p_translation =
             -input.particles[i].position;
         m_context->particle_transformations[i].p2w_translation =
@@ -59,6 +61,10 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 input.particles[i].orientation.y, 
                 input.particles[i].orientation.z);
     }
+    m_context->output = &output;
 
-       
+    // Execute pipeline
+    m_context->pipeline->setup();
+    m_context->thread_pool->executeJobBatch(
+        m_context->pipeline, m_context->number_parallel_pipelines);
 }

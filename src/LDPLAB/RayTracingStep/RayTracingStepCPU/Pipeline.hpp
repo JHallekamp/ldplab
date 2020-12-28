@@ -39,8 +39,13 @@ namespace ldplab
                 std::unique_ptr<IRayParticleInteractionStage> rpi,
                 std::unique_ptr<IInnerParticlePropagationStage> ipp,
                 std::shared_ptr<Context> context);
+            /**
+             * @brief Sets up the pipeline stages.
+             * @note Only called once per ray tracing step execution.
+             */
+            void setup();
             /** @brief Inherited via IJob */
-            virtual void execute(size_t job_id) override;
+            void execute(size_t job_id) override;
         private:
             void processBatch(
                 RayBuffer& buffer,

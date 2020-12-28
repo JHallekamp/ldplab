@@ -18,6 +18,12 @@ ldplab::rtscpu::Pipeline::Pipeline(
 {
 }
 
+void ldplab::rtscpu::Pipeline::setup()
+{
+    m_initial_stage->setup();
+    m_ray_bounding_volume_intersection_test_stage->setup();
+}
+
 void ldplab::rtscpu::Pipeline::execute(size_t job_id)
 {
     LDPLAB_ASSERT(job_id < m_buffer_controls.size());

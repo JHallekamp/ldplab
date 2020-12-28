@@ -2,9 +2,12 @@
 #define WWU_LDPLAB_RTSCPU_CONTEXT_HPP
 
 #include "RayTracingStepCPU.hpp"
+#include "Pipeline.hpp"
 #include "Data.hpp"
 
+#include "..\RayTracingStepOutput.hpp"
 #include "..\..\Geometry.hpp"
+#include "..\..\ThreadPool.hpp"
 #include "..\..\ExperimentalSetup\Lightsource.hpp"
 #include "..\..\ExperimentalSetup\Particle.hpp"
 #include "..\..\Utils\UID.hpp"
@@ -45,6 +48,18 @@ namespace ldplab
              *        setup.
              */
             std::vector<LightSource> light_sources;
+            /**
+             * @brief The ray tracing step cpu pipeline.
+             */
+            std::shared_ptr<Pipeline> pipeline;
+            /**
+             * @brief The thread pool used by the ray tracing step.
+             */
+            std::shared_ptr<ThreadPool> thread_pool;
+            /**
+             * @brief Storing the ray tracing step output.
+             */
+            RayTracingStepOutput* output;
             /** 
              * @brief Under this cutoff intensity rays are not further traced. 
              */

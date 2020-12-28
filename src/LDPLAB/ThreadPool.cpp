@@ -14,7 +14,7 @@ std::string getThreadIDString(std::thread::id tid)
 }
 
 ldplab::ThreadPool::BatchHandle::BatchHandle(
-    std::unique_ptr<IJob> job, size_t size)
+    std::shared_ptr<IJob> job, size_t size)
     :
     m_job{ std::move(job) },
     m_batch_size{ size },
@@ -138,7 +138,7 @@ ldplab::ThreadPool::~ThreadPool()
 
 std::shared_ptr<ldplab::ThreadPool::BatchHandle>
     ldplab::ThreadPool::submitJobBatch(
-        std::unique_ptr<IJob> job, size_t batch_size)
+        std::shared_ptr<IJob> job, size_t batch_size)
 {
     if (batch_size < 1 || size() < 1)
     {
@@ -181,7 +181,7 @@ std::shared_ptr<ldplab::ThreadPool::BatchHandle>
 }
 
 void ldplab::ThreadPool::executeJobBatch(
-    std::unique_ptr<IJob> job, size_t batch_size)
+    std::shared_ptr<IJob> job, size_t batch_size)
 {
     if (batch_size < 1 || size() < 1)
     {
