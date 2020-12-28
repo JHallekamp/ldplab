@@ -16,8 +16,11 @@ ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
     m_rasterization_right{ true },
     m_rasterization_step_size{ 0 }
 {
-    LDPLAB_LOG_INFO("RTSCPU context %i: Created initial stage for bounding"\
-        " spheres and homogenous light sources", m_context->uid);
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "InitialStageBoundingSpheresHomogenousLight instance created",
+        m_context->uid);
+    //LDPLAB_LOG_INFO("RTSCPU context %i: Created initial stage for bounding"\
+    //    " spheres and homogenous light sources", m_context->uid);
 }
 
 void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()

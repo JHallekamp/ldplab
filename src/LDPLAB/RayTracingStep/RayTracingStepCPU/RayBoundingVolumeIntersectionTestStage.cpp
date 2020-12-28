@@ -1,4 +1,5 @@
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
+#include "../../Log.hpp"
 
 ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
@@ -6,6 +7,9 @@ ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     :
     m_context{ context }
 {
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "RayBoundingSphereIntersectionTestStageBruteForce instance created",
+        m_context->uid);
 }
 
 void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::setup()
@@ -16,6 +20,11 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::setup()
 void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
     RayBuffer& buffer)
 {
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Test bounding sphere intersections"\
+        "for batch buffer %i",
+        m_context->uid,
+        buffer.index);
+
     Vec3 unit = { 1, 1, 1 };
     for (size_t i = 0; i < buffer.size; ++i)
     {

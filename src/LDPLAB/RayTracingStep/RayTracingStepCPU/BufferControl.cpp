@@ -1,4 +1,5 @@
 #include "BufferControl.hpp"
+#include "../../Log.hpp"
 
 size_t exp2i(size_t x)
 {
@@ -13,12 +14,17 @@ ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
         exp2i(context->maximum_depth + 1), 
         context->maximum_depth + 1, 
         context->number_rays_per_buffer }
-{
+{    
     const size_t num_rays = m_context->number_rays_per_buffer * 
         (exp2i(m_context->maximum_depth + 1));
     m_ray_data.resize(num_rays);
     m_index_data.resize(num_rays);
     initializeBuffers();
+
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "BufferControl instance created with %i individual buffers for a "\
+        "maximum of %i rays (branching depth %i)",
+        m_context->uid, m_buffers.size(), num_rays, m_context->maximum_depth);
 }
 
 ldplab::rtscpu::RayBuffer& ldplab::rtscpu::BufferControl::initialBuffer()
