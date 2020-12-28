@@ -55,8 +55,6 @@ namespace ldplab
              *       rays.
              */
             std::vector<Ray> batch_rays;
-            /** @brief Stores the initial batch rays. */
-            RayBuffer batch_buffer;
             /** 
              * @brief Under this cutoff intensity rays are not further traced. 
              */
