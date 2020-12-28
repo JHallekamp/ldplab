@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_GEOMETRY_HPP
 #define WWU_LDPLAB_GEOMETRY_HPP
 
-#include "..\..\libs\glm\glm.hpp"
+#include <glm/glm.hpp>
 
 namespace ldplab
 {
