@@ -25,10 +25,12 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     RayBuffer& initial_batch_buffer = buffer_control.initialBuffer();
     std::vector<RayBuffer&> buffer_stack;
     
-    m_initial_stage->setup();
-    m_ray_bounding_volume_intersection_test_stage->setup();
+    // Setup has to be performed by the ray tracing step instance itself, since
+    // it only has to be executed once!
+    //m_initial_stage->setup();
+    //m_ray_bounding_volume_intersection_test_stage->setup();
+    
     bool batches_left;
-
     do
     {
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
