@@ -45,9 +45,12 @@ namespace ldplab
          */
         struct IntersectionBuffer
         {
+            /** @brief Array containing size intersection points. */
             Vec3* point;
+            /** @brief Array containing size intersection normals. */
             Vec3* normal;
-            size_t num_intersections;
+            /** @brief Number of elements in point and normal arrays. */
+            size_t size;
         };
 
         /**
