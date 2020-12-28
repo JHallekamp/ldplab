@@ -20,57 +20,60 @@ ldplab::rtscpu::RodeParticleIntersectionTest::
 void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
     const SimulationState* state,
     const size_t particle,
-    RayBuffer& input_hit_rays,
-    RayBuffer& missed_rays,
+    RayBuffer& rays,
     IntersectionBuffer& intersection)
 {
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray particle intersection"\
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle intersection"\
         " test on batch %i",
-        m_context->uid, input_hit_rays.index);
+        m_context->uid, rays.index);
+    size_t num_hit_rays = 0;
+    size_t num_missed_rays = 0;
 
-    input_hit_rays.branching_depth++;
-    missed_rays.branching_depth = input_hit_rays.branching_depth;
-
-    RodeParticle& particle_geometrie = 
-        m_context->rode_particle_geometry[state->particles[particle].type];
-    double cap_hight = particle_geometrie.origin_cap.z + 
-        particle_geometrie.sphere_radius - particle_geometrie.cylinder_length;
-
-    for (size_t i = 0; i < input_hit_rays.size; i++)
+    for (size_t i = 0; i < rays.size; i++)
     {
-        Ray& ray = input_hit_rays.data[i];
-        Ray& missed_ray = missed_rays.data[i];
+        if (rays.index_data[i] < 0 &&
+            rays.index_data[i] >= m_context->particles.size())
+            continue;
+
+        RodeParticle& geometry = m_context->
+            rode_particle_geometry[state->particles[rays.index_data[i]].type];
+        double cap_hight = geometry.origin_cap.z +
+            geometry.sphere_radius - geometry.cylinder_length;
+
+        Ray& ray = rays.ray_data[i];
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
 
-        if (ray.intensity <= 0)
-            continue;
-
-        if(!intersectionTest(
+        if (!intersectionTest(
+            geometry,
             ray,
-            particle_geometrie, 
             inter_point,
             inter_normal))
         {
             // Ray missed particle
-            missed_ray = ray;
-            ray.intensity = -1;
-            input_hit_rays.num_rays--;
-            missed_rays.num_rays++;
+            rays.index_data[i] = m_context->particles.size();
+            num_missed_rays++;
+            // Transformation to world space
+            ParticleTransformation& trans = m_context->
+                particle_transformations[rays.index_data[i]];
+            ray.origin = trans.p2w_scale_rotation * ray.origin + 
+                trans.p2w_translation;
+            ray.direction = 
+                glm::normalize(trans.p2w_scale_rotation * ray.direction);
         }
+        else
+            num_hit_rays++;
     }
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i contains %i rays that "\
-        "hit the particle", m_context->uid, input_hit_rays.num_rays, 
-        input_hit_rays.index);
+        "hit the particle", m_context->uid, rays.index, num_hit_rays);
     LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i contains %i rays that "\
-        "missed the particle", m_context->uid, missed_rays.num_rays,
-        missed_rays.index);
+        "missed the particle", m_context->uid, rays.index, num_missed_rays);
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
+    const RodeParticle& geometry,
     const Ray& ray,
-    const RodeParticle& particle_geometrie,
     Vec3& inter_point, 
     Vec3& inter_normal)
 {
@@ -79,7 +82,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
 
     // Check cylinder intersection
     if (cylinderIntersection(
-        particle_geometrie,
+        geometry,
         ray,
         intersec_first,
         intersec_second))
@@ -88,7 +91,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
         {
             inter_point = ray.origin + intersec_first * ray.direction;
             if (inter_point.z >= 0 &&
-                inter_point.z <= particle_geometrie.cylinder_length)
+                inter_point.z <= geometry.cylinder_length)
             {
                 inter_normal = { inter_point.x,inter_point.y,0 };
                 inter_normal = glm::normalize(inter_normal);
@@ -100,7 +103,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
                 if (inter_point.z >= 0)
                 {
                     return indentationIntersection(
-                        particle_geometrie,
+                        geometry,
                         ray,
                         inter_point,
                         inter_normal);
@@ -109,7 +112,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
             else // First intersection over the cylinder
             {
                 return capIntersection(
-                    particle_geometrie,
+                    geometry,
                     ray,
                     inter_point,
                     inter_normal);
@@ -124,17 +127,17 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
                 if (inter_point.z > 0)
                 {
                     return indentationIntersection(
-                        particle_geometrie,
+                        geometry,
                         ray,
                         inter_point,
                         inter_normal);
                 }
             }
             // First intersection over the cylinder
-            else if (inter_point.z > particle_geometrie.cylinder_length) 
+            else if (inter_point.z > geometry.cylinder_length) 
             {
                 return capIntersection(
-                    particle_geometrie,
+                    geometry,
                     ray,
                     inter_point,
                     inter_normal);
@@ -146,25 +149,25 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
     {
         double distance = 
             ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y;
-        if (distance <= particle_geometrie.cylinder_radius * 
-                particle_geometrie.cylinder_radius)
+        if (distance <= geometry.cylinder_radius * 
+                geometry.cylinder_radius)
         {
-            if (ray.origin.z >= particle_geometrie.cylinder_length && 
+            if (ray.origin.z >= geometry.cylinder_length && 
                 ray.direction.z < 0)
             {
                 return capIntersection(
-                    particle_geometrie,
+                    geometry,
                     ray,
                     inter_point,
                     inter_normal);
             }
             else if ( (ray.origin.z <= 
-                particle_geometrie.origin_indentation.z + 
-                particle_geometrie.cylinder_radius) &&
+                geometry.origin_indentation.z + 
+                geometry.cylinder_radius) &&
                 ray.direction.z > 0)
             {
                 return indentationIntersection(
-                    particle_geometrie,
+                    geometry,
                     ray,
                     inter_point,
                     inter_normal);
@@ -175,7 +178,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::cylinderIntersection(
-    const RodeParticle& particle,
+    const RodeParticle& geometry,
     const Ray& ray,
     double& distance_min, 
     double& distance_max)
@@ -184,7 +187,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::cylinderIntersection(
         (ray.origin.x * ray.direction.x + ray.origin.y * ray.direction.y) /
         (ray.direction.x * ray.direction.x + ray.direction.y + ray.direction.y);
     double q = (ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) - 
-        particle.cylinder_radius;
+        geometry.cylinder_radius;
 
     double discriminant = p * p - q;
     if (discriminant < 0.0)
@@ -217,7 +220,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::sphereIntersection(
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
-    const RodeParticle& particle_geometrie,
+    const RodeParticle& geometry,
     const Ray& ray, 
     Vec3& inter_point,
     Vec3& inter_normal)
@@ -226,20 +229,20 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
     double intersec_second = 0;
 
     if (sphereIntersection(
-        particle_geometrie.origin_cap,
-        particle_geometrie.cylinder_radius,
+        geometry.origin_cap,
+        geometry.cylinder_radius,
         ray,
         intersec_first,
         intersec_second))
     {
         inter_point = ray.origin + intersec_first *
             ray.direction;
-        if (inter_point.z > particle_geometrie.cylinder_length &&
-            inter_point.z <= particle_geometrie.origin_cap.z +
-            particle_geometrie.sphere_radius)
+        if (inter_point.z > geometry.cylinder_length &&
+            inter_point.z <= geometry.origin_cap.z +
+            geometry.sphere_radius)
         {
             inter_normal = glm::normalize(
-                particle_geometrie.origin_cap - inter_point);
+                geometry.origin_cap - inter_point);
             return true;
         }
     }
@@ -247,24 +250,24 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::indentationIntersection(
-    const RodeParticle& particle_geometrie,
+    const RodeParticle& geometry,
     const Ray& ray,
-    Vec3& intersection_point,
-    Vec3& intersection_normal)
+    Vec3& inter_point,
+    Vec3& inter_normal)
 {
     double intersec_first = 0;
     double intersec_second = 0;
 
     if (sphereIntersection(
-        particle_geometrie.origin_indentation,
-        particle_geometrie.cylinder_radius,
+        geometry.origin_indentation,
+        geometry.cylinder_radius,
         ray,
         intersec_first,
         intersec_second))
     {
-        intersection_point = ray.origin + intersec_second * ray.direction;
-        intersection_normal = glm::normalize(
-            particle_geometrie.origin_indentation - intersection_point);
+        inter_point = ray.origin + intersec_second * ray.direction;
+        inter_normal = glm::normalize(
+            geometry.origin_indentation - inter_point);
         return true;
     }
     return false;

@@ -33,20 +33,16 @@ namespace ldplab
              *        particle. Missed ray are sorted out in a secondary Ray buffer.
              * @param[in] state Pointer to the state of the simulation.
              * @param[in] particle Index of the particle.
-             * @param[in,out] input_hit_rays RayBuffer holding rays that hit the
-             *                               particle bounding box.
-             *                               The output RayBuffer holds all rays
-             *                               that hit the particle.
-             * @param[out] missed_rays RayBuffer collecting rays that missed the
-             *                         particle.
+             * @param[in, out] rays RayBuffer holding rays that hit the
+             *                 particle bounding box. Rays that miss the 
+             *                 particle will be transformed back to world space.
              * @param[out] intersection IntersectionBuffer holding information 
                          about the intersection points.
              */
             virtual void execute(
                 const SimulationState* state,
                 const size_t particle,
-                RayBuffer& input_hit_rays,
-                RayBuffer& missed_rays,
+                RayBuffer& rays,
                 IntersectionBuffer& intersection) = 0;
         };
         
@@ -71,20 +67,16 @@ namespace ldplab
              *         coordinate system.
              * @param[in] state Pointer to the state of the simulation.
              * @param[in] particle Index of the particle.
-             * @param[in,out] input_hit_rays RayBuffer holding rays that hit the
-             *                               particle bounding box.
-             *                               The output RayBuffer holds all rays
-             *                               that hit the particle.
-             * @param[out] missed_rays RayBuffer collecting rays that missed the
-             *                         particle.
+             * @param[in, out] rays RayBuffer holding rays that hit the
+             *                 particle bounding box. Rays that miss the 
+             *                 particle will be transformed back to world space.
              * @param[out] intersection IntersectionBuffer holding information 
              *                          about the intersection points.
              */
             void execute(
                 const SimulationState* state,
                 const size_t particle,
-                RayBuffer& input_hit_rays,
-                RayBuffer& missed_rays,
+                RayBuffer& rays,
                 IntersectionBuffer& intersection) override;
         private:
             std::shared_ptr<Context> m_context;
@@ -92,10 +84,18 @@ namespace ldplab
             /**
              * @brief Testing for a intersection of a single ray with a 
              *        particle.
+             * @param[in] particle Specifies the particle geometry.
+             * @param[in] ray Specifies the ray.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle 
+             *                          surface at the intersection 
+             *                          point. The normal is pointing 
+             *                          outside of the particle.
              */
             bool intersectionTest(
+                const RodeParticle& geometry,
                 const Ray& ray,
-                const RodeParticle& particle_geometrie,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
@@ -141,7 +141,7 @@ namespace ldplab
              * @warning Only the correct hight of the intersection point is 
              *          checked. It is assumed that the intersection point is 
              *          inside the infinite cylinder.
-             * @param[in] particle_geometrie Specifies the particle geometry.
+             * @param[in] geometry Specifies the particle geometry.
              * @param[in] ray Specifies the ray.
              * @param[out] intersection_point Resulting intersection point with
              *                                the cap.
@@ -153,7 +153,7 @@ namespace ldplab
              *         false will be returned.
              */
             bool capIntersection(
-                const RodeParticle& particle_geometrie,
+                const RodeParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
@@ -165,11 +165,11 @@ namespace ldplab
              *       distances).
              * @warning No further checking is done if the intersection point 
              *          is inside the cylinder.
-             * @param[in] particle Specifies the particle geometry.
+             * @param[in] geometry Specifies the particle geometry.
              * @param[in] ray Specifies the ray.
-             * @param[out] intersection_point Resulting intersection point with
+             * @param[out] inter_point Resulting intersection point with
              *                                the indentation.
-             * @param[out] intersection_normal Resulting normal of the particle 
+             * @param[out] inter_normal Resulting normal of the particle 
              *                                 surface at the intersection 
              *                                 point. The normal is pointing 
              *                                 outside of the particle.
@@ -177,10 +177,10 @@ namespace ldplab
              *         false will be returned.
              */
             bool indentationIntersection(
-                const RodeParticle& particle_geometrie,
+                const RodeParticle& geometry,
                 const Ray& ray,
-                Vec3& intersection_point,
-                Vec3& intersection_normal);
+                Vec3& inter_point,
+                Vec3& inter_normal);
 
             
         };
