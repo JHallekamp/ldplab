@@ -236,6 +236,18 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
     m_batch_creation_particle_initialized = false;
 }
 
+
+inline void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
+    transformRayFromWorldToParticleSpace(Ray& ray, size_t pidx) const
+{
+    ray.origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
+        (ray.origin +
+            m_context->particle_transformations[pidx].w2p_translation);
+    ray.direction = glm::normalize(
+        m_context->particle_transformations[pidx].w2p_rotation_scale *
+        ray.direction);
+}
+
 bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
     RayBuffer& initial_batch_buffer)
 {
@@ -312,6 +324,10 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
 
                         // Set initial ray particle index
                         initial_batch_buffer.index_data[nr] = pi;
+
+                        // Transform ray to particle space
+                        transformRayFromWorldToParticleSpace(
+                            initial_batch_buffer.ray_data[nr], pi);
 
                         // Increase number of rays
                         ++nr;

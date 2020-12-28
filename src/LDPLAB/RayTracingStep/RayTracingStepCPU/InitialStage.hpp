@@ -74,6 +74,8 @@ namespace ldplab
                 const LightSource& light_source) const;
             void advBatchCreationLight(size_t& li);
             void advBatchCreationParticle(size_t& pi);
+            inline void transformRayFromWorldToParticleSpace(
+                Ray& ray, size_t pidx) const;
         private:
             std::shared_ptr<Context> m_context;
             // Projections for each particle

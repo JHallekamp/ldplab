@@ -88,7 +88,10 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
 inline void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     transformRayFromWorldToParticleSpace(Ray& ray, size_t pidx) const
 {
-    ray.origin += m_context->particle_transformations[pidx].w2p_translation;
     ray.origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
-        ray.origin;
+        (ray.origin + 
+            m_context->particle_transformations[pidx].w2p_translation);
+    ray.direction = glm::normalize(
+        m_context->particle_transformations[pidx].w2p_rotation_scale *
+            ray.direction);
 }
