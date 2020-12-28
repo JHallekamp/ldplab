@@ -6,7 +6,7 @@
 namespace ldplab
 {
     /** @brief Structure modeling a 2 dimensional vector. */
-    typedef glm::dvec3 Vec3;
+    typedef glm::dvec2 Vec2;
     /** @brief Structure modeling a 3 dimensional vector. */
     typedef glm::dvec3 Vec3;
     
