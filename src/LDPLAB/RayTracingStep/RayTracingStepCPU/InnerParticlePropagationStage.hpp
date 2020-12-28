@@ -30,7 +30,9 @@ namespace ldplab
         public:
             /**
              * @brief Calculating the path of the rays threw the particle.
-             * @param[in, out] rays RayBuffer holding the propagating rays. 
+             * @param[in, out] rays RayBuffer holding the propagating rays.
+             * @param[out] intersection IntersectionBuffer holding information 
+             *             about the intersection points.
              */
             virtual void execute(
                 RayBuffer& rays,
@@ -40,30 +42,51 @@ namespace ldplab
         /**
          * @brief Class implementing the inner particle propagation for 
          *        linear index of refraction gradient in one direction.
-         * @detail The Light propagation is calculated by solving the Eikonal 
-         *         equation with the Runge–Kutta–Fehlberg method.
+         * @detail The light propagation is calculated by solving the Eikonal 
+         *         equation with the Runge–Kutta–Fehlberg(45) method.
          */
         class LinearIndexGradientRodeParticlePropagation
             : public IInnerParticlePropagationStage
         {
         public:
+            /**
+             * @brief Constructing inner particle propagation stage and setting 
+             *        up the parameter for the Runge-Kutta-Fehlberg method.
+             * @param context Pointer to context data for the ray tracing step.
+             * @param inital_step_size Initial step size for each integration.
+             * @param epsilon Maximum error tolerance of the integration steps.
+             * @param safety_factor Factor for new step size calculation.
+             */
             LinearIndexGradientRodeParticlePropagation(
                 std::shared_ptr<Context> context,
                 const double initial_step_size,
                 const double epsilon,
-                const double safety_factor);
+                const double safety_factor = 0.84);
             /**
-             * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.  
+             * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
              * @details Calculating the path of the rays threw the particle.
              * @param[in, out] rays RayBuffer holding the propagating rays.
+             * @param[out] intersection IntersectionBuffer holding information 
+             *             about the intersection points.
              */
             void execute(
                 RayBuffer& rays,
                 IntersectionBuffer& intersection) override;
         private:
+            /**
+             * @brief Structure keeping all variables of the differential
+             *        equation.
+             */
             struct Arg
             {
+                /** 
+                 * @brief Vector pointing in the direction of light. Its norm 
+                 *        is the index of reflection at position r.
+                 */
                 Vec3 w;
+                /**
+                 * @brief Vector pointing to the light rays origin. 
+                 */
                 Vec3 r;
                 Arg operator*(const double& d) 
                 {
@@ -75,30 +98,82 @@ namespace ldplab
                     Arg arg{ this->w + a.w, this->r + a.r };
                     return arg;
                 }
-                double absoluteMax()
-                {
-                    double max = std::abs(w.x);
-                    return max;
-                }
+                /**
+                 * @brief Calculates the maximum value of all variables.
+                 * @returns the maximum of r and w evaluated in all directions.
+                 */
+                double absoluteMax();
             };
+            /**
+             * @brief Calculating the ray propagation through the particle.
+             * @detail The ray propagation is integrated until the ray 
+             *         intersects with the particle surface.
+             * @param[in] particle Index of the particle.
+             * @param[in,out] ray The ray which is propagating threw the 
+             *                    particle. The ray will be updated to the 
+             *                    closest point at the particle surface in 
+             *                    terms of the integration step size.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          inside the particle.
+             */
             void rayPropagation(
                 const size_t particle, 
                 Ray& ray, 
                 Vec3& inter_point,
                 Vec3& inter_normal);
+            /**
+             * @brief Check if the position is outside of the particle.
+             * @param[in] geometry Specifies the particle geometry.
+             * @param[in] r Position to check.
+             * @retuns true if the position is outside the particle, false if 
+             *         the position is inside.
+             */
             bool isOutsideParticle(const RodeParticle& geometry, const Vec3& r);
+            /**
+             * @brief Integration step of the Runge-Kutta-Fehlberg method.
+             * @param[in] particle Pointer to the particle material containing 
+             *            the index of reflection distribution.
+             * @param[in] x Current integration variable.
+             * @param[in] h Integration step size.
+             * @param[out] x_new Resulting integration variable.
+             * @returns The error of the integration.
+             */
             double rk45(
                 const ParticleMaterialLinearOneDirectional* particle, 
                 const Arg& x,
                 const double h,
                 Arg& x_new);
+            /**
+             * @brief The eikonal equation is a partial differential 
+             *        equation used for wave propagation.
+             * @param[in] particle Pointer to the particle material containing 
+             *                     the index of reflection distribution.
+             * @param[in] x Input variable of the equation.
+             * @returns the time derivative of the input variable. 
+             */
             Arg eikonal(
                 const ParticleMaterialLinearOneDirectional* particle, 
                 Arg& x);
-
+            /**
+             * @brief Calculating the intersection of the ray and the particle.
+             * @warning It is necessary that the ray origin is inside the 
+             *          particle.
+             * @param[in] geometry Specifies the particle geometry.
+             * @param[in] ray Specifies the ray.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          inside the particle.
+             */
             void intersection(
                 const RodeParticle& geometry,
-                Arg& ray,
+                const Arg& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
 
