@@ -30,17 +30,15 @@ namespace ldplab
             /**
              * @brief Fills the initial batch buffer with rays.
              * @details Projects the particle bounding volumes onto light 
-             *          sources to create the rays. 
+             *          sources to only create rays that will hit the bounding
+             *          volume.
              * @param[in, out] initial_batch_buffer The buffer that is used to
              *                                      store the created rays.
-             * @param[out] particle_index The index of the particle which 
-             *                            bounding volume is hit by the ray.
              * @returns true, if there are still rays to be created. Otherwise
              *          false, in which case the ray tracing is finished after
              *          the current batch.
              */
-            virtual bool createBatch(RayBuffer& initial_batch_buffer,
-                size_t& particle_index) = 0;
+            virtual bool createBatch(RayBuffer& initial_batch_buffer) = 0;
         };
 
         /**
@@ -56,8 +54,7 @@ namespace ldplab
             /** @brief Inherited via ldplab::rtscpu::IInitialStage. */
             void setup() override;
             /** @brief Inherited via ldplab::rtscpu::IInitialStage. */
-            bool createBatch(RayBuffer& initial_batch_buffer, 
-                size_t& particle_index) override;
+            bool createBatch(RayBuffer& initial_batch_buffer) override;
         private:
             struct Projection
             {
@@ -76,6 +73,7 @@ namespace ldplab
                 const Projection& projection,
                 const LightSource& light_source) const;
             void advBatchCreationLight(size_t& li);
+            void advBatchCreationParticle(size_t& pi);
         private:
             std::shared_ptr<Context> m_context;
             // Projections for each particle

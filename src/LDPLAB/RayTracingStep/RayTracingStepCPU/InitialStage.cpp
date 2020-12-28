@@ -220,116 +220,140 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
     return true;
 }
 
-void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::advBatchCreationLight(size_t& li)
+void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
+    advBatchCreationLight(size_t& li)
 {
     ++li;
     m_batch_creation_particle_initialized = false;
 }
 
+void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
+    advBatchCreationParticle(size_t& pi)
+{
+    ++pi;
+    // Reset values
+    m_batch_creation_light_index = 0;
+    m_batch_creation_particle_initialized = false;
+}
+
 bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
-    RayBuffer& initial_batch_buffer, size_t& particle_index)
+    RayBuffer& initial_batch_buffer)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Create initial batch rays for"\
-        " batch buffer %i", 
-        m_context->uid, 
+        " batch buffer %i",
+        m_context->uid,
         initial_batch_buffer.index);
 
-    initial_batch_buffer.num_rays = 0;
-    particle_index = m_batch_creation_particle_index;
-
+    initial_batch_buffer.active_rays = 0;
     if (m_batch_creation_particle_index >= m_projections_per_particle.size())
         return false;
 
-    for (size_t& li = m_batch_creation_light_index;
-        li < m_projections_per_particle[particle_index].size();
-        advBatchCreationLight(li))
+    for (size_t& pi = m_batch_creation_particle_index;
+        pi < m_projections_per_particle.size();
+        advBatchCreationParticle(pi))
     {
-        const Projection projection =
-            m_projections_per_particle[particle_index][li];
+        if (m_projections_per_particle[pi].size() == 0)
+            continue;
 
-        if (!m_batch_creation_particle_initialized)
+        for (size_t& li = m_batch_creation_light_index;
+            li < m_projections_per_particle[pi].size();
+            advBatchCreationLight(li))
         {
-            m_rasterization_x = projection.center.x;
-            m_rasterization_y = projection.center.y;
-            m_rasterization_up = true;
-            m_rasterization_right = true;
-            m_batch_creation_particle_initialized = true;
-        }
+            const Projection& projection =
+                m_projections_per_particle[pi][li];
+            const LightSource& light =
+                m_context->light_sources[projection.light_index];
 
-        const LightSource& light = 
-            m_context->light_sources[projection.light_index];
-
-        for (size_t& nr = initial_batch_buffer.num_rays; 
-            nr < initial_batch_buffer.size;)
-        {
-            if (hasToCreateRay(projection, light))
+            if (!m_batch_creation_particle_initialized)
             {
-                if (m_rasterization_x >= 0 && m_rasterization_y >= 0 &&
-                    m_rasterization_x <= light.horizontal_size &&
-                    m_rasterization_y <= light.vertical_size)
-                {
-                    // Create ray
-                    initial_batch_buffer.data[nr].origin =
-                        light.origin_corner
-                        + m_rasterization_x * light.horizontal_direction
-                        + m_rasterization_y * light.vertical_direction;
-                    initial_batch_buffer.data[nr].intensity =
-                        ((LightDistributionHomogenous*)
-                            light.intensity_distribution.get())->intensity;
-                    initial_batch_buffer.data[nr].direction = light.orientation;
-                    ++nr;
-                }
-                
-                if (m_rasterization_up)
-                    m_rasterization_y += m_rasterization_step_size;
-                else
-                    m_rasterization_y -= m_rasterization_step_size;
+                m_rasterization_x = projection.center.x;
+                m_rasterization_y = projection.center.y;
+                m_rasterization_up = true;
+                m_rasterization_right = true;
+                m_batch_creation_particle_initialized = true;
             }
-            else
-            {
-                // update column
-                m_rasterization_up = !m_rasterization_up;
-                if (m_rasterization_right)
-                    m_rasterization_x += m_rasterization_step_size;
-                else
-                    m_rasterization_x -= m_rasterization_step_size;
 
-                if (abs(m_rasterization_x - projection.center.x) >
-                    projection.radius)
+            for (size_t& nr = initial_batch_buffer.active_rays;
+                nr <= initial_batch_buffer.size;
+                /* number of rays is increased during ray creation */)
+            {
+                // Check if the buffer is filled
+                if (nr == initial_batch_buffer.size)
                 {
-                    if (m_rasterization_right)
+                    // Set the correct number of active rays and return with
+                    // true
+                    nr = initial_batch_buffer.size;
+                    return true;
+                }
+
+                if (hasToCreateRay(projection, light))
+                {
+                    if (m_rasterization_x >= 0 && m_rasterization_y >= 0 &&
+                        m_rasterization_x <= light.horizontal_size &&
+                        m_rasterization_y <= light.vertical_size)
                     {
-                        // Move to rasterize left side of the projection
-                        m_rasterization_x = projection.center.x;
-                        m_rasterization_y = 
-                            projection.center.y - m_rasterization_step_size;
-                        m_rasterization_up = false;
-                        m_rasterization_right = false;
+                        // Create ray
+                        // Set ray origin
+                        initial_batch_buffer.ray_data[nr].origin =
+                            light.origin_corner
+                            + m_rasterization_x * light.horizontal_direction
+                            + m_rasterization_y * light.vertical_direction;
+                        
+                        // Set initial ray intensity
+                        initial_batch_buffer.ray_data[nr].intensity =
+                            ((LightDistributionHomogenous*)
+                                light.intensity_distribution.get())->intensity;
+                        
+                        // Set initial ray direction
+                        initial_batch_buffer.ray_data[nr].direction = 
+                            light.orientation;
+
+                        // Set initial ray particle index
+                        initial_batch_buffer.index_data[nr] = pi;
+
+                        // Increase number of rays
+                        ++nr;
                     }
+
+                    if (m_rasterization_up)
+                        m_rasterization_y += m_rasterization_step_size;
                     else
+                        m_rasterization_y -= m_rasterization_step_size;
+                }
+                else
+                {
+                    // Update column
+                    m_rasterization_up = !m_rasterization_up;
+                    if (m_rasterization_right)
+                        m_rasterization_x += m_rasterization_step_size;
+                    else
+                        m_rasterization_x -= m_rasterization_step_size;
+
+                    if (abs(m_rasterization_x - projection.center.x) >
+                        projection.radius)
                     {
-                        // Light source projection has no more rays
-                        m_batch_creation_particle_initialized;
-                        break;
+                        if (m_rasterization_right)
+                        {
+                            // Move to rasterize left side of the projection
+                            m_rasterization_x = projection.center.x;
+                            m_rasterization_y =
+                                projection.center.y - m_rasterization_step_size;
+                            m_rasterization_up = false;
+                            m_rasterization_right = false;
+                        }
+                        else
+                        {
+                            // Light source projection has no more rays
+                            m_batch_creation_particle_initialized;
+                            break;
+                        }
                     }
                 }
             }
         }
     }
 
-    // Advance particle index
-    do
-    {
-        ++m_batch_creation_particle_index;
-        if (m_batch_creation_particle_index >= m_projections_per_particle.size())
-            return false;
-    } while (m_projections_per_particle[m_batch_creation_particle_index].size() == 0);
-
-    // Reset values
-    m_batch_creation_light_index = 0;
-    m_batch_creation_particle_initialized = false;
-
-    return true;
+    return false;
 }
