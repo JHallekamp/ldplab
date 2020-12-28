@@ -18,6 +18,7 @@ namespace ldplab
                 index{ index },
                 depth{ depth },
                 size{ size },
+                inner_particle_rays{ false },
                 ray_data{ nullptr },
                 index_data{ nullptr },
                 active_rays{ 0 }
@@ -28,6 +29,8 @@ namespace ldplab
             int32_t* index_data;
             /** @brief Counter for the still active rays inside this. */
             size_t active_rays;
+            /** @brief States whether buffer rays are inside a particle. */
+            bool inner_particle_rays;
             /** @brief Index of this buffer. */
             const size_t index;
             /** @brief Branching depth (number of times rays split before). */
