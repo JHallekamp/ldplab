@@ -63,7 +63,7 @@ ldplab::rtscpu::RayBuffer&
 ldplab::rtscpu::IntersectionBuffer& 
     ldplab::rtscpu::BufferControl::getIntersectionBuffer()
 {
-    // TODO: insert return statement here
+    return m_intersection_buffer;
 }
 
 size_t ldplab::rtscpu::BufferControl::dummyBufferIndex()
