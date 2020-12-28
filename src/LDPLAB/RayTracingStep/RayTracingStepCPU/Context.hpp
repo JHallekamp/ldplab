@@ -9,8 +9,6 @@
 #include "..\..\ExperimentalSetup\Particle.hpp"
 #include "..\..\Utils\UID.hpp"
 
-#include <mutex>
-
 namespace ldplab
 {
     namespace rtscpu
@@ -47,14 +45,6 @@ namespace ldplab
              *        setup.
              */
             std::vector<LightSource> light_sources;
-            /**
-             * @brief Stores the rays during the processing of the ray tracing
-             *        pipeline and is used as the data source for the ray 
-             *        buffers.
-             * @note This amounts to number_rays_per_buffer^branching_depth
-             *       rays.
-             */
-            std::vector<Ray> batch_rays;
             /** 
              * @brief Under this cutoff intensity rays are not further traced. 
              */
