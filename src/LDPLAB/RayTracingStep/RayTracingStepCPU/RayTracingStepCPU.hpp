@@ -35,7 +35,8 @@ namespace ldplab
             * @brief Constructor
             */
             RayTracingStepCPU(std::shared_ptr<Context> context);
-
+        private:
+            std::shared_ptr<Context> m_context;
         };
     }
 }
