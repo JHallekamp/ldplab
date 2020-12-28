@@ -26,7 +26,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
     RayBuffer& input_outer_rays, 
     RayBuffer& inner_rays)
 {
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray particle interaction"\
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction"\
         "on batch %i",
         m_context->uid, input_outer_rays.index);
 

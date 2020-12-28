@@ -18,6 +18,7 @@ namespace ldplab
                 index{ index },
                 depth{ depth },
                 size{ size },
+                inner_particle_rays{ false },
                 ray_data{ nullptr },
                 index_data{ nullptr },
                 active_rays{ 0 }
@@ -28,6 +29,8 @@ namespace ldplab
             int32_t* index_data;
             /** @brief Counter for the still active rays inside this. */
             size_t active_rays;
+            /** @brief States whether buffer rays are inside a particle. */
+            bool inner_particle_rays;
             /** @brief Index of this buffer. */
             const size_t index;
             /** @brief Branching depth (number of times rays split before). */
@@ -48,6 +51,37 @@ namespace ldplab
             Vec3* normal;
             /** @brief Number of elements in point and normal arrays. */
             size_t size;
+        };
+
+        /**
+         * @brief Holds data that is used to transform world space rays into
+         *        particle space or the other way around.
+         */
+        struct ParticleTransformation
+        {
+            /** 
+             * @brief Vector from particle space origin (in world space) to 
+             *        world space origin.
+             */
+            Vec3 w2p_translation;
+            /**
+             * @brief Matrix that transforms a world space vector (when the
+             *        vector is applied to the matrix from the right-hand side) 
+             *        by first rotating and then scaling it into particle space
+             *        (safe for translation).
+             */
+            Mat3 w2p_rotation_scale;
+            /**
+             * @brief Vector to the particle space (in world space)
+             */
+            Vec3 p2w_translation;
+            /**
+             * @brief Matrix that transforms a particle space vector (when the
+             *        vector is applied to the matrix from the right-hand side)
+             *        by first scaling and then rotating it into world space
+             *        (safe for translation).
+             */
+            Mat3 p2w_scale_rotation;
         };
 
         /**
