@@ -10,7 +10,7 @@ ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         std::shared_ptr<Context> context,
         const double initial_step_size,
         const double epsilon,
-        const double safety_factor)
+        const double safety_factor = 0.84)
     :
     initial_step_size{ initial_step_size },
     epsilon{ epsilon },
@@ -225,7 +225,7 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         geometry.sphere_radius)
     {
         inter_normal = glm::normalize(
-            inter_point - geometry.origin_cap);
+            geometry.origin_cap - inter_point);
         return true;
     }
     return false;
@@ -264,7 +264,7 @@ indentationIntersection(
 
 void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::intersection(
     const RodeParticle& geometry,
-    Arg& ray, 
+    const Arg& ray, 
     Vec3& inter_point,
     Vec3& inter_normal)
 {
@@ -275,4 +275,20 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::intersection(
         return;
     if (capIntersection(geometry, t_ray, inter_point, inter_normal))
         return;
+}
+
+double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::Arg::absoluteMax()
+{
+    double max = std::abs(w.x);
+    if (max < std::abs(w.y))
+        max = std::abs(w.y);
+    if (max < std::abs(w.z))
+        max = std::abs(w.z);
+    if (max < std::abs(r.x))
+        max = std::abs(r.x);
+    if (max < std::abs(r.y))
+        max = std::abs(r.y);
+    if (max < std::abs(r.z))
+        max = std::abs(r.z);
+    return max;
 }
