@@ -23,7 +23,6 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     LDPLAB_ASSERT(job_id < m_buffer_controls.size());
     BufferControl& buffer_control = m_buffer_controls[job_id];
     RayBuffer& initial_batch_buffer = buffer_control.initialBuffer();
-    std::vector<RayBuffer&> buffer_stack;
     
     // Setup has to be performed by the ray tracing step instance itself, since
     // it only has to be executed once!

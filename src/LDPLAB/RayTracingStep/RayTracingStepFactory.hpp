@@ -3,8 +3,11 @@
 
 #include "RayTracingStepCPU/RayTracingStepCPU.hpp"
 #include "RayTracingStepCPUInfo.hpp"
+#include "RayTracingStepCPU/Context.hpp"
 
 #include <memory>
+
+
 
 namespace ldplab
 {
@@ -16,6 +19,9 @@ namespace ldplab
     public:
         static std::shared_ptr<rtscpu::RayTracingStepCPU> 
             createRayTracingStepCPU(RayTracingStepCPUInfo& info);
+    private:
+        static void initGeometry(
+            RayTracingStepCPUInfo& info, std::shared_ptr<rtscpu::Context> context);
     };
 }
 

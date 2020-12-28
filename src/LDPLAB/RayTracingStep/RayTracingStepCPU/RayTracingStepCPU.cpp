@@ -5,6 +5,13 @@
 
 #include <glm/ext.hpp>
 
+ldplab::rtscpu::RayTracingStepCPU::RayTracingStepCPU(
+    std::shared_ptr<Context> context)
+    :
+    m_context{ context }
+{
+}
+
 ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz)
 {
     ldplab::Mat3 rotx(0), roty(0), rotz(0);
@@ -53,5 +60,5 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 input.particles[i].orientation.z);
     }
 
-    
+       
 }

@@ -14,11 +14,6 @@ namespace ldplab
     struct ExperimentalSetup
     {
         /**
-         * @brief This bounding box is spanning the space in which the 
-         *        simulation is contained;
-         */
-        BoundingBox world;
-        /**
          * @brief All particles 
          */
         std::vector<Particle>  particles;
