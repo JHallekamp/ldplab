@@ -11,8 +11,8 @@ namespace ldplab
     {
         Vec3 position;
         Vec3 orientation;
-        size_t type;
     };
+
     struct SimulationState
     {
         std::vector<ParticleInstance> particles;
