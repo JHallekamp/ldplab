@@ -35,7 +35,8 @@ const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.1;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.0;
 const size_t NUM_SIM_ROTATION_STEPS = 32;
 
-constexpr double const_pi() { return 3.14159265358979323846264338327950288419716939937510; } //return std::atan(1) * 4.0; }
+constexpr double const_pi() 
+    { return 3.14159265358979323846264338327950288419716939937510; }
 
 int main()
 {
@@ -106,6 +107,9 @@ int main()
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(rtscpu_info);
 
+    if (ray_tracing_step == nullptr)
+        return -1;
+
     // Create simulation
     ldplab::SimulationState state;
     state.particles.emplace_back();
@@ -113,8 +117,8 @@ int main()
         experimental_setup->particles[0].position;
     state.particles.back().orientation =
         experimental_setup->particles[0].orientation;
-    const double lim = 2 * const_pi();
-    const double step_size = lim /
+    constexpr double lim = 2 * const_pi();
+    constexpr double step_size = lim /
         static_cast<double>(NUM_SIM_ROTATION_STEPS);
 
     ldplab::RayTracingStepOutput output;
