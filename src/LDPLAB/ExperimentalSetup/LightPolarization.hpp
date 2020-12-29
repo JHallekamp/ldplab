@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_ILIGHT_POLARIZATION_HPP
 #define WWU_LDPLAB_ILIGHT_POLARIZATION_HPP
 
-namespace
+namespace ldplab
 {
     /**
      * @brief Generic interface class which defines representations of 
@@ -17,6 +17,14 @@ namespace
         virtual ~ILightPolarisation() { }
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
+    };
+
+    /**
+     * @brief Unpolarized light.
+     */
+    struct LightPolarisationUnpolarized : public ILightPolarisation
+    {
+        Type type() const override { return Type::unpolarized; }
     };
 }
 
