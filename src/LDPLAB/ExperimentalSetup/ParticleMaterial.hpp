@@ -20,6 +20,10 @@ namespace ldplab
 
 	struct ParticleMaterialHomogenous : public IParticleMaterial
 	{
+        ParticleMaterialHomogenous(double index_of_refraction)
+            :
+            index_of_refraction{ index_of_refraction }
+        {}
 		Type type() const override { return Type::homogenous; }
 		/**
 		 * @brief The index of refraction of the hole particle. 
@@ -29,6 +33,16 @@ namespace ldplab
 
 	struct ParticleMaterialLinearOneDirectional : public IParticleMaterial
 	{
+        ParticleMaterialLinearOneDirectional(double index_of_refraction,
+            double gradient,
+            Vec3 origin,
+            Vec3 direction)
+            :
+            index_of_refraction{ index_of_refraction },
+            gradient{ gradient },
+            origin{ origin },
+            direction{ direction }
+        {}
 		Type type() const override { return Type::linear_one_directional; }
 		/**
 		 * @brief Calculating the index of refraction at given position in the

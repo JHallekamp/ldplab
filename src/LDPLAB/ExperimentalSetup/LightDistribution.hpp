@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_ILIGHT_DISTRIBUTION_HPP
 #define WWU_LDPLAB_ILIGHT_DISTRIBUTION_HPP
 
-namespace
+namespace ldplab
 {
     /**
      * @brief Generic interface class which defines the intensity distribution
@@ -24,6 +24,10 @@ namespace
      */
     struct LightDistributionHomogenous : public ILightDistribution
     {
+        LightDistributionHomogenous(double intensity)
+            :
+            intensity{ intensity }
+        {}
         Type type() const override { return Type::homogenous; }
         /** @brief Light intensity emited by the light source. */
         double intensity;

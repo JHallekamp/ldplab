@@ -1,4 +1,5 @@
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
+#include "Context.hpp"
 #include "../../Log.hpp"
 
 ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::

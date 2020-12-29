@@ -12,7 +12,7 @@ ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         std::shared_ptr<Context> context,
         const double initial_step_size,
         const double epsilon,
-        const double safety_factor = 0.84)
+        const double safety_factor)
     :
     initial_step_size{ initial_step_size },
     epsilon{ epsilon },

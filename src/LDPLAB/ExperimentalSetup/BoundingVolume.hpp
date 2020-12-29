@@ -20,6 +20,11 @@ namespace ldplab
     /** @brief Contains parameters of bounding sphere. */
     struct BoundingVolumeSphere : public IBoundingVolume
     {
+        BoundingVolumeSphere(Vec3 center, double radius)
+            :
+            center{ center },
+            radius{ radius }
+        {}
         /** 
          * @brief Returns the type of the instance.
          * @returns IBoundingVolume::Type::sphere
@@ -37,6 +42,11 @@ namespace ldplab
      */
     struct BoundingVolumeBox : public IBoundingVolume
     {
+        BoundingVolumeBox(Vec3 min, Vec3 max)
+            :
+            min{ min },
+            max{ max }
+        {}
         /**
          * @brief Returns the type of the instance.
          * @returns IBoundingVolume::Type::box

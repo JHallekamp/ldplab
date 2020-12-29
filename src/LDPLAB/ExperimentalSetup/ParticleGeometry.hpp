@@ -20,17 +20,28 @@ namespace ldplab
      *         cylinder with a half sphere as a cap. At the bottom the same 
      *         half is subtracted.
      */
-    struct RodeParticleGeometry : IParticleGeometry
+    struct RodeParticleGeometry : public IParticleGeometry
     {
+        RodeParticleGeometry(double cylinder_radius,
+            double cylinder_height,
+            double volume,
+            double kappa)
+            :
+            cylinder_radius{ cylinder_radius },
+            cylinder_height{ cylinder_height },
+            volume{ volume },
+            kappa{ kappa }
+        {}
         /** @brief Radius of the cylinder. */
         double cylinder_radius;
-        /** @brief Hight of the cylinder. */
-        double cylinder_hight;
+        /** @brief Height of the cylinder. */
+        double cylinder_height;
         /** @brief Volume of the particle.*/
         double volume;
-        /** @brief Hight of the cap in units of the cylinder radius. */
+        /** @brief Height of the cap in units of the cylinder radius. */
         double kappa;
-        Type type() { return IParticleGeometry::Type::sphere_capped_cylinder; }
+        Type type() const override 
+        { return IParticleGeometry::Type::sphere_capped_cylinder; }
     };
 }
 
