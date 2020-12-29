@@ -43,6 +43,19 @@ namespace ldplab
         };
 
         /**
+         * @brief Buffer holding force and torque change of the particle
+         */
+        struct OutputBuffer
+        {
+            /** @brief Array containing size force changes per particle. */
+            Vec3* force;
+            /** @brief Array containing size torque changes per particle. */
+            Vec3* torque;
+            /** @brief Number of particles. */
+            size_t size;
+        };
+
+        /**
          * @brief Buffer holding intersection points and the corresponding 
          *        normal of the particle surface. 
          */

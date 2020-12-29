@@ -22,7 +22,8 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
     const IntersectionBuffer& intersection,
     const RayBuffer& rays,
     RayBuffer& reflected_rays,
-    RayBuffer& refracted_rays)
+    RayBuffer& refracted_rays,
+    OutputBuffer& output)
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction"\
         "on batch buffer %i",
@@ -63,6 +64,13 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 refracted_ray.direction = nr * ray.direction +
                     inter_normal * (-cos_b + nr * cos_a);
                 refracted_rays.active_rays++;
+
+                output.force[rays.index_data[i]] += refracted_ray.intensity * 
+                    (refracted_ray.direction - ray.direction);
+                output.torque[rays.index_data[i]] += refracted_ray.intensity *
+                    glm::cross(
+                        m_context->particles[rays.index_data[i]].centre_of_mass,
+                        (refracted_ray.direction - ray.direction));
             }
             else
                 refracted_rays.index_data[i] = -1;
@@ -74,9 +82,19 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 reflected_ray.origin = inter_point;
                 reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
                 reflected_rays.active_rays++;
+
+                output.force[rays.index_data[i]] += reflected_ray.intensity *
+                    (reflected_ray.direction - ray.direction);
+                output.torque[rays.index_data[i]] += reflected_ray.intensity *
+                    glm::cross(
+                        m_context->particles[rays.index_data[i]].centre_of_mass,
+                        (reflected_ray.direction - ray.direction));
             }
             else
                 reflected_rays.index_data[i] = -1;
+
+
+
         }
         else
         {
@@ -85,6 +103,13 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
             reflected_ray.intensity = ray.intensity;
             reflected_rays.active_rays++;
+
+            output.force[rays.index_data[i]] += reflected_ray.intensity *
+                (reflected_ray.direction - ray.direction);
+            output.torque[rays.index_data[i]] += reflected_ray.intensity *
+                glm::cross(
+                    m_context->particles[rays.index_data[i]].centre_of_mass,
+                    (reflected_ray.direction - ray.direction));
         }
     }
 
