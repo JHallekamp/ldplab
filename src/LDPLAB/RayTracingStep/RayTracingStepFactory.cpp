@@ -37,7 +37,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         IBoundingVolume::Type::sphere &&
         info.setup->particles[0].geometry->type() ==
         IParticleGeometry::Type::sphere_capped_cylinder &&
-        info.setup->particles[0].material->type() !=
+        info.setup->particles[0].material->type() ==
         IParticleMaterial::Type::linear_one_directional)
     {
         std::unique_ptr<rtscpu::InitialStageBoundingSpheresHomogenousLight> initial
@@ -65,6 +65,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     else
     {
         LDPLAB_LOG_ERROR("RTSCPU factory: Experimental setup types not supported");
+        return nullptr;
     }
     return std::shared_ptr<rtscpu::RayTracingStepCPU>{
         new rtscpu::RayTracingStepCPU{ ctx }};
