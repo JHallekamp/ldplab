@@ -1,7 +1,6 @@
 #ifndef WWU_LDPLAB_RTSCPU_BUFFER_CONTROL_HPP
 #define WWU_LDPLAB_RTSCPU_BUFFER_CONTROL_HPP
 
-#include "Context.hpp"
 #include "Data.hpp"
 
 #include <memory>
@@ -11,16 +10,18 @@ namespace ldplab
 {
     namespace rtscpu
     {
+        class Context;
+
         /**
          * @brief The buffer control is responsible for creating, assigning and
          *        destroying ray buffers.
          * @details In the RTSCPU pipeline, each ray can be split into two
          *          rays, a reflected and a transmitted ray. Therefore each
-         *          buffer will eventually splitted into two, one for reflected
+         *          buffer will eventually split into two, one for reflected
          *          and one for transmitted rays. Therefore the ray buffers
          *          resemble a binary tree structure and regardless of their
          *          underlying data structures will provide a tree like
-         *          intrface.
+         *          interface.
          */
         class BufferControl
         {

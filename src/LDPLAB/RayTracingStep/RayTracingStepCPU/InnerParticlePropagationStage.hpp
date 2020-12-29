@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <memory>
+
 #include "../../Geometry.hpp"
 
 
@@ -17,6 +18,7 @@ namespace ldplab
         // Prototype
         struct Context;
         struct RayBuffer;
+        struct IntersectionBuffer;
         struct RodeParticle;
 
         /**

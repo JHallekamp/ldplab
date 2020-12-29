@@ -1,7 +1,6 @@
 #ifndef WWU_LDPLAB_RTSCPU_RAY_BOUNDING_VOLUME_INTERSECTION_TEST_STAGE_HPP
 #define WWU_LDPLAB_RTSCPU_RAY_BOUNDING_VOLUME_INTERSECTION_TEST_STAGE_HPP
 
-#include "Context.hpp"
 #include "Data.hpp"
 
 #include <memory>
@@ -10,6 +9,9 @@ namespace ldplab
 {
     namespace rtscpu
     {
+        // Prototype
+        struct Context;
+
         /**
          * @brief Performs intersection tests between rays and the bounding
          *        volumes of all particles in the experimental setup.

@@ -1,4 +1,5 @@
 #include "BufferControl.hpp"
+#include "Context.hpp"
 #include "../../Log.hpp"
 
 size_t exp2i(size_t x)

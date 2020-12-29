@@ -1,4 +1,6 @@
 #include "Pipeline.hpp"
+
+#include "Context.hpp"
 #include "../../Log.hpp"
 #include "../../Utils/Assert.hpp"
 

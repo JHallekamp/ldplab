@@ -8,7 +8,6 @@
 #include "RayParticleInteractionStage.hpp"
 #include "RayParticleIntersectionTestStage.hpp"
 
-#include "Context.hpp"
 #include "../../ThreadPool.hpp"
 
 #include <memory>
@@ -18,6 +17,9 @@ namespace ldplab
 {
     namespace rtscpu
     {
+        // Prototype
+        struct Context;
+
         /**
          * @brief Contains the stages of the ray tracing CPU pipeline.
          * @details Pipelines are meant to be executed in parallel. 
