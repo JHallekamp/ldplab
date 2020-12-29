@@ -42,7 +42,7 @@ ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz)
 void ldplab::rtscpu::RayTracingStepCPU::execute(
     const SimulationState& input, RayTracingStepOutput& output)
 {
-    LDPLAB_ASSERT(input.particles.size() == m_context.particles.size());
+    LDPLAB_ASSERT(input.particles.size() == m_context->particles.size());
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "Ray tracing step starts execution",
         m_context->uid);
