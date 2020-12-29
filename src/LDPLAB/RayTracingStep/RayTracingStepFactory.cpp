@@ -17,6 +17,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     }
 
     std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{} };
+    ctx->thread_pool = info.thread_pool;
     ctx->particles = info.setup->particles;
     ctx->particle_transformations.resize(ctx->particles.size());
     initGeometry(info, ctx);
