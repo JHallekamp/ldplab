@@ -40,6 +40,8 @@ namespace ldplab
         double volume;
         /** @brief Height of the cap in units of the cylinder radius. */
         double kappa;
+        /** @brief */
+        double l;
         Type type() const override 
         { return IParticleGeometry::Type::sphere_capped_cylinder; }
     };
