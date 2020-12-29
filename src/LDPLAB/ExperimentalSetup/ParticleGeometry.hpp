@@ -23,19 +23,19 @@ namespace ldplab
     struct RodeParticleGeometry : public IParticleGeometry
     {
         RodeParticleGeometry(double cylinder_radius,
-            double cylinder_height,
+            double cylinder_length,
             double volume,
             double kappa)
             :
             cylinder_radius{ cylinder_radius },
-            cylinder_height{ cylinder_height },
+            cylinder_length{ cylinder_length },
             volume{ volume },
             kappa{ kappa }
         {}
         /** @brief Radius of the cylinder. */
         double cylinder_radius;
-        /** @brief Height of the cylinder. */
-        double cylinder_height;
+        /** @brief Length of the cylinder. */
+        double cylinder_length;
         /** @brief Volume of the particle.*/
         double volume;
         /** @brief Height of the cap in units of the cylinder radius. */
