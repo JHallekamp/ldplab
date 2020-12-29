@@ -7,6 +7,8 @@
 
 #include "../../Log.hpp"
 
+#include <cmath>
+
 ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     LinearIndexGradientRodeParticlePropagation(
         std::shared_ptr<Context> context,
