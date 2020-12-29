@@ -26,6 +26,12 @@ namespace ldplab
         size_t maximum_depth;
         /** @brief Number of parallel pipeline instances. */
         size_t number_parallel_pipelines;
+        /** @brief Initial step size for each integration method. */
+        double initial_step_size;
+        /** @brief epsilon Maximum error tolerance of the integration steps. */
+        double epsilon;
+        /** @brief Factor for new step size calculation in RK45 Method. */
+        double safety_factor;
     };
 }
 

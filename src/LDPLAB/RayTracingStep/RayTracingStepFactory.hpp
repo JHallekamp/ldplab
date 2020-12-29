@@ -21,7 +21,14 @@ namespace ldplab
             createRayTracingStepCPU(RayTracingStepCPUInfo& info);
     private:
         static void initGeometry(
-            RayTracingStepCPUInfo& info, std::shared_ptr<rtscpu::Context> context);
+            const RayTracingStepCPUInfo& info, 
+            std::shared_ptr<rtscpu::Context> context);
+        /**
+         * @brief Checking if all types in the experimental setup are the same.
+         * @param[in] info Structure containing all information about the setup.
+         * @returns true if all types are equal and false if not.
+         */
+        static bool checkTypeUniformity(const RayTracingStepCPUInfo& info);
     };
 }
 
