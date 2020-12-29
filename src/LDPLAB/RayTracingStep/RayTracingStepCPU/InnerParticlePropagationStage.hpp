@@ -35,10 +35,13 @@ namespace ldplab
              * @param[in, out] rays RayBuffer holding the propagating rays.
              * @param[out] intersection IntersectionBuffer holding information 
              *             about the intersection points.
+             * @param[in, out] output Buffer holding the resulting force and 
+             *                        torque change of each particle.
              */
             virtual void execute(
                 RayBuffer& rays,
-                IntersectionBuffer& intersection) = 0;
+                IntersectionBuffer& intersection,
+                OutputBuffer& output) = 0;
         };
 
         /**
@@ -70,10 +73,13 @@ namespace ldplab
              * @param[in, out] rays RayBuffer holding the propagating rays.
              * @param[out] intersection IntersectionBuffer holding information 
              *             about the intersection points.
+             * @param[in, out] output Buffer holding the resulting force and torque
+             *                        change of each particle.
              */
             void execute(
                 RayBuffer& rays,
-                IntersectionBuffer& intersection) override;
+                IntersectionBuffer& intersection,
+                OutputBuffer& output) override;
         private:
             /**
              * @brief Structure keeping all variables of the differential
@@ -121,12 +127,15 @@ namespace ldplab
              *                          surface at the intersection
              *                          point. The normal is pointing
              *                          inside the particle.
+             * @param[in, out] output Buffer holding the resulting force and 
+             *                        torque change of each particle.
              */
             void rayPropagation(
                 const size_t particle, 
                 Ray& ray, 
                 Vec3& inter_point,
-                Vec3& inter_normal);
+                Vec3& inter_normal,
+                OutputBuffer& output);
             /**
              * @brief Check if the position is outside of the particle.
              * @param[in] geometry Specifies the particle geometry.

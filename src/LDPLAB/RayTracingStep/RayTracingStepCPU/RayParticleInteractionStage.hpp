@@ -12,6 +12,7 @@ namespace ldplab
         // Prototype
         struct RayBuffer;
         struct IntersectionBuffer;
+        struct OutputBuffer;
         struct RodeParticle;
         struct Context;
 
@@ -35,12 +36,15 @@ namespace ldplab
              *                            reflected from the particle surface. 
              * @param[out] refracted_rays RayBuffer holds all rays that are 
              *                            refracted from the particle surface. 
+             * @param[in, out] output Buffer holding the resulting force and torque
+             *                    change of each particle.
              */
             virtual void execute(
                 const IntersectionBuffer& intersection,
                 const RayBuffer& rays,
                 RayBuffer& reflected_rays,
-                RayBuffer& refracted_rays) = 0;
+                RayBuffer& refracted_rays,
+                OutputBuffer& output) = 0;
         };
         /**
          * @brief Class implementing the ray particle interaction for 
@@ -68,12 +72,15 @@ namespace ldplab
              *                            reflected from the particle surface. 
              * @param[out] refracted_rays RayBuffer holds all rays that are 
              *                            refracted from the particle surface. 
+             * @param[in, out] output Buffer holding the resulting force and torque
+             *                    change of each particle.
              */
             void execute(
                 const IntersectionBuffer& intersection,
                 const RayBuffer& rays,
                 RayBuffer& reflected_rays,
-                RayBuffer& refracted_rays) override;
+                RayBuffer& refracted_rays,
+                OutputBuffer& output) override;
         private:
             /** 
              * @brief Calculates the reflectance coefficient for unpolarized 

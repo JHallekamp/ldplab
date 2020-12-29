@@ -5,6 +5,8 @@
 #include "../../ExperimentalSetup/Particle.hpp"
 #include "../../ExperimentalSetup/ParticleMaterial.hpp"
 
+#include "../../Log.hpp"
+
 ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     LinearIndexGradientRodeParticlePropagation(
         std::shared_ptr<Context> context,
@@ -21,7 +23,8 @@ ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
 
 void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
     RayBuffer& rays,
-    IntersectionBuffer& intersection)
+    IntersectionBuffer& intersection,
+    OutputBuffer& output)
 {
     for (size_t i = 0; i < rays.size; i++)
     {
@@ -31,7 +34,7 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
 
         rayPropagation(
             rays.index_data[i], 
-            rays.ray_data[i], 
+            rays.ray_data[i],
             intersection.point[i], 
             intersection.normal[i]);
     }
@@ -42,7 +45,8 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         const size_t particle, 
         Ray& ray, 
         Vec3& inter_point,
-        Vec3& inter_normal)
+        Vec3& inter_normal,
+        OutputBuffer& output)
 {
     ParticleMaterialLinearOneDirectional* material =
         (ParticleMaterialLinearOneDirectional*) m_context->particles[particle]
@@ -62,13 +66,21 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
             if (isOutsideParticle(
                 m_context->rode_particle_geometry[particle], x_new.r))
             {
+                Vec3 t_new_direction = glm::normalize(x.w);
+                output.force[particle] += ray.intensity *
+                    (t_new_direction - ray.direction);
+                output.torque[particle] += ray.intensity *
+                    glm::cross(
+                        m_context->particles[particle].centre_of_mass,
+                        (t_new_direction - ray.direction));
+
                 intersected = true;
                 intersection(
                     m_context->rode_particle_geometry[particle], 
                     x, 
                     inter_point, 
                     inter_normal);
-                ray.direction = glm::normalize(x.w);
+                ray.direction = t_new_direction;
                 ray.origin = x.r;
                 return;
             }
@@ -81,7 +93,8 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         else
         {
             h = safety_factor * h * std::pow(epsilon / error, 0.25);
-            // TODO: LDPLAB_LOG_TRACE("Step discarded, error = %f, new_h = %f", error, h))
+            LDPLAB_LOG_TRACE("RTSCPU context %i: RK45 Step discarded with"\
+                " error = %f, new step size = %f", m_context->uid, error, h);
         }
     }
 }
