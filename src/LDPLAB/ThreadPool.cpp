@@ -132,7 +132,17 @@ ldplab::ThreadPool::ThreadPool(size_t size)
 
 ldplab::ThreadPool::~ThreadPool()
 {
-    terminate();
+    // We want thread pools to be terminated explicitly because it helps
+    // preventing crashes during application termination
+    LDPLAB_ASSERT(m_threads_state == State::threads_inactive);
+    if (m_threads_state != State::threads_inactive)
+    {
+        LDPLAB_LOG_WARNING("Thread pool %i: Thread pool implicitly "\
+        "terminated on destructor call, you should call terminate explicitly",
+            m_uid);
+        terminate();
+    }
+    
     LDPLAB_LOG_INFO("Thread pool %i: Instance destroyed", m_uid);
 }
 
