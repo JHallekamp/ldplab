@@ -35,7 +35,7 @@ const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.1;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.0;
 const size_t NUM_SIM_ROTATION_STEPS = 32;
 
-constexpr double const_pi() { return std::atan(1) * 4.0; }
+constexpr double const_pi() { return 3.14159265358979323846264338327950288419716939937510; } //return std::atan(1) * 4.0; }
 
 int main()
 {
@@ -52,19 +52,19 @@ int main()
     rod_particle.position = ldplab::Vec3(0, 0, 0);
     rod_particle.orientation = ldplab::Vec3(0, 0, 0);
     rod_particle.material =
-        std::make_unique<ldplab::ParticleMaterialLinearOneDirectional>(
+        std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             PARTICLE_MATERIAL_GRADIENT,
             PARTICLE_MATERIAL_ORIGIN,
-            ROD_PARTICLE_KAPPA);
+            PARTICLE_MATERIAL_DIRECTION);
     rod_particle.geometry =
-        std::make_unique<ldplab::RodeParticleGeometry>(
+        std::make_shared<ldplab::RodeParticleGeometry>(
             ROD_PARTICLE_CYLINDER_RADIUS,
             ROD_PARTICLE_CYLINDER_HEIGHT,
             ROD_PARTICLE_VOLUME,
             ROD_PARTICLE_KAPPA);
     rod_particle.bounding_volume =
-        std::make_unique<ldplab::BoundingVolumeSphere>(
+        std::make_shared<ldplab::BoundingVolumeSphere>(
             PARTICLE_BOUNDING_SPHERE_CENTER,
             PARTICLE_BOUNDING_SPHERE_RADIUS);
 
@@ -77,11 +77,11 @@ int main()
     light_source.vertical_size = LIGHT_GEOMETRY_PLANE_EXTENT;
     light_source.origin_corner = LIGHT_GEOMETRY_ORIGIN_CORNER;
     light_source.polarisation = 
-        std::make_unique<ldplab::LightPolarisationUnpolarized>();
+        std::make_shared<ldplab::LightPolarisationUnpolarized>();
     light_source.direction =
-        std::make_unique<ldplab::LightDirectionHomogenous>();
+        std::make_shared<ldplab::LightDirectionHomogenous>();
     light_source.intensity_distribution =
-        std::make_unique<ldplab::LightDistributionHomogenous>(
+        std::make_shared<ldplab::LightDistributionHomogenous>(
             LIGHT_INTENSITY);
 
     // Create experimental setup
