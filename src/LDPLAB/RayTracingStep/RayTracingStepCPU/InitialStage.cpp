@@ -256,7 +256,7 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
     LDPLAB_LOG_TRACE("RTSCPU context %i: Create initial batch rays for"\
         " batch buffer %i",
         m_context->uid,
-        initial_batch_buffer.index);
+        initial_batch_buffer.uid);
 
     initial_batch_buffer.active_rays = 0;
     if (m_batch_creation_particle_index >= m_projections_per_particle.size())

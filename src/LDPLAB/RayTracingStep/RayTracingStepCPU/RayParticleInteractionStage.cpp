@@ -19,14 +19,14 @@ ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
 }
 
 void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
-    const IntersectionBuffer& intersection, 
+    const IntersectionBuffer& intersection,
     const RayBuffer& rays,
     RayBuffer& reflected_rays,
     RayBuffer& refracted_rays)
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction"\
-        "on batch %i",
-        m_context->uid, rays.index);
+        "on batch buffer %i",
+        m_context->uid, rays.uid);
 
     reflected_rays.inner_particle_rays = rays.inner_particle_rays;
     refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
@@ -46,7 +46,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         Ray& refracted_ray = refracted_rays.ray_data[i];
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
-        
+
         double nr = material->indexOfRefraction(inter_point);
         double cos_a = glm::dot(ray.direction, inter_normal);
 
@@ -54,7 +54,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         {
             double cos_b = std::sqrt(1 - nr * (1 - cos_a * cos_a));
             double R = reflectance(cos_a, cos_b, nr);
-            
+
             // refracted ray
             refracted_ray.intensity = ray.intensity * (1 - R);
             if (refracted_ray.intensity > m_context->intensity_cutoff)
@@ -88,10 +88,15 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         }
     }
 
-    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i reflected rays",
-        m_context->uid, reflected_rays.index, reflected_rays.active_rays);
-    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i holds %i refracted rays",
-        m_context->uid, refracted_rays.index, refracted_rays.active_rays);
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle interaction on batch "\
+        "buffer %i executed, buffer %i now holds %i reflected rays, buffer "\
+        "%i now holds %i refracted rays",
+        m_context->uid, 
+        rays.uid, 
+        reflected_rays.uid, 
+        reflected_rays, 
+        refracted_rays.uid, 
+        refracted_rays);
 }
 
 double ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::

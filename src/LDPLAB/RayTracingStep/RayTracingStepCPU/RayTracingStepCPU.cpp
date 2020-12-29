@@ -1,8 +1,10 @@
 #include "RayTracingStepCPU.hpp"
 #include "Context.hpp"
 
+#include "../../Log.hpp"
 #include "../../Utils/Assert.hpp"
 
+#include <chrono>
 #include <glm/ext.hpp>
 
 ldplab::rtscpu::RayTracingStepCPU::RayTracingStepCPU(
@@ -41,6 +43,11 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
     const SimulationState& input, RayTracingStepOutput& output)
 {
     LDPLAB_ASSERT(input.particles.size() == m_context.particles.size());
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "Ray tracing step starts execution",
+        m_context->uid);
+    std::chrono::steady_clock::time_point start = 
+        std::chrono::steady_clock::now();
     
     // Update context
     for (size_t i = 0; i < input.particles.size(); ++i)
@@ -61,10 +68,23 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 input.particles[i].orientation.y, 
                 input.particles[i].orientation.z);
     }
+
+    output.impulse_per_particle.resize(input.particles.size());
+    output.torque_per_particle.resize(input.particles.size());
     m_context->output = &output;
 
     // Execute pipeline
     m_context->pipeline->setup();
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray tracing pipeline",
+        m_context->uid);
     m_context->thread_pool->executeJobBatch(
         m_context->pipeline, m_context->number_parallel_pipelines);
+
+    std::chrono::steady_clock::time_point end =
+        std::chrono::steady_clock::now();
+    const double elapsed_time = std::chrono::duration<double>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            end - start)).count();
+    LDPLAB_LOG_INFO("RTSCPU context %i: Ray tracing step executed after %fms",
+        m_context->uid, elapsed_time);
 }
