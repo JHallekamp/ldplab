@@ -1,7 +1,6 @@
 #ifndef WWU_LDPLAP_RTSCPU_INNER_PARTICLE_PROPAGATION_STAGE_HPP
 #define WWU_LDPLAP_RTSCPU_INNER_PARTICLE_PROPAGATION_STAGE_HPP
 
-#include <cmath>
 #include <memory>
 
 #include "../../Geometry.hpp"
@@ -19,6 +18,7 @@ namespace ldplab
         struct Context;
         struct RayBuffer;
         struct IntersectionBuffer;
+        struct OutputBuffer;
         struct RodeParticle;
 
         /**
@@ -253,7 +253,7 @@ namespace ldplab
             const double initial_step_size;
             const double epsilon;
             const double safety_factor;
-            const double alpha[6] { 0.0, 1.0/4.0, 3.0/8.0, 12.0/13.0, 1.0, 1.0/2.0 };
+            const double alpha[6]{ 0.0, 1.0/4.0, 3.0/8.0, 12.0/13.0, 1.0, 1.0/2.0 };
             const double beta[36]{
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ,
                 1.0 / 4.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -261,9 +261,9 @@ namespace ldplab
                 1932.0 / 2197.0, (-7200.0) / 2197.0, 7296.0 / 2197.0, 0.0, 0.0, 0.0,
                 439.0 / 216.0, -8.0, 3680.0 / 513.0, (-845.0) / 4104.0, 0.0, 0.0,
                 (-8.0) / 27.0, 2.0, (-3544.0) / 2565.0, 1859.0 / 4104.0, (-11.0) / 40.0, 0.0 };
-            const double c[6] { 25.0 / 216.0, 0.0, 1408.0 / 2565.0, 2197.0 / 4104.0, (-1.0) / 5.0, 0.0 };
-            const double c_star[6] { 16.0 / 135.0, 0.0, 6656.0 / 12825.0, 28561.0 / 56430.0, (-9.0) / 50.0, 2.0 / 55.0 };
-            const double cerr[6] { -0.00277778,  0.0 ,  0.02994152,  0.02919989, -0.02 , -0.03636364 };
+            const double c[6]{ 25.0 / 216.0, 0.0, 1408.0 / 2565.0, 2197.0 / 4104.0, (-1.0) / 5.0, 0.0 };
+            const double c_star[6]{ 16.0 / 135.0, 0.0, 6656.0 / 12825.0, 28561.0 / 56430.0, (-9.0) / 50.0, 2.0 / 55.0 };
+            const double cerr[6]{ -0.00277778,  0.0 ,  0.02994152,  0.02919989, -0.02 , -0.03636364 };
         private:
             std::shared_ptr<Context> m_context;
         };
