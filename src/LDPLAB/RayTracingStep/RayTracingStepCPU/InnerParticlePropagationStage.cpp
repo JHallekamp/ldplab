@@ -10,9 +10,9 @@
 ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     LinearIndexGradientRodeParticlePropagation(
         std::shared_ptr<Context> context,
-        const double initial_step_size,
-        const double epsilon,
-        const double safety_factor)
+        double initial_step_size,
+        double epsilon,
+        double safety_factor)
     :
     initial_step_size{ initial_step_size },
     epsilon{ epsilon },
@@ -36,7 +36,8 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
             rays.index_data[i], 
             rays.ray_data[i],
             intersection.point[i], 
-            intersection.normal[i]);
+            intersection.normal[i],
+            output);
     }
 }
 

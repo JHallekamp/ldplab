@@ -64,9 +64,9 @@ namespace ldplab
              */
             LinearIndexGradientRodeParticlePropagation(
                 std::shared_ptr<Context> context,
-                const double initial_step_size,
-                const double epsilon,
-                const double safety_factor = 0.84);
+                double initial_step_size,
+                double epsilon,
+                double safety_factor);
             /**
              * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
              * @details Calculating the path of the rays threw the particle.
@@ -187,7 +187,6 @@ namespace ldplab
                 const Arg& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
-
             /**
              * @brief Calculate the intersection point of a ray and the cylinder.
              * @warning It is assumed that the rays origin is inside the 
@@ -250,7 +249,6 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
-
         private:
             const double initial_step_size;
             const double epsilon;
