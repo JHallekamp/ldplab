@@ -126,8 +126,9 @@ void ldplab::rtscpu::Pipeline::processBatch(
     {
         IntersectionBuffer& intersection_buffer =
             buffer_control.getIntersectionBuffer();
+        OutputBuffer& output_buffer = buffer_control.getOutputBuffer();
         m_inner_particle_propagation_stage->execute(
-            buffer, intersection_buffer);
+            buffer, intersection_buffer, output_buffer);
 
         RayBuffer& reflection_buffer =
             buffer_control.getReflectionBuffer(buffer);
@@ -141,7 +142,8 @@ void ldplab::rtscpu::Pipeline::processBatch(
                 intersection_buffer,
                 buffer,
                 reflection_buffer,
-                transmission_buffer);
+                transmission_buffer,
+                output_buffer);
 
             processBatch(reflection_buffer, buffer_control);
             processBatch(transmission_buffer, buffer_control);
@@ -151,6 +153,7 @@ void ldplab::rtscpu::Pipeline::processBatch(
     {
         IntersectionBuffer& intersection_buffer =
             buffer_control.getIntersectionBuffer();
+        OutputBuffer& output_buffer = buffer_control.getOutputBuffer();
         RayBuffer& reflection_buffer =
             buffer_control.getReflectionBuffer(buffer);
         RayBuffer& transmission_buffer =
@@ -172,7 +175,8 @@ void ldplab::rtscpu::Pipeline::processBatch(
                     intersection_buffer, 
                     buffer, 
                     reflection_buffer, 
-                    transmission_buffer);
+                    transmission_buffer,
+                    output_buffer);
             }
 
             processBatch(reflection_buffer, buffer_control);
