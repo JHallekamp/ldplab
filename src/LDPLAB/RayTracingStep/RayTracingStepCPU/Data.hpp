@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSCPU_DATA_HPP
 
 #include "../../Geometry.hpp"
+#include "../../Utils/UID.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -37,6 +38,8 @@ namespace ldplab
             const size_t depth;
             /** @brief Number of elements in ray_data and index_data arrays. */
             const size_t size;
+            /** @brief Unique identifier of the buffer. */
+            UID<RayBuffer> uid;
         };
 
         /**

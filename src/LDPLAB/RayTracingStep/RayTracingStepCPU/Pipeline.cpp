@@ -1,4 +1,5 @@
 #include "Pipeline.hpp"
+#include "../../Log.hpp"
 #include "../../Utils/Assert.hpp"
 
 ldplab::rtscpu::Pipeline::Pipeline(
@@ -14,12 +15,15 @@ ldplab::rtscpu::Pipeline::Pipeline(
     m_ray_particle_intersection_test_stage{ std::move(rpit) },
     m_ray_particle_interaction_stage{ std::move(rpi) },
     m_inner_particle_propagation_stage{ std::move(ipp) },
+    m_context { context },
     m_buffer_controls{ context->number_parallel_pipelines, context }
 {
 }
 
 void ldplab::rtscpu::Pipeline::setup()
 {
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Setup ray tracing pipeline",
+        m_context->uid);
     m_initial_stage->setup();
     m_ray_bounding_volume_intersection_test_stage->setup();
 }
@@ -27,6 +31,10 @@ void ldplab::rtscpu::Pipeline::setup()
 void ldplab::rtscpu::Pipeline::execute(size_t job_id)
 {
     LDPLAB_ASSERT(job_id < m_buffer_controls.size());
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Ray tracing pipeline executes "\
+        "pipeline instance %i",
+        m_context->uid, job_id);
+
     BufferControl& buffer_control = m_buffer_controls[job_id];
     RayBuffer& initial_batch_buffer = buffer_control.initialBuffer();
     
@@ -39,9 +47,25 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     do
     {
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
+        LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i"\
+            "initial rays",
+            m_context->uid, 
+            initial_batch_buffer.uid, 
+            initial_batch_buffer.active_rays);
 
         if (initial_batch_buffer.active_rays > 0)
         {
+            LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i executes "\
+                "new batch on initial buffer %i",
+                m_context->uid, job_id, initial_batch_buffer.uid);
+
+            processBatch(initial_batch_buffer, buffer_control);
+
+            // The following part basically was a workaround so the bounding
+            // volume intersection test would not be executed on freshly
+            // created initial batch buffers. However, in the sake of better 
+            // readability, we do not do that for now.
+            /*
             IntersectionBuffer& intersection_buffer =
                 buffer_control.getIntersectionBuffer();
             RayBuffer& reflection_buffer =
@@ -80,10 +104,17 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
             {
                 processBatch(reflection_buffer, buffer_control);
                 processBatch(transmission_buffer, buffer_control);
-            }
-        }
+            }*/
 
+            LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i "\
+                "finished batch execution",
+                m_context->uid, job_id);
+        }
     } while(batches_left);
+
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Pipeline instance %i executed "\
+        "successfully",
+        m_context->uid, job_id);
 }
 
 void ldplab::rtscpu::Pipeline::processBatch(
@@ -147,29 +178,3 @@ void ldplab::rtscpu::Pipeline::processBatch(
         }
     }
 }
-
-//ldplab::rtscpu::RayBuffer& ldplab::rtscpu::Pipeline::processBuffer(
-//    RayBuffer& buffer, 
-//    BufferControl& buffer_control, 
-//    std::vector<RayBuffer&>& buffer_stack)
-//{
-//    if (buffer.inner_particle_rays)
-//    {
-//        IntersectionBuffer& intersection_buffer =
-//            buffer_control.getIntersectionBuffer();
-//        m_inner_particle_propagation_stage->execute(
-//            buffer, intersection_buffer);
-//
-//        RayBuffer& reflection_buffer = 
-//            buffer_control.getReflectionBuffer(buffer);
-//        RayBuffer& transmission_buffer =
-//            buffer_control.getTransmissionBuffer(buffer);
-//        
-//        if (reflection_buffer.index == buffer_control.dummyBufferIndex())
-//            return reflection_buffer;
-//    }
-//    else
-//    {
-//
-//    }
-//}

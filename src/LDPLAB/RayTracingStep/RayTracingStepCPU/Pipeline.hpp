@@ -61,6 +61,7 @@ namespace ldplab
                 m_ray_particle_interaction_stage;
             std::unique_ptr<IInnerParticlePropagationStage>
                 m_inner_particle_propagation_stage;
+            std::shared_ptr<Context> m_context;
             std::vector<BufferControl>
                 m_buffer_controls;
         };

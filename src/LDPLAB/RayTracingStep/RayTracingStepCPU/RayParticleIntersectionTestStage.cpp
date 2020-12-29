@@ -22,8 +22,8 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
     IntersectionBuffer& intersection)
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle intersection"\
-        " test on batch %i",
-        m_context->uid, rays.index);
+        " test on batch buffer %i",
+        m_context->uid, rays.uid);
     size_t num_hit_rays = 0;
     size_t num_missed_rays = 0;
 
@@ -63,10 +63,9 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
             num_hit_rays++;
     }
 
-    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i contains %i rays that "\
-        "hit the particle", m_context->uid, rays.index, num_hit_rays);
-    LDPLAB_LOG_TRACE("RTSCPU context %i: RayBuffer %i contains %i rays that "\
-        "missed the particle", m_context->uid, rays.index, num_missed_rays);
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle intersection test on "\
+        "batch buffer %i completed, %i rays hit particles, %i rays missed",
+        m_context->uid, rays.uid, num_hit_rays, num_missed_rays);
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
