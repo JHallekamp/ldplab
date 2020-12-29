@@ -84,7 +84,7 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
     for (size_t i = 0; i <= m_context->maximum_depth; ++i)
     {
         const size_t layer_buffer_count = exp2i(i);
-        for (size_t j = 0; j < layer_buffer_count; ++i)
+        for (size_t j = 0; j < layer_buffer_count; ++j)
         {
             const size_t index = layer_buffer_count - 1 + j;
             const size_t depth = i;

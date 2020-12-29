@@ -96,11 +96,14 @@ int main()
     experimental_setup->particles.emplace_back(std::move(rod_particle));
     experimental_setup->light_sources.emplace_back(std::move(light_source));
 
+    // Thread pool
+    std::shared_ptr<ldplab::ThreadPool> thread_pool =
+        std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
+
     // Create ray tracing step
     ldplab::RayTracingStepCPUInfo rtscpu_info;
     rtscpu_info.setup = experimental_setup;
-    rtscpu_info.thread_pool = std::make_shared<ldplab::ThreadPool>(
-        NUM_RTS_THREADS); // number of threads
+    rtscpu_info.thread_pool = thread_pool;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
     rtscpu_info.number_rays_per_unit = NUM_RTS_RAYS_PER_WORLD_SPACE_UNIT;
@@ -134,5 +137,6 @@ int main()
         // TODO: use or stroe output
     }
 
+    thread_pool->terminate();
     return 0;
 }

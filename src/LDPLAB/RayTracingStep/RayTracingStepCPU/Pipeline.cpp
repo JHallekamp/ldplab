@@ -17,9 +17,10 @@ ldplab::rtscpu::Pipeline::Pipeline(
     m_ray_particle_intersection_test_stage{ std::move(rpit) },
     m_ray_particle_interaction_stage{ std::move(rpi) },
     m_inner_particle_propagation_stage{ std::move(ipp) },
-    m_context { context },
-    m_buffer_controls{ context->number_parallel_pipelines, context }
+    m_context { context }
 {
+    for (size_t i = 0; i < m_context->number_parallel_pipelines; ++i)
+        m_buffer_controls.emplace_back(m_context);
 }
 
 void ldplab::rtscpu::Pipeline::setup()
@@ -49,7 +50,7 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     do
     {
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
-        LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i"\
+        LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i "\
             "initial rays",
             m_context->uid, 
             initial_batch_buffer.uid, 
