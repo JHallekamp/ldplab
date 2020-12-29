@@ -1,25 +1,30 @@
 #include <ldplab.hpp>
 #include <cmath>
 
-// Particle material properties
-const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 0.0;
-const double PARTICLE_MATERIAL_GRADIENT = 0.0;
-const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = ldplab::Vec3(0, 0, 0);
-const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(1, 0, 0);
 
 // Particle geometry properties (rod particle)
-const double ROD_PARTICLE_CYLINDER_RADIUS = 1.0;
-const double ROD_PARTICLE_CYLINDER_HEIGHT = 2.0;
-const double ROD_PARTICLE_VOLUME = 0.0;
+const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 0.5;
+const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
+const double ROD_PARTICLE_CYLINDER_RADIUS = std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
+const double ROD_PARTICLE_CYLINDER_HEIGHT = 2 * ROD_PARTICLE_L * ROD_PARTICLE_CYLINDER_RADIUS;
+
+// Particle material properties
+const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
+const double PARTICLE_MATERIAL_GRADIENT = 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
+const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT/2);
+const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
 
 // Particle bounding volume properties
-const ldplab::Vec3 PARTICLE_BOUNDING_SPHERE_CENTER = ldplab::Vec3(0, 0, 0);
-const double PARTICLE_BOUNDING_SPHERE_RADIUS = 2.5;
+const ldplab::Vec3 PARTICLE_BOUNDING_SPHERE_CENTER = ldplab::Vec3(0, 0, 
+    (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2);
+const double PARTICLE_BOUNDING_SPHERE_RADIUS = 
+    (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2;
 
 // Light geometry
-const double LIGHT_GEOMETRY_PLANE_EXTENT = 4.0;
-const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER = ldplab::Vec3(-2, -2, -2);
+const double LIGHT_GEOMETRY_PLANE_EXTENT = 4.0 * ROD_PARTICLE_CYLINDER_HEIGHT;
+const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER = 
+    ldplab::Vec3(-LIGHT_GEOMETRY_PLANE_EXTENT, -LIGHT_GEOMETRY_PLANE_EXTENT, -LIGHT_GEOMETRY_PLANE_EXTENT);
 
 // Light intensity properties
 const double LIGHT_INTENSITY = 1.0;
@@ -29,10 +34,10 @@ const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 512;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_UNIT = 1000.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
-const double RTS_INTENSITY_CUTOFF = 0.0;
-const double RTS_SOLVER_EPSILON = 0.0;
-const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.1;
-const double RTS_SOLVER_SAFETY_FACTOR = 0.0;
+const double RTS_INTENSITY_CUTOFF = 0.05;
+const double RTS_SOLVER_EPSILON = 0.00001;
+const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
+const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
 const size_t NUM_SIM_ROTATION_STEPS = 32;
 
 constexpr double const_pi() 
@@ -62,7 +67,7 @@ int main()
         std::make_shared<ldplab::RodeParticleGeometry>(
             ROD_PARTICLE_CYLINDER_RADIUS,
             ROD_PARTICLE_CYLINDER_HEIGHT,
-            ROD_PARTICLE_VOLUME,
+            ROD_PARTICLE_VOLUME_SPHERE_RADIUS,
             ROD_PARTICLE_KAPPA);
     rod_particle.bounding_volume =
         std::make_shared<ldplab::BoundingVolumeSphere>(
