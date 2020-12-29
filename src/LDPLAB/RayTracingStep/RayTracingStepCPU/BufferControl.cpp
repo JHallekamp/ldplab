@@ -22,6 +22,8 @@ ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
     m_index_data.resize(num_rays);
     m_point_data.resize(context->number_rays_per_buffer);
     m_normal_data.resize(context->number_rays_per_buffer);
+    m_force_data.resize(context->particles.size());
+    m_torque_data.resize(context->particles.size());
     initializeBuffers();
 
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
@@ -67,6 +69,11 @@ ldplab::rtscpu::IntersectionBuffer&
     return m_intersection_buffer;
 }
 
+ldplab::rtscpu::OutputBuffer& ldplab::rtscpu::BufferControl::getOutputBuffer()
+{
+    return m_output_buffer;
+}
+
 size_t ldplab::rtscpu::BufferControl::dummyBufferIndex()
 {
     return m_dummy.index;
@@ -97,4 +104,8 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
     m_intersection_buffer.size = m_context->number_rays_per_buffer;
     m_intersection_buffer.point = m_point_data.data();
     m_intersection_buffer.normal = m_normal_data.data();
+
+    m_output_buffer.size = m_context->particles.size();
+    m_output_buffer.force = m_force_data.data();
+    m_output_buffer.torque = m_torque_data.data();
 }

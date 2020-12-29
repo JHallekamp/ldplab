@@ -10,7 +10,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        class Context;
+        struct Context;
 
         /**
          * @brief The buffer control is responsible for creating, assigning and
@@ -55,6 +55,11 @@ namespace ldplab
              */
             IntersectionBuffer& getIntersectionBuffer();
             /**
+             * @brief Provides a buffer for the output data.
+             * @returns The output buffer.
+             */
+            OutputBuffer& getOutputBuffer();
+            /**
              * @brief Provides the buffer index to identify a dummy buffer.
              * @returns The dummy buffer index.
              */
@@ -70,6 +75,9 @@ namespace ldplab
             std::vector<Vec3> m_point_data;
             std::vector<Vec3> m_normal_data;
             IntersectionBuffer m_intersection_buffer;
+            OutputBuffer m_output_buffer;
+            std::vector<Vec3> m_force_data;
+            std::vector<Vec3> m_torque_data;
         };
     }
 }
