@@ -68,6 +68,9 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 input.particles[i].orientation.y, 
                 input.particles[i].orientation.z);
     }
+
+    output.impulse_per_particle.resize(input.particles.size());
+    output.torque_per_particle.resize(input.particles.size());
     m_context->output = &output;
 
     // Execute pipeline
