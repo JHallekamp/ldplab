@@ -55,27 +55,28 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
-            BoundingVolumeSphere* bounding_sphere = (BoundingVolumeSphere*) 
-                m_context->particles[j].bounding_volume.get();
+            //BoundingVolumeSphere* bounding_sphere = (BoundingVolumeSphere*) 
+            //    m_context->particles[j].bounding_volume.get();
             ParticleTransformation& trans = m_context->
                 particle_transformations[j];
-            const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
-                bounding_sphere->center + trans.p2w_translation;
-
+            //const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
+            //    bounding_sphere->center + trans.p2w_translation;
+            const BoundingVolumeSphere& bounding_sphere =
+                m_context->transformed_bounding_spheres[j];
 
             const double t =
                 glm::dot(light_direction, 
-                    plane_base - bounding_sphere_center_world) * division_term;
+                    plane_base - bounding_sphere.center) * division_term;
 
             if (t < 0)
                 continue;
 
-            const Vec3 wrldctr = bounding_sphere_center_world - t * light_direction;
+            const Vec3 wrldctr = bounding_sphere.center - t * light_direction;
             const Vec3 planectr = wrldctr - plane_base;
             const Vec2 center{ 
                 glm::dot(planectr,  m_context->light_sources[i].horizontal_direction),
                 glm::dot(planectr,  m_context->light_sources[i].vertical_direction) };
-            const double radius = bounding_sphere->radius;
+            const double radius = bounding_sphere.radius;
             if (!projLightOverlap(center, radius, m_context->light_sources[i]))
             {
                 LDPLAB_LOG_TRACE("RTSCPU context %i: Particle %i has no"\
@@ -93,8 +94,8 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
             proj.light_index = i;
             proj.center = center;
             proj.radius = radius;
-            proj.depth = (wrldctr - bounding_sphere->center).length();
-            
+            proj.depth = glm::length(wrldctr - bounding_sphere.center);
+
             for (size_t k = 0; k < light_projections.size(); ++k)
             {
                 if ((light_projections[k].center - proj.center).length() <=
@@ -119,13 +120,14 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
     {
         for (size_t j = 0; j < projection_per_light_source[i].size(); ++j)
         {
-            const size_t particle_index = 
-                projection_per_light_source[i][j].particle_index;        
+            const size_t particle_index =
+                projection_per_light_source[i][j].particle_index;
             projection_per_light_source[i][j].light_index =
                 m_projections_per_particle[particle_index].size();;
             Projection proj;
             proj.center = projection_per_light_source[i][j].center;
             proj.radius = projection_per_light_source[i][j].radius;
+            proj.depth = projection_per_light_source[i][j].depth;
             proj.light_index = i;
             m_projections_per_particle[particle_index].push_back(proj);
         }
@@ -275,16 +277,12 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
         return false;
 
     for (size_t i = 0; i < initial_batch_buffer.size; ++i)
-    {
         initial_batch_buffer.index_data[i] = -1;
-        initial_batch_buffer.min_bounding_volume_distance_data[i] = 0.0;
-    }
 
     for (size_t& pi = m_batch_creation_particle_index;
         pi < m_projections_per_particle.size();
         advBatchCreationParticle(pi))
     {
-
         for (size_t& li = m_batch_creation_light_index;
             li < m_projections_per_particle[pi].size();
             advBatchCreationLight(li))
@@ -312,7 +310,7 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                 {
                     // Set the correct number of active rays and return with
                     // true
-                    nr = initial_batch_buffer.size;
+                    //nr = initial_batch_buffer.size;
                     return true;
                 }
 
@@ -337,6 +335,10 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                         // Set initial ray direction
                         initial_batch_buffer.ray_data[nr].direction = 
                             light.orientation;
+
+                        // Set minimum distance
+                        initial_batch_buffer.min_bounding_volume_distance_data[nr] =
+                            projection.depth;
 
                         // Set initial ray particle index
                         initial_batch_buffer.index_data[nr] = pi;
@@ -380,6 +382,19 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                             // Light source projection has no more rays
                             m_batch_creation_particle_initialized;
                             break;
+                        }
+                    }
+                    else
+                    {
+                        if (m_rasterization_up)
+                        {
+                            while (!hasToCreateRay(projection, light))
+                                m_rasterization_y += m_rasterization_step_size;
+                        }
+                        else
+                        {
+                            while (!hasToCreateRay(projection, light))
+                                m_rasterization_y -= m_rasterization_step_size;
                         }
                     }
                 }

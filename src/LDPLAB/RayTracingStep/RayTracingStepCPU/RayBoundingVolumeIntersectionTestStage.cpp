@@ -44,13 +44,18 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         const Vec3& o = buffer.ray_data[i].origin;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
-            const Vec3& oc = o - ((BoundingVolumeSphere*)
-                m_context->particles[j].bounding_volume.get())->center;
-            const double rr = ((BoundingVolumeSphere*)
-                m_context->particles[j].bounding_volume.get())->radius *
-                ((BoundingVolumeSphere*)
-                    m_context->particles[j].bounding_volume.get())->radius;
-            
+            //const Vec3& oc = o - ((BoundingVolumeSphere*)
+            //    m_context->particles[j].bounding_volume.get())->center;
+            //const double rr = ((BoundingVolumeSphere*)
+            //    m_context->particles[j].bounding_volume.get())->radius *
+            //    ((BoundingVolumeSphere*)
+            //        m_context->particles[j].bounding_volume.get())->radius;
+            const Vec3& oc = o - 
+                m_context->transformed_bounding_spheres[j].center;
+            const double rr =
+                m_context->transformed_bounding_spheres[j].radius *
+                m_context->transformed_bounding_spheres[j].radius;
+
             const double q = glm::dot(oc, oc) - rr;
             if (q <= 1e-9) //std::numeric_limits<double>::epsilon())
                 continue;
@@ -63,6 +68,7 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
             const double d_root = sqrt(discriminant);
             const double dist = -p - d_root;
 
+            double t = buffer.min_bounding_volume_distance_data[i];
             if (dist <= buffer.min_bounding_volume_distance_data[i])
                 continue;
 

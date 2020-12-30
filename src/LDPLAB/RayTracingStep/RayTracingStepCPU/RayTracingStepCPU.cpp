@@ -67,6 +67,15 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 input.particles[i].orientation.x, 
                 input.particles[i].orientation.y, 
                 input.particles[i].orientation.z);
+        // Set transformed bounding sphere
+        m_context->transformed_bounding_spheres[i].radius =
+            ((BoundingVolumeSphere*)
+                m_context->particles[i].bounding_volume.get())->radius;
+        m_context->transformed_bounding_spheres[i].center =
+            m_context->particle_transformations[i].p2w_scale_rotation *
+            ((BoundingVolumeSphere*)
+                m_context->particles[i].bounding_volume.get())->center +
+            m_context->particle_transformations[i].p2w_translation;
     }
 
     output.impulse_per_particle.resize(input.particles.size());

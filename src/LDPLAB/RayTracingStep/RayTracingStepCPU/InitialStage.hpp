@@ -61,6 +61,7 @@ namespace ldplab
                 Vec2 center;
                 double radius;
                 size_t light_index;
+                double depth;
                 // Pointers to overlapping projections
                 std::vector<Projection*> overlaps;
             };

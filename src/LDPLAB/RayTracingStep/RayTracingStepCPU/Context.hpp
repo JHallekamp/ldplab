@@ -38,6 +38,7 @@ namespace ldplab
              *          corresponds to the index of the related particle.
              */
             std::vector<ParticleTransformation> particle_transformations;
+            std::vector<BoundingVolumeSphere> transformed_bounding_spheres;
             /**
              * @brief Stores the particle geometrical representation of rode 
              *        like particles with analytical representation.

@@ -20,6 +20,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     ctx->thread_pool = info.thread_pool;
     ctx->particles = info.setup->particles;
     ctx->particle_transformations.resize(ctx->particles.size());
+    ctx->transformed_bounding_spheres.resize(ctx->particles.size(),
+        BoundingVolumeSphere(Vec3(0, 0, 0), 0));
     initGeometry(info, ctx);
     ctx->light_sources = info.setup->light_sources;
     ctx->intensity_cutoff = info.intensity_cutoff;
