@@ -189,9 +189,10 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::cylinderIntersection(
 {
     double p =
         (ray.origin.x * ray.direction.x + ray.origin.y * ray.direction.y) /
-        (ray.direction.x * ray.direction.x + ray.direction.y + ray.direction.y);
-    double q = (ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) - 
-        geometry.cylinder_radius;
+        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
+    double q = ((ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) -
+        geometry.cylinder_radius * geometry.cylinder_radius) /
+        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
 
     double discriminant = p * p - q;
     if (discriminant < 0.0)
