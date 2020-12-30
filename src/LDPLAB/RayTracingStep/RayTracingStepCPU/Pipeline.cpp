@@ -135,7 +135,7 @@ void ldplab::rtscpu::Pipeline::processBatch(
                     m_ray_bounding_volume_intersection_test_stage->execute(
                         buffer);
                     if (buffer.active_rays == 0)
-                        break;
+                        return;
                     m_ray_particle_intersection_test_stage->execute(
                         buffer,
                         intersection_buffer);
