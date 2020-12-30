@@ -210,8 +210,8 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
 
     const double pr_rr = projection.radius * projection.radius;
     const double pr_dist = ro_xxyy
-        + projection.center.x * ro_2x
-        + projection.center.y * ro_2y
+        - projection.center.x * ro_2x
+        - projection.center.y * ro_2y
         + projection.center.x * projection.center.x
         + projection.center.y * projection.center.y;
     if (pr_rr < pr_dist)
@@ -222,8 +222,8 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
         const Projection* const t_pr = projection.overlaps[i];
         const double t_rr = t_pr->radius * t_pr->radius;
         const double t_dist = ro_xxyy
-            + t_pr->center.x * ro_2x
-            + t_pr->center.y * ro_2y
+            - t_pr->center.x * ro_2x
+            - t_pr->center.y * ro_2y
             + t_pr->center.x * t_pr->center.x
             + t_pr->center.y * t_pr->center.y;
         if (t_dist <= t_rr)
@@ -283,8 +283,6 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
         pi < m_projections_per_particle.size();
         advBatchCreationParticle(pi))
     {
-        if (m_projections_per_particle[pi].size() == 0)
-            continue;
 
         for (size_t& li = m_batch_creation_light_index;
             li < m_projections_per_particle[pi].size();
