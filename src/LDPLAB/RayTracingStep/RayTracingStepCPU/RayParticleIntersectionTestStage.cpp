@@ -63,6 +63,8 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
             num_hit_rays++;
     }
 
+    rays.world_space_rays += num_missed_rays;
+
     LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle intersection test on "\
         "batch buffer %i completed, of %i tested rays %i rays hit particles "\
         "and %i rays missed",

@@ -67,8 +67,8 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
 
             const Vec3 wrldctr = bounding_sphere->center - t * light_direction;
             const Vec2 center{ 
-                glm::dot(wrldctr,  m_context->light_sources[i].horizontal_direction),
-                glm::dot(wrldctr,  m_context->light_sources[i].horizontal_direction) };
+                glm::dot(wrldctr, m_context->light_sources[i].horizontal_direction),
+                glm::dot(wrldctr, m_context->light_sources[i].horizontal_direction) };
 
             const double radius = bounding_sphere->radius;
             if (!projLightOverlap(center, radius, m_context->light_sources[i]))
@@ -260,6 +260,7 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
         initial_batch_buffer.uid);
 
     initial_batch_buffer.active_rays = 0;
+    initial_batch_buffer.world_space_rays = 0;
     if (m_batch_creation_particle_index >= m_projections_per_particle.size())
         return false;
 

@@ -2,22 +2,12 @@
 #include "Context.hpp"
 #include "../../Log.hpp"
 
-size_t exp2i(size_t x)
-{
-    // Calculate 2 to the power of x: 2^x
-    return (static_cast<size_t>(1) << x);
-}
-
 ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
     :
-    m_context{ context },
-    m_dummy{ 
-        exp2i(context->maximum_depth + 1), 
-        context->maximum_depth + 1, 
-        context->number_rays_per_buffer }
+    m_context{ context }
 {    
-    const size_t num_rays = m_context->number_rays_per_buffer * 
-        (exp2i(m_context->maximum_depth + 1));
+    const size_t num_rays = m_context->number_rays_per_buffer *
+        (m_context->maximum_depth + 1);
     m_ray_data.resize(num_rays);
     m_index_data.resize(num_rays);
     m_point_data.resize(context->number_rays_per_buffer);
@@ -41,26 +31,16 @@ ldplab::rtscpu::RayBuffer&
     ldplab::rtscpu::BufferControl::getReflectionBuffer(RayBuffer& buffer)
 {
     if (buffer.depth >= m_context->maximum_depth)
-        return m_dummy;
-
-    //const size_t layer_buffer_index = buffer.index - (exp2i(buffer.depth) - 1);
-    //const size_t next_layer_offset = exp2i(buffer.depth + 1) - 1;
-    //return m_buffers[next_layer_offset + 2 * layer_buffer_index];
-    
-    return m_buffers[2 * buffer.index + 1];
+        return m_buffers[1]; //return m_dummy;
+    return m_buffers[2 * buffer.depth];
 }
 
 ldplab::rtscpu::RayBuffer& 
     ldplab::rtscpu::BufferControl::getTransmissionBuffer(RayBuffer& buffer)
 {
     if (buffer.depth >= m_context->maximum_depth)
-        return m_dummy;
-
-    //const size_t layer_buffer_index = buffer.index - (exp2i(buffer.depth) - 1);
-    //const size_t next_layer_offset = exp2i(buffer.depth + 1) - 1;
-    //return m_buffers[next_layer_offset + 2 * layer_buffer_index + 1];
-
-    return m_buffers[2 * buffer.index + 2];
+        return m_buffers[1]; //return m_dummy;
+    return m_buffers[2 * buffer.depth + 1];
 }
 
 ldplab::rtscpu::IntersectionBuffer& 
@@ -74,37 +54,43 @@ ldplab::rtscpu::OutputBuffer& ldplab::rtscpu::BufferControl::getOutputBuffer()
     return m_output_buffer;
 }
 
-size_t ldplab::rtscpu::BufferControl::dummyBufferIndex()
+size_t ldplab::rtscpu::BufferControl::dummyBufferUID()
 {
-    return m_dummy.index;
+    return m_buffers[1].uid; //m_dummy.uid;
 }
 
 void ldplab::rtscpu::BufferControl::initializeBuffers()
 {
-    for (size_t i = 0; i <= m_context->maximum_depth; ++i)
-    {
-        const size_t layer_buffer_count = exp2i(i);
-        for (size_t j = 0; j < layer_buffer_count; ++j)
-        {
-            const size_t index = layer_buffer_count - 1 + j;
-            const size_t depth = i;
-            m_buffers.push_back(
-                RayBuffer(index, depth, m_context->number_rays_per_buffer));
+    // Initial buffer
+    m_buffers.emplace_back(0, m_context->number_rays_per_buffer);
+    m_buffers.back().ray_data = m_ray_data.data();
+    m_buffers.back().index_data = m_index_data.data();
 
-            const size_t offset = index * m_context->number_rays_per_buffer;
+    // Dummy buffer
+    m_buffers.emplace_back(
+        m_context->maximum_depth + 1, m_context->number_rays_per_buffer);
+    m_buffers.back().ray_data = 
+        m_ray_data.data() + m_context->number_rays_per_buffer;
+    m_buffers.back().index_data =
+        m_index_data.data() + m_context->number_rays_per_buffer;
+
+    // Branching buffers
+    for (size_t i = 1; i <= m_context->maximum_depth; ++i)
+    {
+        for (size_t j = 0; j < 2; ++j)
+        {
+            m_buffers.emplace_back(i, m_context->number_rays_per_buffer);
+            const size_t offset = 
+                (2 * i + j) * m_context->number_rays_per_buffer;
             m_buffers.back().ray_data = m_ray_data.data() + offset;
             m_buffers.back().index_data = m_index_data.data() + offset;
         }
     }
-
-    const size_t offset = m_dummy.index * m_context->number_rays_per_buffer;
-    m_dummy.ray_data = m_ray_data.data() + offset;
-    m_dummy.index_data = m_index_data.data() + offset;
-
+    
     m_intersection_buffer.size = m_context->number_rays_per_buffer;
     m_intersection_buffer.point = m_point_data.data();
     m_intersection_buffer.normal = m_normal_data.data();
-
+    
     m_output_buffer.size = m_context->particles.size();
     m_output_buffer.force = m_force_data.data();
     m_output_buffer.torque = m_torque_data.data();
