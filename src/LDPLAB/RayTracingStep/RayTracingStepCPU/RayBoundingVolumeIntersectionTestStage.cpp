@@ -2,6 +2,8 @@
 #include "Context.hpp"
 #include "../../Log.hpp"
 
+#include <limits>
+
 ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
         std::shared_ptr<Context> context)
@@ -39,38 +41,34 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         double min_d = -1.0;
         size_t min_j = 0;
 
-        const Vec3 o = buffer.ray_data[i].origin;
+        const Vec3& o = buffer.ray_data[i].origin;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
-            const Vec3 oc = o - ((BoundingVolumeSphere*)
+            const Vec3& oc = o - ((BoundingVolumeSphere*)
                 m_context->particles[j].bounding_volume.get())->center;
-            const double dot_uoc = glm::dot(unit, oc);
-            
-            if (dot_uoc < 0)
-                continue;
-
             const double rr = ((BoundingVolumeSphere*)
                 m_context->particles[j].bounding_volume.get())->radius *
                 ((BoundingVolumeSphere*)
                     m_context->particles[j].bounding_volume.get())->radius;
-
-            const double t = dot_uoc * dot_uoc - (glm::dot(oc, oc) - rr);
-            double d = 0;
-
-            if (t < 0)
+            
+            const double q = glm::dot(oc, oc) - rr;
+            if (q <= 1e-9) //std::numeric_limits<double>::epsilon())
                 continue;
-            else if (t == 0)
-                d = dot_uoc;
-            else
-            {
-                d = dot_uoc - sqrt(t);
-                if (signbit(d))
-                    continue;
-            }
 
-            if (d < min_d || min_d < 0)
+            const double p = glm::dot(buffer.ray_data[i].direction, oc);
+            const double discriminant = p * p - q;
+            if (discriminant < 1e-9) //0.0)
+                continue;
+
+            const double d_root = sqrt(discriminant);
+            const double dist = -p - d_root;
+
+            if (signbit(dist))
+                continue;
+
+            if (dist < min_d || min_d < 0)
             {
-                min_d = d;
+                min_d = dist;
                 min_j = j;
             }
         }
@@ -79,13 +77,13 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         {
             // ray exits scene
             buffer.index_data[i] = -1;
-            //buffer.active_rays--;
             ++num_rays_exiting_scene;
         }
         else
         {
             // ray hits particle min_j boundary volume
             buffer.index_data[i] = min_j;
+            buffer.ray_data[i].origin += buffer.ray_data[i].direction * min_d;
             transformRayFromWorldToParticleSpace(buffer.ray_data[i], min_j);
             ++num_rays_hitting_boundary_sphere;
         }
