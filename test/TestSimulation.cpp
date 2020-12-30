@@ -22,7 +22,7 @@ const double PARTICLE_BOUNDING_SPHERE_RADIUS =
     (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2;
 
 // Light geometry
-const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * PARTICLE_BOUNDING_SPHERE_RADIUS;
+const double LIGHT_GEOMETRY_PLANE_EXTENT = 4.0 * PARTICLE_BOUNDING_SPHERE_RADIUS;
 const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER = 
     ldplab::Vec3(
         -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0, 
@@ -51,7 +51,7 @@ int main()
     // Prepare logging
     ldplab::LogCallbackFileStream flog{ "test_simulation.log" };
     ldplab::LogCallbackStdout clog{};
-    flog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
+    flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
     flog.subscribe();
     clog.subscribe();

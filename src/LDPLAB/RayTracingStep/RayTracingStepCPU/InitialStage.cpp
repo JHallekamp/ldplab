@@ -52,23 +52,31 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
         const double division_term = 
             1.0 / -glm::dot(light_direction, light_direction);
 
+
+
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
             BoundingVolumeSphere* bounding_sphere = (BoundingVolumeSphere*) 
                 m_context->particles[j].bounding_volume.get();
+            ParticleTransformation& trans = m_context->
+                particle_transformations[j];
+            const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
+                bounding_sphere->center + trans.p2w_translation;
+
 
             const double t =
                 glm::dot(light_direction, 
-                    plane_base - bounding_sphere->center) * division_term;
+                    plane_base - bounding_sphere_center_world) * division_term;
 
             if (t < 0)
                 continue;
 
-            const Vec3 wrldctr = bounding_sphere->center - t * light_direction;
+            const Vec3 wrldctr = bounding_sphere_center_world - t * light_direction;
+            const Vec3 planectr = wrldctr - plane_base;
             const Vec2 center{ 
-                glm::dot(wrldctr,  m_context->light_sources[i].horizontal_direction),
-                glm::dot(wrldctr,  m_context->light_sources[i].horizontal_direction) };
+                glm::dot(planectr,  m_context->light_sources[i].horizontal_direction),
+                glm::dot(planectr,  m_context->light_sources[i].vertical_direction) };
 
             const double radius = bounding_sphere->radius;
             if (!projLightOverlap(center, radius, m_context->light_sources[i]))
@@ -171,6 +179,11 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::projLightOverla
         center.y - radius > light_source.vertical_size)
         return false;
     
+    if (center.x >= 0 && center.x <= light_source.horizontal_size)
+        return true;
+    if (center.y >= 0 && center.y <= light_source.vertical_size)
+        return true;
+
     const double r2 = radius * radius;
     const double x2 = center.x * center.x;
     const double y2 = center.y * center.y;
