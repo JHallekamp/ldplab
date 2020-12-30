@@ -209,12 +209,12 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::sphereIntersection(
     double& distance_min, 
     double& distance_max)
 {
-    Vec3 o_minus_c = ray.origin - origin;
+    const Vec3 o_minus_c = ray.origin - origin;
 
-    double p = glm::dot(ray.direction, o_minus_c);
-    double q = dot(o_minus_c, o_minus_c) - (raduis * raduis);
+    const double p = glm::dot(ray.direction, o_minus_c);
+    const double q = glm::dot(o_minus_c, o_minus_c) - (raduis * raduis);
 
-    double discriminant = (p * p) - q;
+    const double discriminant = (p * p) - q;
     if (discriminant < 0.0)
         return false;
 
@@ -235,7 +235,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
 
     if (sphereIntersection(
         geometry.origin_cap,
-        geometry.cylinder_radius,
+        geometry.sphere_radius,
         ray,
         intersec_first,
         intersec_second))
@@ -247,7 +247,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
             geometry.sphere_radius)
         {
             inter_normal = glm::normalize(
-                geometry.origin_cap - inter_point);
+                inter_point - geometry.origin_cap);
             return true;
         }
     }
@@ -265,7 +265,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::indentationIntersection(
 
     if (sphereIntersection(
         geometry.origin_indentation,
-        geometry.cylinder_radius,
+        geometry.sphere_radius,
         ray,
         intersec_first,
         intersec_second))
