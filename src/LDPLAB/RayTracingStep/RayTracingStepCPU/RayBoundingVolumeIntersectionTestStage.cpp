@@ -63,7 +63,7 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
             const double d_root = sqrt(discriminant);
             const double dist = -p - d_root;
 
-            if (signbit(dist))
+            if (dist <= buffer.min_bounding_volume_distance_data[i])
                 continue;
 
             if (dist < min_d || min_d < 0)
@@ -83,7 +83,7 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         {
             // ray hits particle min_j boundary volume
             buffer.index_data[i] = min_j;
-            buffer.ray_data[i].origin += buffer.ray_data[i].direction * min_d;
+            buffer.min_bounding_volume_distance_data[i] = min_d;
             transformRayFromWorldToParticleSpace(buffer.ray_data[i], min_j);
             ++num_rays_hitting_boundary_sphere;
         }

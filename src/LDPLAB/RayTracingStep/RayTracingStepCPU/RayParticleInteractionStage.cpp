@@ -64,6 +64,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             if (refracted_ray.intensity > m_context->intensity_cutoff)
             {
                 refracted_rays.index_data[i] = rays.index_data[i];
+                refracted_rays.min_bounding_volume_distance_data[i] = 0.0;
                 refracted_ray.origin = inter_point;
                 refracted_ray.direction = nr * ray.direction +
                     inter_normal * (-cos_b + nr * cos_a);
@@ -84,6 +85,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             if (ray.intensity > m_context->intensity_cutoff)
             {
                 reflected_rays.index_data[i] = rays.index_data[i];
+                reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
                 reflected_ray.origin = inter_point;
                 reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
                 reflected_rays.active_rays++;
@@ -97,14 +99,12 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             }
             else
                 reflected_rays.index_data[i] = -1;
-
-
-
         }
         else
         {
             // total reflected ray
             reflected_rays.index_data[i] = rays.index_data[i];
+            reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
             reflected_ray.origin = inter_point;
             reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
             reflected_ray.intensity = ray.intensity;

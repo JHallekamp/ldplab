@@ -74,6 +74,7 @@ namespace ldplab
             std::vector<RayBuffer> m_buffers;
             std::vector<Ray> m_ray_data;
             std::vector<int32_t> m_index_data;
+            std::vector<double> m_min_bounding_sphere_distance_data;
             std::vector<Vec3> m_point_data;
             std::vector<Vec3> m_normal_data;
             IntersectionBuffer m_intersection_buffer;

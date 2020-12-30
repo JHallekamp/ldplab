@@ -10,6 +10,7 @@ ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
         (m_context->maximum_depth + 1) * 2;
     m_ray_data.resize(num_rays);
     m_index_data.resize(num_rays);
+    m_min_bounding_sphere_distance_data.resize(num_rays);
     m_point_data.resize(context->number_rays_per_buffer);
     m_normal_data.resize(context->number_rays_per_buffer);
     m_force_data.resize(context->particles.size());
@@ -65,6 +66,8 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
     m_buffers.emplace_back(0, m_context->number_rays_per_buffer);
     m_buffers.back().ray_data = m_ray_data.data();
     m_buffers.back().index_data = m_index_data.data();
+    m_buffers.back().min_bounding_volume_distance_data =
+        m_min_bounding_sphere_distance_data.data();
 
     // Dummy buffer
     m_buffers.emplace_back(
@@ -73,6 +76,9 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
         m_ray_data.data() + m_context->number_rays_per_buffer;
     m_buffers.back().index_data =
         m_index_data.data() + m_context->number_rays_per_buffer;
+    m_buffers.back().min_bounding_volume_distance_data =
+        m_min_bounding_sphere_distance_data.data() +
+        m_context->number_rays_per_buffer;
 
     // Branching buffers
     for (size_t i = 1; i <= m_context->maximum_depth; ++i)
@@ -84,6 +90,8 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
                 (2 * i + j) * m_context->number_rays_per_buffer;
             m_buffers.back().ray_data = m_ray_data.data() + offset;
             m_buffers.back().index_data = m_index_data.data() + offset;
+            m_buffers.back().min_bounding_volume_distance_data
+                = m_min_bounding_sphere_distance_data.data() + offset;
         }
     }
     

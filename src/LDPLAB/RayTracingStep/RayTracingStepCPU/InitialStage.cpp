@@ -52,8 +52,6 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
         const double division_term = 
             1.0 / -glm::dot(light_direction, light_direction);
 
-
-
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
@@ -277,7 +275,10 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
         return false;
 
     for (size_t i = 0; i < initial_batch_buffer.size; ++i)
+    {
         initial_batch_buffer.index_data[i] = -1;
+        initial_batch_buffer.min_bounding_volume_distance_data[i] = 0.0;
+    }
 
     for (size_t& pi = m_batch_creation_particle_index;
         pi < m_projections_per_particle.size();
