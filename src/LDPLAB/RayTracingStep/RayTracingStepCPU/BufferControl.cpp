@@ -7,7 +7,7 @@ ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
     m_context{ context }
 {    
     const size_t num_rays = m_context->number_rays_per_buffer *
-        (m_context->maximum_depth + 1);
+        (m_context->maximum_depth + 1) * 2;
     m_ray_data.resize(num_rays);
     m_index_data.resize(num_rays);
     m_point_data.resize(context->number_rays_per_buffer);
