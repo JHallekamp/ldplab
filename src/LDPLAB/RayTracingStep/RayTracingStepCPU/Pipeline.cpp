@@ -64,51 +64,6 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
 
             processBatch(initial_batch_buffer, buffer_control);
 
-            // The following part basically was a workaround so the bounding
-            // volume intersection test would not be executed on freshly
-            // created initial batch buffers. However, in the sake of better 
-            // readability, we do not do that for now.
-            /*
-            IntersectionBuffer& intersection_buffer =
-                buffer_control.getIntersectionBuffer();
-            RayBuffer& reflection_buffer =
-                buffer_control.getReflectionBuffer(initial_batch_buffer);
-            RayBuffer& transmission_buffer =
-                buffer_control.getTransmissionBuffer(initial_batch_buffer);
-
-            m_ray_particle_intersection_test_stage->execute(
-                initial_batch_buffer,
-                intersection_buffer);
-
-            m_ray_particle_interaction_stage->execute(
-                intersection_buffer,
-                initial_batch_buffer,
-                reflection_buffer,
-                transmission_buffer);
-
-            while (initial_batch_buffer.active_rays > 0)
-            {
-                m_ray_bounding_volume_intersection_test_stage->execute(
-                    initial_batch_buffer);
-
-                m_ray_particle_intersection_test_stage->execute(
-                    initial_batch_buffer,
-                    intersection_buffer);
-
-                m_ray_particle_interaction_stage->execute(
-                    intersection_buffer,
-                    initial_batch_buffer,
-                    reflection_buffer,
-                    transmission_buffer);
-            }
-
-            if (reflection_buffer.index != buffer_control.dummyBufferIndex() &&
-                transmission_buffer.index != buffer_control.dummyBufferIndex())
-            {
-                processBatch(reflection_buffer, buffer_control);
-                processBatch(transmission_buffer, buffer_control);
-            }*/
-
             LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i "\
                 "finished batch execution",
                 m_context->uid, job_id);
