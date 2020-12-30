@@ -32,7 +32,7 @@ ldplab::rtscpu::RayBuffer&
 {
     if (buffer.depth >= m_context->maximum_depth)
         return m_buffers[1]; //return m_dummy;
-    return m_buffers[2 * (buffer.depth + 1)];
+    return m_buffers[2 * buffer.depth + 2];
 }
 
 ldplab::rtscpu::RayBuffer& 
@@ -40,7 +40,7 @@ ldplab::rtscpu::RayBuffer&
 {
     if (buffer.depth >= m_context->maximum_depth)
         return m_buffers[1]; //return m_dummy;
-    return m_buffers[2 * (buffer.depth + 1) + 1];
+    return m_buffers[2 * buffer.depth + 3];
 }
 
 ldplab::rtscpu::IntersectionBuffer& 
