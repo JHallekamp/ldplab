@@ -21,7 +21,7 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::setup()
 void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
     RayBuffer& buffer)
 {
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Test bounding sphere intersections"\
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Test bounding sphere intersections "\
         "for batch buffer %i",
         m_context->uid,
         buffer.uid);
@@ -32,7 +32,8 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
     const Vec3 unit = { 1, 1, 1 };
     for (size_t i = 0; i < buffer.size; ++i)
     {
-        if (buffer.index_data[i] < m_context->particles.size())
+        if (buffer.index_data[i] < m_context->particles.size() ||
+            buffer.index_data[i] == -1)
             continue;
 
         double min_d = -1.0;
@@ -91,10 +92,11 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
     }
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Bounding sphere intersection "\
-        "test on batch buffer %i completed, %i rays hit bounding spheres, "\
-        "%i rays exited scene",
+        "test on batch buffer %i completed, of %i tested rays %i hit "\
+        "bounding spheres and %i rays exited the scene",
         m_context->uid,
         buffer.uid,
+        num_rays_hitting_boundary_sphere + num_rays_exiting_scene,
         num_rays_hitting_boundary_sphere,
         num_rays_exiting_scene);
 }

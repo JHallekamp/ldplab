@@ -22,18 +22,21 @@ const double PARTICLE_BOUNDING_SPHERE_RADIUS =
     (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2;
 
 // Light geometry
-const double LIGHT_GEOMETRY_PLANE_EXTENT = 4.0 * ROD_PARTICLE_CYLINDER_HEIGHT;
+const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * PARTICLE_BOUNDING_SPHERE_RADIUS;
 const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER = 
-    ldplab::Vec3(-LIGHT_GEOMETRY_PLANE_EXTENT, -LIGHT_GEOMETRY_PLANE_EXTENT, -LIGHT_GEOMETRY_PLANE_EXTENT);
+    ldplab::Vec3(
+        -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0, 
+        (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) * 2.0,
+        -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
 
 // Light intensity properties
 const double LIGHT_INTENSITY = 1.0;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 8;
-const size_t NUM_RTS_RAYS_PER_BUFFER = 512;
+const size_t NUM_RTS_THREADS = 1;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_UNIT = 1000.0;
-const size_t MAX_RTS_BRANCHING_DEPTH = 8;
+const size_t MAX_RTS_BRANCHING_DEPTH = 6;
 const double RTS_INTENSITY_CUTOFF = 0.05;
 const double RTS_SOLVER_EPSILON = 0.00001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
@@ -48,7 +51,7 @@ int main()
     // Prepare logging
     ldplab::LogCallbackFileStream flog{ "test_simulation.log" };
     ldplab::LogCallbackStdout clog{};
-    flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
+    flog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
     flog.subscribe();
     clog.subscribe();

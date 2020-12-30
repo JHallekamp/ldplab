@@ -123,6 +123,9 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
 void ldplab::rtscpu::Pipeline::processBatch(
     RayBuffer& buffer, BufferControl& buffer_control)
 {
+    if (buffer.active_rays <= 0)
+        return;
+
     if (buffer.inner_particle_rays)
     {
         IntersectionBuffer& intersection_buffer =
@@ -167,15 +170,18 @@ void ldplab::rtscpu::Pipeline::processBatch(
             {
                 m_ray_bounding_volume_intersection_test_stage->execute(
                     buffer);
-                
+
+                if (buffer.active_rays <= 0)
+                    break;
+
                 m_ray_particle_intersection_test_stage->execute(
-                    buffer, 
+                    buffer,
                     intersection_buffer);
-                
+
                 m_ray_particle_interaction_stage->execute(
-                    intersection_buffer, 
-                    buffer, 
-                    reflection_buffer, 
+                    intersection_buffer,
+                    buffer,
+                    reflection_buffer,
                     transmission_buffer,
                     output_buffer);
             }

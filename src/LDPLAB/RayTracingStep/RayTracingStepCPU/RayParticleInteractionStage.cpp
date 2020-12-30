@@ -25,7 +25,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
     RayBuffer& refracted_rays,
     OutputBuffer& output)
 {
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction"\
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction "\
         "on batch buffer %i",
         m_context->uid, rays.uid);
 
@@ -34,7 +34,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
 
     for (size_t i = 0; i < rays.size; i++)
     {
-        if (rays.index_data[i] < 0 &&
+        if (rays.index_data[i] < 0 ||
             rays.index_data[i] >= m_context->particles.size())
             continue;
 
@@ -119,9 +119,9 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         m_context->uid, 
         rays.uid, 
         reflected_rays.uid, 
-        reflected_rays, 
+        reflected_rays.active_rays, 
         refracted_rays.uid, 
-        refracted_rays);
+        refracted_rays.active_rays);
 }
 
 double ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::

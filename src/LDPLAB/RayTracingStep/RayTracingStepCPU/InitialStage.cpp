@@ -85,6 +85,7 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
 
             ProjectionPerLight proj;
             proj.particle_index = j;
+            proj.light_index = i;
             proj.center = center;
             proj.radius = radius;
             proj.depth = (wrldctr - bounding_sphere->center).length();
@@ -261,6 +262,9 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
     initial_batch_buffer.active_rays = 0;
     if (m_batch_creation_particle_index >= m_projections_per_particle.size())
         return false;
+
+    for (size_t i = 0; i < initial_batch_buffer.size; ++i)
+        initial_batch_buffer.index_data[i] = -1;
 
     for (size_t& pi = m_batch_creation_particle_index;
         pi < m_projections_per_particle.size();

@@ -29,7 +29,7 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
 
     for (size_t i = 0; i < rays.size; i++)
     {
-        if (rays.index_data[i] < 0 &&
+        if (rays.index_data[i] < 0 ||
             rays.index_data[i] >= m_context->particles.size())
             continue;
 
@@ -48,24 +48,29 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
             inter_point,
             inter_normal))
         {
-            // Ray missed particle
-            rays.index_data[i] = m_context->particles.size();
-            num_missed_rays++;
             // Transformation to world space
             ParticleTransformation& trans = m_context->
                 particle_transformations[rays.index_data[i]];
-            ray.origin = trans.p2w_scale_rotation * ray.origin + 
+            ray.origin = trans.p2w_scale_rotation * ray.origin +
                 trans.p2w_translation;
-            ray.direction = 
+            ray.direction =
                 glm::normalize(trans.p2w_scale_rotation * ray.direction);
+            // Ray missed particle
+            rays.index_data[i] = m_context->particles.size();
+            num_missed_rays++;
         }
         else
             num_hit_rays++;
     }
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle intersection test on "\
-        "batch buffer %i completed, %i rays hit particles, %i rays missed",
-        m_context->uid, rays.uid, num_hit_rays, num_missed_rays);
+        "batch buffer %i completed, of %i tested rays %i rays hit particles "\
+        "and %i rays missed",
+        m_context->uid, 
+        rays.uid, 
+        num_hit_rays + num_missed_rays,
+        num_hit_rays, 
+        num_missed_rays);
 }
 
 bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(

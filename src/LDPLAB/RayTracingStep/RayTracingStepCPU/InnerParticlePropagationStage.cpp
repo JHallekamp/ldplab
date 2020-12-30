@@ -30,7 +30,7 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
 {
     for (size_t i = 0; i < rays.size; i++)
     {
-        if (rays.index_data[i] < 0 && 
+        if (rays.index_data[i] < 0 ||
             rays.index_data[i] >= m_context->particles.size())
             continue;
 
