@@ -21,7 +21,10 @@ namespace ldplab
          *          and one for transmitted rays. Therefore the ray buffers
          *          resemble a binary tree structure and regardless of their
          *          underlying data structures will provide a tree like
-         *          interface.
+         *          interface. The underlying structure however uses the fact
+         *          that the ray tracing pipeline traverses the tree via depth
+         *          first search, which means that only two buffers have to be
+         *          stored per layer.
          */
         class BufferControl
         {
@@ -61,9 +64,9 @@ namespace ldplab
             OutputBuffer& getOutputBuffer();
             /**
              * @brief Provides the buffer index to identify a dummy buffer.
-             * @returns The dummy buffer index.
+             * @returns The dummy buffer uid.
              */
-            size_t dummyBufferIndex();
+            size_t dummyBufferUID();
         private:
             void initializeBuffers();
         private:
@@ -71,7 +74,6 @@ namespace ldplab
             std::vector<RayBuffer> m_buffers;
             std::vector<Ray> m_ray_data;
             std::vector<int32_t> m_index_data;
-            RayBuffer m_dummy;
             std::vector<Vec3> m_point_data;
             std::vector<Vec3> m_normal_data;
             IntersectionBuffer m_intersection_buffer;

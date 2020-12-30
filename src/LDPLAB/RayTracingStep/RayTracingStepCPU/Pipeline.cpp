@@ -139,8 +139,8 @@ void ldplab::rtscpu::Pipeline::processBatch(
         RayBuffer& transmission_buffer =
             buffer_control.getTransmissionBuffer(buffer);
 
-        if (reflection_buffer.index != buffer_control.dummyBufferIndex() &&
-            transmission_buffer.index != buffer_control.dummyBufferIndex())
+        if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
+            transmission_buffer.uid != buffer_control.dummyBufferUID())
         {
             m_ray_particle_interaction_stage->execute(
                 intersection_buffer,
@@ -163,28 +163,36 @@ void ldplab::rtscpu::Pipeline::processBatch(
         RayBuffer& transmission_buffer =
             buffer_control.getTransmissionBuffer(buffer);
 
-        if (reflection_buffer.index != buffer_control.dummyBufferIndex() &&
-            transmission_buffer.index != buffer_control.dummyBufferIndex())
+        if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
+            transmission_buffer.uid != buffer_control.dummyBufferUID())
         {
-            while (buffer.active_rays > 0)
+            if (buffer.world_space_rays == 0)
             {
-                m_ray_bounding_volume_intersection_test_stage->execute(
-                    buffer);
-
-                if (buffer.active_rays <= 0)
-                    break;
-
                 m_ray_particle_intersection_test_stage->execute(
                     buffer,
                     intersection_buffer);
-
-                m_ray_particle_interaction_stage->execute(
-                    intersection_buffer,
-                    buffer,
-                    reflection_buffer,
-                    transmission_buffer,
-                    output_buffer);
             }
+
+            if (buffer.world_space_rays > 0)
+            {
+                do
+                {
+                    m_ray_bounding_volume_intersection_test_stage->execute(
+                        buffer);
+                    if (buffer.active_rays == 0)
+                        break;
+                    m_ray_particle_intersection_test_stage->execute(
+                        buffer,
+                        intersection_buffer);
+                } while (buffer.world_space_rays > 0);
+            }
+
+            m_ray_particle_interaction_stage->execute(
+                intersection_buffer,
+                buffer,
+                reflection_buffer,
+                transmission_buffer,
+                output_buffer);
 
             processBatch(reflection_buffer, buffer_control);
             processBatch(transmission_buffer, buffer_control);

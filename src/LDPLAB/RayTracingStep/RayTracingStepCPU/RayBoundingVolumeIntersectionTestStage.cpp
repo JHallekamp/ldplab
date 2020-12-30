@@ -79,7 +79,7 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         {
             // ray exits scene
             buffer.index_data[i] = -1;
-            buffer.active_rays--;
+            //buffer.active_rays--;
             ++num_rays_exiting_scene;
         }
         else
@@ -90,6 +90,9 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
             ++num_rays_hitting_boundary_sphere;
         }
     }
+
+    buffer.active_rays = num_rays_hitting_boundary_sphere;
+    buffer.world_space_rays = 0;
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Bounding sphere intersection "\
         "test on batch buffer %i completed, of %i tested rays %i hit "\
