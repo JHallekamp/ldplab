@@ -107,9 +107,9 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
 {
     if (r.x * r.x + r.y * r.y >
         geometry.cylinder_radius * geometry.cylinder_radius)
-        return false;
+        return true;
 
-    if (r.z < geometry.origin_cap.z + geometry.sphere_radius && r.z < 0)
+    if (r.z <= geometry.origin_cap.z + geometry.sphere_radius && r.z >= 0)
     {
         if (r.z > geometry.cylinder_length)
         {
@@ -117,9 +117,9 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
             double radius2 = geometry.sphere_radius * geometry.sphere_radius -
                 std::pow(r.z-geometry.origin_cap.z,2.0);
             if (norm_r2 > radius2)
-                return false;
-            else
                 return true;
+            else
+                return false;
         }
         else if (r.z < geometry.origin_indentation.z + geometry.sphere_radius)
         {
@@ -127,15 +127,15 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
             double radius2 = geometry.sphere_radius * geometry.sphere_radius -
                 std::pow(r.z - geometry.origin_indentation.z, 2.0);
             if (norm_r2 < radius2)
-                return false;
-            else
                 return true;
+            else
+                return false;
         }
         else
-            return true;
+            return false;
     }
     else
-        return false;
+        return true;
 }
 
 double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
@@ -144,8 +144,9 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
     const double h,
     Arg& x_new)
 {
-    Arg k[6] {};
+    Arg k[6]{};
     Arg error{ {0,0,0}, {0,0,0} };
+    x_new = { {0,0,0}, {0,0,0} };
     for (size_t i = 0; i < 6; ++i)
     {
         Arg x_step = x;
