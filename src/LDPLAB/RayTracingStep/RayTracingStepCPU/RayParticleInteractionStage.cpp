@@ -38,15 +38,15 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             rays.index_data[i] >= m_context->particles.size())
             continue;
 
-        ParticleMaterialLinearOneDirectional* material =
+        const ParticleMaterialLinearOneDirectional* material =
             (ParticleMaterialLinearOneDirectional*)m_context->
             particles[rays.index_data[i]].material.get();
 
         Ray& ray = rays.ray_data[i];
         Ray& reflected_ray = reflected_rays.ray_data[i];
         Ray& refracted_ray = refracted_rays.ray_data[i];
-        Vec3& inter_point = intersection.point[i];
-        Vec3& inter_normal = intersection.normal[i];
+        const Vec3& inter_point = intersection.point[i];
+        const Vec3& inter_normal = intersection.normal[i];
 
         double nr = m_context->medium_index_of_reflecation / 
             material->indexOfRefraction(inter_point);
