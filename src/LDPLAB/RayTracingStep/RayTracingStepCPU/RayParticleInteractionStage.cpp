@@ -48,18 +48,22 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
 
-        double nr = material->indexOfRefraction(inter_point);
-        double cos_a = glm::dot(ray.direction, inter_normal);
+        double nr = m_context->medium_index_of_reflecation / 
+            material->indexOfRefraction(inter_point);
+        if (rays.inner_particle_rays)
+            nr = 1/nr;
+        double cos_a = glm::dot(ray.direction, -inter_normal);
 
-        if (1 - nr * (1 - cos_a * cos_a) >= 0)
+        if (1 - nr * nr * (1 - cos_a * cos_a) >= 0)
         {
-            double cos_b = std::sqrt(1 - nr * (1 - cos_a * cos_a));
+            double cos_b = std::sqrt(1 - nr * nr * (1 - cos_a * cos_a));
             double R = reflectance(cos_a, cos_b, nr);
 
             // refracted ray
             refracted_ray.intensity = ray.intensity * (1 - R);
             if (refracted_ray.intensity > m_context->intensity_cutoff)
             {
+                refracted_rays.index_data[i] = rays.index_data[i];
                 refracted_ray.origin = inter_point;
                 refracted_ray.direction = nr * ray.direction +
                     inter_normal * (-cos_b + nr * cos_a);
@@ -79,6 +83,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             reflected_ray.intensity = ray.intensity * R;
             if (ray.intensity > m_context->intensity_cutoff)
             {
+                reflected_rays.index_data[i] = rays.index_data[i];
                 reflected_ray.origin = inter_point;
                 reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
                 reflected_rays.active_rays++;
@@ -99,6 +104,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         else
         {
             // total reflected ray
+            reflected_rays.index_data[i] = rays.index_data[i];
             reflected_ray.origin = inter_point;
             reflected_ray.direction = ray.direction - inter_normal * 2.0 * cos_a;
             reflected_ray.intensity = ray.intensity;

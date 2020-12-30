@@ -23,6 +23,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     initGeometry(info, ctx);
     ctx->light_sources = info.setup->light_sources;
     ctx->intensity_cutoff = info.intensity_cutoff;
+    ctx->medium_index_of_reflecation = info.setup->refractive_index;
     ctx->number_rays_per_buffer = info.number_rays_per_buffer;
     ctx->number_rays_per_unit = info.number_rays_per_unit;
     ctx->maximum_depth = info.maximum_depth;

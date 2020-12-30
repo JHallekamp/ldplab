@@ -98,6 +98,7 @@ int main()
         std::make_shared<ldplab::ExperimentalSetup>();
     experimental_setup->particles.emplace_back(std::move(rod_particle));
     experimental_setup->light_sources.emplace_back(std::move(light_source));
+    experimental_setup->refractive_index = 1.33;
 
     // Thread pool
     std::shared_ptr<ldplab::ThreadPool> thread_pool =

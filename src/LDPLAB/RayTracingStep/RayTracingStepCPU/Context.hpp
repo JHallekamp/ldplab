@@ -64,6 +64,10 @@ namespace ldplab
              * @brief Under this cutoff intensity rays are not further traced. 
              */
             double intensity_cutoff;
+            /** 
+             * @brief Index of reflection from the medium.
+             */
+            double medium_index_of_reflecation;
             /** @brief The ID of the context. */
             UID<Context> uid;
             /** @brief Number of rays per buffer. */
