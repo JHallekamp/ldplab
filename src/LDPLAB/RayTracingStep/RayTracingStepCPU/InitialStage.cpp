@@ -116,6 +116,9 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
 
     // Sort projections of each light source into projections per particle
     m_projections_per_particle.resize(m_context->particles.size());
+    for (size_t i = 0; i < m_projections_per_particle.size(); ++i)
+        m_projections_per_particle[i].clear();
+
     for (size_t i = 0; i < projection_per_light_source.size(); ++i)
     {
         for (size_t j = 0; j < projection_per_light_source[i].size(); ++j)
