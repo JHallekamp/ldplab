@@ -241,6 +241,8 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
         intersec_first,
         intersec_second))
     {
+        if (intersec_first < 0)
+            return false;
         inter_point = ray.origin + intersec_first *
             ray.direction;
         if (inter_point.z > geometry.cylinder_length &&
