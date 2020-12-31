@@ -67,6 +67,8 @@ namespace ldplab
             Vec3* point;
             /** @brief Array containing size intersection normals. */
             Vec3* normal;
+            /** @brief Array containing indices of intersected particles. */
+            int32_t* particle_index;
             /** @brief Number of elements in point and normal arrays. */
             size_t size;
         };

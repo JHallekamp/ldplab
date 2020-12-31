@@ -32,10 +32,18 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
     reflected_rays.inner_particle_rays = rays.inner_particle_rays;
     refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
 
+    reflected_rays.active_rays = 0;
+    refracted_rays.active_rays = 0;
+
     for (size_t i = 0; i < rays.size; i++)
     {
-        if (rays.index_data[i] < 0 ||
-            rays.index_data[i] >= m_context->particles.size())
+        if (rays.index_data[i] < 0)
+        {
+            reflected_rays.index_data[i] = -1;
+            refracted_rays.index_data[i] = -1;
+            continue;
+        }
+        else if (rays.index_data[i] >= m_context->particles.size())
             continue;
 
         const ParticleMaterialLinearOneDirectional* material =
@@ -82,7 +90,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
 
             // reflected ray
             reflected_ray.intensity = ray.intensity * R;
-            if (ray.intensity > m_context->intensity_cutoff)
+            if (reflected_ray.intensity > m_context->intensity_cutoff)
             {
                 reflected_rays.index_data[i] = rays.index_data[i];
                 reflected_rays.min_bounding_volume_distance_data[i] = 0.0;

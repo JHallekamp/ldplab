@@ -30,7 +30,8 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
     for (size_t i = 0; i < rays.size; i++)
     {
         if (rays.index_data[i] < 0 ||
-            rays.index_data[i] >= m_context->particles.size())
+            rays.index_data[i] >= m_context->particles.size() ||
+            rays.index_data[i] == intersection.particle_index[i])
             continue;
 
         RodeParticle& geometry = m_context->

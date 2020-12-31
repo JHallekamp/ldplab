@@ -20,8 +20,8 @@ namespace ldplab
         double intensity_cutoff;
         /** @brief Number of rays per buffer. */
         size_t number_rays_per_buffer;
-        /** @brief Number of rays per world space unit. */
-        size_t number_rays_per_unit;
+        /** @brief Number of rays per light source square unit */
+        size_t light_source_ray_density_per_unit_area;
         /** @brief Maximum number of times a ray can split. */
         size_t maximum_depth;
         /** @brief Number of parallel pipeline instances. */

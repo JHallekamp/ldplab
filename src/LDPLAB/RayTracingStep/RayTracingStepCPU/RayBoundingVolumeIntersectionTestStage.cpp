@@ -20,8 +20,9 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::setup()
     // For the brute force method, no setup is needed
 }
 
-void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
-    RayBuffer& buffer)
+size_t 
+    ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
+        RayBuffer& buffer)
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Test bounding sphere intersections "\
         "for batch buffer %i",
@@ -95,7 +96,7 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         }
     }
 
-    buffer.active_rays = num_rays_hitting_boundary_sphere;
+    buffer.active_rays -= num_rays_exiting_scene;
     buffer.world_space_rays = 0;
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Bounding sphere intersection "\
@@ -106,6 +107,8 @@ void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         num_rays_hitting_boundary_sphere + num_rays_exiting_scene,
         num_rays_hitting_boundary_sphere,
         num_rays_exiting_scene);
+
+    return num_rays_hitting_boundary_sphere;
 }
 
 inline void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::

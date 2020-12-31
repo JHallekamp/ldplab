@@ -118,6 +118,10 @@ void ldplab::rtscpu::Pipeline::processBatch(
         if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
             transmission_buffer.uid != buffer_control.dummyBufferUID())
         {
+            // Reset intersection buffer
+            for (size_t i = 0; i < intersection_buffer.size; ++i)
+                intersection_buffer.particle_index[i] = -1;
+
             if (buffer.world_space_rays == 0)
             {
                 m_ray_particle_intersection_test_stage->execute(
@@ -129,13 +133,15 @@ void ldplab::rtscpu::Pipeline::processBatch(
             {
                 do
                 {
-                    m_ray_bounding_volume_intersection_test_stage->execute(
-                        buffer);
-                    if (buffer.active_rays == 0)
+                    if (m_ray_bounding_volume_intersection_test_stage->execute(
+                        buffer))
+                    {
+                        m_ray_particle_intersection_test_stage->execute(
+                            buffer,
+                            intersection_buffer);
+                    }
+                    else if (buffer.active_rays == 0)
                         return;
-                    m_ray_particle_intersection_test_stage->execute(
-                        buffer,
-                        intersection_buffer);
                 } while (buffer.world_space_rays > 0);
             }
 

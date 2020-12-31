@@ -41,8 +41,9 @@ namespace ldplab
              *          particle index is set accordingly. Otherwise, if no
              *          particle bounding volume is intersected, the ray is
              *          set to be invalid.
+             * @returns The number of rays that hit a particle bounding volume.
              */
-            virtual void execute(RayBuffer& buffer) = 0;
+            virtual size_t execute(RayBuffer& buffer) = 0;
         };
 
         /** @brief Tests the intersection between rays and bounding spheres. */
@@ -61,7 +62,7 @@ namespace ldplab
              * @brief Inherited via
              * ldplab::rtscpu::IRayBoundingVolumeIntersectionTestStage
              */
-            void execute(RayBuffer& buffer) override;
+            size_t execute(RayBuffer& buffer) override;
         private:
             inline void transformRayFromWorldToParticleSpace(
                 Ray& ray, size_t pidx) const;

@@ -1,7 +1,6 @@
 #include <ldplab.hpp>
 #include <cmath>
 
-
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 0.5;
@@ -37,7 +36,7 @@ const double LIGHT_INTENSITY = 1.0;
 // Simulation properties
 const size_t NUM_RTS_THREADS = 1;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_UNIT = 100.0;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 100.0; //2025.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 6;
 const double RTS_INTENSITY_CUTOFF = 0.05;
 const double RTS_SOLVER_EPSILON = 0.00001;
@@ -112,7 +111,8 @@ int main()
     rtscpu_info.thread_pool = thread_pool;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
-    rtscpu_info.number_rays_per_unit = NUM_RTS_RAYS_PER_WORLD_SPACE_UNIT;
+    rtscpu_info.light_source_ray_density_per_unit_area = 
+        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
     rtscpu_info.maximum_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.epsilon = RTS_SOLVER_EPSILON;

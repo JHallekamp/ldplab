@@ -77,6 +77,7 @@ namespace ldplab
             std::vector<double> m_min_bounding_sphere_distance_data;
             std::vector<Vec3> m_point_data;
             std::vector<Vec3> m_normal_data;
+            std::vector<int32_t> m_intersected_particle_index_data;
             IntersectionBuffer m_intersection_buffer;
             OutputBuffer m_output_buffer;
             std::vector<Vec3> m_force_data;
