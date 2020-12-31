@@ -41,12 +41,8 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     BufferControl& buffer_control = m_buffer_controls[job_id];
     RayBuffer& initial_batch_buffer = buffer_control.initialBuffer();
     
-    // Setup has to be performed by the ray tracing step instance itself, since
-    // it only has to be executed once!
-    //m_initial_stage->setup();
-    //m_ray_bounding_volume_intersection_test_stage->setup();
-    
     bool batches_left;
+    size_t num_batches = 0;
     do
     {
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
@@ -62,6 +58,7 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
                 "new batch on initial buffer %i",
                 m_context->uid, job_id, initial_batch_buffer.uid);
 
+            ++num_batches;
             processBatch(initial_batch_buffer, buffer_control);
 
             LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i "\
@@ -71,8 +68,8 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     } while(batches_left);
 
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Pipeline instance %i executed "\
-        "successfully",
-        m_context->uid, job_id);
+        "successfully in a total of %i batches",
+        m_context->uid, job_id, num_batches);
 }
 
 void ldplab::rtscpu::Pipeline::processBatch(

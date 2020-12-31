@@ -83,6 +83,8 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
     m_context->output = &output;
 
     // Execute pipeline
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Setup ray tracing pipeline",
+        m_context->uid);
     m_context->pipeline->setup();
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray tracing pipeline",
         m_context->uid);
@@ -92,8 +94,7 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            end - start)).count();
-    LDPLAB_LOG_INFO("RTSCPU context %i: Ray tracing step executed after %fms",
+            end - start).count();
+    LDPLAB_LOG_INFO("RTSCPU context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);
 }
