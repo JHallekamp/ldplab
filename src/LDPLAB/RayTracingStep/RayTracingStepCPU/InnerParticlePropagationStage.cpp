@@ -21,6 +21,9 @@ ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     safety_factor{ safety_factor },
     m_context{ context }
 {
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "LinearIndexGradientRodeParticlePropagation instance created",
+        m_context->uid);
 }
 
 void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
@@ -28,6 +31,10 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
     IntersectionBuffer& intersection,
     OutputBuffer& output)
 {
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute inner particle ray propagation "\
+        "on batch buffer %i",
+        m_context->uid, rays.uid);
+
     for (size_t i = 0; i < rays.size; i++)
     {
         if (rays.index_data[i] < 0 ||
@@ -41,6 +48,11 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
             intersection.normal[i],
             output);
     }
+
+    LDPLAB_LOG_TRACE("RTSCPU context %i: Inner particle ray propagation on "\
+        "buffer %i completed",
+        m_context->uid,
+        rays.uid);
 }
 
 void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
