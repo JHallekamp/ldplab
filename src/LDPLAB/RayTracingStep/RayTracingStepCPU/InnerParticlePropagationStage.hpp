@@ -96,15 +96,19 @@ namespace ldplab
                  * @brief Vector pointing to the light rays origin. 
                  */
                 Vec3 r;
-                Arg operator*(const double& d) 
+                inline Arg operator*(const double& d) const
                 {
-                    Arg arg { this->w * d, this->r * d };
-                    return arg; 
+                    return Arg{ w * d, r * d };
                 }
-                Arg operator+(const Arg& a)
+                inline void operator*=(const double& d)
                 {
-                    Arg arg{ this->w + a.w, this->r + a.r };
-                    return arg;
+                    w *= d;
+                    r *= d;
+                }
+                inline void operator+=(const Arg& rhs)
+                {
+                    w += rhs.w;
+                    r += rhs.r;
                 }
                 /**
                  * @brief Calculates the maximum value of all variables.
@@ -157,7 +161,7 @@ namespace ldplab
                 const ParticleMaterialLinearOneDirectional* particle, 
                 const Arg& x,
                 const double h,
-                Arg& x_new);
+                Arg& x_new) const;
             /**
              * @brief The eikonal equation is a partial differential 
              *        equation used for wave propagation.
@@ -166,9 +170,9 @@ namespace ldplab
              * @param[in] x Input variable of the equation.
              * @returns the time derivative of the input variable. 
              */
-            Arg eikonal(
+            inline Arg eikonal(
                 const ParticleMaterialLinearOneDirectional* particle, 
-                Arg& x);
+                const Arg& x) const;
             /**
              * @brief Calculating the intersection of the ray and the particle.
              * @warning It is necessary that the ray origin is inside the 

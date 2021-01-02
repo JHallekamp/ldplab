@@ -154,23 +154,53 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
     const double h,
-    Arg& x_new)
+    Arg& x_new) const
 {
     Arg k[6]{};
     Arg error{ {0,0,0}, {0,0,0} };
+    Arg t{};
     x_new = { {0,0,0}, {0,0,0} };
     for (size_t i = 0; i < 6; ++i)
     {
         Arg x_step = x;
         for (size_t j = 0; j < i; ++j)
-            x_step = x_step + k[j] * h * beta[(i+1) * 6 + j];
-        k[i] = eikonal(particle, x_step);
-      
-        error = error + k[i] * cerr[i];
-        x_new = x_new + k[i] * c_star[i];
+        {
+            const double hb = h * beta[i * 6 + j];
+            x_step.w.x += k[j].w.x * hb;
+            x_step.w.y += k[j].w.y * hb;
+            x_step.w.z += k[j].w.z * hb;
+            x_step.r.x += k[j].w.x * hb;
+            x_step.r.y += k[j].w.y * hb;
+            x_step.r.z += k[j].w.z * hb;
+        }
+        // eikonal(particle, x_step)
+        k[i].w = particle->direction_times_gradient;
+        k[i].r = x_step.w / particle->indexOfRefraction(x_step.r);
+
+        if (cerr[i] != 0.0)
+        {
+            error.w.x += k[i].w.x * cerr[i];
+            error.w.y += k[i].w.y * cerr[i];
+            error.w.z += k[i].w.z * cerr[i];
+            error.r.x += k[i].w.x * cerr[i];
+            error.r.y += k[i].w.y * cerr[i];
+            error.r.z += k[i].w.z * cerr[i];
+        }
+
+        if (c_star[i] != 0.0)
+        {
+            x_new.w.x += k[i].w.x * c_star[i];
+            x_new.w.y += k[i].w.y * c_star[i];
+            x_new.w.z += k[i].w.z * c_star[i];
+            x_new.r.x += k[i].w.x * c_star[i];
+            x_new.r.y += k[i].w.y * c_star[i];
+            x_new.r.z += k[i].w.z * c_star[i];
+        }
     }
-    x_new = x_new * h + x;
-    error = error * h;
+    x_new *= h;
+    x_new += x;
+
+    error *= h;
     return error.absoluteMax();
 
     //k[0] = eikonal(particle, x);
@@ -182,15 +212,17 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
     //Arg errorfield = (k[0] * cerr[0] + k[1] * cerr[1] + k[2] * cerr[2] + k[3] * cerr[3] + k[4] * cerr[4] + k[5] * cerr[5]) * h;
 }
 
-ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::Arg 
+inline ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::Arg 
     ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::eikonal(
         const ParticleMaterialLinearOneDirectional* particle,
-        Arg& x )
+        const Arg& x ) const
 {
-    Arg f_of_x{ 
-        particle->direction * particle->gradient, 
+    //Arg f_of_x{ 
+    //    particle->direction * particle->gradient, 
+    //    x.w / particle->indexOfRefraction(x.r) };
+    return Arg{
+        particle->direction_times_gradient,
         x.w / particle->indexOfRefraction(x.r) };
-    return f_of_x;
 }
 
 bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
