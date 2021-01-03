@@ -63,6 +63,10 @@ namespace ldplab
              */
             OutputBuffer& getOutputBuffer();
             /**
+             * @brief Reset output buffer for all particle.
+             */
+            void resetOutputBuffer();
+            /**
              * @brief Provides the buffer index to identify a dummy buffer.
              * @returns The dummy buffer uid.
              */

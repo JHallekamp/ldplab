@@ -31,6 +31,23 @@ void ldplab::rtscpu::Pipeline::setup()
     m_ray_bounding_volume_intersection_test_stage->setup();
 }
 
+void ldplab::rtscpu::Pipeline::finalizeOutput()
+{
+    for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
+    {
+        for (size_t p = 0; p < m_buffer_controls[bc].getOutputBuffer().size; ++p)
+        {
+            m_context->output->force_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().force[p];
+            m_context->output->torque_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().torque[p];
+        }
+    }
+    for (size_t p = 0; p < m_context->particles.size(); ++p)
+    {
+        m_context->output->force_per_particle[p] /= m_context->number_rays_per_unit * m_context->number_rays_per_unit;
+        m_context->output->torque_per_particle[p] /= m_context->number_rays_per_unit * m_context->number_rays_per_unit;
+    }
+}
+
 void ldplab::rtscpu::Pipeline::execute(size_t job_id)
 {
     LDPLAB_ASSERT(job_id < m_buffer_controls.size());
@@ -39,8 +56,9 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
         m_context->uid, job_id);
 
     BufferControl& buffer_control = m_buffer_controls[job_id];
+    buffer_control.resetOutputBuffer();
     RayBuffer& initial_batch_buffer = buffer_control.initialBuffer();
-    
+
     bool batches_left;
     size_t num_batches = 0;
     do

@@ -56,6 +56,15 @@ ldplab::rtscpu::OutputBuffer& ldplab::rtscpu::BufferControl::getOutputBuffer()
     return m_output_buffer;
 }
 
+void ldplab::rtscpu::BufferControl::resetOutputBuffer()
+{
+    for (size_t i = 0; i < m_output_buffer.size; ++i)
+    {
+        m_output_buffer.force[i] = { 0.0, 0.0, 0.0 };
+        m_output_buffer.torque[i] = { 0.0, 0.0, 0.0 };
+    }
+}
+
 size_t ldplab::rtscpu::BufferControl::dummyBufferUID()
 {
     return m_buffers[1].uid; //m_dummy.uid;
@@ -73,7 +82,7 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
     // Dummy buffer
     m_buffers.emplace_back(
         m_context->maximum_depth + 1, m_context->number_rays_per_buffer);
-    m_buffers.back().ray_data = 
+    m_buffers.back().ray_data =
         m_ray_data.data() + m_context->number_rays_per_buffer;
     m_buffers.back().index_data =
         m_index_data.data() + m_context->number_rays_per_buffer;
@@ -87,7 +96,7 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
         for (size_t j = 0; j < 2; ++j)
         {
             m_buffers.emplace_back(i, m_context->number_rays_per_buffer);
-            const size_t offset = 
+            const size_t offset =
                 (2 * i + j) * m_context->number_rays_per_buffer;
             m_buffers.back().ray_data = m_ray_data.data() + offset;
             m_buffers.back().index_data = m_index_data.data() + offset;
@@ -95,13 +104,13 @@ void ldplab::rtscpu::BufferControl::initializeBuffers()
                 = m_min_bounding_sphere_distance_data.data() + offset;
         }
     }
-    
+
     m_intersection_buffer.size = m_context->number_rays_per_buffer;
     m_intersection_buffer.point = m_point_data.data();
     m_intersection_buffer.normal = m_normal_data.data();
-    m_intersection_buffer.particle_index = 
+    m_intersection_buffer.particle_index =
         m_intersected_particle_index_data.data();
-    
+
     m_output_buffer.size = m_context->particles.size();
     m_output_buffer.force = m_force_data.data();
     m_output_buffer.torque = m_torque_data.data();

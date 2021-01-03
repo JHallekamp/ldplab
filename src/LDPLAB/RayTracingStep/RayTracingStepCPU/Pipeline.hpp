@@ -46,6 +46,11 @@ namespace ldplab
              * @note Only called once per ray tracing step execution.
              */
             void setup();
+            /**
+             * @brief Adding output form all batches together and writing it 
+             *        to the ldplab::RayTracingStepOutput.
+             */
+            void finalizeOutput();
             /** @brief Inherited via IJob */
             void execute(size_t job_id) override;
         private:
