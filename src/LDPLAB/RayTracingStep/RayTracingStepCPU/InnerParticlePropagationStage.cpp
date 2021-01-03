@@ -88,7 +88,6 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
                     glm::cross(
                         m_context->particles[particle].centre_of_mass,
                         (t_new_direction - ray.direction));
-
                 intersected = true;
                 intersection(
                     m_context->rode_particle_geometry[particle], 
@@ -169,9 +168,9 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
             x_step.w.x += k[j].w.x * hb;
             x_step.w.y += k[j].w.y * hb;
             x_step.w.z += k[j].w.z * hb;
-            x_step.r.x += k[j].w.x * hb;
-            x_step.r.y += k[j].w.y * hb;
-            x_step.r.z += k[j].w.z * hb;
+            x_step.r.x += k[j].r.x * hb;
+            x_step.r.y += k[j].r.y * hb;
+            x_step.r.z += k[j].r.z * hb;
         }
         // eikonal(particle, x_step)
         k[i].w = particle->direction_times_gradient;
@@ -182,9 +181,9 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
             error.w.x += k[i].w.x * cerr[i];
             error.w.y += k[i].w.y * cerr[i];
             error.w.z += k[i].w.z * cerr[i];
-            error.r.x += k[i].w.x * cerr[i];
-            error.r.y += k[i].w.y * cerr[i];
-            error.r.z += k[i].w.z * cerr[i];
+            error.r.x += k[i].r.x * cerr[i];
+            error.r.y += k[i].r.y * cerr[i];
+            error.r.z += k[i].r.z * cerr[i];
         }
 
         if (c_star[i] != 0.0)
@@ -192,9 +191,9 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
             x_new.w.x += k[i].w.x * c_star[i];
             x_new.w.y += k[i].w.y * c_star[i];
             x_new.w.z += k[i].w.z * c_star[i];
-            x_new.r.x += k[i].w.x * c_star[i];
-            x_new.r.y += k[i].w.y * c_star[i];
-            x_new.r.z += k[i].w.z * c_star[i];
+            x_new.r.x += k[i].r.x * c_star[i];
+            x_new.r.y += k[i].r.y * c_star[i];
+            x_new.r.z += k[i].r.z * c_star[i];
         }
     }
     x_new *= h;
@@ -231,19 +230,18 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         const Ray& ray, 
         Vec3& inter_point,
         Vec3& inter_normal)
-{
-    double p =
+{ 
+    const double p =
         (ray.origin.x * ray.direction.x + ray.origin.y * ray.direction.y) /
-        (ray.direction.x * ray.direction.x + ray.direction.y + ray.direction.y);
-    double q = (ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) -
-        geometry.cylinder_radius;
+        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
+    const double q = ((ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) -
+        geometry.cylinder_radius * geometry.cylinder_radius) /
+        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
     double discriminant = p * p - q;
 
     if (discriminant < 0.0)
         return false;
-    double t = -p - std::sqrt(discriminant);
-    if (t < 0)
-        double t = -p + std::sqrt(discriminant);
+    const double t = -p + std::sqrt(discriminant);
 
     inter_point = ray.origin + ray.direction * t;
     if (inter_point.z <= geometry.cylinder_length &&
@@ -265,16 +263,14 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         Vec3& inter_normal)
 {
     Vec3 o_minus_c = ray.origin - geometry.origin_cap;
-    double p = glm::dot(ray.direction, o_minus_c);
-    double q = dot(o_minus_c, o_minus_c) -
+    const double p = glm::dot(ray.direction, o_minus_c);
+    const double q = dot(o_minus_c, o_minus_c) -
         (geometry.sphere_radius * geometry.sphere_radius);
     double discriminant = (p * p) - q;
 
     if (discriminant < 0.0)
         return false;
-    double t = -p - std::sqrt(discriminant);
-    if (t >= 0)
-        t = -p + std::sqrt(discriminant);
+    const double t = -p + std::sqrt(discriminant);
 
     inter_point = ray.origin + t * ray.direction;
     if (inter_point.z > geometry.cylinder_length &&
@@ -303,9 +299,7 @@ indentationIntersection(
 
     if (discriminant < 0.0)
         return false;
-    double t = -p - std::sqrt(discriminant);
-    if (t >= 0)
-        t = -p + std::sqrt(discriminant);
+    const double t = -p - std::sqrt(discriminant);
 
     inter_point = ray.origin + t * ray.direction;
     if (inter_point.z > 0 &&
