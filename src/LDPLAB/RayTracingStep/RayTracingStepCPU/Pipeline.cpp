@@ -41,10 +41,13 @@ void ldplab::rtscpu::Pipeline::finalizeOutput()
             m_context->output->torque_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().torque[p];
         }
     }
+    const double I = 0.1;
+    const double c = 2.99792458;
+    const double rho = m_context->number_rays_per_unit * m_context->number_rays_per_unit;
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        m_context->output->force_per_particle[p] /= m_context->number_rays_per_unit * m_context->number_rays_per_unit;
-        m_context->output->torque_per_particle[p] /= m_context->number_rays_per_unit * m_context->number_rays_per_unit;
+        m_context->output->force_per_particle[p] *= 1;// (0.1 / 2.99792458 / 100);//I / c / rho;
+        m_context->output->torque_per_particle[p] *= 1;// /c/rho;
     }
 }
 

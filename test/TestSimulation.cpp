@@ -1,6 +1,7 @@
 #include <ldplab.hpp>
 #include <cmath>
 #include <fstream>
+#include <iostream>
 
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
@@ -32,15 +33,15 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
         -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
 
 // Light intensity properties
-const double LIGHT_INTENSITY = 1.0;
+const double LIGHT_INTENSITY = 1;// 0.1 / 2.99792458 / 100;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 4;
+const size_t NUM_RTS_THREADS = 1;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 100.0; //2025.0;
-const size_t MAX_RTS_BRANCHING_DEPTH = 6;
-const double RTS_INTENSITY_CUTOFF = 0.05;
-const double RTS_SOLVER_EPSILON = 0.00000001;
+const size_t MAX_RTS_BRANCHING_DEPTH = 3;
+const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY;
+const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
 const size_t NUM_SIM_ROTATION_STEPS = 128;
@@ -142,7 +143,15 @@ int main()
     {
         state.particles.back().orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_file << rotation_x - const_pi() / 2 << "\t" << glm::length(output.force_per_particle[0])  << std::endl;
+
+        const double l = glm::length(output.force_per_particle[0] * (0.1 / 2.99792458 / 100.0));
+        if (l > 4)
+            std::cout << l;
+        //std::cout << l << "; " << glm::length(output.force_per_particle[0] * (0.1 / 2.99792458 / 100)) << "; ";
+        //output.force_per_particle[0] = output.force_per_particle[0] * (0.1 / 2.99792458 / 100);
+        //std::cout << glm::length(output.force_per_particle[0]) << std::endl;
+
+        output_file << rotation_x - const_pi() / 2 << "\t" << l << std::endl;
     }
 
     thread_pool->terminate();
