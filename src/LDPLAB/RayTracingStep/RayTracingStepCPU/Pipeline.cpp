@@ -33,9 +33,11 @@ void ldplab::rtscpu::Pipeline::setup()
 
 void ldplab::rtscpu::Pipeline::finalizeOutput()
 {
-    for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
+    for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        for (size_t p = 0; p < m_buffer_controls[bc].getOutputBuffer().size; ++p)
+        m_context->output->force_per_particle[p] = Vec3{ 0, 0, 0 };
+        m_context->output->torque_per_particle[p] = Vec3{ 0, 0, 0 };
+        for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
             m_context->output->force_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().force[p];
             m_context->output->torque_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().torque[p];
@@ -46,8 +48,8 @@ void ldplab::rtscpu::Pipeline::finalizeOutput()
     const double rho = m_context->number_rays_per_unit * m_context->number_rays_per_unit;
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        m_context->output->force_per_particle[p] *= 1;// (0.1 / 2.99792458 / 100);//I / c / rho;
-        m_context->output->torque_per_particle[p] *= 1;// /c/rho;
+        m_context->output->force_per_particle[p] *= I / c / rho;
+        m_context->output->torque_per_particle[p] *= I/c/rho;
     }
 }
 

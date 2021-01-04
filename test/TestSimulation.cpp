@@ -139,19 +139,11 @@ int main()
 
     ldplab::RayTracingStepOutput output;
     std::ofstream output_file("force");
-    for (double rotation_x = +const_pi()/2; rotation_x <= lim + const_pi() / 2; rotation_x += step_size)
+    for (double rotation_x = const_pi()/2; rotation_x <= lim + const_pi() / 2; rotation_x += step_size)
     {
         state.particles.back().orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-
-        const double l = glm::length(output.force_per_particle[0] * (0.1 / 2.99792458 / 100.0));
-        if (l > 4)
-            std::cout << l;
-        //std::cout << l << "; " << glm::length(output.force_per_particle[0] * (0.1 / 2.99792458 / 100)) << "; ";
-        //output.force_per_particle[0] = output.force_per_particle[0] * (0.1 / 2.99792458 / 100);
-        //std::cout << glm::length(output.force_per_particle[0]) << std::endl;
-
-        output_file << rotation_x - const_pi() / 2 << "\t" << l << std::endl;
+        output_file << rotation_x - const_pi() / 2 << "\t" << glm::length(output.force_per_particle[0]) << std::endl;
     }
 
     thread_pool->terminate();
