@@ -1,5 +1,6 @@
 #include <ldplab.hpp>
 #include <cmath>
+#include <fstream>
 
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
@@ -34,15 +35,15 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
 const double LIGHT_INTENSITY = 1.0;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 1;
+const size_t NUM_RTS_THREADS = 4;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 100.0; //2025.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 6;
 const double RTS_INTENSITY_CUTOFF = 0.05;
-const double RTS_SOLVER_EPSILON = 0.00001;
+const double RTS_SOLVER_EPSILON = 0.00000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 32;
+const size_t NUM_SIM_ROTATION_STEPS = 128;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
@@ -136,11 +137,12 @@ int main()
         static_cast<double>(NUM_SIM_ROTATION_STEPS);
 
     ldplab::RayTracingStepOutput output;
-    for (double rotation_z = 0.0; rotation_z <= lim; rotation_z += step_size)
+    std::ofstream output_file("force");
+    for (double rotation_x = +const_pi()/2; rotation_x <= lim + const_pi() / 2; rotation_x += step_size)
     {
-        state.particles.back().orientation.z = rotation_z;
+        state.particles.back().orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        // TODO: use or stroe output
+        output_file << rotation_x - const_pi() / 2 << "\t" << glm::length(output.force_per_particle[0])  << std::endl;
     }
 
     thread_pool->terminate();
