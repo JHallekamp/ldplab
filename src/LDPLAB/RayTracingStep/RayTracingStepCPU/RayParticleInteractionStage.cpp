@@ -37,7 +37,6 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
 
     for (size_t i = 0; i < rays.size; i++)
     {
-
         if (rays.index_data[i] < 0)
         {
             reflected_rays.index_data[i] = -1;
@@ -78,7 +77,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 refracted_ray.direction = nr * ray.direction +
                     inter_normal * (-cos_b + nr * cos_a);
                 refracted_rays.active_rays++;
-
+              
                 output.force[rays.index_data[i]] += refracted_ray.intensity * 
                     (refracted_ray.direction - ray.direction);
                 output.torque[rays.index_data[i]] += refracted_ray.intensity *
@@ -111,6 +110,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         }
         else
         {
+            refracted_rays.index_data[i] = -1;
             // total reflected ray
             reflected_rays.index_data[i] = rays.index_data[i];
             reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
@@ -126,6 +126,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     m_context->particles[rays.index_data[i]].centre_of_mass,
                     (reflected_ray.direction - ray.direction));
         }
+
     }
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle interaction on batch "\
