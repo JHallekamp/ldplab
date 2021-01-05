@@ -39,13 +39,14 @@ void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
 {
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        output.force_per_particle[p] = Vec3{ 0, 0, 0 };
-        output.torque_per_particle[p] = Vec3{ 0, 0, 0 };
+        UID<Particle> puid = m_context->particle_index_to_uid_map[p];
+        output.force_per_particle[puid] = Vec3{ 0, 0, 0 };
+        output.torque_per_particle[puid] = Vec3{ 0, 0, 0 };
         for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
-            output.force_per_particle[p] += 
+            output.force_per_particle[puid] += 
                 m_buffer_controls[bc].getOutputBuffer().force[p];
-            output.torque_per_particle[p] += 
+            output.torque_per_particle[puid] += 
                 m_buffer_controls[bc].getOutputBuffer().torque[p];
         }
     }
@@ -57,8 +58,9 @@ void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
 
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        output.force_per_particle[p] *= I / c / rho;
-        output.torque_per_particle[p] *= I/c/rho;
+        UID<Particle> puid = m_context->particle_index_to_uid_map[p];
+        output.force_per_particle[puid] *= I / c / rho;
+        output.torque_per_particle[puid] *= I/c/rho;
     }
 }
 

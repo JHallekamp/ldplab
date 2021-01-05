@@ -1,6 +1,9 @@
 #ifndef WWU_LDPLAB_RTSCPU_CONTEXT_HPP
 #define WWU_LDPLAB_RTSCPU_CONTEXT_HPP
 
+#include <map>
+#include <vector>
+
 #include "RayTracingStepCPU.hpp"
 #include "Pipeline.hpp"
 #include "Data.hpp"
@@ -38,8 +41,28 @@ namespace ldplab
                 rode_particle_geometry{ },
                 pipeline{ nullptr },
                 thread_pool{ nullptr },
+                particle_uid_to_index_map{ },
+                light_source_uid_to_index_map{ },
+                particle_index_to_uid_map{ },
+                light_source_index_to_uid_map{ },
                 parameters{ }
-            {}
+            {
+                // Create uid, index maps
+                for (size_t i = 0; i < particles.size(); ++i)
+                {
+                    particle_uid_to_index_map.emplace(std::make_pair(
+                        particles[i].uid, i));
+                    particle_index_to_uid_map.emplace(std::make_pair(
+                        i, particles[i].uid));
+                }
+                for (size_t i = 0; i < light_sources.size(); ++i)
+                {
+                    light_source_uid_to_index_map.emplace(std::make_pair(
+                        light_sources[i].uid, i));
+                    light_source_index_to_uid_map.emplace(std::make_pair(
+                        i, light_sources[i].uid));
+                }
+            }
             /** @brief The ID of the context. */
             UID<Context> uid;
             /**
@@ -64,15 +87,19 @@ namespace ldplab
              *        like particles with analytical representation.
              */
             std::vector<RodeParticle> rode_particle_geometry;
-            /**
-             * @brief The ray tracing step cpu pipeline.
-             */
+            /** @brief The ray tracing step cpu pipeline. */
             std::shared_ptr<Pipeline> pipeline;
-            /**
-             * @brief The thread pool used by the ray tracing step.
-             */
+            /** @brief The thread pool used by the ray tracing step. */
             std::shared_ptr<ThreadPool> thread_pool;
-
+            /** @brief Maps particle UIDs to the internaly used indices. */
+            std::map<UID<Particle>, size_t> particle_uid_to_index_map;
+            /** @brief Maps light source UIDs to the internaly used indices. */
+            std::map<UID<LightSource>, size_t> light_source_uid_to_index_map;
+            /** @brief Maps the internaly used particle indices to UIDs. */
+            std::map<size_t, UID<Particle>> particle_index_to_uid_map;
+            /** @brief Maps the internaly used light source indices to UIDs. */
+            std::map<size_t, UID<LightSource>> light_source_index_to_uid_map;
+            /** @brief Structure holding simulation parameters. */
             struct
             {
                 /**

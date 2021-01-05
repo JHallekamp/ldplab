@@ -39,15 +39,15 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
 const double LIGHT_INTENSITY = 1;// 0.1 / 2.99792458 / 100;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 1;
+const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 100.0; //2025.0;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 2000.0; //2025.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 3;
 const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 128;
+const size_t NUM_SIM_ROTATION_STEPS = 180;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
@@ -129,26 +129,21 @@ int main()
         return -1;
 
     // Create simulation
-    ldplab::SimulationState state;
-    state.particles.emplace_back();
-    state.particles.back().position = 
-        experimental_setup.particles[0].position;
-    state.particles.back().orientation =
-        experimental_setup.particles[0].orientation;
+    ldplab::SimulationState state{ experimental_setup };
     constexpr double lim = 2 * const_pi();
     constexpr double step_size = lim /
         static_cast<double>(NUM_SIM_ROTATION_STEPS);
-
     ldplab::RayTracingStepOutput output;
     std::ofstream output_file("force");
+    ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     for (double rotation_x = const_pi()/2; 
         rotation_x <= lim + const_pi() / 2; 
         rotation_x += step_size)
     {
-        state.particles.back().orientation.x = rotation_x;
+        state.particle_instances[puid].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
         output_file << rotation_x - const_pi() / 2 << "\t" << 
-            glm::length(output.force_per_particle[0]) << std::endl;
+            glm::length(output.force_per_particle[puid]) << std::endl;
     }
 
     thread_pool->terminate();

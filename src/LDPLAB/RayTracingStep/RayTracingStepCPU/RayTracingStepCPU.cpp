@@ -45,7 +45,8 @@ ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz)
 void ldplab::rtscpu::RayTracingStepCPU::execute(
     const SimulationState& input, RayTracingStepOutput& output)
 {
-    LDPLAB_ASSERT(input.particles.size() == m_context->particles.size());
+    LDPLAB_ASSERT(input.particle_instances.size() == 
+        m_context->particles.size());
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "Ray tracing step starts execution",
         m_context->uid);
@@ -53,23 +54,37 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
         std::chrono::steady_clock::now();
     
     // Update context
-    for (size_t i = 0; i < input.particles.size(); ++i)
+    for (size_t i = 0; i < m_context->particles.size(); ++i)
     {
+        UID<Particle> puid{ m_context->particle_index_to_uid_map[i] };
+        std::map<UID<Particle>, ParticleInstance>::const_iterator particle_it
+            = input.particle_instances.find(puid);
+        if (particle_it == input.particle_instances.end())
+        {
+            LDPLAB_LOG_ERROR("RTSCPU context %i: Could not update particle "\
+                "transformations, particle %i is not present in the given "\
+                "simulation state, abort RTSCPU execution",
+                m_context->uid,
+                puid);
+            return;
+        }
+        const ParticleInstance& particle = particle_it->second;
+
         // Set particle current transformation
         m_context->particle_transformations[i].w2p_translation =
-            -input.particles[i].position;
+            -particle.position;
         m_context->particle_transformations[i].p2w_translation =
-            input.particles[i].position;
+            particle.position;
         m_context->particle_transformations[i].w2p_rotation_scale =
             getRotationMatrix(
-                -input.particles[i].orientation.x,
-                -input.particles[i].orientation.y,
-                -input.particles[i].orientation.z);
+                -particle.orientation.x,
+                -particle.orientation.y,
+                -particle.orientation.z);
         m_context->particle_transformations[i].p2w_scale_rotation =
             getRotationMatrix(
-                input.particles[i].orientation.x, 
-                input.particles[i].orientation.y, 
-                input.particles[i].orientation.z);
+                particle.orientation.x, 
+                particle.orientation.y, 
+                particle.orientation.z);
         // Set transformed bounding sphere
         m_context->transformed_bounding_spheres[i].radius =
             ((BoundingVolumeSphere*)
@@ -80,9 +95,6 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 m_context->particles[i].bounding_volume.get())->center +
             m_context->particle_transformations[i].p2w_translation;
     }
-
-    output.force_per_particle.resize(input.particles.size());
-    output.torque_per_particle.resize(input.particles.size());
 
     // Execute pipeline
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Setup ray tracing pipeline",
