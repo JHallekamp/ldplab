@@ -72,14 +72,14 @@ namespace ldplab
              */
             State state();
         private:
-            BatchHandle(std::unique_ptr<IJob> job, size_t size);
+            BatchHandle(std::shared_ptr<IJob> job, size_t size);
             void runJob(bool& remove_batch_from_queue);
             void prepareJob(
                 size_t& job_id, bool& remove_batch_from_queue);
             void finishJob();
         private:
             std::mutex m_mutex;
-            const std::unique_ptr<IJob> m_job;
+            const std::shared_ptr<IJob> m_job;
             const size_t m_batch_size;
             size_t m_next_job_id;
             size_t m_running_jobs;
@@ -104,13 +104,13 @@ namespace ldplab
          *       batch handle.
          */
         std::shared_ptr<BatchHandle> submitJobBatch(
-            std::unique_ptr<IJob> job, size_t batch_size);
+            std::shared_ptr<IJob> job, size_t batch_size);
         /**
          * @brief Enqueues a batch of jobs and waits until the batch is 
          *        finished.
          */
         void executeJobBatch(
-            std::unique_ptr<IJob> job, size_t batch_size);
+            std::shared_ptr<IJob> job, size_t batch_size);
         /** @brief Returns the number of threads in the thread pool. */
         size_t size() const;
         /** @brief Returns the number of enqueued batches. */
