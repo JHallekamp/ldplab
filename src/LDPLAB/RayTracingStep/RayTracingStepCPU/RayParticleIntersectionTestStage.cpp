@@ -13,9 +13,10 @@
 ldplab::rtscpu::RodParticleIntersectionTest::
     RodParticleIntersectionTest(std::shared_ptr<Context> context)
     :
-    m_context{ context }
-{
-}
+    m_context{ context },
+    m_rod_particles{ ((RodParticleData*)
+        context->particle_data.get())->particle_data }
+{ }
 
 void ldplab::rtscpu::RodParticleIntersectionTest::execute(
     RayBuffer& rays,
@@ -34,8 +35,7 @@ void ldplab::rtscpu::RodParticleIntersectionTest::execute(
             rays.index_data[i] == intersection.particle_index[i])
             continue;
 
-        RodParticle& geometry = m_context->
-            rod_particle_geometry[rays.index_data[i]];
+        RodParticle& geometry = m_rod_particles[rays.index_data[i]];
         double cap_hight = geometry.origin_cap.z +
             geometry.sphere_radius - geometry.cylinder_length;
 

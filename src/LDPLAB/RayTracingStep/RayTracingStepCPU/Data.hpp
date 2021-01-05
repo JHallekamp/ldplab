@@ -1,11 +1,13 @@
 #ifndef WWU_LDPLAB_RTSCPU_DATA_HPP
 #define WWU_LDPLAB_RTSCPU_DATA_HPP
 
-#include "../../Geometry.hpp"
-#include "../../Utils/UID.hpp"
-
 #include <cstdint>
 #include <memory>
+#include <vector>
+
+#include "../../ExperimentalSetup/BoundingVolume.hpp"
+#include "../../Geometry.hpp"
+#include "../../Utils/UID.hpp"
 
 namespace ldplab
 {
@@ -105,18 +107,6 @@ namespace ldplab
         };
 
         /**
-         * @brief Interface for particle data rehashed to be used during ray 
-         *        tracing. 
-         */
-        struct IParticleData
-        {
-            /** @brief The type of the particle data. */
-            enum class Type { rod_particle };
-            /** @brief Returns the type of the particle. */
-            virtual Type type() const = 0;
-        };
-
-        /**
          * @brief Structure models the geometries of a rod like particle. The 
          *        particle is cylindric shaped with a spherical cap and a 
          *        spherical indent at the bottom.
@@ -125,27 +115,55 @@ namespace ldplab
          *         in the middle point of bottom surface where the indentation 
          *         is.
          */
-        struct RodParticle : public IParticleData
+        struct RodParticle
         {
-            RodParticle(
-                double cylinder_radius,
-                double cylinder_length,
-                double sphere_radius,
-                Vec3 origin_cap,
-                Vec3 origin_indentation)
-                :
-                cylinder_radius{ cylinder_radius },
-                cylinder_length{ cylinder_length },
-                sphere_radius{ sphere_radius },
-                origin_cap{ origin_cap },
-                origin_indentation{ origin_indentation }
-            { }
-            Type type() const override { return Type::rod_particle; }
             double cylinder_radius;
             double cylinder_length;
             double sphere_radius;
             Vec3 origin_cap;
             Vec3 origin_indentation;
+        };
+
+        /**
+         * @brief Interface for structure containing the particle data rehashed
+         *        to be used during ray tracing.
+         */
+        struct IParticleData
+        {
+            virtual ~IParticleData() { }
+            /** @brief The type of the particles. */
+            enum class Type { rod_particles };
+            /** @brief Returns the type of the particles. */
+            virtual Type type() const = 0;
+        };
+
+        /** @brief Contains particle data. */
+        struct RodParticleData : public IParticleData
+        {
+            Type type() const override { return Type::rod_particles; }
+            /** @brief Contains the rod particles. */
+            std::vector<RodParticle> particle_data;
+        };
+
+        /** 
+         * @brief Interface for structures containing data of bounding 
+         *        volumes. 
+         */
+        struct IBoundingVolumeData
+        {
+            virtual ~IBoundingVolumeData() { }
+            /** @brief The type of the bounding volume data. */
+            enum class Type { spheres };
+            /** @brief Returns the type of the bounding volumes. */
+            virtual Type type() const = 0;
+        };
+
+        /** @brief Contains the data of the transformed bounding spheres. */
+        struct BoundingSphereData : public IBoundingVolumeData
+        {
+            Type type() const override { return Type::spheres; }
+            /** @brief Bounding sphere data in world space. */
+            std::vector<BoundingVolumeSphere> sphere_data;
         };
     }
 }

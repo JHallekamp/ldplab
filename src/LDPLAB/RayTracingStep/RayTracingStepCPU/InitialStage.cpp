@@ -7,6 +7,8 @@ ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
         std::shared_ptr<Context> context)
     :
     m_context{ context },
+    m_bounding_spheres{ ((BoundingSphereData*)
+        context->bounding_volume_data.get())->sphere_data },
     m_batch_creation_light_index{ 0 },
     m_batch_creation_particle_index{ 0 },
     m_batch_creation_particle_initialized { false },
@@ -62,7 +64,7 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
             //const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
             //    bounding_sphere->center + trans.p2w_translation;
             const BoundingVolumeSphere& bounding_sphere =
-                m_context->transformed_bounding_spheres[j];
+                m_bounding_spheres[j];
 
             const double t =
                 glm::dot(light_direction, 

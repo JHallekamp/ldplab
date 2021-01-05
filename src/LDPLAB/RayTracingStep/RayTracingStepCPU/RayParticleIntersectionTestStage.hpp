@@ -1,9 +1,11 @@
 #ifndef WWU_LDPLAB_RTSCPU_RAY_PARTICLE_INTERSECTION_TEST_STAGE_HPP
 #define WWU_LDPLAB_RTSCPU_RAY_PARTICLE_INTERSECTION_TEST_STAGE_HPP
 
+#include "Data.hpp"
 #include "../../Geometry.hpp"
 
 #include <memory>
+#include <vector>
 
 namespace ldplab
 {
@@ -74,8 +76,6 @@ namespace ldplab
             void execute(
                 RayBuffer& rays,
                 IntersectionBuffer& intersection) override;
-        private:
-            std::shared_ptr<Context> m_context;
         private:
             /**
              * @brief Testing for a intersection of a single ray with a 
@@ -177,8 +177,9 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
-
-            
+        private:
+            std::shared_ptr<Context> m_context;
+            std::vector<RodParticle>& m_rod_particles;
         };
     }
 }

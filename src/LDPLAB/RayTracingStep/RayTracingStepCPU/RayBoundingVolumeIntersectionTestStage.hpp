@@ -68,6 +68,7 @@ namespace ldplab
                 Ray& ray, size_t pidx) const;
         private:
             std::shared_ptr<Context> m_context;
+            std::vector<BoundingVolumeSphere>& m_bounding_spheres;
         };
     }
 }

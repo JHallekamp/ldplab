@@ -23,7 +23,7 @@ namespace ldplab
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info);
     private:
-        static void initGeometry(
+        static void initRodParticleGeometry(
             const ExperimentalSetup& setup,
             std::shared_ptr<rtscpu::Context> context);
         /**

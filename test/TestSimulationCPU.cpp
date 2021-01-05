@@ -73,7 +73,7 @@ int main()
             PARTICLE_MATERIAL_ORIGIN,
             PARTICLE_MATERIAL_DIRECTION);
     rod_particle.geometry =
-        std::make_shared<ldplab::RodeParticleGeometry>(
+        std::make_shared<ldplab::RodParticleGeometry>(
             ROD_PARTICLE_CYLINDER_RADIUS,
             ROD_PARTICLE_CYLINDER_HEIGHT,
             ROD_PARTICLE_VOLUME_SPHERE_RADIUS,

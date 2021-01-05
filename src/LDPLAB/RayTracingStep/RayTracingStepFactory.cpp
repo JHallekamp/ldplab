@@ -31,20 +31,6 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
             "objects in the experimental setup");
         return nullptr;
     }
-
-    std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
-        setup.particles, setup.light_sources } };
-    ctx->thread_pool = info.thread_pool;
-    ctx->particle_transformations.resize(ctx->particles.size());
-    ctx->transformed_bounding_spheres.resize(ctx->particles.size(),
-        BoundingVolumeSphere(Vec3(0, 0, 0), 0));
-    ctx->parameters.intensity_cutoff = info.intensity_cutoff;
-    ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
-    ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
-    ctx->parameters.number_rays_per_unit = 
-        sqrt(info.light_source_ray_density_per_unit_area);
-    ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
-    ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
     
     if (setup.light_sources[0].direction->type() ==
         ILightDirection::Type::homogenous &&
@@ -59,7 +45,29 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         setup.particles[0].material->type() ==
         IParticleMaterial::Type::linear_one_directional)
     {
-        initGeometry(setup, ctx);
+        std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
+        setup.particles, setup.light_sources } };
+        ctx->thread_pool = info.thread_pool;
+        ctx->particle_transformations.resize(ctx->particles.size());
+        ctx->parameters.intensity_cutoff = info.intensity_cutoff;
+        ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
+        ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
+        ctx->parameters.number_rays_per_unit =
+            sqrt(info.light_source_ray_density_per_unit_area);
+        ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
+        ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
+
+        ctx->bounding_volume_data =
+            std::shared_ptr<rtscpu::IBoundingVolumeData>(
+                new rtscpu::BoundingSphereData());
+        ((rtscpu::BoundingSphereData*)ctx->bounding_volume_data.get())->
+            sphere_data.resize(ctx->particles.size(), 
+                BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
+        ctx->particle_data =
+            std::shared_ptr<rtscpu::IParticleData>(
+                new rtscpu::RodParticleData());
+        initRodParticleGeometry(setup, ctx);
+
         std::unique_ptr<rtscpu::InitialStageBoundingSpheresHomogenousLight> initial
         { new rtscpu::InitialStageBoundingSpheresHomogenousLight{ ctx } };
         std::unique_ptr<rtscpu::RayBoundingSphereIntersectionTestStageBruteForce> rbvit
@@ -90,7 +98,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     return nullptr;
 }
 
-void ldplab::RayTracingStepFactory::initGeometry(
+void ldplab::RayTracingStepFactory::initRodParticleGeometry(
     const ExperimentalSetup& setup, std::shared_ptr<rtscpu::Context> context)
 {
     for (size_t i = 0; i < setup.particles.size(); ++i)
@@ -106,12 +114,13 @@ void ldplab::RayTracingStepFactory::initGeometry(
                 (h + geometry->cylinder_radius * geometry->cylinder_radius / h) / 2.0;
             Vec3 origin_cap{ 0.0 , 0.0, geometry->cylinder_length + h - sphere_radius };
             Vec3 origin_indentation{ 0.0 , 0.0,h - sphere_radius };
-            context->rod_particle_geometry.push_back(rtscpu::RodParticle{
-                geometry->cylinder_radius,
-                geometry->cylinder_length,
-                sphere_radius,
-                origin_cap,
-                origin_indentation });
+            ((rtscpu::RodParticleData*)context->particle_data.get())->
+                particle_data.push_back(rtscpu::RodParticle{
+                    geometry->cylinder_radius,
+                    geometry->cylinder_length,
+                    sphere_radius,
+                    origin_cap,
+                    origin_indentation });
         }
     }
 }

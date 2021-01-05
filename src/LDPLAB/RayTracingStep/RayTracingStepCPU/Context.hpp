@@ -37,10 +37,10 @@ namespace ldplab
                 particles{ particles },
                 light_sources{ light_sources },
                 particle_transformations{ },
-                transformed_bounding_spheres{ },
-                rod_particle_geometry{ },
                 pipeline{ nullptr },
                 thread_pool{ nullptr },
+                particle_data{ nullptr },
+                bounding_volume_data{ nullptr },
                 particle_uid_to_index_map{ },
                 light_source_uid_to_index_map{ },
                 particle_index_to_uid_map{ },
@@ -66,12 +66,13 @@ namespace ldplab
             /** @brief The ID of the context. */
             UID<Context> uid;
             /**
-             * @brief Stores the particles present in the experimental setup. 
+             * @brief Stores a copy of the particles present in the
+             *        experimental setup. 
              */
             const std::vector<Particle> particles;
             /**
-             * @brief Stores the light sources present in the experimental
-             *        setup.
+             * @brief Stores a copy of the light sources present in the 
+             *        experimental setup.
              */
             const std::vector<LightSource> light_sources;
             /**
@@ -81,16 +82,14 @@ namespace ldplab
              *          corresponds to the index of the related particle.
              */
             std::vector<ParticleTransformation> particle_transformations;
-            std::vector<BoundingVolumeSphere> transformed_bounding_spheres;
-            /**
-             * @brief Stores the particle geometrical representation of rod
-             *        like particles with analytical representation.
-             */
-            std::vector<RodParticle> rod_particle_geometry;
             /** @brief The ray tracing step cpu pipeline. */
             std::shared_ptr<Pipeline> pipeline;
             /** @brief The thread pool used by the ray tracing step. */
             std::shared_ptr<ThreadPool> thread_pool;
+            /** @brief Holds an array with particle data. */
+            std::shared_ptr<IParticleData> particle_data;
+            /** @brief Holds an array with bounding volume data. */
+            std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
             /** @brief Maps particle UIDs to the internaly used indices. */
             std::map<UID<Particle>, size_t> particle_uid_to_index_map;
             /** @brief Maps light source UIDs to the internaly used indices. */

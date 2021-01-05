@@ -2,9 +2,10 @@
 #define WWU_LDPLAP_RTSCPU_INNER_PARTICLE_PROPAGATION_STAGE_HPP
 
 #include <memory>
+#include <vector>
 
+#include "Data.hpp"
 #include "../../Geometry.hpp"
-
 
 namespace ldplab
 {
@@ -270,6 +271,7 @@ namespace ldplab
             const double cerr[6]{ -0.00277778,  0.0 ,  0.02994152,  0.02919989, -0.02 , -0.03636364 };
         private:
             std::shared_ptr<Context> m_context;
+            std::vector<RodParticle>& m_rod_particles;
         };
     }
 }

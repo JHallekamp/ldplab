@@ -1,6 +1,7 @@
 #ifndef WWU_LDPLAB_RTSCPU_RAY_TRACING_STEP_CPU_HPP
 #define WWU_LDPLAB_RTSCPU_RAY_TRACING_STEP_CPU_HPP
 
+#include "Data.hpp"
 #include "..\IRayTracingStep.hpp"
 
 #include <memory>

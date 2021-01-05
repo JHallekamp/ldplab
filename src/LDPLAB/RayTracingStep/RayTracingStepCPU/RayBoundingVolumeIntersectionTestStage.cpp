@@ -8,7 +8,9 @@ ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
         std::shared_ptr<Context> context)
     :
-    m_context{ context }
+    m_context{ context },
+    m_bounding_spheres{ ((BoundingSphereData*) 
+        context->bounding_volume_data.get())->sphere_data }
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "RayBoundingSphereIntersectionTestStageBruteForce instance created",
@@ -52,10 +54,10 @@ size_t
             //    ((BoundingVolumeSphere*)
             //        m_context->particles[j].bounding_volume.get())->radius;
             const Vec3& oc = o - 
-                m_context->transformed_bounding_spheres[j].center;
+                m_bounding_spheres[j].center;
             const double rr =
-                m_context->transformed_bounding_spheres[j].radius *
-                m_context->transformed_bounding_spheres[j].radius;
+                m_bounding_spheres[j].radius *
+                m_bounding_spheres[j].radius;
 
             const double q = glm::dot(oc, oc) - rr;
             if (q <= 1e-9) //std::numeric_limits<double>::epsilon())

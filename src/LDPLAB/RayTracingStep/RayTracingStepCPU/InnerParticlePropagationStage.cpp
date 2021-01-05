@@ -19,7 +19,9 @@ ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     initial_step_size{ initial_step_size },
     epsilon{ epsilon },
     safety_factor{ safety_factor },
-    m_context{ context }
+    m_context{ context },
+    m_rod_particles{ ((RodParticleData*)
+        context->particle_data.get())->particle_data }
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "LinearIndexGradientRodParticlePropagation instance created",
@@ -78,8 +80,7 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
         double error = rk45(material, x, h, x_new);
         if (error <= epsilon)
         {
-            if (isOutsideParticle(
-                m_context->rod_particle_geometry[particle], x_new.r))
+            if (isOutsideParticle(m_rod_particles[particle], x_new.r))
             {
                 Vec3 t_new_direction = glm::normalize(x.w);
                 output.force[particle] += ray.intensity *
@@ -90,7 +91,7 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
                         (t_new_direction - ray.direction));
                 intersected = true;
                 intersection(
-                    m_context->rod_particle_geometry[particle], 
+                    m_rod_particles[particle], 
                     x, 
                     inter_point, 
                     inter_normal);

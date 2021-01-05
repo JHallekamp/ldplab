@@ -85,15 +85,23 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
                 particle.orientation.x, 
                 particle.orientation.y, 
                 particle.orientation.z);
-        // Set transformed bounding sphere
-        m_context->transformed_bounding_spheres[i].radius =
-            ((BoundingVolumeSphere*)
-                m_context->particles[i].bounding_volume.get())->radius;
-        m_context->transformed_bounding_spheres[i].center =
-            m_context->particle_transformations[i].p2w_scale_rotation *
-            ((BoundingVolumeSphere*)
-                m_context->particles[i].bounding_volume.get())->center +
-            m_context->particle_transformations[i].p2w_translation;
+        // Transform bounding volumes
+        if (m_context->bounding_volume_data->type() ==
+            IBoundingVolumeData::Type::spheres)
+        {
+            // Set sphere radius
+            ((BoundingSphereData*)
+                m_context->bounding_volume_data.get())->sphere_data[i].radius =
+                ((BoundingVolumeSphere*)
+                    m_context->particles[i].bounding_volume.get())->radius;
+            // Set sphere center
+            ((BoundingSphereData*)
+                m_context->bounding_volume_data.get())->sphere_data[i].center =
+                m_context->particle_transformations[i].p2w_scale_rotation *
+                ((BoundingVolumeSphere*)
+                    m_context->particles[i].bounding_volume.get())->center +
+                m_context->particle_transformations[i].p2w_translation;
+        }
     }
 
     // Execute pipeline
