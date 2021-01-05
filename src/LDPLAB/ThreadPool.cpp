@@ -14,7 +14,7 @@ std::string getThreadIDString(std::thread::id tid)
 }
 
 ldplab::ThreadPool::BatchHandle::BatchHandle(
-    std::unique_ptr<IJob> job, size_t size)
+    std::shared_ptr<IJob> job, size_t size)
     :
     m_job{ std::move(job) },
     m_batch_size{ size },
@@ -38,7 +38,7 @@ void ldplab::ThreadPool::BatchHandle::runJob(bool& remove_batch_from_queue)
     LDPLAB_LOG_TRACE("Thread pool batch %i: Thread %s executes job %i "\
         "(%i of %i)", 
         m_uid,
-        getThreadIDString(std::this_thread::get_id()),
+        getThreadIDString(std::this_thread::get_id()).c_str(),
         job_id, 
         job_id + 1, 
         m_batch_size);
@@ -48,7 +48,7 @@ void ldplab::ThreadPool::BatchHandle::runJob(bool& remove_batch_from_queue)
     LDPLAB_LOG_TRACE("Thread pool batch %i: Thread %s finished job execution "\
         "%i (%i of %i)",
         m_uid, 
-        getThreadIDString(std::this_thread::get_id()),
+        getThreadIDString(std::this_thread::get_id()).c_str(),
         job_id, 
         job_id + 1, 
         m_batch_size);
@@ -90,7 +90,7 @@ void ldplab::ThreadPool::BatchHandle::join()
     if (m_next_job_id < m_batch_size || m_running_jobs > 0)
     {
         LDPLAB_LOG_TRACE("Thread pool batch %i: Join on thread %s",
-            m_uid, getThreadIDString(std::this_thread::get_id()));
+            m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
         m_batch_join.wait(lck);
     }
 }
@@ -132,13 +132,23 @@ ldplab::ThreadPool::ThreadPool(size_t size)
 
 ldplab::ThreadPool::~ThreadPool()
 {
-    terminate();
+    // We want thread pools to be terminated explicitly because it helps
+    // preventing crashes during application termination
+    LDPLAB_ASSERT(m_threads_state == State::threads_inactive);
+    if (m_threads_state != State::threads_inactive)
+    {
+        LDPLAB_LOG_WARNING("Thread pool %i: Thread pool implicitly "\
+        "terminated on destructor call, you should call terminate explicitly",
+            m_uid);
+        terminate();
+    }
+    
     LDPLAB_LOG_INFO("Thread pool %i: Instance destroyed", m_uid);
 }
 
 std::shared_ptr<ldplab::ThreadPool::BatchHandle>
     ldplab::ThreadPool::submitJobBatch(
-        std::unique_ptr<IJob> job, size_t batch_size)
+        std::shared_ptr<IJob> job, size_t batch_size)
 {
     if (batch_size < 1 || size() < 1)
     {
@@ -175,13 +185,15 @@ std::shared_ptr<ldplab::ThreadPool::BatchHandle>
 
     enqueueBatch(batch);
     LDPLAB_LOG_DEBUG("Thread pool %i: Batch %i submitted by thread %s",
-        m_uid, batch->m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, 
+        batch->m_uid, 
+        getThreadIDString(std::this_thread::get_id()).c_str());
 
     return batch;
 }
 
 void ldplab::ThreadPool::executeJobBatch(
-    std::unique_ptr<IJob> job, size_t batch_size)
+    std::shared_ptr<IJob> job, size_t batch_size)
 {
     if (batch_size < 1 || size() < 1)
     {
@@ -219,7 +231,9 @@ void ldplab::ThreadPool::executeJobBatch(
     enqueueBatch(batch);
     LDPLAB_LOG_DEBUG("Thread pool %i: Batch %i submitted for synchronized "\
         "execution by thread %s", 
-        m_uid, batch->m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, 
+        batch->m_uid, 
+        getThreadIDString(std::this_thread::get_id()).c_str());
 
     batch->join();
 }
@@ -248,9 +262,9 @@ void ldplab::ThreadPool::join()
     thread_lck.unlock();
 
     LDPLAB_LOG_DEBUG("Thread pool %i: Performs join on thread %s", 
-        m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
     LDPLAB_LOG_TRACE("Thread pool %i: Joins batches on thread %s",
-        m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
     while (true)
     {
         std::shared_ptr<BatchHandle> batch = getUnjoinedBatch();
@@ -264,13 +278,13 @@ void ldplab::ThreadPool::join()
     {
         LDPLAB_LOG_TRACE("Thread pool %i: Joins thread %s on thread %s",
             m_uid, 
-            getThreadIDString(m_worker_threads[i].get_id()),
-            getThreadIDString(std::this_thread::get_id()));
+            getThreadIDString(m_worker_threads[i].get_id()).c_str(),
+            getThreadIDString(std::this_thread::get_id()).c_str());
         m_worker_threads[i].join();
     }
 
     LDPLAB_LOG_DEBUG("Thread pool %i: Join complete on thread %s", 
-        m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
 }
 
 void ldplab::ThreadPool::terminate()
@@ -288,7 +302,7 @@ void ldplab::ThreadPool::terminate()
     for (size_t i = 0; i < m_worker_threads.size(); ++i)
     {
         LDPLAB_LOG_TRACE("Thread pool %i: Termination joins thread %s",
-            m_uid, getThreadIDString(m_worker_threads[i].get_id()));
+            m_uid, getThreadIDString(m_worker_threads[i].get_id()).c_str());
         m_worker_threads[i].join();
     }
 
@@ -308,7 +322,7 @@ void ldplab::ThreadPool::terminate()
 void ldplab::ThreadPool::workerThread()
 {
     LDPLAB_LOG_DEBUG("Thread pool %i: Thread %s started", 
-        m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
     while (workerThreadRunning())
     {
         std::shared_ptr<BatchHandle> batch_handle =
@@ -318,7 +332,7 @@ void ldplab::ThreadPool::workerThread()
             LDPLAB_LOG_TRACE("Thread pool %i: Thread %s executes job "\
                 "in batch %i",
                 m_uid,
-                getThreadIDString(std::this_thread::get_id()),
+                getThreadIDString(std::this_thread::get_id()).c_str(),
                 batch_handle->m_uid);
 
             bool remove_from_queue;
@@ -328,7 +342,7 @@ void ldplab::ThreadPool::workerThread()
                 LDPLAB_LOG_TRACE("Thread pool %i: Thread %s had no job to "\
                     "execute in batch %i, batch will be removed from queue",
                     m_uid,
-                    getThreadIDString(std::this_thread::get_id()),
+                    getThreadIDString(std::this_thread::get_id()).c_str(),
                     batch_handle->m_uid);
                 workerThreadDequeueBatch(batch_handle);
             }
@@ -337,7 +351,7 @@ void ldplab::ThreadPool::workerThread()
             break;
     }
     LDPLAB_LOG_DEBUG("Thread pool %i: Thread %s stopped",
-        m_uid, getThreadIDString(std::this_thread::get_id()));
+        m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
 }
 
 void ldplab::ThreadPool::enqueueBatch(std::shared_ptr<BatchHandle> batch)
@@ -374,7 +388,9 @@ void ldplab::ThreadPool::workerThreadDequeueBatch(
     {
         m_batch_queue.pop_front();
         LDPLAB_LOG_DEBUG("Thread pool %i: Thread %s dequeued batch %i",
-            m_uid, getThreadIDString(std::this_thread::get_id()), batch->m_uid);
+            m_uid, 
+            getThreadIDString(std::this_thread::get_id()).c_str(), 
+            batch->m_uid);
     }
 }
 
@@ -388,10 +404,10 @@ std::shared_ptr<ldplab::ThreadPool::BatchHandle>
     if (workerThreadCanIdle())
     {
         LDPLAB_LOG_TRACE("Thread pool %i: Thread %s waits, no job available",
-            m_uid, getThreadIDString(std::this_thread::get_id()));
+            m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
         m_idle_worker.wait(queue_lck);
         LDPLAB_LOG_TRACE("Thread pool %i: Thread %s woke up",
-            m_uid, getThreadIDString(std::this_thread::get_id()));
+            m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
     }
     return nullptr;
 }

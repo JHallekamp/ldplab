@@ -14,11 +14,6 @@ namespace ldplab
     struct ExperimentalSetup
     {
         /**
-         * @brief This bounding box is spanning the space in which the 
-         *        simulation is contained;
-         */
-        BoundingBox world;
-        /**
          * @brief All particles 
          */
         std::vector<Particle>  particles;
@@ -29,7 +24,7 @@ namespace ldplab
         /**
          * @brief Index of reflection of the medium.
          */
-        double refractive_index;
+        double medium_reflection_index;
     };
 }
 

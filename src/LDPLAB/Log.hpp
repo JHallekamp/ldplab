@@ -3,6 +3,7 @@
 
 #include "LogCallback.hpp"
 
+#include <cstdint>
 #include <mutex>
 #include <list>
 
@@ -50,7 +51,7 @@ namespace ldplab
         static void logFatal(const char* format, ...);
         /** @brief Logs an error that prevents correct operation. */
         static void logError(const char* format, ...);
-        /** @brief Logs a warning that might be interessting for operators. */
+        /** @brief Logs a warning that might be interessting for operators. */ 
         static void logWarning(const char* format, ...);
         /** @brief Logs an information during normal operation. */
         static void logInfo(const char* format, ...);
@@ -74,7 +75,7 @@ namespace ldplab
         public:
             ~LogDispatcher();
             void log(LogLevel log_level, const std::string& log_entry);
-            unsigned int numCallbacks();
+            size_t numCallbacks();
             bool subscribeCallback(ILogCallback* callback);
             bool unsubscribeCallback(ILogCallback* callback);
         private:

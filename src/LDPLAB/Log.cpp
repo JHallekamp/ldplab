@@ -149,7 +149,7 @@ void ldplab::Log::LogDispatcher::log(
     }
 }
 
-unsigned int ldplab::Log::LogDispatcher::numCallbacks()
+size_t ldplab::Log::LogDispatcher::numCallbacks()
 {
     std::lock_guard<std::mutex> guard{ m_callback_mutex };
     return m_callbacks.size();
