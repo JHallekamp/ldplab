@@ -19,7 +19,7 @@ namespace ldplab
         struct RayBuffer;
         struct IntersectionBuffer;
         struct OutputBuffer;
-        struct RodeParticle;
+        struct RodParticle;
 
         /**
          * @brief Inner particle propagation stage interface
@@ -50,7 +50,7 @@ namespace ldplab
          * @detail The light propagation is calculated by solving the Eikonal 
          *         equation with the Runge–Kutta–Fehlberg(45) method.
          */
-        class LinearIndexGradientRodeParticlePropagation
+        class LinearIndexGradientRodParticlePropagation
             : public IInnerParticlePropagationStage
         {
         public:
@@ -61,7 +61,7 @@ namespace ldplab
              * @param parameters Structure containing all parameter for the 
              *                   Runge-Kutta-Fehlberg method.
              */
-            LinearIndexGradientRodeParticlePropagation(
+            LinearIndexGradientRodParticlePropagation(
                 std::shared_ptr<Context> context,
                 RK45 parameters);
             /**
@@ -144,7 +144,7 @@ namespace ldplab
              * @retuns true if the position is outside the particle, false if 
              *         the position is inside.
              */
-            bool isOutsideParticle(const RodeParticle& geometry, const Vec3& r);
+            bool isOutsideParticle(const RodParticle& geometry, const Vec3& r);
             /**
              * @brief Integration step of the Runge-Kutta-Fehlberg method.
              * @param[in] particle Pointer to the particle material containing 
@@ -184,7 +184,7 @@ namespace ldplab
              *                          inside the particle.
              */
             void intersection(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Arg& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
@@ -204,13 +204,13 @@ namespace ldplab
              *         false will be returned.
              */
             bool cylinderIntersection(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the
-             *        spherical cap of the rode particle.
+             *        spherical cap of the rod particle.
              * @warning It is assumed that the rays origin is inside the 
              *          particle.
              * @param[in] geometry Specifies the particle geometry.
@@ -225,13 +225,13 @@ namespace ldplab
              *         false will be returned.
              */
             bool capIntersection(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the
-             *        spherical indentation of the rode particle.
+             *        spherical indentation of the rod particle.
              * @warning It is assumed that the rays origin is inside the 
              *          particle.
              * @param[in] geometry Specifies the particle geometry.
@@ -246,7 +246,7 @@ namespace ldplab
              *         else false will be returned.
              */
             bool indentationIntersection(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);

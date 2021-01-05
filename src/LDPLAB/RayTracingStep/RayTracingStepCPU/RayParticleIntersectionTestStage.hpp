@@ -15,7 +15,7 @@ namespace ldplab
         // Prototype
         struct RayBuffer;
         struct IntersectionBuffer;
-        struct RodeParticle;
+        struct RodParticle;
         struct Context;
 
         /**
@@ -47,15 +47,15 @@ namespace ldplab
 
         /**
          * @brief Class implementing the ray particle intersection test for 
-         *        rode like particle which are analytical representation. 
+         *        rod like particle which are analytical representation. 
          *        The particle is cylindric shaped with a spherical cap and a 
          *        spherical indent at the bottom.
          */
-        class RodeParticleIntersectionTest :
+        class RodParticleIntersectionTest :
             public IRayParticleIntersectionTestStage
         {
         public:
-            RodeParticleIntersectionTest(
+            RodParticleIntersectionTest(
                 std::shared_ptr<Context> context);
             /**
              * @brief Inherited via ldplab::rtscpu::IRayParticleIntersectionTestStage.  
@@ -90,7 +90,7 @@ namespace ldplab
              *                          outside of the particle.
              */
             bool intersectionTest(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
@@ -106,7 +106,7 @@ namespace ldplab
              *         false will be returned.
              */
             bool cylinderIntersection(
-                const RodeParticle& particle,
+                const RodParticle& particle,
                 const Ray& ray,
                 double& distance_min,
                 double& distance_max);
@@ -131,7 +131,7 @@ namespace ldplab
 
             /**
              * @brief Calculate the intersection point of a ray and the
-             *        spherical cap of the rode particle.
+             *        spherical cap of the rod particle.
              * @note The intersection point is always the point with the
              *       minimum distance from the ray origin.
              * @warning Only the correct hight of the intersection point is 
@@ -149,13 +149,13 @@ namespace ldplab
              *         false will be returned.
              */
             bool capIntersection(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the 
-             *        spherical indentation of the rode particle.
+             *        spherical indentation of the rod particle.
              * @note The intersection point is always the point with the 
              *       maximum distance from the ray origin (including negative 
              *       distances).
@@ -173,7 +173,7 @@ namespace ldplab
              *         false will be returned.
              */
             bool indentationIntersection(
-                const RodeParticle& geometry,
+                const RodParticle& geometry,
                 const Ray& ray,
                 Vec3& inter_point,
                 Vec3& inter_normal);

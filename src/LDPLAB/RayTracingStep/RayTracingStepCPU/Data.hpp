@@ -105,7 +105,19 @@ namespace ldplab
         };
 
         /**
-         * @brief Structure models the geometries of a rode like particle. The 
+         * @brief Interface for particle data rehashed to be used during ray 
+         *        tracing. 
+         */
+        struct IParticleData
+        {
+            /** @brief The type of the particle data. */
+            enum class Type { rod_particle };
+            /** @brief Returns the type of the particle. */
+            virtual Type type() const = 0;
+        };
+
+        /**
+         * @brief Structure models the geometries of a rod like particle. The 
          *        particle is cylindric shaped with a spherical cap and a 
          *        spherical indent at the bottom.
          * @detail The orientation of the cylinder is pointing to the 
@@ -113,8 +125,22 @@ namespace ldplab
          *         in the middle point of bottom surface where the indentation 
          *         is.
          */
-        struct RodeParticle
+        struct RodParticle : public IParticleData
         {
+            RodParticle(
+                double cylinder_radius,
+                double cylinder_length,
+                double sphere_radius,
+                Vec3 origin_cap,
+                Vec3 origin_indentation)
+                :
+                cylinder_radius{ cylinder_radius },
+                cylinder_length{ cylinder_length },
+                sphere_radius{ sphere_radius },
+                origin_cap{ origin_cap },
+                origin_indentation{ origin_indentation }
+            { }
+            Type type() const override { return Type::rod_particle; }
             double cylinder_radius;
             double cylinder_length;
             double sphere_radius;

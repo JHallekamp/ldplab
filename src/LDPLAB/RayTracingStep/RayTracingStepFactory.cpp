@@ -56,7 +56,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         setup.particles[0].bounding_volume->type() ==
         IBoundingVolume::Type::sphere &&
         setup.particles[0].geometry->type() ==
-        IParticleGeometry::Type::sphere_capped_cylinder &&
+        IParticleGeometry::Type::rod_particle &&
         setup.particles[0].material->type() ==
         IParticleMaterial::Type::linear_one_directional &&
         info.solver_parameters->type() == IEikonalSolver::Type::rk45)
@@ -66,12 +66,12 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         { new rtscpu::InitialStageBoundingSpheresHomogenousLight{ ctx } };
         std::unique_ptr<rtscpu::RayBoundingSphereIntersectionTestStageBruteForce> rbvit
         { new rtscpu::RayBoundingSphereIntersectionTestStageBruteForce {ctx} };
-        std::unique_ptr<rtscpu::RodeParticleIntersectionTest> rpit
-        { new rtscpu::RodeParticleIntersectionTest{ctx} };
+        std::unique_ptr<rtscpu::RodParticleIntersectionTest> rpit
+        { new rtscpu::RodParticleIntersectionTest{ctx} };
         std::unique_ptr<rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction> rpi
         { new rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction{ ctx } };
-        std::unique_ptr<rtscpu::LinearIndexGradientRodeParticlePropagation> ipp
-        { new rtscpu::LinearIndexGradientRodeParticlePropagation{
+        std::unique_ptr<rtscpu::LinearIndexGradientRodParticlePropagation> ipp
+        { new rtscpu::LinearIndexGradientRodParticlePropagation{
             ctx,
             *((RK45*) info.solver_parameters.get())} };
         ctx->pipeline = std::unique_ptr<rtscpu::Pipeline>{ new rtscpu::Pipeline{
@@ -97,16 +97,16 @@ void ldplab::RayTracingStepFactory::initGeometry(
     {
         const Particle& particle = setup.particles[i];
         if (particle.geometry->type() ==
-            IParticleGeometry::Type::sphere_capped_cylinder)
+            IParticleGeometry::Type::rod_particle)
         {
-            RodeParticleGeometry* geometry =
-                (RodeParticleGeometry*)particle.geometry.get();
+            RodParticleGeometry* geometry =
+                (RodParticleGeometry*)particle.geometry.get();
             double h = geometry->kappa * geometry->cylinder_radius;
             double sphere_radius =
                 (h + geometry->cylinder_radius * geometry->cylinder_radius / h) / 2.0;
             Vec3 origin_cap{ 0.0 , 0.0, geometry->cylinder_length + h - sphere_radius };
             Vec3 origin_indentation{ 0.0 , 0.0,h - sphere_radius };
-            context->rode_particle_geometry.push_back(rtscpu::RodeParticle{
+            context->rod_particle_geometry.push_back(rtscpu::RodParticle{
                 geometry->cylinder_radius,
                 geometry->cylinder_length,
                 sphere_radius,
