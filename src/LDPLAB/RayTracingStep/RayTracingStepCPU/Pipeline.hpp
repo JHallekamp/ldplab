@@ -8,6 +8,7 @@
 #include "RayParticleInteractionStage.hpp"
 #include "RayParticleIntersectionTestStage.hpp"
 
+#include "../RayTracingStepOutput.hpp"
 #include "../../ThreadPool.hpp"
 
 #include <memory>
@@ -50,7 +51,7 @@ namespace ldplab
              * @brief Adding output form all batches together and writing it 
              *        to the ldplab::RayTracingStepOutput.
              */
-            void finalizeOutput();
+            void finalizeOutput(RayTracingStepOutput& output);
             /** @brief Inherited via IJob */
             void execute(size_t job_id) override;
         private:

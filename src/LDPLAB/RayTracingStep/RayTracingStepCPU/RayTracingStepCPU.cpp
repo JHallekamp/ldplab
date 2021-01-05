@@ -83,7 +83,6 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
 
     output.force_per_particle.resize(input.particles.size());
     output.torque_per_particle.resize(input.particles.size());
-    m_context->output = &output;
 
     // Execute pipeline
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Setup ray tracing pipeline",
@@ -92,8 +91,8 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray tracing pipeline",
         m_context->uid);
     m_context->thread_pool->executeJobBatch(
-        m_context->pipeline, m_context->number_parallel_pipelines);
-    m_context->pipeline->finalizeOutput();
+        m_context->pipeline, m_context->parameters.number_parallel_pipelines);
+    m_context->pipeline->finalizeOutput(output);
 
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();

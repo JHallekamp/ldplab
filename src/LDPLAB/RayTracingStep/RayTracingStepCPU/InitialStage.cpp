@@ -163,7 +163,7 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
     m_batch_creation_light_index = 0;
     m_batch_creation_particle_initialized = false;
     m_rasterization_step_size = 
-        1.0 / static_cast<double>(m_context->number_rays_per_unit);
+        1.0 / static_cast<double>(m_context->parameters.number_rays_per_unit);
 
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Particle projections created",
         m_context->uid);

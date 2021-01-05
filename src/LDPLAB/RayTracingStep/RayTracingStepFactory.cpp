@@ -38,13 +38,13 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     ctx->particle_transformations.resize(ctx->particles.size());
     ctx->transformed_bounding_spheres.resize(ctx->particles.size(),
         BoundingVolumeSphere(Vec3(0, 0, 0), 0));
-    ctx->intensity_cutoff = info.intensity_cutoff;
-    ctx->medium_index_of_reflecation = setup.refractive_index;
-    ctx->number_rays_per_buffer = info.number_rays_per_buffer;
-    ctx->number_rays_per_unit = 
+    ctx->parameters.intensity_cutoff = info.intensity_cutoff;
+    ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
+    ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
+    ctx->parameters.number_rays_per_unit = 
         sqrt(info.light_source_ray_density_per_unit_area);
-    ctx->maximum_depth = info.maximum_depth;
-    ctx->number_parallel_pipelines = info.number_parallel_pipelines;
+    ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
+    ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
     
     if (setup.light_sources[0].direction->type() ==
         ILightDirection::Type::homogenous &&
@@ -71,9 +71,9 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         std::unique_ptr<rtscpu::LinearIndexGradientRodeParticlePropagation> ipp
         { new rtscpu::LinearIndexGradientRodeParticlePropagation{
             ctx,
-            info.initial_step_size,
-            info.epsilon,
-            info.safety_factor} };
+            info.rk45_initial_step_size,
+            info.rk45_epsilon,
+            info.rk45_safety_factor} };
         ctx->pipeline = std::unique_ptr<rtscpu::Pipeline>{ new rtscpu::Pipeline{
             std::move(initial),
             std::move(rbvit),

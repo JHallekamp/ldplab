@@ -24,7 +24,7 @@ namespace ldplab
         /**
          * @brief Index of reflection of the medium.
          */
-        double refractive_index;
+        double medium_reflection_index;
     };
 }
 

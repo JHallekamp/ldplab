@@ -100,11 +100,10 @@ int main()
             LIGHT_INTENSITY);
 
     // Create experimental setup
-    std::shared_ptr<ldplab::ExperimentalSetup> experimental_setup =
-        std::make_shared<ldplab::ExperimentalSetup>();
-    experimental_setup->particles.emplace_back(std::move(rod_particle));
-    experimental_setup->light_sources.emplace_back(std::move(light_source));
-    experimental_setup->refractive_index = 1.33;
+    ldplab::ExperimentalSetup experimental_setup;
+    experimental_setup.particles.emplace_back(std::move(rod_particle));
+    experimental_setup.light_sources.emplace_back(std::move(light_source));
+    experimental_setup.medium_reflection_index = 1.33;
 
     // Thread pool
     std::shared_ptr<ldplab::ThreadPool> thread_pool =
@@ -112,19 +111,19 @@ int main()
 
     // Create ray tracing step
     ldplab::RayTracingStepCPUInfo rtscpu_info;
-    rtscpu_info.setup = experimental_setup;
     rtscpu_info.thread_pool = thread_pool;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
     rtscpu_info.light_source_ray_density_per_unit_area = 
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
-    rtscpu_info.maximum_depth = MAX_RTS_BRANCHING_DEPTH;
+    rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.epsilon = RTS_SOLVER_EPSILON;
-    rtscpu_info.initial_step_size = RTS_SOLVER_INITIAL_STEP_SIZE;
-    rtscpu_info.safety_factor = RTS_SOLVER_SAFETY_FACTOR;
+    rtscpu_info.rk45_epsilon = RTS_SOLVER_EPSILON;
+    rtscpu_info.rk45_initial_step_size = RTS_SOLVER_INITIAL_STEP_SIZE;
+    rtscpu_info.rk45_safety_factor = RTS_SOLVER_SAFETY_FACTOR;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
-        ldplab::RayTracingStepFactory::createRayTracingStepCPU(rtscpu_info);
+        ldplab::RayTracingStepFactory::createRayTracingStepCPU(
+            experimental_setup, rtscpu_info);
 
     if (ray_tracing_step == nullptr)
         return -1;
@@ -133,9 +132,9 @@ int main()
     ldplab::SimulationState state;
     state.particles.emplace_back();
     state.particles.back().position = 
-        experimental_setup->particles[0].position;
+        experimental_setup.particles[0].position;
     state.particles.back().orientation =
-        experimental_setup->particles[0].orientation;
+        experimental_setup.particles[0].orientation;
     constexpr double lim = 2 * const_pi();
     constexpr double step_size = lim /
         static_cast<double>(NUM_SIM_ROTATION_STEPS);

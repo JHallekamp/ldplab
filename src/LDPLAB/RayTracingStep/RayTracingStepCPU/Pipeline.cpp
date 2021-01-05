@@ -19,7 +19,7 @@ ldplab::rtscpu::Pipeline::Pipeline(
     m_inner_particle_propagation_stage{ std::move(ipp) },
     m_context { context }
 {
-    for (size_t i = 0; i < m_context->number_parallel_pipelines; ++i)
+    for (size_t i = 0; i < m_context->parameters.number_parallel_pipelines; ++i)
         m_buffer_controls.emplace_back(m_context);
 
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
@@ -35,25 +35,30 @@ void ldplab::rtscpu::Pipeline::setup()
     m_ray_bounding_volume_intersection_test_stage->setup();
 }
 
-void ldplab::rtscpu::Pipeline::finalizeOutput()
+void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
 {
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        m_context->output->force_per_particle[p] = Vec3{ 0, 0, 0 };
-        m_context->output->torque_per_particle[p] = Vec3{ 0, 0, 0 };
+        output.force_per_particle[p] = Vec3{ 0, 0, 0 };
+        output.torque_per_particle[p] = Vec3{ 0, 0, 0 };
         for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
-            m_context->output->force_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().force[p];
-            m_context->output->torque_per_particle[p] += m_buffer_controls[bc].getOutputBuffer().torque[p];
+            output.force_per_particle[p] += 
+                m_buffer_controls[bc].getOutputBuffer().force[p];
+            output.torque_per_particle[p] += 
+                m_buffer_controls[bc].getOutputBuffer().torque[p];
         }
     }
     const double I = 0.1;
     const double c = 2.99792458;
-    const double rho = m_context->number_rays_per_unit * m_context->number_rays_per_unit;
+    const double rho = 
+        m_context->parameters.number_rays_per_unit * 
+        m_context->parameters.number_rays_per_unit;
+
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
-        m_context->output->force_per_particle[p] *= I / c / rho;
-        m_context->output->torque_per_particle[p] *= I/c/rho;
+        output.force_per_particle[p] *= I / c / rho;
+        output.torque_per_particle[p] *= I/c/rho;
     }
 }
 

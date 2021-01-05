@@ -30,9 +30,18 @@ namespace ldplab
             Context(const std::vector<Particle>& particles,
                 const std::vector<LightSource>& light_sources)
                 :
+                uid{ }, 
                 particles{ particles },
-                light_sources{ light_sources }
+                light_sources{ light_sources },
+                particle_transformations{ },
+                transformed_bounding_spheres{ },
+                rode_particle_geometry{ },
+                pipeline{ nullptr },
+                thread_pool{ nullptr },
+                parameters{ }
             {}
+            /** @brief The ID of the context. */
+            UID<Context> uid;
             /**
              * @brief Stores the particles present in the experimental setup. 
              */
@@ -63,28 +72,25 @@ namespace ldplab
              * @brief The thread pool used by the ray tracing step.
              */
             std::shared_ptr<ThreadPool> thread_pool;
-            /**
-             * @brief Storing the ray tracing step output.
-             */
-            RayTracingStepOutput* output;
-            /** 
-             * @brief Under this cutoff intensity rays are not further traced. 
-             */
-            double intensity_cutoff;
-            /** 
-             * @brief Index of reflection from the medium.
-             */
-            double medium_index_of_reflecation;
-            /** @brief The ID of the context. */
-            UID<Context> uid;
-            /** @brief Number of rays per buffer. */
-            size_t number_rays_per_buffer;
-            /** @brief Number of rays per world space unit. */
-            size_t number_rays_per_unit;
-            /** @brief Maximum number of times a ray can split. */
-            size_t maximum_depth;
-            /** @brief Number of parallel pipeline instances. */
-            size_t number_parallel_pipelines;
+
+            struct
+            {
+                /**
+                 * @brief Under this cutoff intensity rays are not further
+                 *        traced.
+                 */
+                double intensity_cutoff;
+                /** @brief Index of reflection from the medium. */
+                double medium_reflection_index;
+                /** @brief Maximum number of times a ray can split. */
+                size_t maximum_branching_depth;
+                /** @brief Number of rays per buffer. */
+                size_t number_rays_per_buffer;
+                /** @brief Number of rays per world space unit. */
+                size_t number_rays_per_unit;
+                /** @brief Number of parallel pipeline instances. */
+                size_t number_parallel_pipelines;
+            } parameters;
         };
     }
 }

@@ -56,7 +56,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         const Vec3& inter_point = intersection.point[i];
         const Vec3& inter_normal = intersection.normal[i];
 
-        double nr = m_context->medium_index_of_reflecation / 
+        double nr = m_context->parameters.medium_reflection_index /
             material->indexOfRefraction(inter_point);
         if (rays.inner_particle_rays)
             nr = 1/nr;
@@ -69,7 +69,8 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
 
             // refracted ray
             refracted_ray.intensity = ray.intensity * (1 - R);
-            if (refracted_ray.intensity > m_context->intensity_cutoff)
+            if (refracted_ray.intensity > 
+                m_context->parameters.intensity_cutoff)
             {
                 refracted_rays.index_data[i] = rays.index_data[i];
                 refracted_rays.min_bounding_volume_distance_data[i] = 0.0;
@@ -90,12 +91,13 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
 
             // reflected ray
             reflected_ray.intensity = ray.intensity * R;
-            if (reflected_ray.intensity > m_context->intensity_cutoff)
+            if (reflected_ray.intensity > m_context->parameters.intensity_cutoff)
             {
                 reflected_rays.index_data[i] = rays.index_data[i];
                 reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
                 reflected_ray.origin = inter_point;
-                reflected_ray.direction = ray.direction + inter_normal * 2.0 * cos_a;
+                reflected_ray.direction = 
+                    ray.direction + inter_normal * 2.0 * cos_a;
                 reflected_rays.active_rays++;
 
                 output.force[rays.index_data[i]] += reflected_ray.intensity *
