@@ -13,7 +13,7 @@ namespace ldplab
         struct RayBuffer;
         struct IntersectionBuffer;
         struct OutputBuffer;
-        struct RodeParticle;
+        struct RodParticle;
         struct Context;
 
         /**

@@ -5,7 +5,7 @@ namespace ldplab
 {
     struct IParticleGeometry
     {
-        enum class Type { sphere, sphere_capped_cylinder };
+        enum class Type { sphere, rod_particle };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IParticleGeometry.
@@ -19,7 +19,7 @@ namespace ldplab
             switch (type())
             {
             case Type::sphere: return "sphere";
-            case Type::sphere_capped_cylinder: return "sphere_capped_cylinder";
+            case Type::rod_particle: return "rod_particle";
             default: return "unknown_type";
             }
         }
@@ -30,9 +30,9 @@ namespace ldplab
      *         cylinder with a half sphere as a cap. At the bottom the same 
      *         half is subtracted.
      */
-    struct RodeParticleGeometry : public IParticleGeometry
+    struct RodParticleGeometry : public IParticleGeometry
     {
-        RodeParticleGeometry(double cylinder_radius,
+        RodParticleGeometry(double cylinder_radius,
             double cylinder_length,
             double volume,
             double kappa)
@@ -53,7 +53,7 @@ namespace ldplab
         /** @brief */
         double l;
         Type type() const override 
-        { return IParticleGeometry::Type::sphere_capped_cylinder; }
+        { return IParticleGeometry::Type::rod_particle; }
     };
 }
 

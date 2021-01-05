@@ -10,14 +10,14 @@
 
 #include <cmath>
 
-ldplab::rtscpu::RodeParticleIntersectionTest::
-    RodeParticleIntersectionTest(std::shared_ptr<Context> context)
+ldplab::rtscpu::RodParticleIntersectionTest::
+    RodParticleIntersectionTest(std::shared_ptr<Context> context)
     :
     m_context{ context }
 {
 }
 
-void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
+void ldplab::rtscpu::RodParticleIntersectionTest::execute(
     RayBuffer& rays,
     IntersectionBuffer& intersection)
 {
@@ -34,8 +34,8 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
             rays.index_data[i] == intersection.particle_index[i])
             continue;
 
-        RodeParticle& geometry = m_context->
-            rode_particle_geometry[rays.index_data[i]];
+        RodParticle& geometry = m_context->
+            rod_particle_geometry[rays.index_data[i]];
         double cap_hight = geometry.origin_cap.z +
             geometry.sphere_radius - geometry.cylinder_length;
 
@@ -76,8 +76,8 @@ void ldplab::rtscpu::RodeParticleIntersectionTest::execute(
         num_missed_rays);
 }
 
-bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
-    const RodeParticle& geometry,
+bool ldplab::rtscpu::RodParticleIntersectionTest::intersectionTest(
+    const RodParticle& geometry,
     const Ray& ray,
     Vec3& inter_point, 
     Vec3& inter_normal)
@@ -182,8 +182,8 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::intersectionTest(
     return false;
 }
 
-bool ldplab::rtscpu::RodeParticleIntersectionTest::cylinderIntersection(
-    const RodeParticle& geometry,
+bool ldplab::rtscpu::RodParticleIntersectionTest::cylinderIntersection(
+    const RodParticle& geometry,
     const Ray& ray,
     double& distance_min, 
     double& distance_max)
@@ -203,7 +203,7 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::cylinderIntersection(
     return true;
 }
 
-bool ldplab::rtscpu::RodeParticleIntersectionTest::sphereIntersection(
+bool ldplab::rtscpu::RodParticleIntersectionTest::sphereIntersection(
     const Vec3& origin, 
     const double& raduis, 
     const Ray& ray, 
@@ -225,8 +225,8 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::sphereIntersection(
     return true;
 }
 
-bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
-    const RodeParticle& geometry,
+bool ldplab::rtscpu::RodParticleIntersectionTest::capIntersection(
+    const RodParticle& geometry,
     const Ray& ray, 
     Vec3& inter_point,
     Vec3& inter_normal)
@@ -257,8 +257,8 @@ bool ldplab::rtscpu::RodeParticleIntersectionTest::capIntersection(
     return false;
 }
 
-bool ldplab::rtscpu::RodeParticleIntersectionTest::indentationIntersection(
-    const RodeParticle& geometry,
+bool ldplab::rtscpu::RodParticleIntersectionTest::indentationIntersection(
+    const RodParticle& geometry,
     const Ray& ray,
     Vec3& inter_point,
     Vec3& inter_normal)

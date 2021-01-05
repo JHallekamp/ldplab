@@ -9,8 +9,8 @@
 
 #include <cmath>
 
-ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
-    LinearIndexGradientRodeParticlePropagation(
+ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
+    LinearIndexGradientRodParticlePropagation(
         std::shared_ptr<Context> context,
         double initial_step_size,
         double epsilon,
@@ -22,11 +22,11 @@ ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     m_context{ context }
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
-        "LinearIndexGradientRodeParticlePropagation instance created",
+        "LinearIndexGradientRodParticlePropagation instance created",
         m_context->uid);
 }
 
-void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
+void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::execute(
     RayBuffer& rays,
     IntersectionBuffer& intersection,
     OutputBuffer& output)
@@ -55,7 +55,7 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::execute(
         rays.uid);
 }
 
-void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
+void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     rayPropagation(
         const size_t particle, 
         Ray& ray, 
@@ -79,7 +79,7 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         if (error <= epsilon)
         {
             if (isOutsideParticle(
-                m_context->rode_particle_geometry[particle], x_new.r))
+                m_context->rod_particle_geometry[particle], x_new.r))
             {
                 Vec3 t_new_direction = glm::normalize(x.w);
                 output.force[particle] += ray.intensity *
@@ -90,7 +90,7 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
                         (t_new_direction - ray.direction));
                 intersected = true;
                 intersection(
-                    m_context->rode_particle_geometry[particle], 
+                    m_context->rod_particle_geometry[particle], 
                     x, 
                     inter_point, 
                     inter_normal);
@@ -113,8 +113,8 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     }
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
-    isOutsideParticle(const RodeParticle& geometry, const Vec3& r)
+bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
+    isOutsideParticle(const RodParticle& geometry, const Vec3& r)
 {
     if (r.x * r.x + r.y * r.y >
         geometry.cylinder_radius * geometry.cylinder_radius)
@@ -149,7 +149,7 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
         return true;
 }
 
-double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
+double ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::rk45(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
     const double h,
@@ -211,8 +211,8 @@ double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::rk45(
     //Arg errorfield = (k[0] * cerr[0] + k[1] * cerr[1] + k[2] * cerr[2] + k[3] * cerr[3] + k[4] * cerr[4] + k[5] * cerr[5]) * h;
 }
 
-inline ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::Arg 
-    ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::eikonal(
+inline ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::Arg 
+    ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::eikonal(
         const ParticleMaterialLinearOneDirectional* particle,
         const Arg& x ) const
 {
@@ -224,9 +224,9 @@ inline ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::Arg
         x.w / particle->indexOfRefraction(x.r) };
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
+bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     cylinderIntersection(
-        const RodeParticle& geometry, 
+        const RodParticle& geometry, 
         const Ray& ray, 
         Vec3& inter_point,
         Vec3& inter_normal)
@@ -255,9 +255,9 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
+bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     capIntersection(
-        const RodeParticle& geometry,
+        const RodParticle& geometry,
         const Ray& ray, 
         Vec3& inter_point, 
         Vec3& inter_normal)
@@ -284,9 +284,9 @@ bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
     return false;
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::
+bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
 indentationIntersection(
-    const RodeParticle& geometry,
+    const RodParticle& geometry,
     const Ray& ray,
     Vec3& inter_point,
     Vec3& inter_normal)
@@ -313,8 +313,8 @@ indentationIntersection(
     return false;
 }
 
-void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::intersection(
-    const RodeParticle& geometry,
+void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::intersection(
+    const RodParticle& geometry,
     const Arg& ray, 
     Vec3& inter_point,
     Vec3& inter_normal)
@@ -328,7 +328,7 @@ void ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::intersection(
         return;
 }
 
-double ldplab::rtscpu::LinearIndexGradientRodeParticlePropagation::Arg::absoluteMax()
+double ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::Arg::absoluteMax()
 {
     double max = std::abs(w.x);
     if (max < std::abs(w.y))

@@ -38,7 +38,7 @@ namespace ldplab
                 light_sources{ light_sources },
                 particle_transformations{ },
                 transformed_bounding_spheres{ },
-                rode_particle_geometry{ },
+                rod_particle_geometry{ },
                 pipeline{ nullptr },
                 thread_pool{ nullptr },
                 particle_uid_to_index_map{ },
@@ -83,10 +83,10 @@ namespace ldplab
             std::vector<ParticleTransformation> particle_transformations;
             std::vector<BoundingVolumeSphere> transformed_bounding_spheres;
             /**
-             * @brief Stores the particle geometrical representation of rode 
+             * @brief Stores the particle geometrical representation of rod
              *        like particles with analytical representation.
              */
-            std::vector<RodeParticle> rode_particle_geometry;
+            std::vector<RodParticle> rod_particle_geometry;
             /** @brief The ray tracing step cpu pipeline. */
             std::shared_ptr<Pipeline> pipeline;
             /** @brief The thread pool used by the ray tracing step. */
