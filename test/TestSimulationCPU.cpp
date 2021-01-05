@@ -132,11 +132,12 @@ int main()
     constexpr double lim = 2 * const_pi();
     constexpr double step_size = lim /
         static_cast<double>(NUM_SIM_ROTATION_STEPS);
+    constexpr double angle_shift = const_pi() / 2;
     ldplab::RayTracingStepOutput output;
     std::ofstream output_file("force");
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
-    for (double rotation_x = const_pi()/2; 
-        rotation_x <= lim + const_pi() / 2; 
+    for (double rotation_x = angle_shift;
+        rotation_x < lim + angle_shift; 
         rotation_x += step_size)
     {
         state.particle_instances[puid].orientation.x = rotation_x;
