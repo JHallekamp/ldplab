@@ -7,13 +7,16 @@
 const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 0.5;
 const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
-const double ROD_PARTICLE_CYLINDER_RADIUS = std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
-const double ROD_PARTICLE_CYLINDER_HEIGHT = 2 * ROD_PARTICLE_L * ROD_PARTICLE_CYLINDER_RADIUS;
+const double ROD_PARTICLE_CYLINDER_RADIUS = 
+    std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
+const double ROD_PARTICLE_CYLINDER_HEIGHT = 
+    2 * ROD_PARTICLE_L * ROD_PARTICLE_CYLINDER_RADIUS;
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
 const double PARTICLE_MATERIAL_GRADIENT = 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
-const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT/2);
+const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = 
+    ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT/2);
 const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
 
 // Particle bounding volume properties
@@ -52,7 +55,7 @@ constexpr double const_pi()
 int main()
 {
     // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "test_simulation.log" };
+    ldplab::LogCallbackFileStream flog{ "test_simulation_cpu.log" };
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
@@ -139,11 +142,14 @@ int main()
 
     ldplab::RayTracingStepOutput output;
     std::ofstream output_file("force");
-    for (double rotation_x = const_pi()/2; rotation_x <= lim + const_pi() / 2; rotation_x += step_size)
+    for (double rotation_x = const_pi()/2; 
+        rotation_x <= lim + const_pi() / 2; 
+        rotation_x += step_size)
     {
         state.particles.back().orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_file << rotation_x - const_pi() / 2 << "\t" << glm::length(output.force_per_particle[0]) << std::endl;
+        output_file << rotation_x - const_pi() / 2 << "\t" << 
+            glm::length(output.force_per_particle[0]) << std::endl;
     }
 
     thread_pool->terminate();
