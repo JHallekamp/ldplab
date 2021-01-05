@@ -21,6 +21,10 @@ ldplab::rtscpu::Pipeline::Pipeline(
 {
     for (size_t i = 0; i < m_context->number_parallel_pipelines; ++i)
         m_buffer_controls.emplace_back(m_context);
+
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "Pipeline instance created",
+        m_context->uid);
 }
 
 void ldplab::rtscpu::Pipeline::setup()

@@ -12,6 +12,9 @@ ldplab::rtscpu::RayTracingStepCPU::RayTracingStepCPU(
     :
     m_context{ context }
 {
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "RayTracingStepCPU instance created",
+        m_context->uid);
 }
 
 ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz)

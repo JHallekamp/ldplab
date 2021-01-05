@@ -82,15 +82,13 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
             std::move(rpi),
             std::move(ipp),
             ctx} };
+        return std::shared_ptr<rtscpu::RayTracingStepCPU>{
+            new rtscpu::RayTracingStepCPU{ ctx }};
     }
-    else
-    {
-        LDPLAB_LOG_ERROR("RTSCPU factory: The given combination of object "\
-            "types in the experimental setup is not yet supported");
-        return nullptr;
-    }
-    return std::shared_ptr<rtscpu::RayTracingStepCPU>{
-        new rtscpu::RayTracingStepCPU{ ctx }};
+
+    LDPLAB_LOG_ERROR("RTSCPU factory: The given combination of object "\
+        "types in the experimental setup is not yet supported");
+    return nullptr;
 }
 
 void ldplab::RayTracingStepFactory::initGeometry(
