@@ -42,17 +42,12 @@ size_t
             continue;
 
         double min_d = -1.0;
-        size_t min_j = 0;
+        int32_t min_j = 0;
 
         const Vec3& o = buffer.ray_data[i].origin;
-        for (size_t j = 0; j < m_context->particles.size(); ++j)
+        for (int32_t j = 0; j < 
+            static_cast<int32_t>(m_context->particles.size()); ++j)
         {
-            //const Vec3& oc = o - ((BoundingVolumeSphere*)
-            //    m_context->particles[j].bounding_volume.get())->center;
-            //const double rr = ((BoundingVolumeSphere*)
-            //    m_context->particles[j].bounding_volume.get())->radius *
-            //    ((BoundingVolumeSphere*)
-            //        m_context->particles[j].bounding_volume.get())->radius;
             const Vec3& oc = o - 
                 m_bounding_spheres[j].center;
             const double rr =
@@ -60,12 +55,12 @@ size_t
                 m_bounding_spheres[j].radius;
 
             const double q = glm::dot(oc, oc) - rr;
-            if (q <= 1e-9) //std::numeric_limits<double>::epsilon())
+            if (q <= 1e-9)
                 continue;
 
             const double p = glm::dot(buffer.ray_data[i].direction, oc);
             const double discriminant = p * p - q;
-            if (discriminant < 1e-9) //0.0)
+            if (discriminant < 1e-9)
                 continue;
 
             const double d_root = sqrt(discriminant);

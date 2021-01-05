@@ -17,6 +17,16 @@ namespace ldplab
      */
     struct Particle
     {
+        Particle()
+            :
+            uid{ },
+            bounding_volume{ nullptr },
+            geometry{ nullptr },
+            material{ nullptr },
+            position{ 0, 0, 0 },
+            orientation{ 0, 0, 0 },
+            centre_of_mass{ 0, 0, 0 }
+        { }
         UID<Particle> uid;
         std::shared_ptr<IBoundingVolume> bounding_volume;
         std::shared_ptr<IParticleGeometry> geometry;

@@ -18,13 +18,15 @@ namespace ldplab
         {
             RayBuffer(size_t depth, size_t size)
                 :
+                uid{ },
                 depth{ depth },
                 size{ size },
-                inner_particle_rays{ false },
                 ray_data{ nullptr },
                 index_data{ nullptr },
+                min_bounding_volume_distance_data{ nullptr },
                 active_rays{ 0 },
-                world_space_rays{ 0 }
+                world_space_rays{ 0 },
+                inner_particle_rays{ false }
             { }
             /** @brief Array containing size Ray element. */
             Ray* ray_data;

@@ -54,8 +54,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         ctx->parameters.intensity_cutoff = info.intensity_cutoff;
         ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
         ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
-        ctx->parameters.number_rays_per_unit =
-            sqrt(info.light_source_ray_density_per_unit_area);
+        ctx->parameters.number_rays_per_unit = static_cast<size_t>(
+            sqrt(info.light_source_ray_density_per_unit_area));
         ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
         ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
 

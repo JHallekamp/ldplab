@@ -3,6 +3,7 @@
 
 #include "LogCallback.hpp"
 
+#include <cstdint>
 #include <mutex>
 #include <list>
 
@@ -74,7 +75,7 @@ namespace ldplab
         public:
             ~LogDispatcher();
             void log(LogLevel log_level, const std::string& log_entry);
-            unsigned int numCallbacks();
+            size_t numCallbacks();
             bool subscribeCallback(ILogCallback* callback);
             bool unsubscribeCallback(ILogCallback* callback);
         private:

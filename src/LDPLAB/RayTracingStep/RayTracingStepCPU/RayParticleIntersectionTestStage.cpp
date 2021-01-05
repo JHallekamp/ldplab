@@ -57,7 +57,8 @@ void ldplab::rtscpu::RodParticleIntersectionTest::execute(
             ray.direction =
                 glm::normalize(trans.p2w_scale_rotation * ray.direction);
             // Ray missed particle
-            rays.index_data[i] = m_context->particles.size();
+            rays.index_data[i] = 
+                static_cast<int32_t>(m_context->particles.size());
             num_missed_rays++;
         }
         else

@@ -40,7 +40,8 @@ namespace ldplab
             cylinder_radius{ cylinder_radius },
             cylinder_length{ cylinder_length },
             volume{ volume },
-            kappa{ kappa }
+            kappa{ kappa },
+            l{ 0 }
         {}
         /** @brief Radius of the cylinder. */
         double cylinder_radius;

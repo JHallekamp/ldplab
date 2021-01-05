@@ -53,8 +53,8 @@ void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
     const double I = 0.1;
     const double c = 2.99792458;
     const double rho = 
-        m_context->parameters.number_rays_per_unit * 
-        m_context->parameters.number_rays_per_unit;
+        static_cast<double>(m_context->parameters.number_rays_per_unit) * 
+        static_cast<double>(m_context->parameters.number_rays_per_unit);
 
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {

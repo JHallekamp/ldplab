@@ -32,6 +32,15 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
 
     struct ProjectionPerLight
     {
+        ProjectionPerLight()
+            :
+            center{ 0, 0 },
+            radius{ 0 },
+            depth{ 0 },
+            particle_index{ 0 },
+            light_index{ 0 },
+            overlaps{ }
+        { }
         Vec2 center;
         double radius;
         double depth;
@@ -346,7 +355,8 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                             projection.depth;
 
                         // Set initial ray particle index
-                        initial_batch_buffer.index_data[nr] = pi;
+                        initial_batch_buffer.index_data[nr] = 
+                            static_cast<int32_t>(pi);
 
                         // Transform ray to particle space
                         transformRayFromWorldToParticleSpace(
