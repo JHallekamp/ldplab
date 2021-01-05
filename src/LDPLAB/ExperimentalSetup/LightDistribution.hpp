@@ -9,7 +9,7 @@ namespace ldplab
      */
     struct ILightDistribution
     {
-        enum class Type { homogenous };
+        enum class Type { homogeneous };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        ILightDirection.
@@ -22,23 +22,23 @@ namespace ldplab
         {
             switch (type())
             {
-            case Type::homogenous: return "homogenous";
+            case Type::homogeneous: return "homogeneous";
             default: return "unknown_type";
             }
         }
     };
 
     /**
-     * @brief Homogenous light distribution over a complete light source.
+     * @brief Homogeneous light distribution over a complete light source.
      */
-    struct LightDistributionHomogenous : public ILightDistribution
+    struct LightDistributionHomogeneous : public ILightDistribution
     {
-        LightDistributionHomogenous(double intensity)
+        LightDistributionHomogeneous(double intensity)
             :
             intensity{ intensity }
         {}
-        Type type() const override { return Type::homogenous; }
-        /** @brief Light intensity emited by the light source. */
+        Type type() const override { return Type::homogeneous; }
+        /** @brief Light intensity emitted by the light source. */
         double intensity;
     };
 }

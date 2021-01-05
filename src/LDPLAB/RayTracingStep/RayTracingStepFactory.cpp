@@ -34,9 +34,9 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
     }
     
     if (setup.light_sources[0].direction->type() ==
-        ILightDirection::Type::homogenous &&
+        ILightDirection::Type::homogeneous &&
         setup.light_sources[0].intensity_distribution->type() ==
-        ILightDistribution::Type::homogenous &&
+        ILightDistribution::Type::homogeneous &&
         setup.light_sources[0].polarisation->type() ==
         ILightPolarisation::Type::unpolarized &&
         setup.particles[0].bounding_volume->type() ==

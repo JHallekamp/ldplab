@@ -7,7 +7,7 @@ namespace ldplab
 {
 	struct ILightDirection
 	{
-		enum class Type { homogenous };
+		enum class Type { homogeneous };
 		/**
 		 * @brief The destructor is virtual since classes inherit from
 		 *        ILightDirection.
@@ -20,16 +20,16 @@ namespace ldplab
         {
             switch (type())
             {
-            case Type::homogenous: return "homogenous";
+            case Type::homogeneous: return "homogeneous";
             default: return "unknown_type";
             }
         }
 	};
 
-    /** @brief Light is emited in the direction of the plane. */
-    struct LightDirectionHomogenous : public ILightDirection
+    /** @brief Light is emitted in the direction of the plane. */
+    struct LightDirectionHomogeneous : public ILightDirection
     {
-        Type type() const override { return Type::homogenous; }
+        Type type() const override { return Type::homogeneous; }
     };
 }
 

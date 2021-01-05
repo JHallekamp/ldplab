@@ -94,9 +94,9 @@ int main()
     light_source.polarisation = 
         std::make_shared<ldplab::LightPolarisationUnpolarized>();
     light_source.direction =
-        std::make_shared<ldplab::LightDirectionHomogenous>();
+        std::make_shared<ldplab::LightDirectionHomogeneous>();
     light_source.intensity_distribution =
-        std::make_shared<ldplab::LightDistributionHomogenous>(
+        std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
 
     // Create experimental setup
