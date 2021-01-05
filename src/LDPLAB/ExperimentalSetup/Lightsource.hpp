@@ -5,6 +5,7 @@
 #include "LightDistribution.hpp"
 #include "LightPolarization.hpp"
 #include "../Geometry.hpp"
+#include "../Utils/UID.hpp"
 
 #include <memory>
 
@@ -15,6 +16,10 @@ namespace ldplab
      */
     struct LightSource
     {
+        /**
+         * @brief Unique light source id.
+         */
+        UID<LightSource> uid;
         /**
          * @brief Direction of the individual rays. 
          */

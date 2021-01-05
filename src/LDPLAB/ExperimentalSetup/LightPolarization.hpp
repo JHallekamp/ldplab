@@ -17,6 +17,15 @@ namespace ldplab
         virtual ~ILightPolarisation() { }
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
+        /** @brief Returns the type of the instance as string. */
+        const char* typeString() const
+        {
+            switch (type())
+            {
+            case Type::unpolarized: return "unpolarized";
+            default: return "unknown_type";
+            }
+        }
     };
 
     /**

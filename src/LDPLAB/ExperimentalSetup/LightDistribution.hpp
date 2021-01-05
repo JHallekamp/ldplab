@@ -17,6 +17,15 @@ namespace ldplab
         virtual ~ILightDistribution() { }
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
+        /** @brief Returns the type of the instance as string. */
+        const char* typeString() const
+        {
+            switch (type())
+            {
+            case Type::homogenous: return "homogenous";
+            default: return "unknown_type";
+            }
+        }
     };
 
     /**

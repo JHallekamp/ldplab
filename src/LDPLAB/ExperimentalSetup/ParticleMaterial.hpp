@@ -16,6 +16,16 @@ namespace ldplab
 		virtual ~IParticleMaterial() { }
 		/** @brief Returns the type of the instance. */
 		virtual Type type() const = 0;
+        /** @brief Returns the type of the instance as string. */
+        const char* typeString() const
+        {
+            switch (type())
+            {
+            case Type::homogenous: return "homogenous";
+            case Type::linear_one_directional: return "linear_one_directional";
+            default: return "unknown_type";
+            }
+        }
 	};
 
 	struct ParticleMaterialHomogenous : public IParticleMaterial

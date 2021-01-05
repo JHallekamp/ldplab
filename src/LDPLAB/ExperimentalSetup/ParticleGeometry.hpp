@@ -5,7 +5,7 @@ namespace ldplab
 {
     struct IParticleGeometry
     {
-        enum class Type { shpere, sphere_capped_cylinder };
+        enum class Type { sphere, sphere_capped_cylinder };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IParticleGeometry.
@@ -13,6 +13,16 @@ namespace ldplab
         virtual ~IParticleGeometry() { }
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
+        /** @brief Returns the type of the instance as string. */
+        const char* typeString() const
+        {
+            switch (type())
+            {
+            case Type::sphere: return "sphere";
+            case Type::sphere_capped_cylinder: return "sphere_capped_cylinder";
+            default: return "unknown_type";
+            }
+        }
     };
 
     /** 

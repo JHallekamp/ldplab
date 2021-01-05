@@ -15,6 +15,16 @@ namespace ldplab
         virtual ~IBoundingVolume() { }
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
+        /** @brief Returns the type of the instance as string. */
+        const char* typeString() const
+        {
+            switch (type())
+            {
+            case Type::sphere: return "sphere";
+            case Type::box: return "box";
+            default: return "unknown_type";
+            }
+        }
     };
 
     /** @brief Contains parameters of bounding sphere. */
