@@ -19,12 +19,12 @@ namespace ldplab
     {
         UID<Particle> uid;
         std::shared_ptr<IBoundingVolume> bounding_volume;
+        std::shared_ptr<IParticleGeometry> geometry;
+        std::shared_ptr<IParticleMaterial> material;
         Vec3 position;
         Vec3 orientation;
         Vec3 centre_of_mass;
-        std::shared_ptr<IParticleGeometry> geometry;
-        std::shared_ptr<IParticleMaterial> material;
-    };
+    }; 
 }
 
 #endif

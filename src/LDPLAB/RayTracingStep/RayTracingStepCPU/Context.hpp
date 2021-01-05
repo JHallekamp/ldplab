@@ -27,10 +27,21 @@ namespace ldplab
          */
         struct Context
         {
+            Context(const std::vector<Particle>& particles,
+                const std::vector<LightSource>& light_sources)
+                :
+                particles{ particles },
+                light_sources{ light_sources }
+            {}
             /**
              * @brief Stores the particles present in the experimental setup. 
              */
-            std::vector<Particle> particles;
+            const std::vector<Particle> particles;
+            /**
+             * @brief Stores the light sources present in the experimental
+             *        setup.
+             */
+            const std::vector<LightSource> light_sources;
             /**
              * @brief Stores the particle transformations for the current 
              *        state of the experimental setup.
@@ -44,11 +55,6 @@ namespace ldplab
              *        like particles with analytical representation.
              */
             std::vector<RodeParticle> rode_particle_geometry;
-            /**
-             * @brief Stores the light sources present in the experimental 
-             *        setup.
-             */
-            std::vector<LightSource> light_sources;
             /**
              * @brief The ray tracing step cpu pipeline.
              */

@@ -32,13 +32,12 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         return nullptr;
     }
 
-    std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{} };
+    std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
+        setup.particles, setup.light_sources } };
     ctx->thread_pool = info.thread_pool;
-    ctx->particles = setup.particles;
     ctx->particle_transformations.resize(ctx->particles.size());
     ctx->transformed_bounding_spheres.resize(ctx->particles.size(),
         BoundingVolumeSphere(Vec3(0, 0, 0), 0));
-    ctx->light_sources = setup.light_sources;
     ctx->intensity_cutoff = info.intensity_cutoff;
     ctx->medium_index_of_reflecation = setup.refractive_index;
     ctx->number_rays_per_buffer = info.number_rays_per_buffer;
