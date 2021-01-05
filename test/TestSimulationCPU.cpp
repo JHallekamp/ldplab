@@ -36,14 +36,15 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
         -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
 
 // Light intensity properties
-const double LIGHT_INTENSITY = 1;// 0.1 / 2.99792458 / 100;
+const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 
 // Simulation properties
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 2000.0; //2025.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 3;
-const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY;
+const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  / 
+    NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;

@@ -344,7 +344,9 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                         // Set initial ray intensity
                         initial_batch_buffer.ray_data[nr].intensity =
                             ((LightDistributionHomogeneous*)
-                                light.intensity_distribution.get())->intensity;
+                                light.intensity_distribution.get())->intensity /
+                            (m_context->parameters.number_rays_per_unit *
+                            m_context->parameters.number_rays_per_unit);
                         
                         // Set initial ray direction
                         initial_batch_buffer.ray_data[nr].direction = 

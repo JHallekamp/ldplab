@@ -50,18 +50,6 @@ void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
                 m_buffer_controls[bc].getOutputBuffer().torque[p];
         }
     }
-    const double I = 0.1;
-    const double c = 2.99792458;
-    const double rho = 
-        static_cast<double>(m_context->parameters.number_rays_per_unit) * 
-        static_cast<double>(m_context->parameters.number_rays_per_unit);
-
-    for (size_t p = 0; p < m_context->particles.size(); ++p)
-    {
-        UID<Particle> puid = m_context->particle_index_to_uid_map[p];
-        output.force_per_particle[puid] *= I / c / rho;
-        output.torque_per_particle[puid] *= I/c/rho;
-    }
 }
 
 void ldplab::rtscpu::Pipeline::execute(size_t job_id)
