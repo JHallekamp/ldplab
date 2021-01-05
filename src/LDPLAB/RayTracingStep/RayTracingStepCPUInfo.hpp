@@ -1,8 +1,8 @@
 #ifndef WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 #define WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 
+#include "EikonalSolver.hpp"
 #include "..\ThreadPool.hpp"
-#include "..\ExperimentalSetup\EikonalSolver.hpp"
 
 #include <memory>
 

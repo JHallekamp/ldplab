@@ -4,7 +4,7 @@
 #include "RayTracingStepCPU/Pipeline.hpp"
 #include "RayTracingStepCPU/RayTracingStepCPU.hpp"
 
-#include "../ExperimentalSetup/EikonalSolver.hpp"
+#include "EikonalSolver.hpp"
 #include "../Log.hpp"
 
 std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory::
