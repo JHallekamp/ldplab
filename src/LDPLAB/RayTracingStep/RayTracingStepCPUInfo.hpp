@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 
 #include "..\ThreadPool.hpp"
+#include "..\ExperimentalSetup\EikonalSolver.hpp"
 
 #include <memory>
 
@@ -24,12 +25,8 @@ namespace ldplab
         size_t maximum_branching_depth;
         /** @brief Number of parallel pipeline instances. */
         size_t number_parallel_pipelines;
-        /** @brief Initial step size for each integration method. */
-        double rk45_initial_step_size;
-        /** @brief epsilon Maximum error tolerance of the integration steps. */
-        double rk45_epsilon;
-        /** @brief Factor for new step size calculation in RK45 Method. */
-        double rk45_safety_factor;
+        /** @brief Parameters for the Eikonal solver */
+        std::shared_ptr<IEikonalSolver> solver_parameters;
     };
 }
 

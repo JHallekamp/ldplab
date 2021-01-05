@@ -4,6 +4,7 @@
 #include "RayTracingStepCPU/Pipeline.hpp"
 #include "RayTracingStepCPU/RayTracingStepCPU.hpp"
 
+#include "../ExperimentalSetup/EikonalSolver.hpp"
 #include "../Log.hpp"
 
 std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory::
@@ -43,7 +44,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         setup.particles[0].geometry->type() ==
         IParticleGeometry::Type::rod_particle &&
         setup.particles[0].material->type() ==
-        IParticleMaterial::Type::linear_one_directional)
+        IParticleMaterial::Type::linear_one_directional &&
+        info.solver_parameters->type() == IEikonalSolver::Type::rk45)
     {
         std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
         setup.particles, setup.light_sources } };
@@ -79,9 +81,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> ldplab::RayTracingStepFactory
         std::unique_ptr<rtscpu::LinearIndexGradientRodParticlePropagation> ipp
         { new rtscpu::LinearIndexGradientRodParticlePropagation{
             ctx,
-            info.rk45_initial_step_size,
-            info.rk45_epsilon,
-            info.rk45_safety_factor} };
+            *((RK45*) info.solver_parameters.get())} };
         ctx->pipeline = std::unique_ptr<rtscpu::Pipeline>{ new rtscpu::Pipeline{
             std::move(initial),
             std::move(rbvit),

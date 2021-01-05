@@ -118,9 +118,8 @@ int main()
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
     rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.rk45_epsilon = RTS_SOLVER_EPSILON;
-    rtscpu_info.rk45_initial_step_size = RTS_SOLVER_INITIAL_STEP_SIZE;
-    rtscpu_info.rk45_safety_factor = RTS_SOLVER_SAFETY_FACTOR;
+    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
+        RTS_SOLVER_EPSILON, RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_SAFETY_FACTOR);
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
             experimental_setup, rtscpu_info);

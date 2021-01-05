@@ -6,6 +6,7 @@
 
 #include "Data.hpp"
 #include "../../Geometry.hpp"
+#include "../../ExperimentalSetup/EikonalSolver.hpp"
 
 namespace ldplab
 {
@@ -59,15 +60,12 @@ namespace ldplab
              * @brief Constructing inner particle propagation stage and setting 
              *        up the parameter for the Runge-Kutta-Fehlberg method.
              * @param context Pointer to context data for the ray tracing step.
-             * @param inital_step_size Initial step size for each integration.
-             * @param epsilon Maximum error tolerance of the integration steps.
-             * @param safety_factor Factor for new step size calculation.
+             * @param parameters Structure containing all parameter for the 
+             *                   Runge-Kutta-Fehlberg method.
              */
             LinearIndexGradientRodParticlePropagation(
                 std::shared_ptr<Context> context,
-                double initial_step_size,
-                double epsilon,
-                double safety_factor);
+                RK45 parameters);
             /**
              * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
              * @details Calculating the path of the rays threw the particle.
@@ -255,9 +253,6 @@ namespace ldplab
                 Vec3& inter_point,
                 Vec3& inter_normal);
         private:
-            const double initial_step_size;
-            const double epsilon;
-            const double safety_factor;
             const double alpha[6]{ 0.0, 1.0/4.0, 3.0/8.0, 12.0/13.0, 1.0, 1.0/2.0 };
             const double beta[36]{
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ,
@@ -270,6 +265,7 @@ namespace ldplab
             const double c_star[6]{ 16.0 / 135.0, 0.0, 6656.0 / 12825.0, 28561.0 / 56430.0, (-9.0) / 50.0, 2.0 / 55.0 };
             const double cerr[6]{ -0.00277778,  0.0 ,  0.02994152,  0.02919989, -0.02 , -0.03636364 };
         private:
+            const RK45 m_parameters;
             std::shared_ptr<Context> m_context;
             std::vector<RodParticle>& m_rod_particles;
         };

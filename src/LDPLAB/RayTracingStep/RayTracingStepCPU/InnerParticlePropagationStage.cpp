@@ -12,16 +12,12 @@
 ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     LinearIndexGradientRodParticlePropagation(
         std::shared_ptr<Context> context,
-        double initial_step_size,
-        double epsilon,
-        double safety_factor)
+        RK45 parameters)
     :
-    initial_step_size{ initial_step_size },
-    epsilon{ epsilon },
-    safety_factor{ safety_factor },
     m_context{ context },
     m_rod_particles{ ((RodParticleData*)
-        context->particle_data.get())->particle_data }
+        context->particle_data.get())->particle_data },
+    m_parameters{parameters}
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "LinearIndexGradientRodParticlePropagation instance created",
@@ -74,11 +70,11 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
         ray.direction * material->indexOfRefraction(ray.origin),
         ray.origin };
     Arg x_new{};
-    double h = initial_step_size;
+    double h = m_parameters.initial_step_size;
     while (!intersected)
     {
         double error = rk45(material, x, h, x_new);
-        if (error <= epsilon)
+        if (error <= m_parameters.epsilon)
         {
             if (isOutsideParticle(m_rod_particles[particle], x_new.r))
             {
@@ -102,12 +98,14 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
             else
             {
                 x = x_new;
-                h = safety_factor * h * std::pow(epsilon / error, 0.2);
+                h = m_parameters.safety_factor * h * 
+                    std::pow(m_parameters.epsilon / error, 0.2);
             }
         }
         else
         {
-            h = safety_factor * h * std::pow(epsilon / error, 0.25);
+            h = m_parameters.safety_factor * h * 
+                std::pow(m_parameters.epsilon / error, 0.25);
             LDPLAB_LOG_TRACE("RTSCPU context %i: RK45 Step discarded with"\
                 " error = %f, new step size = %f", m_context->uid, error, h);
         }
