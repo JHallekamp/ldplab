@@ -174,10 +174,10 @@ double ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::rk45(
         // eikonal(particle, x_step)
         k[i].w = particle->direction_times_gradient;
         const double index_of_refraction =
-            particle->indexOfRefraction(x_step.r);
-        k[i].r.x = x_step.w.x / index_of_refraction;
-        k[i].r.y = x_step.w.y / index_of_refraction;
-        k[i].r.z = x_step.w.z / index_of_refraction;
+            1.0 / particle->indexOfRefraction(x_step.r);
+        k[i].r.x = x_step.w.x * index_of_refraction;
+        k[i].r.y = x_step.w.y * index_of_refraction;
+        k[i].r.z = x_step.w.z * index_of_refraction;
 
         if (cerr[i] != 0.0)
         {
