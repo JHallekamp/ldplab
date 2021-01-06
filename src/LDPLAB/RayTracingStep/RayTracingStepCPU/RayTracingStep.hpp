@@ -9,7 +9,7 @@
 
 namespace ldplab
 {
-    // Protoype
+    // Prototype
     class RayTracingStepFactory;
 
     namespace rtscpu
@@ -21,7 +21,7 @@ namespace ldplab
          * @brief Class implementing IRaytracingStep on the CPU. It is non
          *        distributed.
          */
-        class RayTracingStepCPU : public IRayTracingStep
+        class RayTracingStep : public IRayTracingStep
         {
             friend RayTracingStepFactory;
         public:
@@ -35,10 +35,11 @@ namespace ldplab
                 const SimulationState& input,
                 RayTracingStepOutput& output) override;
         private:
+            ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz);
             /**
             * @brief Constructor
             */
-            RayTracingStepCPU(std::shared_ptr<Context> context);
+            RayTracingStep(std::shared_ptr<Context> context);
         private:
             std::shared_ptr<Context> m_context;
         };

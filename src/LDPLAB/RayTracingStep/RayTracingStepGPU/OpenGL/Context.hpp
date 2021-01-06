@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCPU_CONTEXT_HPP
-#define WWU_LDPLAB_RTSCPU_CONTEXT_HPP
+#ifndef WWU_LDPLAB_RTSGPU_OGL_CONTEXT_HPP
+#define WWU_LDPLAB_RTSGPU_OGL_CONTEXT_HPP
 
 #include <map>
 #include <vector>
@@ -8,16 +8,16 @@
 #include "Pipeline.hpp"
 #include "Data.hpp"
 
-#include "..\RayTracingStepOutput.hpp"
-#include "..\..\Geometry.hpp"
-#include "..\..\ThreadPool.hpp"
-#include "..\..\ExperimentalSetup\Lightsource.hpp"
-#include "..\..\ExperimentalSetup\Particle.hpp"
-#include "..\..\Utils\UID.hpp"
+#include "../../RayTracingStepOutput.hpp"
+#include "../../../Geometry.hpp"
+#include "../../../ThreadPool.hpp"
+#include "../../../ExperimentalSetup/Lightsource.hpp"
+#include "../../../ExperimentalSetup/Particle.hpp"
+#include "../../../Utils/UID.hpp"
 
 namespace ldplab
 {
-    namespace rtscpu
+    namespace rtsgpu_ogl
     {
         /**
          * @brief Holds context data for a ray tracer run.

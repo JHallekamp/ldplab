@@ -1,23 +1,26 @@
-#include "RayTracingStepCPU.hpp"
+#include "RayTracingStep.hpp"
 #include "Context.hpp"
 
-#include "../../Log.hpp"
-#include "../../Utils/Assert.hpp"
+#include "../../../Log.hpp"
+#include "../../../Utils/Assert.hpp"
 
 #include <chrono>
 #include <glm/ext.hpp>
 
-ldplab::rtscpu::RayTracingStepCPU::RayTracingStepCPU(
+ldplab::rtsgpu_ogl::RayTracingStep::RayTracingStep(
     std::shared_ptr<Context> context)
     :
     m_context{ context }
 {
-    LDPLAB_LOG_INFO("RTSCPU context %i: "\
-        "RayTracingStepCPU instance created",
+    LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
+        "RayTracingStep instance created",
         m_context->uid);
 }
 
-ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz)
+ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
+    double rx,
+    double ry,
+    double rz)
 {
     ldplab::Mat3 rotx(0), roty(0), rotz(0);
 
@@ -42,12 +45,12 @@ ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz)
     return rotz * roty * rotx;
 }
 
-void ldplab::rtscpu::RayTracingStepCPU::execute(
+void ldplab::rtsgpu_ogl::RayTracingStep::execute(
     const SimulationState& input, RayTracingStepOutput& output)
 {
     LDPLAB_ASSERT(input.particle_instances.size() == 
         m_context->particles.size());
-    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+    LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "Ray tracing step starts execution",
         m_context->uid);
     std::chrono::steady_clock::time_point start = 
@@ -61,9 +64,9 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
             = input.particle_instances.find(puid);
         if (particle_it == input.particle_instances.end())
         {
-            LDPLAB_LOG_ERROR("RTSCPU context %i: Could not update particle "\
+            LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not update particle "\
                 "transformations, particle %i is not present in the given "\
-                "simulation state, abort RTSCPU execution",
+                "simulation state, abort RTSGPU (OpenGL) execution",
                 m_context->uid,
                 puid);
             return;
@@ -105,10 +108,10 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
     }
 
     // Execute pipeline
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Setup ray tracing pipeline",
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Setup ray tracing pipeline",
         m_context->uid);
     m_context->pipeline->setup();
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Execute ray tracing pipeline",
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Execute ray tracing pipeline",
         m_context->uid);
     m_context->thread_pool->executeJobBatch(
         m_context->pipeline, m_context->parameters.number_parallel_pipelines);
@@ -118,6 +121,6 @@ void ldplab::rtscpu::RayTracingStepCPU::execute(
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
             end - start).count();
-    LDPLAB_LOG_INFO("RTSCPU context %i: Ray tracing step executed after %fs",
+    LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);
 }

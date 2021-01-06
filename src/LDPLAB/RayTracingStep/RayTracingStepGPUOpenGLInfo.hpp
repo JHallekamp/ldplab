@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
-#define WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
+#ifndef WWU_LDPLAB_RAY_TRACING_STEP_GPU_OPEN_GL_INFO_HPP
+#define WWU_LDPLAB_RAY_TRACING_STEP_GPU_OPEN_GL_INFO_HPP
 
 #include "EikonalSolver.hpp"
 #include "..\ThreadPool.hpp"
@@ -10,11 +10,11 @@ namespace ldplab
 {
     /**
      * @brief Structure containing all information to create an 
-     *        RayTracingStep 
+     *        RayTracingStep instance.
      */
-    struct RayTracingStepCPUInfo
+    struct RayTracingStepGPUOpenGLInfo
     {
-        RayTracingStepCPUInfo()
+        RayTracingStepGPUOpenGLInfo()
             :
             thread_pool{ nullptr },
             intensity_cutoff{ 0 },
