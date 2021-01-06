@@ -65,7 +65,7 @@ namespace ldplab
 		 * @warning There is no checking if the position is inside the 
 		 *           particle.
 		 */
-		double indexOfRefraction(const Vec3& position) const { 
+		inline double indexOfRefraction(const Vec3& position) const { 
 			//return index_of_refraction + 
 			//	gradient * glm::dot(direction, (position - origin)); 
             return index_of_refraction +
