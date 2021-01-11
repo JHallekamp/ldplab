@@ -7,6 +7,7 @@
 #include "RayTracingStep.hpp"
 #include "Pipeline.hpp"
 #include "Data.hpp"
+#include "OpenGLContext.hpp"
 
 #include "../../RayTracingStepOutput.hpp"
 #include "../../../Geometry.hpp"
@@ -34,6 +35,7 @@ namespace ldplab
                 const std::vector<LightSource>& light_sources)
                 :
                 uid{ }, 
+                ogl{ nullptr },
                 particles{ particles },
                 light_sources{ light_sources },
                 particle_transformations{ },
@@ -65,6 +67,8 @@ namespace ldplab
             }
             /** @brief The ID of the context. */
             UID<Context> uid;
+            /** @brief The OpenGL graphic context. */
+            std::shared_ptr<OpenGLContext> ogl;
             /**
              * @brief Stores a copy of the particles present in the
              *        experimental setup. 
