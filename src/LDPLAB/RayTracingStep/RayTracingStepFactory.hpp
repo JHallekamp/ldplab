@@ -3,16 +3,18 @@
 
 #include "..\ExperimentalSetup\ExperimentalSetup.hpp"
 #include "RayTracingStepCPUInfo.hpp"
-#include "RayTracingStepCPU/Context.hpp"
 #include "RayTracingStepCPU/RayTracingStep.hpp"
 #include "RayTracingStepGPUOpenGLInfo.hpp"
-#include "RayTracingStepGPU/OpenGL/Context.hpp"
 #include "RayTracingStepGPU/OpenGL/RayTracingStep.hpp"
 
 #include <memory>
 
 namespace ldplab
 {
+    // prototype
+    namespace rtscpu { struct Context; }
+    namespace rtsgpu_ogl { struct Context; }
+
     /**
      * @brief Class building a RayTracingStep.  
      */

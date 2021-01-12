@@ -5,7 +5,7 @@
 
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.5;
+const double ROD_PARTICLE_KAPPA = 0.001;
 const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
 const double ROD_PARTICLE_CYLINDER_RADIUS = 
     std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
@@ -39,10 +39,10 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
 const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 4;
+const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512.0;
-const size_t MAX_RTS_BRANCHING_DEPTH = 3;
+const size_t MAX_RTS_BRANCHING_DEPTH = 8;
 const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  / 
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
@@ -52,6 +52,23 @@ const size_t NUM_SIM_ROTATION_STEPS = 64;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
+
+void plotProgress(double progress)
+{
+    const size_t steps = 20;
+    const size_t threshold = static_cast<size_t>(static_cast<double>(steps) * 
+        (progress + std::numeric_limits<double>::epsilon()));
+    
+    std::string str_progress_bar(steps, ' ');
+    for (size_t i = 1; i <= steps; ++i)
+    {
+        if (i <= threshold)
+            str_progress_bar[i - 1] = (char)219; // Block character
+    }
+    
+    std::cout << "Progress: [" << str_progress_bar << "] " << 
+        progress * 100.0 << "%" << std::endl;
+}
 
 int main()
 {
@@ -145,6 +162,7 @@ int main()
         ray_tracing_step->execute(state, output);
         output_file << rotation_x - const_pi() / 2 << "\t" << 
             glm::length(output.force_per_particle[puid]) << std::endl;
+        plotProgress((rotation_x - angle_shift) / lim);
     }
 
     thread_pool->terminate();

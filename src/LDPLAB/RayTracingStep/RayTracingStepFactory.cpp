@@ -1,9 +1,11 @@
 #include "RayTracingStepFactory.hpp"
 
+#include "RayTracingStepCPU/Context.hpp"
 #include "RayTracingStepCPU/Data.hpp"
 #include "RayTracingStepCPU/Pipeline.hpp"
 #include "RayTracingStepCPU/RayTracingStep.hpp"
 
+#include "RayTracingStepGPU/OpenGL/Context.hpp"
 #include "RayTracingStepGPU/OpenGL/Data.hpp"
 #include "RayTracingStepGPU/OpenGL/Pipeline.hpp"
 #include "RayTracingStepGPU/OpenGL/RayTracingStep.hpp"
