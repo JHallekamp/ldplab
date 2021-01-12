@@ -48,26 +48,31 @@ const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  /
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 64;
+const size_t NUM_SIM_ROTATION_STEPS = 128;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
 
 void plotProgress(double progress)
 {
-    const size_t steps = 20;
-    const size_t threshold = static_cast<size_t>(static_cast<double>(steps) * 
-        (progress + std::numeric_limits<double>::epsilon()));
+    const double progress_epsilon = 0.00001;
+    const size_t steps = 40;
+    const size_t iprogress = 
+        static_cast<size_t>((progress + progress_epsilon) * 100.0);
+    const size_t threshold = steps * iprogress; // Includes factor of 100
     
+    if (threshold == steps)
+        bool a = true;
+
     std::string str_progress_bar(steps, ' ');
     for (size_t i = 1; i <= steps; ++i)
     {
-        if (i <= threshold)
+        if (i * 100 <= threshold)
             str_progress_bar[i - 1] = (char)219; // Block character
     }
     
     std::cout << "Progress: [" << str_progress_bar << "] " << 
-        progress * 100.0 << "%" << std::endl;
+        iprogress << "%" << std::endl;
 }
 
 int main()
@@ -150,12 +155,13 @@ int main()
     constexpr double lim = 2 * const_pi();
     constexpr double step_size = lim /
         static_cast<double>(NUM_SIM_ROTATION_STEPS);
-    constexpr double angle_shift = const_pi() / 2;
+    constexpr double half_step_size = step_size / 2.0;
+    constexpr double angle_shift = const_pi() / 2.0;
     ldplab::RayTracingStepOutput output;
     std::ofstream output_file("force");
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     for (double rotation_x = angle_shift;
-        rotation_x < lim + angle_shift; 
+        rotation_x < lim + angle_shift + half_step_size; 
         rotation_x += step_size)
     {
         state.particle_instances[puid].orientation.x = rotation_x;
