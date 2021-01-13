@@ -2,17 +2,57 @@
 
 #include "Context.hpp"
 #include "../../../Log.hpp"
+#include "../../../Utils/Assert.hpp"
 
 #include <vector>
 
 ldplab::rtsgpu_ogl::ComputeShader::ComputeShader()
     :
-    glid{ 0 }
+    m_glid{ 0 }
 { }
 
 ldplab::rtsgpu_ogl::ComputeShader::~ComputeShader()
 {
-    glDeleteProgram(glid);
+    glDeleteProgram(m_glid);
+}
+
+bool ldplab::rtsgpu_ogl::ComputeShader::isInitialized() const
+{
+    return (m_glid != 0);
+}
+
+const char* ldplab::rtsgpu_ogl::ComputeShader::name() const
+{
+    LDPLAB_ASSERT(isInitialized());
+    return m_name.c_str();
+}
+
+GLint ldplab::rtsgpu_ogl::ComputeShader::getUniformLocation(
+    const std::string& name) const
+{
+    LDPLAB_ASSERT(isInitialized());
+    GLint uniform_location = glGetUniformLocation(m_glid, name.c_str());
+    if (uniform_location < 0)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Shader %s does not "\
+            "have a uniform buffer %s",
+            m_context->uid, m_name.c_str(), name.c_str());
+    }
+    else
+    {
+        LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Shader %s provides "\
+            "uniform buffer %s at location %i",
+            m_context->uid, m_name.c_str(), name.c_str(), uniform_location);
+    }
+    return uniform_location;
+}
+
+void ldplab::rtsgpu_ogl::ComputeShader::use() const
+{
+    LDPLAB_ASSERT(isInitialized());
+    glUseProgram(m_glid);
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Now uses compute shader %s",
+        m_context->uid, m_name.c_str());
 }
 
 ldplab::rtsgpu_ogl::OpenGLContext::OpenGLContext(
@@ -38,7 +78,7 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::init()
     return true;
 }
 
-bool ldplab::rtsgpu_ogl::OpenGLContext::CreateComputeShader(
+bool ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
     const std::string& shader_name,
     const std::string& glsl_code, 
     ComputeShader& shader) const
@@ -90,8 +130,9 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::CreateComputeShader(
     else
     {
         // No errors
-        shader.glid = program;
-        shader.name = shader_name;
+        shader.m_context = m_context;
+        shader.m_glid = program;
+        shader.m_name = shader_name;
         LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished %s compute "\
             "shader compilation successfully", 
             m_context->uid, shader_name.c_str());
@@ -102,4 +143,3 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::CreateComputeShader(
     glDeleteShader(compute_shader);
     return (result != GL_FALSE);
 }
-

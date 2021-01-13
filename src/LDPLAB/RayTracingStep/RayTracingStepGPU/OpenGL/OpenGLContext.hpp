@@ -14,17 +14,38 @@ namespace ldplab
         struct Context;
 
         /** @brief Encapsulates an OpenGL shader program. */
-        struct ComputeShader
+        class ComputeShader
         {
+            friend class OpenGLContext;
+        public:
             ComputeShader();
             /** @brief Destructs the shader program. */
             ~ComputeShader();
-            /** @brief Implicit conversion into GLuint. */
-            operator GLuint() const { return glid; }
+            /**
+             * @brief Checks whether the shader is initialized correctly.
+             * @returns true, if the shader is initialized correctly.
+             */
+            bool isInitialized() const;
+            /**
+             * @brief Provides the name of the shader.
+             * @returns The name as a null terminated C string.
+             */
+            const char* name() const;
+            /**
+             * @brief Provides the location of the specified shader uniform.
+             * @param[in] name The name of the uniform buffer.
+             * @returns If successful it returns the location of the uniform
+             *          inside the shader program, otherwise -1.
+             */
+            GLint getUniformLocation(const std::string& name) const;
+            /** @brief Uses shader in the current OpenGL rendering state. */
+            void use() const;
+        private:
+            std::shared_ptr<Context> m_context;
             /** @brief OpenGL ID of the shader program. */
-            GLuint glid;
+            GLuint m_glid;
             /** @brief The name of the shader program. */
-            std::string name;
+            std::string m_name;
         };
 
         /**
@@ -48,7 +69,7 @@ namespace ldplab
              *                    shader program.
              * @returns true if the shader program was created successfully.
              */
-            bool CreateComputeShader(
+            bool createComputeShader(
                 const std::string& shader_name,
                 const std::string& glsl_code, 
                 ComputeShader& shader) const;

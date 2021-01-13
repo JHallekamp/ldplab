@@ -113,16 +113,16 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
         RayBuffer& transmission_buffer =
             buffer_control.getTransmissionBuffer(buffer);
 
+        m_ray_particle_interaction_stage->execute(
+            intersection_buffer,
+            buffer,
+            reflection_buffer,
+            transmission_buffer,
+            output_buffer);
+
         if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
             transmission_buffer.uid != buffer_control.dummyBufferUID())
         {
-            m_ray_particle_interaction_stage->execute(
-                intersection_buffer,
-                buffer,
-                reflection_buffer,
-                transmission_buffer,
-                output_buffer);
-
             processBatch(reflection_buffer, buffer_control);
             processBatch(transmission_buffer, buffer_control);
         }
@@ -137,43 +137,43 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
         RayBuffer& transmission_buffer =
             buffer_control.getTransmissionBuffer(buffer);
 
+        // Reset intersection buffer
+        for (size_t i = 0; i < intersection_buffer.size; ++i)
+            intersection_buffer.particle_index[i] = -1;
+
+        if (buffer.world_space_rays == 0)
+        {
+            m_ray_particle_intersection_test_stage->execute(
+                buffer,
+                intersection_buffer);
+        }
+
+        if (buffer.world_space_rays > 0)
+        {
+            do
+            {
+                if (m_ray_bounding_volume_intersection_test_stage->execute(
+                    buffer))
+                {
+                    m_ray_particle_intersection_test_stage->execute(
+                        buffer,
+                        intersection_buffer);
+                }
+                else if (buffer.active_rays == 0)
+                    return;
+            } while (buffer.world_space_rays > 0);
+        }
+
+        m_ray_particle_interaction_stage->execute(
+            intersection_buffer,
+            buffer,
+            reflection_buffer,
+            transmission_buffer,
+            output_buffer);
+
         if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
             transmission_buffer.uid != buffer_control.dummyBufferUID())
         {
-            // Reset intersection buffer
-            for (size_t i = 0; i < intersection_buffer.size; ++i)
-                intersection_buffer.particle_index[i] = -1;
-
-            if (buffer.world_space_rays == 0)
-            {
-                m_ray_particle_intersection_test_stage->execute(
-                    buffer,
-                    intersection_buffer);
-            }
-
-            if (buffer.world_space_rays > 0)
-            {
-                do
-                {
-                    if (m_ray_bounding_volume_intersection_test_stage->execute(
-                        buffer))
-                    {
-                        m_ray_particle_intersection_test_stage->execute(
-                            buffer,
-                            intersection_buffer);
-                    }
-                    else if (buffer.active_rays == 0)
-                        return;
-                } while (buffer.world_space_rays > 0);
-            }
-
-            m_ray_particle_interaction_stage->execute(
-                intersection_buffer,
-                buffer,
-                reflection_buffer,
-                transmission_buffer,
-                output_buffer);
-
             processBatch(reflection_buffer, buffer_control);
             processBatch(transmission_buffer, buffer_control);
         }
