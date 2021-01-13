@@ -100,6 +100,7 @@ void ldplab::rtscpu::Pipeline::processBatch(
     if (buffer.active_rays <= 0)
         return;
 
+    bool emit_max_depth_warning = false;
     if (buffer.inner_particle_rays)
     {
         IntersectionBuffer& intersection_buffer =
@@ -126,6 +127,8 @@ void ldplab::rtscpu::Pipeline::processBatch(
             processBatch(reflection_buffer, buffer_control);
             processBatch(transmission_buffer, buffer_control);
         }
+        else if (buffer.active_rays > 0)
+            emit_max_depth_warning = true;
     }
     else
     {
@@ -137,7 +140,6 @@ void ldplab::rtscpu::Pipeline::processBatch(
         RayBuffer& transmission_buffer =
             buffer_control.getTransmissionBuffer(buffer);
 
-       
         // Reset intersection buffer
         for (size_t i = 0; i < intersection_buffer.size; ++i)
             intersection_buffer.particle_index[i] = -1;
@@ -178,5 +180,33 @@ void ldplab::rtscpu::Pipeline::processBatch(
             processBatch(reflection_buffer, buffer_control);
             processBatch(transmission_buffer, buffer_control);
         }
+        else if (buffer.active_rays > 0)
+            emit_max_depth_warning = true;
+    }
+
+    // Check if there are still active rays left and print a warning to the log
+    if (emit_max_depth_warning)
+    {
+        // Compute max and average length
+        double max_intensity = 0.0, avg_intensity = 0.0;
+        for (size_t i = 0; i < buffer.size; ++i)
+        {
+            if (buffer.index_data[i] < 0)
+                continue;
+
+            double intensity = buffer.ray_data[i].intensity;
+            avg_intensity += intensity;
+            if (intensity > max_intensity)
+                max_intensity = intensity;
+        }
+        avg_intensity /= static_cast<double>(buffer.active_rays);
+        LDPLAB_LOG_WARNING("RTSCPU context %i: Pipeline reached max branching "\
+            "depth %i with a total of %i still active rays, which include a "\
+            "max intensity of %f and average intensity of %f",
+            m_context->uid,
+            m_context->parameters.maximum_branching_depth,
+            buffer.active_rays,
+            max_intensity,
+            avg_intensity);
     }
 }

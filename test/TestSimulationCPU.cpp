@@ -5,7 +5,7 @@
 
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.001;
+const double ROD_PARTICLE_KAPPA = 0.0001;
 const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
 const double ROD_PARTICLE_CYLINDER_RADIUS = 
     std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
@@ -14,7 +14,7 @@ const double ROD_PARTICLE_CYLINDER_HEIGHT =
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
-const double PARTICLE_MATERIAL_GRADIENT = 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
+const double PARTICLE_MATERIAL_GRADIENT = 0; //0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
 const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = 
     ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT/2);
 const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
@@ -48,7 +48,7 @@ const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  /
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 128;
+const size_t NUM_SIM_ROTATION_STEPS = 2048;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
@@ -154,7 +154,7 @@ int main()
     ldplab::SimulationState state{ experimental_setup };
     constexpr double lim = 2 * const_pi();
     constexpr double step_size = lim /
-        static_cast<double>(NUM_SIM_ROTATION_STEPS);
+        static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
     constexpr double angle_shift = const_pi() / 2.0;
     ldplab::RayTracingStepOutput output;
