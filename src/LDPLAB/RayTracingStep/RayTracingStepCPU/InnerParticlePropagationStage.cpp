@@ -265,6 +265,24 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
         Vec3& inter_point, 
         Vec3& inter_normal)
 {
+    if (geometry.origin_indentation.z +
+        geometry.sphere_radius <
+        1e-3)
+    {
+        // Kappa is too small (or 0) and therefore assume the shape as perfect
+        // cylinder.
+        const double t = (geometry.cylinder_length - ray.origin.z) /
+            ray.direction.z;
+        if (t < 0)
+            return false;
+        inter_point = ray.origin + t * ray.direction;
+        if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
+            geometry.cylinder_radius * geometry.cylinder_radius)
+            return false;
+        inter_normal = Vec3(0, 0, -1);
+        return true;
+    }
+
     Vec3 o_minus_c = ray.origin - geometry.origin_cap;
     const double p = glm::dot(ray.direction, o_minus_c);
     const double q = dot(o_minus_c, o_minus_c) -
@@ -294,6 +312,24 @@ indentationIntersection(
     Vec3& inter_point,
     Vec3& inter_normal)
 {
+    if (geometry.origin_indentation.z +
+        geometry.sphere_radius <
+        1e-3)
+    {
+        // Kappa is too small (or 0) and therefore assume the shape as perfect
+        // cylinder.
+        const double t = -ray.origin.z /
+            ray.direction.z;
+        if (t < 0)
+            return false;
+        inter_point = ray.origin + t * ray.direction;
+        if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
+            geometry.cylinder_radius * geometry.cylinder_radius)
+            return false;
+        inter_normal = Vec3(0, 0, 1);
+        return true;
+    }
+
     Vec3 o_minus_c = ray.origin - geometry.origin_indentation;
     double p = glm::dot(ray.direction, o_minus_c);
     double q = dot(o_minus_c, o_minus_c) - 

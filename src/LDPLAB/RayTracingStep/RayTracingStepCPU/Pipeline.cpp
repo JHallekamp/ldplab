@@ -100,50 +100,33 @@ void ldplab::rtscpu::Pipeline::processBatch(
     if (buffer.active_rays <= 0)
         return;
 
+    IntersectionBuffer& intersection_buffer =
+        buffer_control.getIntersectionBuffer();
+    OutputBuffer& output_buffer = buffer_control.getOutputBuffer();
+    RayBuffer& reflection_buffer =
+        buffer_control.getReflectionBuffer(buffer);
+    RayBuffer& transmission_buffer =
+        buffer_control.getTransmissionBuffer(buffer);
+
+    // Reset intersection buffer
+    for (size_t i = 0; i < intersection_buffer.size; ++i)
+        intersection_buffer.particle_index[i] = -1;
+
     bool emit_max_depth_warning = false;
     if (buffer.inner_particle_rays)
     {
-        IntersectionBuffer& intersection_buffer =
-            buffer_control.getIntersectionBuffer();
-        OutputBuffer& output_buffer = buffer_control.getOutputBuffer();
         m_inner_particle_propagation_stage->execute(
             buffer, intersection_buffer, output_buffer);
 
-        RayBuffer& reflection_buffer =
-            buffer_control.getReflectionBuffer(buffer);
-        RayBuffer& transmission_buffer =
-            buffer_control.getTransmissionBuffer(buffer);
-        
         m_ray_particle_interaction_stage->execute(
             intersection_buffer,
             buffer,
             reflection_buffer,
             transmission_buffer,
             output_buffer);
-
-        if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
-            transmission_buffer.uid != buffer_control.dummyBufferUID())
-        {
-            processBatch(reflection_buffer, buffer_control);
-            processBatch(transmission_buffer, buffer_control);
-        }
-        else if (buffer.active_rays > 0)
-            emit_max_depth_warning = true;
     }
     else
     {
-        IntersectionBuffer& intersection_buffer =
-            buffer_control.getIntersectionBuffer();
-        OutputBuffer& output_buffer = buffer_control.getOutputBuffer();
-        RayBuffer& reflection_buffer =
-            buffer_control.getReflectionBuffer(buffer);
-        RayBuffer& transmission_buffer =
-            buffer_control.getTransmissionBuffer(buffer);
-
-        // Reset intersection buffer
-        for (size_t i = 0; i < intersection_buffer.size; ++i)
-            intersection_buffer.particle_index[i] = -1;
-
         if (buffer.world_space_rays == 0)
         {
             m_ray_particle_intersection_test_stage->execute(
@@ -173,19 +156,16 @@ void ldplab::rtscpu::Pipeline::processBatch(
             reflection_buffer,
             transmission_buffer,
             output_buffer);
-
-        if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
-            transmission_buffer.uid != buffer_control.dummyBufferUID())
-        {
-            processBatch(reflection_buffer, buffer_control);
-            processBatch(transmission_buffer, buffer_control);
-        }
-        else if (buffer.active_rays > 0)
-            emit_max_depth_warning = true;
     }
 
     // Check if there are still active rays left and print a warning to the log
-    if (emit_max_depth_warning)
+    if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
+        transmission_buffer.uid != buffer_control.dummyBufferUID())
+    {
+        processBatch(reflection_buffer, buffer_control);
+        processBatch(transmission_buffer, buffer_control);
+    }
+    else if (buffer.active_rays > 0)
     {
         // Compute max and average length
         double max_intensity = 0.0, avg_intensity = 0.0;

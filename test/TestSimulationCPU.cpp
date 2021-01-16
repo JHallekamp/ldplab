@@ -5,7 +5,7 @@
 
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.0001;
+const double ROD_PARTICLE_KAPPA = 0;
 const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
 const double ROD_PARTICLE_CYLINDER_RADIUS = 
     std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
@@ -41,14 +41,14 @@ const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 // Simulation properties
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512.0;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1024.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
 const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  / 
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.005;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 2048;
+const size_t NUM_SIM_ROTATION_STEPS = 512;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
@@ -82,8 +82,8 @@ int main()
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
-    flog.subscribe();
-    clog.subscribe();
+    //flog.subscribe();
+    //clog.subscribe();
    
     // Create particle
     ldplab::Particle rod_particle;
@@ -142,7 +142,7 @@ int main()
     rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
-        RTS_SOLVER_EPSILON, RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_SAFETY_FACTOR);
+        RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_EPSILON, RTS_SOLVER_SAFETY_FACTOR);
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
             experimental_setup, rtscpu_info);
@@ -152,15 +152,16 @@ int main()
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
-    constexpr double lim = 2 * const_pi();
-    constexpr double step_size = lim /
+    constexpr double offset = 0;
+    constexpr double lim = const_pi(); //2 * const_pi();
+    constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
     constexpr double angle_shift = const_pi() / 2.0;
     ldplab::RayTracingStepOutput output;
     std::ofstream output_file("force");
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
-    for (double rotation_x = angle_shift;
+    for (double rotation_x = offset + angle_shift;
         rotation_x < lim + angle_shift + half_step_size; 
         rotation_x += step_size)
     {
@@ -168,7 +169,7 @@ int main()
         ray_tracing_step->execute(state, output);
         output_file << rotation_x - const_pi() / 2 << "\t" << 
             glm::length(output.force_per_particle[puid]) << std::endl;
-        plotProgress((rotation_x - angle_shift) / lim);
+        plotProgress((rotation_x - offset - angle_shift) / (lim - offset));
     }
 
     thread_pool->terminate();

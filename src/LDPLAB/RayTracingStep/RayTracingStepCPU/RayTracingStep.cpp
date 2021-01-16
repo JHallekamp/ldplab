@@ -45,18 +45,8 @@ ldplab::Mat3 ldplab::rtscpu::RayTracingStep::getRotationMatrix(
     return rotz * roty * rotx;
 }
 
-void ldplab::rtscpu::RayTracingStep::execute(
-    const SimulationState& input, RayTracingStepOutput& output)
+void ldplab::rtscpu::RayTracingStep::updateContext(const SimulationState& input)
 {
-    LDPLAB_ASSERT(input.particle_instances.size() == 
-        m_context->particles.size());
-    LDPLAB_LOG_INFO("RTSCPU context %i: "\
-        "Ray tracing step starts execution",
-        m_context->uid);
-    std::chrono::steady_clock::time_point start = 
-        std::chrono::steady_clock::now();
-    
-    // Update context
     for (size_t i = 0; i < m_context->particles.size(); ++i)
     {
         UID<Particle> puid{ m_context->particle_index_to_uid_map[i] };
@@ -85,8 +75,8 @@ void ldplab::rtscpu::RayTracingStep::execute(
                 -particle.orientation.z);
         m_context->particle_transformations[i].p2w_scale_rotation =
             getRotationMatrix(
-                particle.orientation.x, 
-                particle.orientation.y, 
+                particle.orientation.x,
+                particle.orientation.y,
                 particle.orientation.z);
         // Transform bounding volumes
         if (m_context->bounding_volume_data->type() ==
@@ -106,6 +96,20 @@ void ldplab::rtscpu::RayTracingStep::execute(
                 m_context->particle_transformations[i].p2w_translation;
         }
     }
+}
+
+void ldplab::rtscpu::RayTracingStep::execute(
+    const SimulationState& input, RayTracingStepOutput& output)
+{
+    LDPLAB_ASSERT(input.particle_instances.size() == 
+        m_context->particles.size());
+    LDPLAB_LOG_INFO("RTSCPU context %i: "\
+        "Ray tracing step starts execution",
+        m_context->uid);
+    std::chrono::steady_clock::time_point start = 
+        std::chrono::steady_clock::now();
+    
+    updateContext(input);
 
     // Execute pipeline
     LDPLAB_LOG_DEBUG("RTSCPU context %i: Setup ray tracing pipeline",
