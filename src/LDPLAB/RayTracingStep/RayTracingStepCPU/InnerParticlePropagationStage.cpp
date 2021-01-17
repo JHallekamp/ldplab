@@ -265,12 +265,12 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
         Vec3& inter_point, 
         Vec3& inter_normal)
 {
-    if (geometry.origin_indentation.z +
-        geometry.sphere_radius <
-        1e-3)
+    if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
+        if (ray.direction.z == 0)
+            return false;
         const double t = (geometry.cylinder_length - ray.origin.z) /
             ray.direction.z;
         if (t < 0)
@@ -312,12 +312,12 @@ indentationIntersection(
     Vec3& inter_point,
     Vec3& inter_normal)
 {
-    if (geometry.origin_indentation.z +
-        geometry.sphere_radius <
-        1e-3)
+    if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
+        if (ray.direction.z == 0)
+            return false;
         const double t = -ray.origin.z /
             ray.direction.z;
         if (t < 0)

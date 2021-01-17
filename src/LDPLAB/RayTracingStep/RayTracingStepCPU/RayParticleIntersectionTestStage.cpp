@@ -102,15 +102,11 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::intersectionTest(
             }
             else if (inter_point.z < 0) // First intersection under the cylinder
             {
-                inter_point = ray.origin + intersec_second * ray.direction;
-                if (inter_point.z > 0)
-                {
-                    return indentationIntersection(
-                        geometry,
-                        ray,
-                        inter_point,
-                        inter_normal);
-                }
+                return indentationIntersection(
+                    geometry,
+                    ray,
+                    inter_point,
+                    inter_normal);
             }
             else // First intersection over the cylinder
             {
@@ -123,40 +119,11 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::intersectionTest(
         }
         else if (intersec_second > 0) // Ray origin inside infinite cylinder
         {
-            if (ray.direction.z <= 0 && ray.origin.z <= 0)
-                return false;
-            else if (ray.direction.z > 0 && ray.origin.z <= 0)
-                return indentationIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-            
-            const double particle_height = 
-                geometry.origin_cap.z + geometry.sphere_radius;
-            if (ray.direction.z >= 0 && ray.origin.z >= particle_height)
-                return false;
-            else if (ray.direction.z < 0 && ray.origin.z >= particle_height)
-                return capIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-
-            const double dist = 
-                glm::length(geometry.origin_indentation - ray.origin);
-            if (dist <= geometry.sphere_radius + 1e-9)
-                return indentationIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-            else
-                return capIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
+            return bottomTopIntersection(
+                geometry,
+                ray,
+                inter_point,
+                inter_normal);
         }
     }
     // Check for ray inside the infinite cylinder with orthogonal direction
@@ -167,40 +134,11 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::intersectionTest(
         if (distance <= geometry.cylinder_radius * 
                 geometry.cylinder_radius)
         {
-            if (ray.direction.z <= 0 && ray.origin.z <= 0)
-                return false;
-            else if (ray.direction.z > 0 && ray.origin.z <= 0)
-                return indentationIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-
-            const double particle_height =
-                geometry.origin_cap.z + geometry.sphere_radius;
-            if (ray.direction.z >= 0 && ray.origin.z >= particle_height)
-                return false;
-            else if (ray.direction.z < 0 && ray.origin.z >= particle_height)
-                return capIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-
-            const double dist =
-                glm::length(geometry.origin_indentation - ray.origin);
-            if (dist <= geometry.sphere_radius + 1e-9)
-                return indentationIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-            else
-                return capIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
+            return bottomTopIntersection(
+                geometry, 
+                ray, 
+                inter_point, 
+                inter_normal);
         }
     }
     return false;
@@ -225,6 +163,54 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::cylinderIntersection(
     distance_min = - p - std::sqrt(discriminant);
     distance_max = - p + std::sqrt(discriminant);
     return true;
+}
+
+bool ldplab::rtscpu::RodParticleIntersectionTest::bottomTopIntersection(
+    const RodParticle& particle, 
+    const Ray& ray, 
+    Vec3& inter_point, 
+    Vec3& inter_normal)
+{
+    if (ray.origin.z <= 0) // Ray origin below the particle
+    {
+        if (ray.direction.z <= 0)
+            return false;
+        else
+            return indentationIntersection(
+                particle,
+                ray,
+                inter_point,
+                inter_normal);
+    }
+
+    const double particle_height =
+        particle.origin_cap.z + particle.sphere_radius;
+    if (ray.origin.z >= particle_height) // Ray origin above the particle
+    {
+        if (ray.direction.z >= 0)
+            return false;
+        else
+            return capIntersection(
+                particle, 
+                ray, 
+                inter_point, 
+                inter_normal);
+    }
+
+    const double dist =
+        glm::length(particle.origin_indentation - ray.origin);
+    if (dist <= particle.sphere_radius + 1e-9)
+        return indentationIntersection(
+            particle,
+            ray,
+            inter_point,
+            inter_normal);
+    else
+        return capIntersection(
+            particle,
+            ray,
+            inter_point,
+            inter_normal);
 }
 
 bool ldplab::rtscpu::RodParticleIntersectionTest::sphereIntersection(
@@ -254,12 +240,12 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::capIntersection(
     Vec3& inter_point,
     Vec3& inter_normal)
 {
-    if (geometry.origin_indentation.z +
-        geometry.sphere_radius <
-        1e-3)
+    if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
+        if (ray.direction.z == 0)
+            return false;
         const double t = (geometry.cylinder_length - ray.origin.z) /
             ray.direction.z;
         if (t < 0)
@@ -304,12 +290,12 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::indentationIntersection(
     Vec3& inter_point,
     Vec3& inter_normal)
 {
-    if (geometry.origin_indentation.z +
-        geometry.sphere_radius <
-        1e-3)
+    if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
+        if (ray.direction.z == 0)
+            return false;
         const double t = -ray.origin.z / ray.direction.z;
         if (t < 0)
             return false;
