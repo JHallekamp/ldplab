@@ -55,7 +55,7 @@ size_t
                 m_bounding_spheres[j].radius;
 
             const double q = glm::dot(oc, oc) - rr;
-            if (q <= 1e-9)
+            if (q < 1e-9)
                 continue;
 
             const double p = glm::dot(buffer.ray_data[i].direction, oc);

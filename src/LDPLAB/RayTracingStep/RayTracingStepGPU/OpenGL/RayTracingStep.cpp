@@ -17,6 +17,61 @@ ldplab::rtsgpu_ogl::RayTracingStep::RayTracingStep(
         m_context->uid);
 }
 
+void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
+    const SimulationState& input)
+{
+    // Update context
+    for (size_t i = 0; i < m_context->particles.size(); ++i)
+    {
+        UID<Particle> puid{ m_context->particle_index_to_uid_map[i] };
+        std::map<UID<Particle>, ParticleInstance>::const_iterator particle_it
+            = input.particle_instances.find(puid);
+        if (particle_it == input.particle_instances.end())
+        {
+            LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not update particle "\
+                "transformations, particle %i is not present in the given "\
+                "simulation state, abort RTSGPU (OpenGL) execution",
+                m_context->uid,
+                puid);
+            return;
+        }
+        const ParticleInstance& particle = particle_it->second;
+
+        // Set particle current transformation
+        m_context->particle_transformations[i].w2p_translation =
+            -particle.position;
+        m_context->particle_transformations[i].p2w_translation =
+            particle.position;
+        m_context->particle_transformations[i].w2p_rotation_scale =
+            getRotationMatrix(
+                -particle.orientation.x,
+                -particle.orientation.y,
+                -particle.orientation.z);
+        m_context->particle_transformations[i].p2w_scale_rotation =
+            getRotationMatrix(
+                particle.orientation.x,
+                particle.orientation.y,
+                particle.orientation.z);
+        // Transform bounding volumes
+        if (m_context->bounding_volume_data->type() ==
+            IBoundingVolumeData::Type::spheres)
+        {
+            // Set sphere radius
+            ((BoundingSphereData*)
+                m_context->bounding_volume_data.get())->sphere_data[i].radius =
+                ((BoundingVolumeSphere*)
+                    m_context->particles[i].bounding_volume.get())->radius;
+            // Set sphere center
+            ((BoundingSphereData*)
+                m_context->bounding_volume_data.get())->sphere_data[i].center =
+                m_context->particle_transformations[i].p2w_scale_rotation *
+                ((BoundingVolumeSphere*)
+                    m_context->particles[i].bounding_volume.get())->center +
+                m_context->particle_transformations[i].p2w_translation;
+        }
+    }
+}
+
 ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     double rx,
     double ry,
@@ -56,56 +111,7 @@ void ldplab::rtsgpu_ogl::RayTracingStep::execute(
     std::chrono::steady_clock::time_point start = 
         std::chrono::steady_clock::now();
     
-    // Update context
-    for (size_t i = 0; i < m_context->particles.size(); ++i)
-    {
-        UID<Particle> puid{ m_context->particle_index_to_uid_map[i] };
-        std::map<UID<Particle>, ParticleInstance>::const_iterator particle_it
-            = input.particle_instances.find(puid);
-        if (particle_it == input.particle_instances.end())
-        {
-            LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not update particle "\
-                "transformations, particle %i is not present in the given "\
-                "simulation state, abort RTSGPU (OpenGL) execution",
-                m_context->uid,
-                puid);
-            return;
-        }
-        const ParticleInstance& particle = particle_it->second;
-
-        // Set particle current transformation
-        m_context->particle_transformations[i].w2p_translation =
-            -particle.position;
-        m_context->particle_transformations[i].p2w_translation =
-            particle.position;
-        m_context->particle_transformations[i].w2p_rotation_scale =
-            getRotationMatrix(
-                -particle.orientation.x,
-                -particle.orientation.y,
-                -particle.orientation.z);
-        m_context->particle_transformations[i].p2w_scale_rotation =
-            getRotationMatrix(
-                particle.orientation.x, 
-                particle.orientation.y, 
-                particle.orientation.z);
-        // Transform bounding volumes
-        if (m_context->bounding_volume_data->type() ==
-            IBoundingVolumeData::Type::spheres)
-        {
-            // Set sphere radius
-            ((BoundingSphereData*)
-                m_context->bounding_volume_data.get())->sphere_data[i].radius =
-                ((BoundingVolumeSphere*)
-                    m_context->particles[i].bounding_volume.get())->radius;
-            // Set sphere center
-            ((BoundingSphereData*)
-                m_context->bounding_volume_data.get())->sphere_data[i].center =
-                m_context->particle_transformations[i].p2w_scale_rotation *
-                ((BoundingVolumeSphere*)
-                    m_context->particles[i].bounding_volume.get())->center +
-                m_context->particle_transformations[i].p2w_translation;
-        }
-    }
+    updateContext(input);
 
     // Execute pipeline
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Setup ray tracing pipeline",

@@ -111,6 +111,27 @@ namespace ldplab
                 double& distance_min,
                 double& distance_max);
             /**
+             * @brief Calculates whether a ray intersects the particle at the
+             *        cap or indentation under the assumption that the ray is
+             *        within the infinite cylinder.
+             * @param[in] particle Specifies the particle geometry.
+             * @param[in] ray Specifies the ray.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          outside of the particle.
+             * @returns true if the ray intersects the particle at the bottom
+             *          or top.
+             */
+            bool bottomTopIntersection(
+                const RodParticle& particle,
+                const Ray& ray,
+                Vec3& inter_point,
+                Vec3& inter_normal);
+
+            /**
              * @brief Calculate the intersection point of a ray and the sphere.
              * @param[in] origin Specifies the origin of the sphere.
              * @param[in] radius Specifies the radius of the sphere.
