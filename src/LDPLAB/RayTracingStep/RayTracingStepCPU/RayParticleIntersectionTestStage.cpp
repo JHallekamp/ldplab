@@ -273,11 +273,9 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::capIntersection(
         inter_point = ray.origin + intersec_first *
             ray.direction;
         if (inter_point.z > geometry.cylinder_length &&
-            inter_point.z <= geometry.origin_cap.z +
-            geometry.sphere_radius)
+            inter_point.z <= geometry.origin_cap.z + geometry.sphere_radius)
         {
-            inter_normal = glm::normalize(
-                inter_point - geometry.origin_cap);
+            inter_normal = glm::normalize(inter_point - geometry.origin_cap);
             return true;
         }
     }
@@ -321,7 +319,7 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::indentationIntersection(
         
         if (inter_point.z > 0 &&
             inter_point.z <= geometry.origin_indentation.z +
-            geometry.sphere_radius)
+                geometry.sphere_radius)
         {
             inter_normal = glm::normalize(
                 geometry.origin_indentation - inter_point);
