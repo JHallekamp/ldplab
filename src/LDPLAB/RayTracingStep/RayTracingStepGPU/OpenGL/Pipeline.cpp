@@ -68,18 +68,18 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
     do
     {
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
-        LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Filled batch buffer %i with %i "\
-            "initial rays",
+        LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Filled batch buffer %i "\
+            "with %i initial rays",
             m_context->uid, 
             initial_batch_buffer.uid, 
             initial_batch_buffer.active_rays);
 
         if (initial_batch_buffer.active_rays > 0)
         {
-            ++num_batches;
             LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i executes "\
                 "batch %i on initial buffer %i",
                 m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
+            ++num_batches;
 
             processBatch(initial_batch_buffer, buffer_control);
 
