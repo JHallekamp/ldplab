@@ -76,11 +76,11 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
 
         if (initial_batch_buffer.active_rays > 0)
         {
-            LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Pipeline instance %i executes "\
-                "new batch on initial buffer %i",
-                m_context->uid, job_id, initial_batch_buffer.uid);
-
             ++num_batches;
+            LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i executes "\
+                "batch %i on initial buffer %i",
+                m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
+
             processBatch(initial_batch_buffer, buffer_control);
 
             LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Pipeline instance %i "\
