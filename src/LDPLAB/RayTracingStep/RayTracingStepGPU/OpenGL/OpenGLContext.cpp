@@ -169,15 +169,32 @@ void ldplab::rtsgpu_ogl::ShaderStorageBuffer::bindToIndex(
 void ldplab::rtsgpu_ogl::ShaderStorageBuffer::upload(
     size_t offset, 
     size_t size, 
-    void* data)
+    const void* data)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_glid);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);
 }
 
-void ldplab::rtsgpu_ogl::ShaderStorageBuffer::upload(void* data)
+void ldplab::rtsgpu_ogl::ShaderStorageBuffer::upload(const void* data)
 {
     upload(0, m_size, data);
+}
+
+void ldplab::rtsgpu_ogl::ShaderStorageBuffer::download(
+    size_t offset,
+    size_t size, 
+    void* target)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_glid);
+    GLvoid* ssbo_data = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    ssbo_data = (void*)(((char*)ssbo_data) + offset);
+    std::memcpy(target, ssbo_data, size);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void ldplab::rtsgpu_ogl::ShaderStorageBuffer::download(void* target)
+{
+    download(0, m_size, target);
 }
 
 ldplab::rtsgpu_ogl::ShaderStorageBuffer::ShaderStorageBuffer()

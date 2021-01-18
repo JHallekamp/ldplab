@@ -67,7 +67,7 @@ namespace ldplab
              *                 in size.
              * @note This will bind the buffer.
              */
-            void upload(size_t offset, size_t size, void* data);
+            void upload(size_t offset, size_t size, const void* data);
             /**
              * @brief Uploads data to the SSBO.
              * @param[in] data Pointer to the source data that is uploaded to 
@@ -75,7 +75,24 @@ namespace ldplab
              *                 size as the SSBO.
              * @note This will bind the buffer.
              */
-            void upload(void* data);
+            void upload(const void* data);
+            /**
+             * @brief Downloads data from the SSBO.
+             * @param[in] offset Offset for the SSBO in bytes.
+             * @param[in] size Size of the copied range in bytes.
+             * @param[in,out] target Pointer to target where the data is copied
+             *                       to. The target must be size bytes in size.
+             * @note This will bind the buffer.
+             */
+            void download(size_t offset, size_t size, void* target);
+            /**
+             * @brief Downloads the complete data from the SSBO.
+             * @param[in,out] target Pointer to target where the data is copied
+             *                       to. The target must be of the same size as
+             *                       the SSBO.
+             * @note This will bind the buffer.
+             */
+            void download(void* target);
         private:
             ShaderStorageBuffer();
         private:
