@@ -18,14 +18,8 @@ namespace ldplab
         {
             friend class OpenGLContext;
         public:
-            ComputeShader();
             /** @brief Destructs the shader program. */
             ~ComputeShader();
-            /**
-             * @brief Checks whether the shader is initialized correctly.
-             * @returns true, if the shader is initialized correctly.
-             */
-            bool isInitialized() const;
             /**
              * @brief Provides the name of the shader.
              * @returns The name as a null terminated C string.
@@ -41,11 +35,56 @@ namespace ldplab
             /** @brief Uses shader in the current OpenGL rendering state. */
             void use() const;
         private:
+            ComputeShader();
+        private:
             std::shared_ptr<Context> m_context;
             /** @brief OpenGL ID of the shader program. */
             GLuint m_glid;
             /** @brief The name of the shader program. */
             std::string m_name;
+        };
+
+        /** @brief Encapsulates a shader storage buffer. */
+        class ShaderStorageBuffer
+        {
+            friend class OpenGLContext;
+        public:
+            ~ShaderStorageBuffer();
+            /** @brief Size of the buffer in bytes. */
+            size_t size() const { return m_size; }
+            /** 
+             * @brief Binds the shader storage buffer to a given binding index.
+             * @param[in] binding_index The SSBO index to which the buffer is 
+             *                          bound.
+             */
+            void bindToIndex(GLuint binding_index) const;
+            /** 
+             * @brief Uploads data to the SSBO.
+             * @param[in] offset Offset for SSBO in bytes.
+             * @param[in] size Size of the copied range in bytes.
+             * @param[in] data Pointer to the source data that is uploaded to
+             *                 the shader buffer. This needs to be size bytes
+             *                 in size.
+             * @note This will bind the buffer.
+             */
+            void upload(size_t offset, size_t size, void* data);
+            /**
+             * @brief Uploads data to the SSBO.
+             * @param[in] data Pointer to the source data that is uploaded to 
+             *                 the shader buffer. This needs to be of the same
+             *                 size as the SSBO.
+             * @note This will bind the buffer.
+             */
+            void upload(void* data);
+        private:
+            ShaderStorageBuffer();
+        private:
+            /** @brief The shader storage buffer object (SSBO) OpenGL id. */
+            GLuint m_glid;
+            /** @brief Size of the buffer in bytes. */
+            size_t m_size;
+            /** @brief Usage pattern of the buffer. */
+            GLenum m_usage;
         };
 
         /**
@@ -65,14 +104,22 @@ namespace ldplab
              * @brief Creates a compute shader program.
              * @param[in] shader_name The name of the glsl shader.
              * @param[in] glsl_code The glsl shader code of the compute shader.
-             * @param[out] shader The target container for the compiled 
-             *                    shader program.
-             * @returns true if the shader program was created successfully.
+             * @returns Shared pointer to the shader or nullptr if the shader
+             *          was not created successfully.
              */
-            bool createComputeShader(
+            std::shared_ptr<ComputeShader> createComputeShader(
                 const std::string& shader_name,
-                const std::string& glsl_code, 
-                ComputeShader& shader) const;
+                const std::string& glsl_code) const;
+            /**
+             * @brief Creates a shader storage buffer object (SSBO).
+             * @param[in] buffer_size Size of the buffer in bytes.
+             * @param[in] buffer_usage Specifies OpenGL usage pattern.
+             * @returns Shared pointer to the shader storage buffer or nullptr
+             *          if the buffer was not created successfully.
+             */
+            std::shared_ptr<ShaderStorageBuffer> createShaderStorageBuffer(
+                size_t buffer_size,
+                GLenum buffer_usage = GL_DYNAMIC_READ);
         private:
             std::shared_ptr<Context> m_context;
         };

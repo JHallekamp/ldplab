@@ -16,11 +16,6 @@ ldplab::rtsgpu_ogl::ComputeShader::~ComputeShader()
     glDeleteProgram(m_glid);
 }
 
-bool ldplab::rtsgpu_ogl::ComputeShader::isInitialized() const
-{
-    return (m_glid != 0);
-}
-
 const char* ldplab::rtsgpu_ogl::ComputeShader::name() const
 {
     LDPLAB_ASSERT(isInitialized());
@@ -78,13 +73,15 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::init()
     return true;
 }
 
-bool ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
+std::shared_ptr<ldplab::rtsgpu_ogl::ComputeShader> 
+ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
     const std::string& shader_name,
-    const std::string& glsl_code, 
-    ComputeShader& shader) const
+    const std::string& glsl_code) const
 {
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Begins %s compute shader "\
         "compilation", m_context->uid, shader_name.c_str());
+
+    std::shared_ptr<ComputeShader> shader{ nullptr };
 
     // Compile the compute shader
     GLuint compute_shader = glCreateShader(GL_COMPUTE_SHADER);
@@ -107,7 +104,7 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
         std::string log = "RTSGPU (OpenGL) context %i: Failed to compile "\
             "%s compute shader, " + std::string(error_log.data());
         LDPLAB_LOG_ERROR(log.c_str(), m_context->uid, shader_name.c_str());
-        return false;
+        return shader;
     }
 
     // Link program
@@ -130,9 +127,10 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
     else
     {
         // No errors
-        shader.m_context = m_context;
-        shader.m_glid = program;
-        shader.m_name = shader_name;
+        shader = std::shared_ptr<ComputeShader>(new ComputeShader());
+        shader->m_context = m_context;
+        shader->m_glid = program;
+        shader->m_name = shader_name;
         LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished %s compute "\
             "shader compilation successfully", 
             m_context->uid, shader_name.c_str());
@@ -141,5 +139,55 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
     // Clean up and return
     glDetachShader(program, compute_shader);
     glDeleteShader(compute_shader);
-    return (result != GL_FALSE);
+    return shader;
+}
+
+std::shared_ptr<ldplab::rtsgpu_ogl::ShaderStorageBuffer> 
+ldplab::rtsgpu_ogl::OpenGLContext::createShaderStorageBuffer(
+    size_t buffer_size, 
+    GLenum buffer_usage)
+{
+    std::shared_ptr<ShaderStorageBuffer> ssbo{ new ShaderStorageBuffer() };
+    if (ssbo != nullptr)
+    {
+        ssbo->m_size = buffer_size;
+        ssbo->m_usage = buffer_usage;
+        glGenBuffers(1, &ssbo->m_glid);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo->m_glid);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, NULL, buffer_usage);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+    return ssbo;
+}
+
+void ldplab::rtsgpu_ogl::ShaderStorageBuffer::bindToIndex(
+    GLuint binding_index) const
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding_index, m_glid);
+}
+
+void ldplab::rtsgpu_ogl::ShaderStorageBuffer::upload(
+    size_t offset, 
+    size_t size, 
+    void* data)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_glid);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);
+}
+
+void ldplab::rtsgpu_ogl::ShaderStorageBuffer::upload(void* data)
+{
+    upload(0, m_size, data);
+}
+
+ldplab::rtsgpu_ogl::ShaderStorageBuffer::ShaderStorageBuffer()
+    :
+    m_glid{ 0 },
+    m_size{ 0 },
+    m_usage{ 0 }
+{ }
+
+ldplab::rtsgpu_ogl::ShaderStorageBuffer::~ShaderStorageBuffer()
+{
+    glDeleteBuffers(1, &m_glid);
 }
