@@ -245,7 +245,8 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     if (discriminant < 0.0)
         return false;
     const double t = -p + std::sqrt(discriminant);
-
+    if (t <= 1e-9)
+        return false;
     inter_point = ray.origin + ray.direction * t;
     if (inter_point.z <= geometry.cylinder_length &&
         inter_point.z >= 0)
@@ -273,7 +274,7 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
             return false;
         const double t = (geometry.cylinder_length - ray.origin.z) /
             ray.direction.z;
-        if (t < 0)
+        if (t <= 1e-9)
             return false;
         inter_point = ray.origin + t * ray.direction;
         if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
@@ -292,7 +293,8 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     if (discriminant < 0.0)
         return false;
     const double t = -p + std::sqrt(discriminant);
-
+    if (t <= 1e-9)
+        return false;
     inter_point = ray.origin + t * ray.direction;
     if (inter_point.z > geometry.cylinder_length &&
         inter_point.z <= geometry.origin_cap.z +
@@ -320,7 +322,7 @@ indentationIntersection(
             return false;
         const double t = -ray.origin.z /
             ray.direction.z;
-        if (t < 0)
+        if (t <= 1e-9)
             return false;
         inter_point = ray.origin + t * ray.direction;
         if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
@@ -339,7 +341,8 @@ indentationIntersection(
     if (discriminant < 0.0)
         return false;
     const double t = -p - std::sqrt(discriminant);
-
+    if (t <= 1e-9)
+        return false;
     inter_point = ray.origin + t * ray.direction;
     if (inter_point.z > 0 &&
         inter_point.z <= geometry.origin_indentation.z +
