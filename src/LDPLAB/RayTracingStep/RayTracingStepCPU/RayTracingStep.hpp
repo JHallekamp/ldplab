@@ -34,6 +34,12 @@ namespace ldplab
             void execute(
                 const SimulationState& input,
                 RayTracingStepOutput& output) override;
+            /** 
+             * @brief Updates the internal data buffers. 
+             * @note This is called automatically on execute so you usually
+             *       do not have to call it manually.
+             */
+            void updateContext(const SimulationState& input);
         private:
             ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz);
             /**

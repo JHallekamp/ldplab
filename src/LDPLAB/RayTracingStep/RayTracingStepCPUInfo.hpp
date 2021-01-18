@@ -39,6 +39,40 @@ namespace ldplab
         /** @brief Number of parallel pipeline instances. */
         size_t number_parallel_pipelines;
     };
+
+    // Prototypes
+    namespace rtscpu
+    {
+        struct Context;
+        class IInitialStage;
+        class IInnerParticlePropagationStage;
+        class IRayBoundingVolumeIntersectionTestStage;
+        class IRayParticleInteractionStage;
+        class IRayParticleIntersectionTestStage;
+    }
+
+    /** @brief Holds pointer used in debugging and testing environments. */
+    struct RayTracingStepCPUDebugInfo
+    {
+        /** @brief Pointer to the RTSCPU context structure. */
+        std::shared_ptr<rtscpu::Context> 
+            context;
+        /** @brief Pointer to the initial stage implementation. */
+        std::unique_ptr<rtscpu::IInitialStage> 
+            initial_stage;
+        /** @brief Pointer to the inner particle propagation implementation. */
+        std::unique_ptr<rtscpu::IInnerParticlePropagationStage> 
+            inner_particle_propagation;
+        /** @brief Pointer to ray bounding volume intersection test implementation. */
+        std::unique_ptr<rtscpu::IRayBoundingVolumeIntersectionTestStage>
+            ray_bounding_volume_intersection_test;
+        /** @brief Pointer to ray particle interaction implementation. */
+        std::unique_ptr<rtscpu::IRayParticleInteractionStage>
+            ray_particle_interaction;
+        /** @brief Pointer to ray particle intersection test implementation. */
+        std::unique_ptr<rtscpu::IRayParticleIntersectionTestStage>
+            ray_particle_intersection_test;
+    };
 }
 
 #endif
