@@ -56,11 +56,11 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
 
         Vec3& reflected_ray_origin = reflected_rays.ray_origin_data[i];
         Vec3& reflected_ray_direction = reflected_rays.ray_direction_data[i];
-        double reflected_ray_intensity = reflected_rays.ray_intensity_data[i];
+        double& reflected_ray_intensity = reflected_rays.ray_intensity_data[i];
         
         Vec3& refracted_ray_origin = refracted_rays.ray_origin_data[i];
         Vec3& refracted_ray_direction = refracted_rays.ray_direction_data[i];
-        double refracted_ray_intensity = refracted_rays.ray_intensity_data[i];
+        double& refracted_ray_intensity = refracted_rays.ray_intensity_data[i];
         
         const Vec3& inter_point = intersection.point_data[i];
         const Vec3& inter_normal = intersection.normal_data[i];

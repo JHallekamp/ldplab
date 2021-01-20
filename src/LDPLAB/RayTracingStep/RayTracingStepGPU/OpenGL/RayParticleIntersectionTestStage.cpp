@@ -37,7 +37,6 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
         const RodParticle& geometry = m_rod_particles[rays.index_data[i]];
         Vec3& ray_origin = rays.ray_origin_data[i];
         Vec3& ray_direction = rays.ray_direction_data[i];
-        double ray_intensity = rays.ray_intensity_data[i];
         Vec3& inter_point = intersection.point_data[i];
         Vec3& inter_normal = intersection.normal_data[i];
 
