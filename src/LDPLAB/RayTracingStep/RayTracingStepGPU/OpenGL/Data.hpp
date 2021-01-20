@@ -21,15 +21,21 @@ namespace ldplab
                 uid{ },
                 depth{ depth },
                 size{ size },
-                ray_data{ nullptr },
+                ray_origin_data{ nullptr },
+                ray_direction_data{ nullptr },
+                ray_intensity_data{ nullptr },
                 index_data{ nullptr },
                 min_bounding_volume_distance_data{ nullptr },
                 active_rays{ 0 },
                 world_space_rays{ 0 },
                 inner_particle_rays{ false }
             { }
-            /** @brief Array containing size Ray element. */
-            Ray* ray_data;
+            /** @brief Array containing the origin for each ray. */
+            Vec3* ray_origin_data;
+            /** @brief Array containing the direction for each ray. */
+            Vec3* ray_direction_data;
+            /** @brief Array containing intensity for each ray element. */
+            double* ray_intensity_data;
             /** @brief Array containing size (particle) indices. */
             int32_t* index_data;
             /** @brief Array containing the min distance to bounding volumes */
@@ -54,9 +60,9 @@ namespace ldplab
         struct OutputBuffer
         {
             /** @brief Array containing size force changes per particle. */
-            Vec3* force;
+            Vec3* force_data;
             /** @brief Array containing size torque changes per particle. */
-            Vec3* torque;
+            Vec3* torque_data;
             /** @brief Number of particles. */
             size_t size;
         };
@@ -68,11 +74,11 @@ namespace ldplab
         struct IntersectionBuffer
         {
             /** @brief Array containing size intersection points. */
-            Vec3* point;
+            Vec3* point_data;
             /** @brief Array containing size intersection normals. */
-            Vec3* normal;
+            Vec3* normal_data;
             /** @brief Array containing indices of intersected particles. */
-            int32_t* particle_index;
+            int32_t* particle_index_data;
             /** @brief Number of elements in point and normal arrays. */
             size_t size;
         };

@@ -263,16 +263,17 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     m_batch_creation_particle_initialized = false;
 }
 
-
 inline void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
-    transformRayFromWorldToParticleSpace(Ray& ray, size_t pidx) const
+    transformRayFromWorldToParticleSpace(
+        Vec3& origin, 
+        Vec3& direction, 
+        size_t pidx) const
 {
-    ray.origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
-        (ray.origin +
-            m_context->particle_transformations[pidx].w2p_translation);
-    ray.direction = glm::normalize(
+    origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
+        (origin + m_context->particle_transformations[pidx].w2p_translation);
+    direction = glm::normalize(
         m_context->particle_transformations[pidx].w2p_rotation_scale *
-        ray.direction);
+        direction);
 }
 
 bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch(
@@ -336,20 +337,20 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
                     {
                         // Create ray
                         // Set ray origin
-                        initial_batch_buffer.ray_data[nr].origin =
+                        initial_batch_buffer.ray_origin_data[nr] =
                             light.origin_corner
                             + m_rasterization_x * light.horizontal_direction
                             + m_rasterization_y * light.vertical_direction;
                         
                         // Set initial ray intensity
-                        initial_batch_buffer.ray_data[nr].intensity =
+                        initial_batch_buffer.ray_intensity_data[nr] =
                             ((LightDistributionHomogeneous*)
                                 light.intensity_distribution.get())->intensity /
                             (m_context->parameters.number_rays_per_unit *
                             m_context->parameters.number_rays_per_unit);
                         
                         // Set initial ray direction
-                        initial_batch_buffer.ray_data[nr].direction = 
+                        initial_batch_buffer.ray_direction_data[nr] = 
                             light.orientation;
 
                         // Set minimum distance
@@ -362,7 +363,9 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
 
                         // Transform ray to particle space
                         transformRayFromWorldToParticleSpace(
-                            initial_batch_buffer.ray_data[nr], pi);
+                            initial_batch_buffer.ray_origin_data[nr], 
+                            initial_batch_buffer.ray_direction_data[nr], 
+                            pi);
 
                         // Increase number of rays
                         ++nr;

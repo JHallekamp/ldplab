@@ -120,10 +120,15 @@ namespace ldplab
              * @detail The ray propagation is integrated until the ray 
              *         intersects with the particle surface.
              * @param[in] particle Index of the particle.
-             * @param[in,out] ray The ray which is propagating threw the 
-             *                    particle. The ray will be updated to the 
-             *                    closest point at the particle surface in 
-             *                    terms of the integration step size.
+             * @param[in,out] ray_origin Origin of the ray which is propagating
+             *                           through the particle. Will be updated
+             *                           to the closest point at the particle
+             *                           surface in terms of the integration 
+             *                           step size.
+             * @param[in,out] ray_direction Direction of the ray which is 
+             *                              propagating through the particle.
+             * @param[in,out] ray_intensity Intensity of the ray which is 
+             *                              propagating through the particle.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
@@ -135,7 +140,9 @@ namespace ldplab
              */
             void rayPropagation(
                 const size_t particle, 
-                Ray& ray, 
+                Vec3& ray_origin,
+                Vec3& ray_direction,
+                double ray_intensity,
                 Vec3& inter_point,
                 Vec3& inter_normal,
                 OutputBuffer& output);
@@ -195,7 +202,8 @@ namespace ldplab
              * @warning It is assumed that the rays origin is inside the 
              *          particle.
              * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] inter_point Resulting intersection point with
              *                         the cap.
              * @param[out] inter_normal Resulting normal of the particle
@@ -207,7 +215,8 @@ namespace ldplab
              */
             bool cylinderIntersection(
                 const RodParticle& geometry,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
@@ -216,7 +225,8 @@ namespace ldplab
              * @warning It is assumed that the rays origin is inside the 
              *          particle.
              * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] inter_point Resulting intersection point with
              *                         the cap.
              * @param[out] inter_normal Resulting normal of the particle
@@ -228,7 +238,8 @@ namespace ldplab
              */
             bool capIntersection(
                 const RodParticle& geometry,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
@@ -237,7 +248,8 @@ namespace ldplab
              * @warning It is assumed that the rays origin is inside the 
              *          particle.
              * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] intersection_point Resulting intersection point with
              *                                the indentation.
              * @param[out] intersection_normal Resulting normal of the particle
@@ -249,7 +261,8 @@ namespace ldplab
              */
             bool indentationIntersection(
                 const RodParticle& geometry,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
         private:

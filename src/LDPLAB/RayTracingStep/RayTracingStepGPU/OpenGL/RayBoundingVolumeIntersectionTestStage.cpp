@@ -44,7 +44,7 @@ size_t
         double min_d = -1.0;
         int32_t min_j = 0;
 
-        const Vec3& o = buffer.ray_data[i].origin;
+        const Vec3& o = buffer.ray_origin_data[i];
         for (int32_t j = 0; j < 
             static_cast<int32_t>(m_context->particles.size()); ++j)
         {
@@ -58,7 +58,7 @@ size_t
             if (q < 1e-9)
                 continue;
 
-            const double p = glm::dot(buffer.ray_data[i].direction, oc);
+            const double p = glm::dot(buffer.ray_direction_data[i], oc);
             const double discriminant = p * p - q;
             if (discriminant < 1e-9)
                 continue;
@@ -88,7 +88,10 @@ size_t
             // ray hits particle min_j boundary volume
             buffer.index_data[i] = min_j;
             buffer.min_bounding_volume_distance_data[i] = min_d;
-            transformRayFromWorldToParticleSpace(buffer.ray_data[i], min_j);
+            transformRayFromWorldToParticleSpace(
+                buffer.ray_origin_data[i], 
+                buffer.ray_direction_data[i], 
+                min_j);
             ++num_rays_hitting_boundary_sphere;
         }
     }
@@ -109,12 +112,14 @@ size_t
 }
 
 inline void ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
-    transformRayFromWorldToParticleSpace(Ray& ray, size_t pidx) const
+    transformRayFromWorldToParticleSpace(
+        Vec3& origin, 
+        Vec3& direction, 
+        size_t pidx) const
 {
-    ray.origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
-        (ray.origin + 
-            m_context->particle_transformations[pidx].w2p_translation);
-    ray.direction = glm::normalize(
+    origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
+        (origin + m_context->particle_transformations[pidx].w2p_translation);
+    direction = glm::normalize(
         m_context->particle_transformations[pidx].w2p_rotation_scale *
-            ray.direction);
+            direction);
 }

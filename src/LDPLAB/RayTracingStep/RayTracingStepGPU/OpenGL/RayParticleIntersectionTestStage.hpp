@@ -81,7 +81,8 @@ namespace ldplab
              * @brief Testing for a intersection of a single ray with a 
              *        particle.
              * @param[in] particle Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle 
@@ -91,13 +92,15 @@ namespace ldplab
              */
             bool intersectionTest(
                 const RodParticle& geometry,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the cylinder.
              * @param[in] particle Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] distance_min Resulting distance between the origin
              *                      of the ray and the intersection point.
              * @param[out] distance_max Resulting distance between the origin
@@ -107,7 +110,8 @@ namespace ldplab
              */
             bool cylinderIntersection(
                 const RodParticle& particle,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 double& distance_min,
                 double& distance_max);
             /**
@@ -115,7 +119,8 @@ namespace ldplab
              *        cap or indentation under the assumption that the ray is
              *        within the infinite cylinder.
              * @param[in] particle Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
@@ -127,7 +132,8 @@ namespace ldplab
              */
             bool bottomTopIntersection(
                 const RodParticle& particle,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
 
@@ -135,7 +141,8 @@ namespace ldplab
              * @brief Calculate the intersection point of a ray and the sphere.
              * @param[in] origin Specifies the origin of the sphere.
              * @param[in] radius Specifies the radius of the sphere.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] distance_min Resulting distance between the origin
              *                      of the ray and the intersection point.
              * @param[out] distance_max Resulting distance between the origin
@@ -144,9 +151,10 @@ namespace ldplab
              *         false will be returned.
              */
             bool sphereIntersection(
-                const Vec3& origin,
-                const double& raduis,
-                const Ray& ray,
+                const Vec3& sphere_origin,
+                const double& sphere_raduis,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 double& distance_min,
                 double& distance_max);
 
@@ -159,7 +167,8 @@ namespace ldplab
              *          checked. It is assumed that the intersection point is 
              *          inside the infinite cylinder.
              * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] intersection_point Resulting intersection point with
              *                                the cap.
              * @param[out] intersection_normal Resulting normal of the particle
@@ -171,7 +180,8 @@ namespace ldplab
              */
             bool capIntersection(
                 const RodParticle& geometry,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
             /**
@@ -183,7 +193,8 @@ namespace ldplab
              * @warning No further checking is done if the intersection point 
              *          is inside the cylinder.
              * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin Specifies the ray origin.
+             * @param[in] ray_direction Specifies the ray direction.
              * @param[out] inter_point Resulting intersection point with
              *                                the indentation.
              * @param[out] inter_normal Resulting normal of the particle 
@@ -195,7 +206,8 @@ namespace ldplab
              */
             bool indentationIntersection(
                 const RodParticle& geometry,
-                const Ray& ray,
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
                 Vec3& inter_point,
                 Vec3& inter_normal);
         private:

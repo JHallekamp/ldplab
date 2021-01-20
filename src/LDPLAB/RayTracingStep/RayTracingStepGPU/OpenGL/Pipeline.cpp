@@ -45,9 +45,9 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
         for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
             output.force_per_particle[puid] += 
-                m_buffer_controls[bc].getOutputBuffer().force[p];
+                m_buffer_controls[bc].getOutputBuffer().force_data[p];
             output.torque_per_particle[puid] += 
-                m_buffer_controls[bc].getOutputBuffer().torque[p];
+                m_buffer_controls[bc].getOutputBuffer().torque_data[p];
         }
     }
 }
@@ -110,7 +110,7 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
 
     // Reset intersection buffer
     for (size_t i = 0; i < intersection_buffer.size; ++i)
-        intersection_buffer.particle_index[i] = -1;
+        intersection_buffer.particle_index_data[i] = -1;
 
     bool emit_max_depth_warning = false;
     if (buffer.inner_particle_rays)
@@ -174,7 +174,7 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
             if (buffer.index_data[i] < 0)
                 continue;
 
-            double intensity = buffer.ray_data[i].intensity;
+            double intensity = buffer.ray_intensity_data[i];
             avg_intensity += intensity;
             if (intensity > max_intensity)
                 max_intensity = intensity;

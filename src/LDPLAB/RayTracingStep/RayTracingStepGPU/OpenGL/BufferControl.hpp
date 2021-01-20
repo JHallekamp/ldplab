@@ -75,17 +75,19 @@ namespace ldplab
             void initializeBuffers();
         private:
             std::shared_ptr<Context> m_context;
-            std::vector<RayBuffer> m_buffers;
-            std::vector<Ray> m_ray_data;
-            std::vector<int32_t> m_index_data;
-            std::vector<double> m_min_bounding_sphere_distance_data;
-            std::vector<Vec3> m_point_data;
-            std::vector<Vec3> m_normal_data;
-            std::vector<int32_t> m_intersected_particle_index_data;
+            std::vector<Vec3> m_ray_origin_data;
+            std::vector<Vec3> m_ray_direction_data;
+            std::vector<double> m_ray_intensity_data;
+            std::vector<int32_t> m_ray_index_data;
+            std::vector<double> m_ray_min_bounding_sphere_distance_data;
+            std::vector<Vec3> m_intersection_point_data;
+            std::vector<Vec3> m_intersection_normal_data;
+            std::vector<int32_t> m_intersection_particle_index_data;
+            std::vector<Vec3> m_output_force_data;
+            std::vector<Vec3> m_output_torque_data;
+            std::vector<RayBuffer> m_ray_buffers;
             IntersectionBuffer m_intersection_buffer;
             OutputBuffer m_output_buffer;
-            std::vector<Vec3> m_force_data;
-            std::vector<Vec3> m_torque_data;
         };
     }
 }

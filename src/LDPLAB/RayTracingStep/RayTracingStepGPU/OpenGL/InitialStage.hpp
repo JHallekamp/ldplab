@@ -76,7 +76,7 @@ namespace ldplab
             void advBatchCreationLight(size_t& li);
             void advBatchCreationParticle(size_t& pi);
             inline void transformRayFromWorldToParticleSpace(
-                Ray& ray, size_t pidx) const;
+                Vec3& origin, Vec3& direction, size_t pidx) const;
         private:
             std::shared_ptr<Context> m_context;
             std::vector<BoundingVolumeSphere>& m_bounding_spheres;

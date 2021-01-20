@@ -41,9 +41,11 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
 
         rayPropagation(
             rays.index_data[i], 
-            rays.ray_data[i],
-            intersection.point[i], 
-            intersection.normal[i],
+            rays.ray_origin_data[i],
+            rays.ray_direction_data[i],
+            rays.ray_intensity_data[i],
+            intersection.point_data[i], 
+            intersection.normal_data[i],
             output);
     }
 
@@ -56,7 +58,9 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
 void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     rayPropagation(
         const size_t particle, 
-        Ray& ray, 
+        Vec3& ray_origin, 
+        Vec3& ray_direction, 
+        double ray_intensity,
         Vec3& inter_point,
         Vec3& inter_normal,
         OutputBuffer& output)
@@ -67,8 +71,8 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
 
     bool intersected = false;
     Arg x{
-        ray.direction * material->indexOfRefraction(ray.origin),
-        ray.origin };
+        ray_direction * material->indexOfRefraction(ray_origin),
+        ray_origin };
     Arg x_new{};
     double h = m_parameters.initial_step_size;
     while (!intersected)
@@ -79,20 +83,20 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
             if (isOutsideParticle(m_rod_particles[particle], x_new.r))
             {
                 Vec3 t_new_direction = glm::normalize(x.w);
-                output.force[particle] += ray.intensity *
-                    (t_new_direction - ray.direction);
-                output.torque[particle] += ray.intensity *
+                output.force_data[particle] += ray_intensity *
+                    (t_new_direction - ray_direction);
+                output.torque_data[particle] += ray_intensity *
                     glm::cross(
                         m_context->particles[particle].centre_of_mass,
-                        (t_new_direction - ray.direction));
+                        (t_new_direction - ray_direction));
                 intersected = true;
                 intersection(
                     m_rod_particles[particle], 
                     x, 
                     inter_point, 
                     inter_normal);
-                ray.direction = t_new_direction;
-                ray.origin = x.r;
+                ray_direction = t_new_direction;
+                ray_origin = x.r;
                 return;
             }
             else
@@ -230,16 +234,17 @@ inline ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::Arg
 bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     cylinderIntersection(
         const RodParticle& geometry, 
-        const Ray& ray, 
+        const Vec3& ray_origin, 
+        const Vec3& ray_direction, 
         Vec3& inter_point,
         Vec3& inter_normal)
 { 
     const double p =
-        (ray.origin.x * ray.direction.x + ray.origin.y * ray.direction.y) /
-        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
-    const double q = ((ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) -
+        (ray_origin.x * ray_direction.x + ray_origin.y * ray_direction.y) /
+        (ray_direction.x * ray_direction.x + ray_direction.y * ray_direction.y);
+    const double q = ((ray_origin.x * ray_origin.x + ray_origin.y * ray_origin.y) -
         geometry.cylinder_radius * geometry.cylinder_radius) /
-        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
+        (ray_direction.x * ray_direction.x + ray_direction.y * ray_direction.y);
     double discriminant = p * p - q;
 
     if (discriminant < 0.0)
@@ -247,7 +252,7 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     const double t = -p + std::sqrt(discriminant);
     if (t <= 1e-9)
         return false;
-    inter_point = ray.origin + ray.direction * t;
+    inter_point = ray_origin + ray_direction * t;
     if (inter_point.z <= geometry.cylinder_length &&
         inter_point.z >= 0)
     {
@@ -255,14 +260,14 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
         inter_normal = glm::normalize(inter_normal);
         return true;
     }
-    return false;
-    
+    return false;   
 }
 
 bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     capIntersection(
         const RodParticle& geometry,
-        const Ray& ray, 
+        const Vec3& ray_origin, 
+        const Vec3& ray_direction, 
         Vec3& inter_point, 
         Vec3& inter_normal)
 {
@@ -270,13 +275,13 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
-        if (ray.direction.z == 0)
+        if (ray_direction.z == 0)
             return false;
-        const double t = (geometry.cylinder_length - ray.origin.z) /
-            ray.direction.z;
+        const double t = (geometry.cylinder_length - ray_origin.z) /
+            ray_direction.z;
         if (t <= 1e-9)
             return false;
-        inter_point = ray.origin + t * ray.direction;
+        inter_point = ray_origin + t * ray_direction;
         if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
             geometry.cylinder_radius * geometry.cylinder_radius)
             return false;
@@ -284,8 +289,8 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
         return true;
     }
 
-    Vec3 o_minus_c = ray.origin - geometry.origin_cap;
-    const double p = glm::dot(ray.direction, o_minus_c);
+    Vec3 o_minus_c = ray_origin - geometry.origin_cap;
+    const double p = glm::dot(ray_direction, o_minus_c);
     const double q = dot(o_minus_c, o_minus_c) -
         (geometry.sphere_radius * geometry.sphere_radius);
     double discriminant = (p * p) - q;
@@ -295,7 +300,7 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     const double t = -p + std::sqrt(discriminant);
     if (t <= 1e-9)
         return false;
-    inter_point = ray.origin + t * ray.direction;
+    inter_point = ray_origin + t * ray_direction;
     if (inter_point.z > geometry.cylinder_length &&
         inter_point.z <= geometry.origin_cap.z +
         geometry.sphere_radius)
@@ -310,7 +315,8 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
 bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
 indentationIntersection(
     const RodParticle& geometry,
-    const Ray& ray,
+    const Vec3& ray_origin,
+    const Vec3& ray_direction,
     Vec3& inter_point,
     Vec3& inter_normal)
 {
@@ -318,13 +324,13 @@ indentationIntersection(
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
-        if (ray.direction.z == 0)
+        if (ray_direction.z == 0)
             return false;
-        const double t = -ray.origin.z /
-            ray.direction.z;
+        const double t = -ray_origin.z /
+            ray_direction.z;
         if (t <= 1e-9)
             return false;
-        inter_point = ray.origin + t * ray.direction;
+        inter_point = ray_origin + t * ray_direction;
         if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
             geometry.cylinder_radius * geometry.cylinder_radius)
             return false;
@@ -332,8 +338,8 @@ indentationIntersection(
         return true;
     }
 
-    Vec3 o_minus_c = ray.origin - geometry.origin_indentation;
-    double p = glm::dot(ray.direction, o_minus_c);
+    Vec3 o_minus_c = ray_origin - geometry.origin_indentation;
+    double p = glm::dot(ray_direction, o_minus_c);
     double q = dot(o_minus_c, o_minus_c) -
         (geometry.sphere_radius * geometry.sphere_radius);
     double discriminant = (p * p) - q;
@@ -343,7 +349,7 @@ indentationIntersection(
     const double t = -p - std::sqrt(discriminant);
     if (t <= 1e-9)
         return false;
-    inter_point = ray.origin + t * ray.direction;
+    inter_point = ray_origin + t * ray_direction;
     if (inter_point.z > 0 &&
         inter_point.z <= geometry.origin_indentation.z +
         geometry.sphere_radius)
@@ -361,12 +367,15 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::intersection
     Vec3& inter_point,
     Vec3& inter_normal)
 {
-    Ray t_ray{ ray.r, glm::normalize(ray.w), -1};
-    if (indentationIntersection(geometry, t_ray, inter_point, inter_normal))
+    const Vec3 t_ray_direction = glm::normalize(ray.w);
+    if (indentationIntersection(
+            geometry, ray.r, t_ray_direction, inter_point, inter_normal))
         return;
-    if (cylinderIntersection(geometry, t_ray, inter_point, inter_normal))
+    if (cylinderIntersection(
+            geometry, ray.r, t_ray_direction, inter_point, inter_normal))
         return;
-    if (capIntersection(geometry, t_ray, inter_point, inter_normal))
+    if (capIntersection(
+            geometry, ray.r, t_ray_direction, inter_point, inter_normal))
         return;
 }
 
