@@ -127,8 +127,8 @@ namespace ldplab
              *                           step size.
              * @param[in,out] ray_direction Direction of the ray which is 
              *                              propagating through the particle.
-             * @param[in,out] ray_intensity Intensity of the ray which is 
-             *                              propagating through the particle.
+             * @param[in] ray_intensity Intensity of the ray which is 
+             *                          propagating through the particle.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
