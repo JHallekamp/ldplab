@@ -49,6 +49,14 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
             output.torque_per_particle[puid] += 
                 m_buffer_controls[bc].getOutputBuffer().torque_data[p];
         }
+
+        // Transform output from particle into world space
+        const ParticleTransformation& trans = m_context->
+            particle_transformations[p];
+        output.force_per_particle[puid] = trans.p2w_scale_rotation *
+            output.force_per_particle[puid];
+        output.torque_per_particle[puid] = trans.p2w_scale_rotation *
+            output.force_per_particle[puid];
     }
 }
 

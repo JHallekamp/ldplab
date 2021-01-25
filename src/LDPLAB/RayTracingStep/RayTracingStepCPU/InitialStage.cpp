@@ -19,8 +19,6 @@ ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "InitialStageBoundingSpheresHomogenousLight instance created",
         m_context->uid);
-    //LDPLAB_LOG_INFO("RTSCPU context %i: Created initial stage for bounding"\
-    //    " spheres and homogenous light sources", m_context->uid);
 }
 
 void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
@@ -318,7 +316,6 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                 {
                     // Set the correct number of active rays and return with
                     // true
-                    //nr = initial_batch_buffer.size;
                     return true;
                 }
 
