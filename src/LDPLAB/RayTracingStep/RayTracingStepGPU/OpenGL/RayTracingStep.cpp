@@ -109,6 +109,11 @@ ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     case (RotationOrder::zxy): return roty * rotx * rotz;
     case (RotationOrder::zyx): return rotx * roty * rotz;
     }
+
+    // To avoid compiler warnings
+    LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Encountered unknown "\
+        "rotation order, assumes xyz instead.");
+    return rotz * roty * rotx;
 }
 
 void ldplab::rtsgpu_ogl::RayTracingStep::execute(

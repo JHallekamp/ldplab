@@ -52,6 +52,11 @@ ldplab::Mat3 ldplab::rtscpu::RayTracingStep::getRotationMatrix(
     case (RotationOrder::zxy): return roty * rotx * rotz;
     case (RotationOrder::zyx): return rotx * roty * rotz;
     }
+
+    // To avoid compiler warnings
+    LDPLAB_LOG_WARNING("RTSCPU context %i: Encountered unknown rotation "\
+        "order, assumes xyz instead.");
+    return rotz * roty * rotx;
 }
 
 void ldplab::rtscpu::RayTracingStep::updateContext(const SimulationState& input)
