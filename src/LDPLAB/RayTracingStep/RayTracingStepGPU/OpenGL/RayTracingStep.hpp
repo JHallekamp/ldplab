@@ -3,6 +3,7 @@
 
 #include "Data.hpp"
 #include "..\..\IRayTracingStep.hpp"
+#include "..\..\..\Geometry.hpp"
 
 #include <memory>
 #include <vector>
@@ -41,7 +42,8 @@ namespace ldplab
              */
             void updateContext(const SimulationState& input);
         private:
-            Mat3 getRotationMatrix(double rx, double ry, double rz);
+            Mat3 getRotationMatrix(
+                double rx, double ry, double rz, RotationOrder order);
             /**
             * @brief Constructor
             */

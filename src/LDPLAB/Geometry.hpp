@@ -20,6 +20,23 @@ namespace ldplab
         Vec3 direction;
         double intensity;
     };
+
+    /** @brief Defines the order of orieantation around each axis. */
+    enum class RotationOrder
+    {
+        /** @brief Rotates first around x, then y and finally z. */
+        xyz,
+        /** @brief Rotates first around x, then z and finally y. */
+        xzy,
+        /** @brief Rotates first around y, then x and finally z. */
+        yxz,
+        /** @brief Rotates first around y, then z and finally x. */
+        yzx,
+        /** @brief Rotates first around z, then x and finally y. */
+        zxy,
+        /** @brief Rotates first around z, then y and finally x. */
+        zyx
+    };
 }
 
 #endif

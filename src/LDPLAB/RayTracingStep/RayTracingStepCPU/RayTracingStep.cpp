@@ -20,7 +20,8 @@ ldplab::rtscpu::RayTracingStep::RayTracingStep(
 ldplab::Mat3 ldplab::rtscpu::RayTracingStep::getRotationMatrix(
     double rx, 
     double ry, 
-    double rz)
+    double rz,
+    RotationOrder order)
 {
     ldplab::Mat3 rotx(0), roty(0), rotz(0);
 
@@ -42,7 +43,15 @@ ldplab::Mat3 ldplab::rtscpu::RayTracingStep::getRotationMatrix(
     rotz[1][1] = cos(rz);
     rotz[2][2] = 1;
 
-    return rotz * roty * rotx;
+    switch (order)
+    {
+    case (RotationOrder::xyz): return rotz * roty * rotx;
+    case (RotationOrder::xzy): return roty * rotz * rotx;
+    case (RotationOrder::yxz): return rotz * rotx * roty;
+    case (RotationOrder::yzx): return rotx * rotz * roty;
+    case (RotationOrder::zxy): return roty * rotx * rotz;
+    case (RotationOrder::zyx): return rotx * roty * rotz;
+    }
 }
 
 void ldplab::rtscpu::RayTracingStep::updateContext(const SimulationState& input)
@@ -72,12 +81,15 @@ void ldplab::rtscpu::RayTracingStep::updateContext(const SimulationState& input)
             getRotationMatrix(
                 -particle.orientation.x,
                 -particle.orientation.y,
-                -particle.orientation.z);
+                -particle.orientation.z,
+                particle.rotation_order);
         m_context->particle_transformations[i].p2w_scale_rotation =
             getRotationMatrix(
                 particle.orientation.x,
                 particle.orientation.y,
-                particle.orientation.z);
+                particle.orientation.z,
+                particle.rotation_order);
+
         // Transform bounding volumes
         if (m_context->bounding_volume_data->type() ==
             IBoundingVolumeData::Type::spheres)
