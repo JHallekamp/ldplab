@@ -80,7 +80,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 refracted_rays.active_rays++;
               
                 output.force[rays.index_data[i]] += refracted_ray.intensity * 
-                    (refracted_ray.direction - ray.direction);
+                    (- refracted_ray.direction + ray.direction);
                 output.torque[rays.index_data[i]] += refracted_ray.intensity *
                     glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
@@ -101,7 +101,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 reflected_rays.active_rays++;
 
                 output.force[rays.index_data[i]] += reflected_ray.intensity *
-                    (reflected_ray.direction - ray.direction);
+                    (- reflected_ray.direction + ray.direction);
                 output.torque[rays.index_data[i]] += reflected_ray.intensity *
                     glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
@@ -122,7 +122,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             reflected_rays.active_rays++;
 
             output.force[rays.index_data[i]] += reflected_ray.intensity *
-                (reflected_ray.direction - ray.direction);
+                (- reflected_ray.direction + ray.direction);
             output.torque[rays.index_data[i]] += reflected_ray.intensity *
                 glm::cross(
                     m_context->particles[rays.index_data[i]].centre_of_mass,

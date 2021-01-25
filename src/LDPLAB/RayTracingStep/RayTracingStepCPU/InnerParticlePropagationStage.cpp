@@ -84,7 +84,7 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
                 output.torque[particle] += ray.intensity *
                     glm::cross(
                         m_context->particles[particle].centre_of_mass,
-                        (t_new_direction - ray.direction));
+                        (-t_new_direction + ray.direction));
                 intersected = true;
                 intersection(
                     m_rod_particles[particle], 
