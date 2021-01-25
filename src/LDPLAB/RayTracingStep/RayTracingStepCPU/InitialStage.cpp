@@ -7,8 +7,6 @@ ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
         std::shared_ptr<Context> context)
     :
     m_context{ context },
-    m_bounding_spheres{ ((BoundingSphereData*)
-        context->bounding_volume_data.get())->sphere_data },
     m_batch_creation_light_index{ 0 },
     m_batch_creation_particle_index{ 0 },
     m_batch_creation_particle_initialized { false },
@@ -55,6 +53,10 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
     // Projections per light source
     std::vector<std::vector<ProjectionPerLight>> projection_per_light_source;
 
+    // Bounding spheres
+    const std::vector<BoundingVolumeSphere>& bounding_spheres =
+        ((BoundingSphereData*)m_context->bounding_volume_data.get())->sphere_data;
+
     for (size_t i = 0; i < m_context->light_sources.size(); ++i)
     {
         const Vec3 plane_base = m_context->light_sources[i].origin_corner;
@@ -66,29 +68,22 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
-            //BoundingVolumeSphere* bounding_sphere = (BoundingVolumeSphere*) 
-            //    m_context->particles[j].bounding_volume.get();
-            ParticleTransformation& trans = m_context->
-                particle_transformations[j];
-            //const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
-            //    bounding_sphere->center + trans.p2w_translation;
             const BoundingVolumeSphere& bounding_sphere =
-                m_bounding_spheres[j];
-
+                bounding_spheres[j];
             const double t =
                 glm::dot(light_direction, 
                     plane_base - bounding_sphere.center) * division_term;
 
-            if (t < 0)
+            if (t <= bounding_sphere.radius)
                 continue;
 
             const Vec3 wrldctr = bounding_sphere.center - t * light_direction;
             const Vec3 planectr = wrldctr - plane_base;
-            const Vec2 center{ 
+            const Vec2 proj_center{ 
                 glm::dot(planectr,  m_context->light_sources[i].horizontal_direction),
                 glm::dot(planectr,  m_context->light_sources[i].vertical_direction) };
-            const double radius = bounding_sphere.radius;
-            if (!projLightOverlap(center, radius, m_context->light_sources[i]))
+            if (!projLightOverlap(
+                proj_center, bounding_sphere.radius, m_context->light_sources[i]))
             {
                 LDPLAB_LOG_TRACE("RTSCPU context %i: Particle %i has no"\
                     " projection onto light source %i",
@@ -103,8 +98,8 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
             ProjectionPerLight proj;
             proj.particle_index = j;
             proj.light_index = i;
-            proj.center = center;
-            proj.radius = radius;
+            proj.center = proj_center;
+            proj.radius = bounding_sphere.radius;
             proj.depth = glm::length(wrldctr - bounding_sphere.center);
 
             for (size_t k = 0; k < light_projections.size(); ++k)
@@ -119,7 +114,6 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
                             light_projections.size());
                 }
             }
-
             light_projections.push_back(proj);
         }
         projection_per_light_source.push_back(light_projections);
