@@ -18,14 +18,12 @@ ldplab::rtsgpu_ogl::ComputeShader::~ComputeShader()
 
 const char* ldplab::rtsgpu_ogl::ComputeShader::name() const
 {
-    LDPLAB_ASSERT(isInitialized());
     return m_name.c_str();
 }
 
 GLint ldplab::rtsgpu_ogl::ComputeShader::getUniformLocation(
     const std::string& name) const
 {
-    LDPLAB_ASSERT(isInitialized());
     GLint uniform_location = glGetUniformLocation(m_glid, name.c_str());
     if (uniform_location < 0)
     {
@@ -44,7 +42,6 @@ GLint ldplab::rtsgpu_ogl::ComputeShader::getUniformLocation(
 
 void ldplab::rtsgpu_ogl::ComputeShader::use() const
 {
-    LDPLAB_ASSERT(isInitialized());
     glUseProgram(m_glid);
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Now uses compute shader %s",
         m_context->uid, m_name.c_str());
