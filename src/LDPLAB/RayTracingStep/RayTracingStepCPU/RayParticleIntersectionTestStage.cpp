@@ -304,7 +304,6 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::indentationIntersection(
         inter_normal = Vec3(0, 0, -1);
         return true;
     }
-
     double intersec_first = 0;
     double intersec_second = 0;
 

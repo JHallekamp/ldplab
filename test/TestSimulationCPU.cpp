@@ -6,7 +6,7 @@
 
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.25;
+const double ROD_PARTICLE_KAPPA = 0;
 const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
 const double ROD_PARTICLE_CYLINDER_RADIUS = 
     std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
@@ -43,7 +43,7 @@ const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1024.0;
-const size_t MAX_RTS_BRANCHING_DEPTH = 8;
+const size_t MAX_RTS_BRANCHING_DEPTH = 0;
 const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  / 
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
@@ -161,9 +161,11 @@ int main()
     constexpr double angle_shift = const_pi() / 2.0;
     ldplab::RayTracingStepOutput output;
     std::stringstream ss;
-    ss << "force_k" << static_cast<int>(ROD_PARTICLE_KAPPA)  << 
-        "_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 1000.0) << 
-        "_bd" << MAX_RTS_BRANCHING_DEPTH;
+    ss << "force_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
+        "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0)  << 
+        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0)  << 
+        "_bd" << MAX_RTS_BRANCHING_DEPTH << 
+        "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
     std::ofstream output_file(ss.str());
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     for (double rotation_x = offset + angle_shift;
