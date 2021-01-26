@@ -119,21 +119,21 @@ void ldplab::rtscpu::Debug::PrintRayBuffer(
     const RayBuffer& buffer, BufferInterpretation interpretation)
 {
     Debug& me = instance();
-
-    std::ofstream& file =
-        (interpretation == BufferInterpretation::initial_batch_rays) ?
-            me.m_file_initial_rays : me.m_file_intersected_rays;
-    for (size_t i = 0; buffer.size; ++i)
+    for (size_t i = 0; i < buffer.size; ++i)
     {
         if (buffer.index_data[i] < 0)
             continue;
-        file <<
-            buffer.ray_data[i].origin.x << '\t' <<
+        std::stringstream ss;
+        ss << buffer.ray_data[i].origin.x << '\t' <<
             buffer.ray_data[i].origin.y << '\t' <<
             buffer.ray_data[i].origin.z << '\t' <<
             buffer.ray_data[i].direction.x << '\t' <<
             buffer.ray_data[i].direction.y << '\t' <<
             buffer.ray_data[i].direction.z << std::endl;
+        if (interpretation == BufferInterpretation::initial_batch_rays)
+            me.m_file_initial_rays << ss.str();
+        else
+            me.m_file_intersected_rays << ss.str();
     }
 }
 
