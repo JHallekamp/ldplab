@@ -53,7 +53,8 @@ namespace ldplab
             origin{ origin },
             direction{ direction },
             direction_times_gradient{ direction * gradient },
-            direction_dot_origin{ glm::dot(direction, origin) }
+            index_of_refraction_minus_partial_dot{ 
+                index_of_refraction - glm::dot(gradient * direction, origin) }
         {}
 		Type type() const override { return Type::linear_one_directional; }
 		/**
@@ -66,11 +67,10 @@ namespace ldplab
 		 *           particle.
 		 */
 		inline double indexOfRefraction(const Vec3& position) const { 
-			//return index_of_refraction + 
-			//	gradient * glm::dot(direction, (position - origin)); 
-            return index_of_refraction +
-                gradient * (glm::dot(direction, position) -
-                    direction_dot_origin);
+		    //return index_of_refraction + 
+		    //	gradient * glm::dot(direction, (position - origin));
+            return index_of_refraction_minus_partial_dot +
+                glm::dot(direction_times_gradient, position);
         }
 		/**
 		 * @brief The index of refraction at the origin of the linear index 
@@ -93,7 +93,7 @@ namespace ldplab
 		Vec3 direction;
         
         Vec3 direction_times_gradient;
-        double direction_dot_origin;
+        double index_of_refraction_minus_partial_dot;
 	};
 }
 

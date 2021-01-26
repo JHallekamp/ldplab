@@ -21,6 +21,11 @@ namespace ldplab
                 reflected,
                 transmitted
             };
+            enum class BufferInterpretation
+            {
+                initial_batch_rays,
+                intersected_rays
+            };
         public:
 
             static void RtsExecutionStart(std::shared_ptr<Context> ctx);
@@ -29,7 +34,14 @@ namespace ldplab
             
             static void SetActiveRay(size_t ray_id);
             static void MarkActiveRayIntersectionCap();
-            static void AddForce(Vec3 force, ForceType force_type, size_t ray_id);
+            static void AddForce(
+                const Vec3& force, ForceType force_type, size_t ray_id);
+
+            static size_t GetExecutionCounter();
+            static void PrintIntersectionBuffer(
+                const IntersectionBuffer& buffer);
+            static void PrintRayBuffer(
+                const RayBuffer& buffer, BufferInterpretation interpretation);
 
         private:
             Debug();
@@ -41,6 +53,9 @@ namespace ldplab
             std::ofstream m_file_reflected_force_shell;
             std::ofstream m_file_transmitted_force_cap;
             std::ofstream m_file_transmitted_force_shell;
+            std::ofstream m_file_intersections;
+            std::ofstream m_file_initial_rays;
+            std::ofstream m_file_intersected_rays;
             size_t m_execution_ctr;
 
             size_t m_active_ray;

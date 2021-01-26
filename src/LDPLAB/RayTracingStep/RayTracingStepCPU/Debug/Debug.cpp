@@ -15,6 +15,9 @@ void ldplab::rtscpu::Debug::RtsExecutionStart(std::shared_ptr<Context> ctx)
         me.m_file_reflected_force_shell = std::ofstream{ "debug_force_reflected_shell" };
         me.m_file_transmitted_force_cap = std::ofstream{ "debug_force_transmitted_cap" };
         me.m_file_transmitted_force_shell = std::ofstream{ "debug_force_transmitted_shell" };
+        me.m_file_intersections = std::ofstream{ "debug_intersections" };
+        me.m_file_initial_rays = std::ofstream{ "debug_light_source" };
+        me.m_file_intersected_rays = std::ofstream{ "debug_light_origin" };
         me.m_ray_cap_mark.resize(me.m_context->parameters.number_rays_per_buffer, false);
         me.m_execution_ctr = 0;
     }
@@ -72,7 +75,8 @@ void ldplab::rtscpu::Debug::MarkActiveRayIntersectionCap()
     me.m_ray_cap_mark[me.m_active_ray] = true;
 }
 
-void ldplab::rtscpu::Debug::AddForce(Vec3 force, ForceType force_type, size_t ray_id)
+void ldplab::rtscpu::Debug::AddForce(
+    const Vec3& force, ForceType force_type, size_t ray_id)
 {
     Debug& me = instance();
     bool cap = me.m_ray_cap_mark[ray_id];
@@ -85,6 +89,52 @@ void ldplab::rtscpu::Debug::AddForce(Vec3 force, ForceType force_type, size_t ra
         me.m_force_transmitted_cap += force;
     else
         me.m_force_transmitted_shell += force;
+}
+
+size_t ldplab::rtscpu::Debug::GetExecutionCounter()
+{
+    Debug& me = instance();
+    return me.m_execution_ctr;
+}
+
+void ldplab::rtscpu::Debug::PrintIntersectionBuffer(
+    const IntersectionBuffer& buffer)
+{
+    Debug& me = instance();
+    for (size_t i = 0; buffer.size; ++i)
+    {
+        if (buffer.particle_index[i] < 0)
+            continue;
+        me.m_file_intersections <<
+            buffer.point[i].x << '\t' <<
+            buffer.point[i].y << '\t' <<
+            buffer.point[i].z << '\t' <<
+            buffer.normal[i].x << '\t' <<
+            buffer.normal[i].y << '\t' <<
+            buffer.normal[i].z << std::endl;
+    }
+}
+
+void ldplab::rtscpu::Debug::PrintRayBuffer(
+    const RayBuffer& buffer, BufferInterpretation interpretation)
+{
+    Debug& me = instance();
+
+    std::ofstream& file =
+        (interpretation == BufferInterpretation::initial_batch_rays) ?
+            me.m_file_initial_rays : me.m_file_intersected_rays;
+    for (size_t i = 0; buffer.size; ++i)
+    {
+        if (buffer.index_data[i] < 0)
+            continue;
+        file <<
+            buffer.ray_data[i].origin.x << '\t' <<
+            buffer.ray_data[i].origin.y << '\t' <<
+            buffer.ray_data[i].origin.z << '\t' <<
+            buffer.ray_data[i].direction.x << '\t' <<
+            buffer.ray_data[i].direction.y << '\t' <<
+            buffer.ray_data[i].direction.z << std::endl;
+    }
 }
 
 ldplab::rtscpu::Debug::Debug()
