@@ -120,7 +120,6 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
     for (size_t i = 0; i < intersection_buffer.size; ++i)
         intersection_buffer.particle_index_data[i] = -1;
 
-    bool emit_max_depth_warning = false;
     if (buffer.inner_particle_rays)
     {
         m_inner_particle_propagation_stage->execute(
@@ -173,7 +172,8 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
         processBatch(reflection_buffer, buffer_control);
         processBatch(transmission_buffer, buffer_control);
     }
-    else if (buffer.active_rays > 0)
+    else if (buffer.active_rays > 0 &&
+        m_context->flags.emit_warning_on_maximum_branching_depth_discardment)
     {
         // Compute max and average length
         double max_intensity = 0.0, avg_intensity = 0.0;

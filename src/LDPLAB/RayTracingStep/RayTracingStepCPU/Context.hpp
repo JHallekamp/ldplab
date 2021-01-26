@@ -117,6 +117,16 @@ namespace ldplab
                 /** @brief Number of parallel pipeline instances. */
                 size_t number_parallel_pipelines;
             } parameters;
+            /** @brief Structure holding simulation flags. */
+            struct
+            {
+                /** 
+                 * @brief Determines whether a warning is emited when active
+                 *        rays are not further traced because they would exceed
+                 *        the maximum branching depth.
+                 */
+                bool emit_warning_on_maximum_branching_depth_discardment;
+            } flags;
         };
     }
 }

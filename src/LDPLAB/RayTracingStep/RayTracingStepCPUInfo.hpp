@@ -17,12 +17,13 @@ namespace ldplab
         RayTracingStepCPUInfo()
             :
             thread_pool{ nullptr },
+            solver_parameters{ nullptr },
             intensity_cutoff{ 0 },
             number_rays_per_buffer{ 0 },
             light_source_ray_density_per_unit_area{ 0 },
             maximum_branching_depth{ 0 },
             number_parallel_pipelines{ 0 },
-            solver_parameters{ nullptr }
+            emit_warning_on_maximum_branching_depth_discardment{ true }
         { }
         /** @brief Pointer to the thread pool. */
         std::shared_ptr<ThreadPool> thread_pool;
@@ -38,6 +39,12 @@ namespace ldplab
         size_t maximum_branching_depth;
         /** @brief Number of parallel pipeline instances. */
         size_t number_parallel_pipelines;
+        /**
+         * @brief Determines whether a warning is emited when active rays are
+         *        not further traced because they would exceed the maximum 
+         *        branching depth.
+         */
+        bool emit_warning_on_maximum_branching_depth_discardment;
     };
 
     // Prototypes

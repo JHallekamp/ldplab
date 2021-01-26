@@ -75,6 +75,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
             sqrt(info.light_source_ray_density_per_unit_area));
         ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
         ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
+        ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
+            info.emit_warning_on_maximum_branching_depth_discardment;
 
         ctx->bounding_volume_data =
             std::shared_ptr<rtscpu::IBoundingVolumeData>(
@@ -183,6 +185,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep>
             sqrt(info.light_source_ray_density_per_unit_area));
         ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
         ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
+        ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
+            info.emit_warning_on_maximum_branching_depth_discardment;
 
         ctx->bounding_volume_data =
             std::shared_ptr<rtscpu::IBoundingVolumeData>(
@@ -283,6 +287,8 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
             sqrt(info.light_source_ray_density_per_unit_area));
         ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
         ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
+        ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
+            info.emit_warning_on_maximum_branching_depth_discardment;
 
         ctx->bounding_volume_data =
             std::shared_ptr<rtsgpu_ogl::IBoundingVolumeData>(
