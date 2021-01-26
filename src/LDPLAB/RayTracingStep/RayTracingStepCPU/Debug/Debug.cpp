@@ -32,22 +32,22 @@ void ldplab::rtscpu::Debug::RtsExecutionFinish()
     me.m_file_reflected_force_cap << me.m_execution_ctr << '\t' <<
         me.m_force_reflected_cap.x << '\t' <<
         me.m_force_reflected_cap.y << '\t' <<
-        me.m_force_reflected_cap.z << '\t' << std::endl;
+        me.m_force_reflected_cap.z << std::endl;
 
     me.m_file_reflected_force_shell << me.m_execution_ctr << '\t' <<
         me.m_force_reflected_shell.x << '\t' <<
         me.m_force_reflected_shell.y << '\t' <<
-        me.m_force_reflected_shell.z << '\t' << std::endl;
+        me.m_force_reflected_shell.z << std::endl;
 
     me.m_file_transmitted_force_cap << me.m_execution_ctr << '\t' <<
         me.m_force_transmitted_cap.x << '\t' <<
         me.m_force_transmitted_cap.y << '\t' <<
-        me.m_force_transmitted_cap.z << '\t' << std::endl;
+        me.m_force_transmitted_cap.z << std::endl;
 
     me.m_file_transmitted_force_shell << me.m_execution_ctr << '\t' <<
         me.m_force_transmitted_shell.x << '\t' <<
         me.m_force_transmitted_shell.y << '\t' <<
-        me.m_force_transmitted_shell.z << '\t' << std::endl;
+        me.m_force_transmitted_shell.z << std::endl;
 
     ++me.m_execution_ctr;
 }
