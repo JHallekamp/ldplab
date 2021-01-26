@@ -22,7 +22,8 @@ namespace ldplab
             light_source_ray_density_per_unit_area{ 0 },
             maximum_branching_depth{ 0 },
             number_parallel_pipelines{ 0 },
-            solver_parameters{ nullptr }
+            solver_parameters{ nullptr },
+            emit_warning_on_maximum_branching_depth_discardment{ true }
         { }
         /** @brief Pointer to the thread pool. */
         std::shared_ptr<ThreadPool> thread_pool;
