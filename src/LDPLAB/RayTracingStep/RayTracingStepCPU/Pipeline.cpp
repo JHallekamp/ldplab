@@ -4,6 +4,8 @@
 #include "../../Log.hpp"
 #include "../../Utils/Assert.hpp"
 
+#include "Debug/Debug.hpp"
+
 ldplab::rtscpu::Pipeline::Pipeline(
     std::unique_ptr<IInitialStage> initial, 
     std::unique_ptr<IRayBoundingVolumeIntersectionTestStage> rbvit,
@@ -155,6 +157,22 @@ void ldplab::rtscpu::Pipeline::processBatch(
                 else if (buffer.active_rays == 0)
                     return;
             } while (buffer.world_space_rays > 0);
+        }
+
+        if (Debug::instance().getUint64("rts_execution_ctr") == 0)
+        {
+            std::ofstream& file = Debug::instance().getOfstream(
+                "debug_intersections_" +  
+                Debug::instance().getUint64AsString("rts_execution_ctr"));
+            for (size_t i = 0; i < intersection_buffer.size; ++i)
+            {
+                file << intersection_buffer.point[i].x << '\t' <<
+                    intersection_buffer.point[i].y << '\t' <<
+                    intersection_buffer.point[i].z << '\t' <<
+                    intersection_buffer.normal[i].x << '\t' <<
+                    intersection_buffer.normal[i].y << '\t' <<
+                    intersection_buffer.normal[i].z << '\t' << std::endl;
+            }
         }
 
         m_ray_particle_interaction_stage->execute(

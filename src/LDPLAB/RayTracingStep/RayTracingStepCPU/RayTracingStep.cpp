@@ -7,6 +7,8 @@
 #include <chrono>
 #include <glm/ext.hpp>
 
+#include "Debug/Debug.hpp"
+
 ldplab::rtscpu::RayTracingStep::RayTracingStep(
     std::shared_ptr<Context> context)
     :
@@ -118,6 +120,36 @@ void ldplab::rtscpu::RayTracingStep::updateContext(const SimulationState& input)
 void ldplab::rtscpu::RayTracingStep::execute(
     const SimulationState& input, RayTracingStepOutput& output)
 {
+    // Debug
+    if (Debug::instance().getUint64("rts_execution_ctr") == 0)
+    {
+        Debug::instance().getOfstream("debug_intersections_" +
+            Debug::instance().getUint64AsString("rts_execution_ctr")) << 
+            "# point x, point_y, point_z, normal_x, normal_y, normal_z" << std::endl <<
+            "# point in particle coordinates" << std::endl;
+
+        //Debug::instance().getOfstream("debug_reflected_force_" +
+        //    Debug::instance().getUint64AsString("rts_execution_ctr")) <<
+        //    "# force vector x, force vector y, force vector z" << std::endl;
+        //
+        //Debug::instance().getOfstream("debug_transmitted_force_" +
+        //    Debug::instance().getUint64AsString("rts_execution_ctr")) <<
+        //    "# force vector x, force vector y, force vector z" << std::endl;
+
+        Debug::instance().getOfstream("debug_impulse_reflected") <<
+            "# execution counter, force vector x, force vector y, force vector z" << std::endl;
+
+        Debug::instance().getOfstream("debug_impulse_transmitted") <<
+            "# execution counter, force vector x, force vector y, force vector z" << std::endl;
+    }
+    
+    Debug::instance().getDouble("reflected_force_x") = 0.0;
+    Debug::instance().getDouble("reflected_force_y") = 0.0;
+    Debug::instance().getDouble("reflected_force_z") = 0.0;
+    Debug::instance().getDouble("transmitted_force_x") = 0.0;
+    Debug::instance().getDouble("transmitted_force_y") = 0.0;
+    Debug::instance().getDouble("transmitted_force_z") = 0.0;
+
     LDPLAB_ASSERT(input.particle_instances.size() == 
         m_context->particles.size());
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
@@ -144,4 +176,17 @@ void ldplab::rtscpu::RayTracingStep::execute(
             end - start).count();
     LDPLAB_LOG_INFO("RTSCPU context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);
+
+    // Debug
+    Debug::instance().getOfstream("debug_impulse_reflected") <<
+        Debug::instance().getUint64("rts_execution_ctr") <<
+        Debug::instance().getDouble("reflected_force_x") <<
+        Debug::instance().getDouble("reflected_force_y") <<
+        Debug::instance().getDouble("reflected_force_z") << std::endl;
+    Debug::instance().getOfstream("debug_impulse_transmitted") <<
+        Debug::instance().getUint64("rts_execution_ctr") <<
+        Debug::instance().getDouble("transmitted_force_x") <<
+        Debug::instance().getDouble("transmitted_force_y") <<
+        Debug::instance().getDouble("transmitted_force_z") << std::endl;
+    Debug::instance().getUint64("rts_execution_ctr")++;
 }

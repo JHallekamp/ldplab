@@ -1,5 +1,6 @@
-#ifdef LDPLAB_FRAMEWORK_DEBUG
+#ifdef LDPLAB_BUILD_FRAMEWORK_DEBUG
 #include "Debug.hpp"
+#include <sstream>
 
 ldplab::rtscpu::Debug& ldplab::rtscpu::Debug::instance()
 {
@@ -30,6 +31,27 @@ std::uint64_t& ldplab::rtscpu::Debug::getUint64(std::string name)
         std::uint64_t t = 0;
         m_uints[name] = std::move(t);
         return m_uints[name];
+    }
+    else
+        return it->second;
+}
+
+std::string ldplab::rtscpu::Debug::getUint64AsString(std::string name)
+{
+    std::stringstream ss;
+    ss << getUint64(name);
+    return ss.str();
+}
+
+double& ldplab::rtscpu::Debug::getDouble(std::string name)
+{
+    std::map<std::string, double>::iterator it =
+        m_doubles.find(name);
+    if (it == m_doubles.end())
+    {
+        double t = 0.0;
+        m_doubles[name] = std::move(t);
+        return m_doubles[name];
     }
     else
         return it->second;

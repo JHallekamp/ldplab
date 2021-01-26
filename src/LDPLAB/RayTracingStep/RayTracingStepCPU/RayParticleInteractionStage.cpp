@@ -7,6 +7,8 @@
 
 #include "../../../../libs/glm/glm.hpp"
 
+#include "Debug/Debug.hpp"
+
 ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
     UnpolirzedLight1DLinearIndexGradientInteraction(
         std::shared_ptr<Context> context)
@@ -85,17 +87,27 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
                         (ray.direction - refracted_ray.direction));
+
+                Vec3 t_debug_v = refracted_ray.intensity * (ray.direction - refracted_ray.direction);
+                Debug::instance().getDouble("transmitted_force_x") += t_debug_v.x;
+                Debug::instance().getDouble("transmitted_force_y") += t_debug_v.y;
+                Debug::instance().getDouble("transmitted_force_z") += t_debug_v.z;
             }
             else
             {
                 refracted_rays.index_data[i] = -1;
                 Vec3 delta_direction = (nr - 1) * ray.direction + inter_normal * (cos_b - nr * cos_a);
-                output.force[rays.index_data[i]] += reflected_ray.intensity *
+                output.force[rays.index_data[i]] += refracted_ray.intensity *
                     delta_direction;
-                output.torque[rays.index_data[i]] += reflected_ray.intensity *
+                output.torque[rays.index_data[i]] += refracted_ray.intensity *
                     glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
                         delta_direction);
+
+                Vec3 t_debug_v = refracted_ray.intensity * delta_direction;
+                Debug::instance().getDouble("transmitted_force_x") += t_debug_v.x;
+                Debug::instance().getDouble("transmitted_force_y") += t_debug_v.y;
+                Debug::instance().getDouble("transmitted_force_z") += t_debug_v.z;
             }
             // reflected ray
             reflected_ray.intensity = ray.intensity * R;
@@ -114,6 +126,11 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
                         (ray.direction - reflected_ray.direction));
+
+                Vec3 t_debug_v = reflected_ray.intensity * (ray.direction - reflected_ray.direction);
+                Debug::instance().getDouble("reflected_force_x") += t_debug_v.x;
+                Debug::instance().getDouble("reflected_force_y") += t_debug_v.y;
+                Debug::instance().getDouble("reflected_force_z") += t_debug_v.z;
             }
             else
             {
@@ -125,6 +142,11 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
                         delta_direction);
+
+                Vec3 t_debug_v = reflected_ray.intensity * delta_direction;
+                Debug::instance().getDouble("reflected_force_x") += t_debug_v.x;
+                Debug::instance().getDouble("reflected_force_y") += t_debug_v.y;
+                Debug::instance().getDouble("reflected_force_z") += t_debug_v.z;
             }
         }
         else
