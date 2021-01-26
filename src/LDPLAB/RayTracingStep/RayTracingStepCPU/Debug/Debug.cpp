@@ -101,7 +101,7 @@ void ldplab::rtscpu::Debug::PrintIntersectionBuffer(
     const IntersectionBuffer& buffer)
 {
     Debug& me = instance();
-    for (size_t i = 0; buffer.size; ++i)
+    for (size_t i = 0; i < buffer.size; ++i)
     {
         if (buffer.particle_index[i] < 0)
             continue;
