@@ -77,6 +77,7 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     size_t num_batches = 0;
     do
     {
+        Debug::RtsBatchStart();
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
         LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i "\
             "initial rays",
@@ -109,25 +110,6 @@ void ldplab::rtscpu::Pipeline::processBatch(
 {
     if (buffer.active_rays <= 0)
         return;
-
-    if (Debug::instance().getUint64("rts_execution_ctr") == 0)
-    {
-        std::ofstream& file_origin = Debug::instance().getOfstream(
-            "debug_light_source_" +
-            Debug::instance().getUint64AsString("rts_execution_ctr"));
-        for (size_t i = 0; i < buffer.size; ++i)
-        {
-            if (buffer.index_data[i] < 0)
-                continue;
-
-            file_origin << buffer.ray_data[i].origin.x << '\t' <<
-                buffer.ray_data[i].origin.y << '\t' <<
-                buffer.ray_data[i].origin.z << '\t' <<
-                buffer.ray_data[i].direction.x << '\t' <<
-                buffer.ray_data[i].direction.y << '\t' <<
-                buffer.ray_data[i].direction.z << std::endl;
-        }
-    }
 
     IntersectionBuffer& intersection_buffer =
         buffer_control.getIntersectionBuffer();
@@ -176,35 +158,6 @@ void ldplab::rtscpu::Pipeline::processBatch(
                 else if (buffer.active_rays == 0)
                     return;
             } while (buffer.world_space_rays > 0);
-        }
-
-        if (Debug::instance().getUint64("rts_execution_ctr") == 0)
-        {
-            std::ofstream& file_intersection = Debug::instance().getOfstream(
-                "debug_intersections_" +  
-                Debug::instance().getUint64AsString("rts_execution_ctr"));
-            std::ofstream& file_origin = Debug::instance().getOfstream(
-                "debug_light_origin_" +
-                Debug::instance().getUint64AsString("rts_execution_ctr"));
-            for (size_t i = 0; i < intersection_buffer.size; ++i)
-            {
-                if (buffer.index_data[i] < 0)
-                    continue;
-
-                file_intersection << intersection_buffer.point[i].x << '\t' <<
-                    intersection_buffer.point[i].y << '\t' <<
-                    intersection_buffer.point[i].z << '\t' <<
-                    intersection_buffer.normal[i].x << '\t' <<
-                    intersection_buffer.normal[i].y << '\t' <<
-                    intersection_buffer.normal[i].z << std::endl;
-
-                file_origin << buffer.ray_data[i].origin.x << '\t' <<
-                    buffer.ray_data[i].origin.y << '\t' <<
-                    buffer.ray_data[i].origin.z << '\t' <<
-                    buffer.ray_data[i].direction.x << '\t' <<
-                    buffer.ray_data[i].direction.y << '\t' <<
-                    buffer.ray_data[i].direction.z << std::endl;
-            }
         }
 
         m_ray_particle_interaction_stage->execute(

@@ -89,9 +89,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                         (ray.direction - refracted_ray.direction));
 
                 Vec3 t_debug_v = refracted_ray.intensity * (ray.direction - refracted_ray.direction);
-                Debug::instance().getDouble("transmitted_force_x") += t_debug_v.x;
-                Debug::instance().getDouble("transmitted_force_y") += t_debug_v.y;
-                Debug::instance().getDouble("transmitted_force_z") += t_debug_v.z;
+                Debug::AddForce(t_debug_v, Debug::ForceType::transmitted, i);
             }
             else
             {
@@ -105,9 +103,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                         delta_direction);
 
                 Vec3 t_debug_v = refracted_ray.intensity * delta_direction;
-                Debug::instance().getDouble("transmitted_force_x") += t_debug_v.x;
-                Debug::instance().getDouble("transmitted_force_y") += t_debug_v.y;
-                Debug::instance().getDouble("transmitted_force_z") += t_debug_v.z;
+                Debug::AddForce(t_debug_v, Debug::ForceType::transmitted, i);
             }
             // reflected ray
             reflected_ray.intensity = ray.intensity * R;
@@ -128,9 +124,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                         (ray.direction - reflected_ray.direction));
 
                 Vec3 t_debug_v = reflected_ray.intensity * (ray.direction - reflected_ray.direction);
-                Debug::instance().getDouble("reflected_force_x") += t_debug_v.x;
-                Debug::instance().getDouble("reflected_force_y") += t_debug_v.y;
-                Debug::instance().getDouble("reflected_force_z") += t_debug_v.z;
+                Debug::AddForce(t_debug_v, Debug::ForceType::reflected, i);
             }
             else
             {
@@ -144,9 +138,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                         delta_direction);
 
                 Vec3 t_debug_v = reflected_ray.intensity * delta_direction;
-                Debug::instance().getDouble("reflected_force_x") += t_debug_v.x;
-                Debug::instance().getDouble("reflected_force_y") += t_debug_v.y;
-                Debug::instance().getDouble("reflected_force_z") += t_debug_v.z;
+                Debug::AddForce(t_debug_v, Debug::ForceType::reflected, i);
             }
         }
         else
