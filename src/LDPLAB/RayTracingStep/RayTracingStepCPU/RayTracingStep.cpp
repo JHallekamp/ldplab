@@ -179,14 +179,14 @@ void ldplab::rtscpu::RayTracingStep::execute(
 
     // Debug
     Debug::instance().getOfstream("debug_impulse_reflected") <<
-        Debug::instance().getUint64("rts_execution_ctr") <<
-        Debug::instance().getDouble("reflected_force_x") <<
-        Debug::instance().getDouble("reflected_force_y") <<
+        Debug::instance().getUint64("rts_execution_ctr") << '\t' <<
+        Debug::instance().getDouble("reflected_force_x") << '\t' <<
+        Debug::instance().getDouble("reflected_force_y") << '\t' <<
         Debug::instance().getDouble("reflected_force_z") << std::endl;
     Debug::instance().getOfstream("debug_impulse_transmitted") <<
-        Debug::instance().getUint64("rts_execution_ctr") <<
-        Debug::instance().getDouble("transmitted_force_x") <<
-        Debug::instance().getDouble("transmitted_force_y") <<
+        Debug::instance().getUint64("rts_execution_ctr") << '\t' <<
+        Debug::instance().getDouble("transmitted_force_x") << '\t' <<
+        Debug::instance().getDouble("transmitted_force_y") << '\t' <<
         Debug::instance().getDouble("transmitted_force_z") << std::endl;
     Debug::instance().getUint64("rts_execution_ctr")++;
 }
