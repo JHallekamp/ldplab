@@ -44,16 +44,16 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
             particle.position;
         m_context->particle_transformations[i].w2p_rotation_scale =
             getRotationMatrix(
-                -particle.orientation.x,
-                -particle.orientation.y,
-                -particle.orientation.z,
-                particle.rotation_order);
-        m_context->particle_transformations[i].p2w_scale_rotation =
-            getRotationMatrix(
                 particle.orientation.x,
                 particle.orientation.y,
                 particle.orientation.z,
                 particle.rotation_order);
+        m_context->particle_transformations[i].p2w_scale_rotation =
+            getRotationMatrix(
+                -particle.orientation.x,
+                -particle.orientation.y,
+                -particle.orientation.z,
+                invertRotationOrder(particle.rotation_order));
         // Transform bounding volumes
         if (m_context->bounding_volume_data->type() ==
             IBoundingVolumeData::Type::spheres)

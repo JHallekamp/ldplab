@@ -37,6 +37,21 @@ namespace ldplab
         /** @brief Rotates first around z, then y and finally x. */
         zyx
     };
+
+    constexpr RotationOrder invertRotationOrder(RotationOrder order)
+    {
+        switch (order)
+        {
+        case ldplab::RotationOrder::xyz: return RotationOrder::zyx;
+        case ldplab::RotationOrder::xzy: return RotationOrder::yzx;
+        case ldplab::RotationOrder::yxz: return RotationOrder::zxy;
+        case ldplab::RotationOrder::yzx: return RotationOrder::xzy;
+        case ldplab::RotationOrder::zxy: return RotationOrder::yxz;
+        case ldplab::RotationOrder::zyx: return RotationOrder::xyz;
+        default:
+            return order;
+        }
+    };
 }
 
 #endif
