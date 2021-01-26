@@ -2,7 +2,8 @@
 #define WWU_LDPLAB_RTSCPU_RAY_TRACING_STEP_CPU_HPP
 
 #include "Data.hpp"
-#include "..\IRayTracingStep.hpp"
+#include "../IRayTracingStep.hpp"
+#include "../../Geometry.hpp"
 
 #include <memory>
 #include <vector>
@@ -41,7 +42,8 @@ namespace ldplab
              */
             void updateContext(const SimulationState& input);
         private:
-            ldplab::Mat3 getRotationMatrix(double rx, double ry, double rz);
+            ldplab::Mat3 getRotationMatrix(
+                double rx, double ry, double rz, RotationOrder order);
             /**
             * @brief Constructor
             */

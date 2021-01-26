@@ -46,12 +46,14 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
             getRotationMatrix(
                 -particle.orientation.x,
                 -particle.orientation.y,
-                -particle.orientation.z);
+                -particle.orientation.z,
+                particle.rotation_order);
         m_context->particle_transformations[i].p2w_scale_rotation =
             getRotationMatrix(
                 particle.orientation.x,
                 particle.orientation.y,
-                particle.orientation.z);
+                particle.orientation.z,
+                particle.rotation_order);
         // Transform bounding volumes
         if (m_context->bounding_volume_data->type() ==
             IBoundingVolumeData::Type::spheres)
@@ -75,7 +77,8 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
 ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     double rx,
     double ry,
-    double rz)
+    double rz,
+    RotationOrder order)
 {
     ldplab::Mat3 rotx(0), roty(0), rotz(0);
 
@@ -97,6 +100,19 @@ ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     rotz[1][1] = cos(rz);
     rotz[2][2] = 1;
 
+    switch (order)
+    {
+    case (RotationOrder::xyz): return rotz * roty * rotx;
+    case (RotationOrder::xzy): return roty * rotz * rotx;
+    case (RotationOrder::yxz): return rotz * rotx * roty;
+    case (RotationOrder::yzx): return rotx * rotz * roty;
+    case (RotationOrder::zxy): return roty * rotx * rotz;
+    case (RotationOrder::zyx): return rotx * roty * rotz;
+    }
+
+    // To avoid compiler warnings
+    LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Encountered unknown "\
+        "rotation order, assumes xyz instead.");
     return rotz * roty * rotx;
 }
 
