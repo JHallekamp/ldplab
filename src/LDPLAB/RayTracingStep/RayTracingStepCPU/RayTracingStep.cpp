@@ -127,8 +127,6 @@ void ldplab::rtscpu::RayTracingStep::execute(
         m_context->uid);
     std::chrono::steady_clock::time_point start = 
         std::chrono::steady_clock::now();
-    
-    Debug::RtsExecutionStart(m_context);
 
     updateContext(input);
 
@@ -141,8 +139,6 @@ void ldplab::rtscpu::RayTracingStep::execute(
     m_context->thread_pool->executeJobBatch(
         m_context->pipeline, m_context->parameters.number_parallel_pipelines);
     m_context->pipeline->finalizeOutput(output);
-
-    Debug::RtsExecutionFinish();
 
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();

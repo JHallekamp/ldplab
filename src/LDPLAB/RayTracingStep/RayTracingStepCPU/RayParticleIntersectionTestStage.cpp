@@ -42,7 +42,6 @@ void ldplab::rtscpu::RodParticleIntersectionTest::execute(
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
 
-        Debug::SetActiveRay(i);
         if (!intersectionTest(
             geometry,
             ray,
@@ -262,7 +261,6 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::capIntersection(
             return false;
         inter_normal = Vec3(0, 0, 1);
 
-        Debug::MarkActiveRayIntersectionCap();
         return true;
     }
 
@@ -284,7 +282,6 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::capIntersection(
             inter_point.z <= geometry.origin_cap.z + geometry.sphere_radius)
         {
             inter_normal = glm::normalize(inter_point - geometry.origin_cap);
-            Debug::MarkActiveRayIntersectionCap();
             return true;
         }
     }
@@ -311,7 +308,6 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::indentationIntersection(
             geometry.cylinder_radius * geometry.cylinder_radius)
             return false;
         inter_normal = Vec3(0, 0, -1);
-        Debug::MarkActiveRayIntersectionCap();
         return true;
     }
     double intersec_first = 0;
@@ -332,7 +328,6 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::indentationIntersection(
         {
             inter_normal = glm::normalize(
                 geometry.origin_indentation - inter_point);
-            Debug::MarkActiveRayIntersectionCap();
             return true;
         }
     }

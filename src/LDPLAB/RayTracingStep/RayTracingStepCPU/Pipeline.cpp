@@ -77,7 +77,6 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     size_t num_batches = 0;
     do
     {
-        Debug::RtsBatchStart();
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
         LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i "\
             "initial rays",
@@ -87,9 +86,6 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
 
         if (initial_batch_buffer.active_rays > 0)
         {
-            if (Debug::GetExecutionCounter() == 0)
-                Debug::PrintRayBuffer(initial_batch_buffer, Debug::BufferInterpretation::initial_batch_rays);
-
             LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i executes "\
                 "batch %i on initial buffer %i",
                 m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
@@ -161,12 +157,6 @@ void ldplab::rtscpu::Pipeline::processBatch(
                 else if (buffer.active_rays == 0)
                     return;
             } while (buffer.world_space_rays > 0);
-        }
-
-        if (Debug::GetExecutionCounter() == 0)
-        {
-            Debug::PrintIntersectionBuffer(intersection_buffer);
-            Debug::PrintRayBuffer(buffer, Debug::BufferInterpretation::intersected_rays);
         }
 
         m_ray_particle_interaction_stage->execute(
