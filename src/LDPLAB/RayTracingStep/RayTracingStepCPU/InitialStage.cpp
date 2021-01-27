@@ -72,7 +72,7 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
                 glm::dot(light_direction, 
                     plane_base - bounding_sphere.center) * division_term;
 
-            if (t <= bounding_sphere.radius)
+            if (t < 0.0)
                 continue;
 
             const Vec3 wrldctr = bounding_sphere.center - t * light_direction;
@@ -85,6 +85,15 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
             {
                 LDPLAB_LOG_TRACE("RTSCPU context %i: Particle %i has no"\
                     " projection onto light source %i",
+                    m_context->uid, j, i);
+                continue;
+            }
+
+            if (t <= bounding_sphere.radius)
+            {
+                LDPLAB_LOG_WARNING("RTSCPU context %i: Particle "\
+                    "%i bounding sphere intersects light source %i, the "\
+                    "particle projection is discarded",
                     m_context->uid, j, i);
                 continue;
             }

@@ -96,6 +96,15 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
                 continue;
             }
 
+            if (t <= bounding_sphere.radius)
+            {
+                LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Particle "\
+                    "%i bounding sphere intersects light source %i, the "\
+                    "particle projection is discarded",
+                    m_context->uid, j, i);
+                continue;
+            }
+
             LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Particle %i is projected"\
                 " onto light source %i",
                 m_context->uid, j, i);
