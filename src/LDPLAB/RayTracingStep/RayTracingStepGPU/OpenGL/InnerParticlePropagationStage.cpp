@@ -88,7 +88,7 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
                 output.torque_data[particle] += ray_intensity *
                     glm::cross(
                         m_context->particles[particle].centre_of_mass,
-                        (t_new_direction - ray_direction));
+                        (ray_direction - t_new_direction));
                 intersected = true;
                 intersection(
                     m_rod_particles[particle], 

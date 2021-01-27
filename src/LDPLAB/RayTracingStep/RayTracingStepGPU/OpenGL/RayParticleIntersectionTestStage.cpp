@@ -60,7 +60,10 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
             num_missed_rays++;
         }
         else
+        {
+            intersection.particle_index_data[i] = rays.index_data[i];
             num_hit_rays++;
+        }
     }
 
     rays.world_space_rays += num_missed_rays;

@@ -346,7 +346,6 @@ void ldplab::RayTracingStepFactory::initRodParticleGeometryCPU(
         {
             RodParticleGeometry* geometry =
                 (RodParticleGeometry*)particle.geometry.get();
-
             double h;
             double sphere_radius;
             if (geometry->kappa <= 0.001)
@@ -386,9 +385,20 @@ void ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
         {
             RodParticleGeometry* geometry =
                 (RodParticleGeometry*)particle.geometry.get();
-            double h = geometry->kappa * geometry->cylinder_radius;
-            double sphere_radius =
-                (h + geometry->cylinder_radius * geometry->cylinder_radius / h) / 2.0;
+            double h;
+            double sphere_radius;
+            if (geometry->kappa <= 0.001)
+            {
+                h = 0;
+                sphere_radius = 0;
+            }
+            else
+            {
+                h = geometry->kappa * geometry->cylinder_radius;
+                sphere_radius =
+                    (h + geometry->cylinder_radius *
+                        geometry->cylinder_radius / h) / 2.0;
+            }
             Vec3 origin_cap{ 0.0 , 0.0, geometry->cylinder_length + h - sphere_radius };
             Vec3 origin_indentation{ 0.0 , 0.0,h - sphere_radius };
             ((rtsgpu_ogl::RodParticleData*)context->particle_data.get())->

@@ -2,8 +2,6 @@
 #include "Debug.hpp"
 #include <sstream>
 
-
-
 void ldplab::rtscpu::Debug::RtsExecutionStart(std::shared_ptr<Context> ctx)
 {
     Debug& me = instance();
