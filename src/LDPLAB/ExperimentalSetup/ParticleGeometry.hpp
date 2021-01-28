@@ -56,6 +56,23 @@ namespace ldplab
         Type type() const override 
         { return IParticleGeometry::Type::rod_particle; }
     };
+
+    /**
+     *  @brief Geometry of an spherical particle.
+     */
+    struct SphericalParticleGeometry : public IParticleGeometry
+    {
+        SphericalParticleGeometry(double radius)
+            :
+            radius{ radius }
+        {}
+        /** @brief Radius of the sphere. */
+        double radius;
+        Type type() const override
+        {
+            return IParticleGeometry::Type::sphere;
+        }
+    };
 }
 
 #endif
