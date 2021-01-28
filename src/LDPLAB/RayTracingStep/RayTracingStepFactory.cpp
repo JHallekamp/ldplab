@@ -49,77 +49,121 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
             "ldplab::rtscpu::RayTracingStep failed");
         return nullptr;
     }
+
+
+    std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
+    setup.particles, setup.light_sources } };
+    ctx->thread_pool = info.thread_pool;
+    ctx->particle_transformations.resize(ctx->particles.size());
+    ctx->parameters.intensity_cutoff = info.intensity_cutoff;
+    ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
+    ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
+    ctx->parameters.number_rays_per_unit = static_cast<size_t>(
+        sqrt(info.light_source_ray_density_per_unit_area));
+    ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
+    ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
+    ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
+        info.emit_warning_on_maximum_branching_depth_discardment;
+
     
+    
+    std::unique_ptr<rtscpu::IInitialStage> initial;
+    std::unique_ptr<rtscpu::IRayBoundingVolumeIntersectionTestStage> rbvit;
+    std::unique_ptr<rtscpu::IRayParticleIntersectionTestStage> rpit;
+    std::unique_ptr<rtscpu::IRayParticleInteractionStage> rpi;
+    std::unique_ptr<rtscpu::IInnerParticlePropagationStage> ipp;
+
+    if (setup.particles[0].bounding_volume->type() ==
+        IBoundingVolume::Type::sphere)
+    {
+        ctx->bounding_volume_data =
+            std::shared_ptr<rtscpu::IBoundingVolumeData>(
+                new rtscpu::BoundingSphereData());
+        ((rtscpu::BoundingSphereData*)ctx->bounding_volume_data.get())->
+            sphere_data.resize(ctx->particles.size(),
+                BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
+        rbvit = std::unique_ptr<rtscpu::RayBoundingSphereIntersectionTestStageBruteForce>
+            { new rtscpu::RayBoundingSphereIntersectionTestStageBruteForce {ctx} };
+    }
+    else
+        return combinationError();
+
     if (setup.light_sources[0].direction->type() ==
         ILightDirection::Type::homogeneous &&
         setup.light_sources[0].intensity_distribution->type() ==
         ILightDistribution::Type::homogeneous &&
         setup.light_sources[0].polarisation->type() ==
-        ILightPolarisation::Type::unpolarized &&
-        setup.particles[0].bounding_volume->type() ==
-        IBoundingVolume::Type::sphere &&
-        setup.particles[0].geometry->type() ==
-        IParticleGeometry::Type::rod_particle &&
-        setup.particles[0].material->type() ==
-        IParticleMaterial::Type::linear_one_directional &&
-        info.solver_parameters->type() == IEikonalSolver::Type::rk45)
+        ILightPolarisation::Type::unpolarized)
+        {
+            initial = std::unique_ptr<rtscpu::InitialStageBoundingSpheresHomogenousLight>
+                { new rtscpu::InitialStageBoundingSpheresHomogenousLight{ ctx } };
+        }
+    else
+        return combinationError();
+
+    if (setup.particles[0].material->type() ==
+        IParticleMaterial::Type::linear_one_directional)
     {
-        std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
-        setup.particles, setup.light_sources } };
-        ctx->thread_pool = info.thread_pool;
-        ctx->particle_transformations.resize(ctx->particles.size());
-        ctx->parameters.intensity_cutoff = info.intensity_cutoff;
-        ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
-        ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
-        ctx->parameters.number_rays_per_unit = static_cast<size_t>(
-            sqrt(info.light_source_ray_density_per_unit_area));
-        ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
-        ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
-        ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
-            info.emit_warning_on_maximum_branching_depth_discardment;
+        if (setup.particles[0].geometry->type() ==
+            IParticleGeometry::Type::rod_particle)
+        {
+            ctx->particle_data =
+                std::shared_ptr<rtscpu::IParticleData>(
+                    new rtscpu::RodParticleData());
+            initRodParticleGeometryCPU(setup, ctx);
 
-        ctx->bounding_volume_data =
-            std::shared_ptr<rtscpu::IBoundingVolumeData>(
-                new rtscpu::BoundingSphereData());
-        ((rtscpu::BoundingSphereData*)ctx->bounding_volume_data.get())->
-            sphere_data.resize(ctx->particles.size(), 
-                BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
-        ctx->particle_data =
-            std::shared_ptr<rtscpu::IParticleData>(
-                new rtscpu::RodParticleData());
-        initRodParticleGeometryCPU(setup, ctx);
-
-        std::unique_ptr<rtscpu::InitialStageBoundingSpheresHomogenousLight> initial
-        { new rtscpu::InitialStageBoundingSpheresHomogenousLight{ ctx } };
-        std::unique_ptr<rtscpu::RayBoundingSphereIntersectionTestStageBruteForce> rbvit
-        { new rtscpu::RayBoundingSphereIntersectionTestStageBruteForce {ctx} };
-        std::unique_ptr<rtscpu::RodParticleIntersectionTest> rpit
-        { new rtscpu::RodParticleIntersectionTest{ctx} };
-        std::unique_ptr<rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction> rpi
-        { new rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction{ ctx } };
-        std::unique_ptr<rtscpu::LinearIndexGradientRodParticlePropagation> ipp
-        { new rtscpu::LinearIndexGradientRodParticlePropagation{
-            ctx,
-            *((RK45*) info.solver_parameters.get())} };
-        ctx->pipeline = std::make_unique<rtscpu::Pipeline>(
-            std::move(initial),
-            std::move(rbvit),
-            std::move(rpit),
-            std::move(rpi),
-            std::move(ipp),
-            ctx);
-        return std::shared_ptr<rtscpu::RayTracingStep>(
-            new rtscpu::RayTracingStep{ ctx });
-        LDPLAB_LOG_INFO("RTS factory: Creation of "\
-            "ldplab::rtscpu::RayTracingStep completed");
+            rpit = std::unique_ptr<rtscpu::RodParticleIntersectionTest>
+            { new rtscpu::RodParticleIntersectionTest{ctx} };
+            if (info.solver_parameters->type() == IEikonalSolver::Type::rk45)
+            {
+                ipp = std::unique_ptr <rtscpu::LinearIndexGradientRodParticlePropagation>
+                { new rtscpu::LinearIndexGradientRodParticlePropagation{
+                    ctx,
+                    *((RK45*)info.solver_parameters.get())} };
+            }
+            else
+                return combinationError();
+        }
+        else if (setup.particles[0].geometry->type() ==
+            IParticleGeometry::Type::sphere)
+        {
+            rpit = std::unique_ptr<rtscpu::SphericalParticleIntersectionTest>
+            { new rtscpu::SphericalParticleIntersectionTest{ctx} };
+            if (info.solver_parameters->type() == IEikonalSolver::Type::rk45)
+            {
+                ipp = std::unique_ptr <rtscpu::LinearIndexGradientSphericalParticlePropagation>
+                { new rtscpu::LinearIndexGradientSphericalParticlePropagation{
+                    ctx,
+                    *((RK45*)info.solver_parameters.get())} };
+            }
+            else
+                return combinationError();
+        }
+        else
+            return combinationError();
+        if (setup.light_sources[0].polarisation->type() ==
+            ILightPolarisation::Type::unpolarized)
+        {
+            rpi = std::unique_ptr<rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction>
+            { new rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction{ ctx } };
+        }
+        else
+            return combinationError();
     }
+    else
+        return combinationError();
 
-    LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
-        "types in the experimental setup is not yet supported by "\
-        "ldplab::rtscpu::RayTracingStep");
+    ctx->pipeline = std::make_unique<rtscpu::Pipeline>(
+        std::move(initial),
+        std::move(rbvit),
+        std::move(rpit),
+        std::move(rpi),
+        std::move(ipp),
+        ctx);
     LDPLAB_LOG_INFO("RTS factory: Creation of "\
-        "ldplab::rtscpu::RayTracingStep failed");
-    return nullptr;
+        "ldplab::rtscpu::RayTracingStep completed");
+    return std::shared_ptr<rtscpu::RayTracingStep>(
+        new rtscpu::RayTracingStep{ ctx });
 }
 
 std::shared_ptr<ldplab::rtscpu::RayTracingStep> 
@@ -524,3 +568,13 @@ bool ldplab::RayTracingStepFactory::checkTypeUniformity(
     return only_homogenous_types;
 }
 
+std::shared_ptr<ldplab::rtscpu::RayTracingStep> 
+    ldplab::RayTracingStepFactory::combinationError()
+{
+    LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
+        "types in the experimental setup is not yet supported by "\
+        "ldplab::rtscpu::RayTracingStep");
+    LDPLAB_LOG_INFO("RTS factory: Creation of "\
+        "ldplab::rtscpu::RayTracingStep failed");
+    return nullptr;
+}

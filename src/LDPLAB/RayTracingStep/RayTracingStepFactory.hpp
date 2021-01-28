@@ -72,6 +72,12 @@ namespace ldplab
          * @returns true if all types are equal and false if not.
          */
         static bool checkTypeUniformity(const ExperimentalSetup& setup);
+        /**
+         * @brief Factory error output for an combination of object which is not
+         *        supported
+         * @returns A null pointer
+         */
+        static std::shared_ptr<rtscpu::RayTracingStep> combinationError();
     };
 }
 
