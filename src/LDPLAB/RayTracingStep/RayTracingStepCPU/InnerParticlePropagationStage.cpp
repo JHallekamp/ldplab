@@ -577,3 +577,19 @@ void ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::
     inter_point = t_ray.origin + distance * t_ray.direction;
     inter_normal = -glm::normalize(inter_point);
 }
+
+double ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::Arg::absoluteMax()
+{
+    double max = std::abs(w.x);
+    if (max < std::abs(w.y))
+        max = std::abs(w.y);
+    if (max < std::abs(w.z))
+        max = std::abs(w.z);
+    if (max < std::abs(r.x))
+        max = std::abs(r.x);
+    if (max < std::abs(r.y))
+        max = std::abs(r.y);
+    if (max < std::abs(r.z))
+        max = std::abs(r.z);
+    return max;
+}
