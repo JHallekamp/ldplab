@@ -24,7 +24,8 @@ namespace ldplab
             enum class BufferInterpretation
             {
                 initial_batch_rays,
-                intersected_rays
+                intersected_rays,
+                propagated_batch_rays
             };
         public:
 
@@ -39,7 +40,7 @@ namespace ldplab
 
             static size_t GetExecutionCounter();
             static void PrintIntersectionBuffer(
-                const IntersectionBuffer& buffer);
+                const IntersectionBuffer& buffer, BufferInterpretation interpretation);
             static void PrintRayBuffer(
                 const RayBuffer& buffer, BufferInterpretation interpretation);
 
@@ -56,6 +57,7 @@ namespace ldplab
             std::ofstream m_file_intersections;
             std::ofstream m_file_initial_rays;
             std::ofstream m_file_intersected_rays;
+            std::ofstream m_file_propagated_rays;
             size_t m_execution_ctr;
 
             size_t m_active_ray;

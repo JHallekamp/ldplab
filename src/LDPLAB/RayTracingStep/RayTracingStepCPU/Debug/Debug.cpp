@@ -15,6 +15,7 @@ void ldplab::rtscpu::Debug::RtsExecutionStart(std::shared_ptr<Context> ctx)
         me.m_file_transmitted_force_shell = std::ofstream{ "debug_force_transmitted_shell" };
         me.m_file_intersections = std::ofstream{ "debug_intersections" };
         me.m_file_initial_rays = std::ofstream{ "debug_light_source" };
+        me.m_file_propagated_rays = std::ofstream{ "debug_light_propagated" };
         me.m_file_intersected_rays = std::ofstream{ "debug_light_origin" };
         me.m_ray_cap_mark.resize(me.m_context->parameters.number_rays_per_buffer, false);
         me.m_execution_ctr = 0;
@@ -96,20 +97,25 @@ size_t ldplab::rtscpu::Debug::GetExecutionCounter()
 }
 
 void ldplab::rtscpu::Debug::PrintIntersectionBuffer(
-    const IntersectionBuffer& buffer)
+    const IntersectionBuffer& buffer, BufferInterpretation interpretation)
 {
     Debug& me = instance();
     for (size_t i = 0; i < buffer.size; ++i)
     {
         if (buffer.particle_index[i] < 0)
             continue;
-        me.m_file_intersections <<
+        std::stringstream ss;
+        ss <<
             buffer.point[i].x << '\t' <<
             buffer.point[i].y << '\t' <<
             buffer.point[i].z << '\t' <<
             buffer.normal[i].x << '\t' <<
             buffer.normal[i].y << '\t' <<
             buffer.normal[i].z << std::endl;
+        if (interpretation == BufferInterpretation::propagated_batch_rays)
+            me.m_file_propagated_rays << ss.str();
+        else
+            me.m_file_intersections << ss.str();
     }
 }
 
@@ -130,8 +136,8 @@ void ldplab::rtscpu::Debug::PrintRayBuffer(
             buffer.ray_data[i].direction.z << std::endl;
         if (interpretation == BufferInterpretation::initial_batch_rays)
             me.m_file_initial_rays << ss.str();
-        else
-            me.m_file_intersected_rays << ss.str();
+        else if (interpretation == BufferInterpretation::propagated_batch_rays)
+            me.m_file_propagated_rays << ss.str();
     }
 }
 
