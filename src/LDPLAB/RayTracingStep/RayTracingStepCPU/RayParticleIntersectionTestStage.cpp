@@ -417,6 +417,9 @@ bool ldplab::rtscpu::SphericalParticleIntersectionTest::intersectionTest(
         return false;
 
     const double distance= -p - std::sqrt(discriminant);
+    if (distance < 1e-9)
+        return false;
+
     inter_point = ray.origin + distance * ray.direction;
     inter_normal = glm::normalize(inter_point);
     return true;
