@@ -160,7 +160,6 @@ double ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::rk45(
 {
     Arg k[6]{};
     Arg error{ {0,0,0}, {0,0,0} };
-    Arg t{};
     x_new = { {0,0,0}, {0,0,0} };
     for (size_t i = 0; i < 6; ++i)
     {
