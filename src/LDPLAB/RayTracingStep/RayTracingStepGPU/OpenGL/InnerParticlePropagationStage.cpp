@@ -244,7 +244,7 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     const double q = ((ray_origin.x * ray_origin.x + ray_origin.y * ray_origin.y) -
         geometry.cylinder_radius * geometry.cylinder_radius) /
         (ray_direction.x * ray_direction.x + ray_direction.y * ray_direction.y);
-    double discriminant = p * p - q;
+    const double discriminant = p * p - q;
 
     if (discriminant < 0.0)
         return false;
@@ -288,11 +288,11 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
         return true;
     }
 
-    Vec3 o_minus_c = ray_origin - geometry.origin_cap;
+    const Vec3 o_minus_c = ray_origin - geometry.origin_cap;
     const double p = glm::dot(ray_direction, o_minus_c);
-    const double q = dot(o_minus_c, o_minus_c) -
+    const double q = glm::dot(o_minus_c, o_minus_c) -
         (geometry.sphere_radius * geometry.sphere_radius);
-    double discriminant = (p * p) - q;
+    const double discriminant = (p * p) - q;
 
     if (discriminant < 0.0)
         return false;
@@ -339,7 +339,7 @@ indentationIntersection(
 
     Vec3 o_minus_c = ray_origin - geometry.origin_indentation;
     double p = glm::dot(ray_direction, o_minus_c);
-    double q = dot(o_minus_c, o_minus_c) -
+    double q = glm::dot(o_minus_c, o_minus_c) -
         (geometry.sphere_radius * geometry.sphere_radius);
     double discriminant = (p * p) - q;
 
