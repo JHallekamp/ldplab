@@ -85,7 +85,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     (ray.direction - refracted_ray.direction);
                 output.torque[rays.index_data[i]] += refracted_ray.intensity *
                     glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
+                        inter_point - m_context->particles[rays.index_data[i]].centre_of_mass,
                         (ray.direction - refracted_ray.direction));
             }
             else
@@ -96,7 +96,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     delta_direction;
                 output.torque[rays.index_data[i]] += refracted_ray.intensity *
                     glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
+                        inter_point - m_context->particles[rays.index_data[i]].centre_of_mass,
                         delta_direction);
             }
             // reflected ray
@@ -114,7 +114,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     (ray.direction - reflected_ray.direction);
                 output.torque[rays.index_data[i]] += reflected_ray.intensity *
                     glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
+                        inter_point - m_context->particles[rays.index_data[i]].centre_of_mass,
                         (ray.direction - reflected_ray.direction));
             }
             else
@@ -125,7 +125,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                     delta_direction;
                 output.torque[rays.index_data[i]] += reflected_ray.intensity *
                     glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
+                        inter_point - m_context->particles[rays.index_data[i]].centre_of_mass,
                         delta_direction);
             }
         }
@@ -144,7 +144,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 (ray.direction - reflected_ray.direction);
             output.torque[rays.index_data[i]] += reflected_ray.intensity *
                 glm::cross(
-                    m_context->particles[rays.index_data[i]].centre_of_mass,
+                    inter_point - m_context->particles[rays.index_data[i]].centre_of_mass,
                     (ray.direction - reflected_ray.direction));
         }
 
