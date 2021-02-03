@@ -108,10 +108,11 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
             std::move(rpi),
             std::move(ipp),
             ctx);
-        return std::shared_ptr<rtscpu::RayTracingStep>(
+        std::shared_ptr<rtscpu::RayTracingStep> rts(
             new rtscpu::RayTracingStep{ ctx });
         LDPLAB_LOG_INFO("RTS factory: Creation of "\
             "ldplab::rtscpu::RayTracingStep completed");
+        return rts;
     }
 
     LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
@@ -211,10 +212,11 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep>
         debug.inner_particle_propagation =
             std::make_unique<rtscpu::LinearIndexGradientRodParticlePropagation>(ctx, *((RK45*)info.solver_parameters.get()));
 
-        return std::shared_ptr<rtscpu::RayTracingStep>(
+        std::shared_ptr<rtscpu::RayTracingStep> rts(
             new rtscpu::RayTracingStep{ ctx });
         LDPLAB_LOG_INFO("RTS factory: Creation of "\
             "ldplab::rtscpu::RayTracingStep (debug variant) completed");
+        return rts;
     }
 
     LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
@@ -313,6 +315,13 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
         { new rtsgpu_ogl::LinearIndexGradientRodParticlePropagation{
             ctx,
             *((RK45*)info.solver_parameters.get())} };
+        if (!ipp->initShaders(info))
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
+                "ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation "\
+                "stage");
+            return nullptr;
+        }
         ctx->pipeline = std::make_unique<rtsgpu_ogl::Pipeline>(
             std::move(initial),
             std::move(rbvit),
@@ -320,10 +329,11 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
             std::move(rpi),
             std::move(ipp),
             ctx);
-        return std::shared_ptr<rtsgpu_ogl::RayTracingStep>(
+        std::shared_ptr<rtsgpu_ogl::RayTracingStep> rts(
             new rtsgpu_ogl::RayTracingStep{ ctx });
         LDPLAB_LOG_INFO("RTS factory: Creation of "\
             "ldplab::rtsgpu_ogl::RayTracingStep completed");
+        return rts;
     }
 
     LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
@@ -406,8 +416,8 @@ void ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
                     geometry->cylinder_radius,
                     geometry->cylinder_length,
                     sphere_radius,
-                    origin_cap,
-                    origin_indentation });
+                    Vec4(origin_cap, 0),
+                    Vec4(origin_indentation, 0) });
         }
     }
 }

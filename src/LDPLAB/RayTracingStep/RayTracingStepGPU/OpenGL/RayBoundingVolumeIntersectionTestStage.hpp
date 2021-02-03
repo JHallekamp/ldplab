@@ -65,7 +65,7 @@ namespace ldplab
             size_t execute(RayBuffer& buffer) override;
         private:
             inline void transformRayFromWorldToParticleSpace(
-                Vec3& origin, Vec3& direction, size_t pidx) const;
+                Vec4& origin, Vec4& direction, size_t pidx) const;
         private:
             std::shared_ptr<Context> m_context;
             std::vector<BoundingVolumeSphere>& m_bounding_spheres;

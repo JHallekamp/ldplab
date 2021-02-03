@@ -6,6 +6,7 @@
 
 #include "Data.hpp"
 #include "../../EikonalSolver.hpp"
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
 #include "../../../Geometry.hpp"
 
 namespace ldplab
@@ -67,6 +68,11 @@ namespace ldplab
                 std::shared_ptr<Context> context,
                 RK45 parameters);
             /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            /**
              * @brief Inherited via ldplab::rtsgpu_ogl::IInnerParticlePropagationStage.
              * @details Calculating the path of the rays threw the particle.
              * @param[in, out] rays RayBuffer holding the propagating rays.
@@ -90,11 +96,11 @@ namespace ldplab
                  * @brief Vector pointing in the direction of light. Its norm 
                  *        is the index of reflection at position r.
                  */
-                Vec3 w;
+                Vec4 w;
                 /**
                  * @brief Vector pointing to the light rays origin. 
                  */
-                Vec3 r;
+                Vec4 r;
                 inline Arg operator*(const double& d) const
                 {
                     return Arg{ w * d, r * d };
@@ -140,11 +146,11 @@ namespace ldplab
              */
             void rayPropagation(
                 const size_t particle, 
-                Vec3& ray_origin,
-                Vec3& ray_direction,
+                Vec4& ray_origin,
+                Vec4& ray_direction,
                 double ray_intensity,
-                Vec3& inter_point,
-                Vec3& inter_normal,
+                Vec4& inter_point,
+                Vec4& inter_normal,
                 OutputBuffer& output);
             /**
              * @brief Check if the position is outside of the particle.
@@ -153,7 +159,7 @@ namespace ldplab
              * @retuns true if the position is outside the particle, false if 
              *         the position is inside.
              */
-            bool isOutsideParticle(const RodParticle& geometry, const Vec3& r);
+            bool isOutsideParticle(const RodParticle& geometry, const Vec4& r);
             /**
              * @brief Integration step of the Runge-Kutta-Fehlberg method.
              * @param[in] particle Pointer to the particle material containing 
@@ -195,8 +201,8 @@ namespace ldplab
             void intersection(
                 const RodParticle& geometry,
                 const Arg& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                Vec4& inter_point,
+                Vec4& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the cylinder.
              * @warning It is assumed that the rays origin is inside the 
@@ -215,10 +221,10 @@ namespace ldplab
              */
             bool cylinderIntersection(
                 const RodParticle& geometry,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the
              *        spherical cap of the rod particle.
@@ -238,10 +244,10 @@ namespace ldplab
              */
             bool capIntersection(
                 const RodParticle& geometry,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the
              *        spherical indentation of the rod particle.
@@ -261,10 +267,10 @@ namespace ldplab
              */
             bool indentationIntersection(
                 const RodParticle& geometry,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
         private:
             const double alpha[6]{ 0.0, 1.0/4.0, 3.0/8.0, 12.0/13.0, 1.0, 1.0/2.0 };
             const double beta[36]{
@@ -280,6 +286,7 @@ namespace ldplab
         private:
             const RK45 m_parameters;
             std::shared_ptr<Context> m_context;
+            std::shared_ptr<ComputeShader> m_compute_shader;
             std::vector<RodParticle>& m_rod_particles;
         };
     }

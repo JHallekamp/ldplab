@@ -35,10 +35,10 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
             continue;
 
         const RodParticle& geometry = m_rod_particles[rays.index_data[i]];
-        Vec3& ray_origin = rays.ray_origin_data[i];
-        Vec3& ray_direction = rays.ray_direction_data[i];
-        Vec3& inter_point = intersection.point_data[i];
-        Vec3& inter_normal = intersection.normal_data[i];
+        Vec4& ray_origin = rays.ray_origin_data[i];
+        Vec4& ray_direction = rays.ray_direction_data[i];
+        Vec4& inter_point = intersection.point_data[i];
+        Vec4& inter_normal = intersection.normal_data[i];
 
         if (!intersectionTest(
             geometry,
@@ -80,10 +80,10 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::intersectionTest(
     const RodParticle& geometry,
-    const Vec3& ray_origin,
-    const Vec3& ray_direction,
-    Vec3& inter_point, 
-    Vec3& inter_normal)
+    const Vec4& ray_origin,
+    const Vec4& ray_direction,
+    Vec4& inter_point, 
+    Vec4& inter_normal)
 {
     double intersec_first = 0;
     double intersec_second = 0;
@@ -102,7 +102,7 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::intersectionTest(
             if (inter_point.z >= 0 &&
                 inter_point.z <= geometry.cylinder_length)
             {
-                inter_normal = { inter_point.x, inter_point.y, 0 };
+                inter_normal = { inter_point.x, inter_point.y, 0, 0 };
                 inter_normal = glm::normalize(inter_normal);
                 return true;
             }
@@ -156,10 +156,10 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::intersectionTest(
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::bottomTopIntersection(
     const RodParticle& particle,
-    const Vec3& ray_origin,
-    const Vec3& ray_direction,
-    Vec3& inter_point,
-    Vec3& inter_normal)
+    const Vec4& ray_origin,
+    const Vec4& ray_direction,
+    Vec4& inter_point,
+    Vec4& inter_normal)
 {
     if (ray_origin.z <= 0) // Ray origin below the particle
     {
@@ -209,8 +209,8 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::bottomTopIntersection(
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::cylinderIntersection(
     const RodParticle& geometry,
-    const Vec3& ray_origin,
-    const Vec3& ray_direction,
+    const Vec4& ray_origin,
+    const Vec4& ray_direction,
     double& distance_min, 
     double& distance_max)
 {
@@ -230,14 +230,14 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::cylinderIntersection(
 }
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::sphereIntersection(
-    const Vec3& sphere_origin, 
+    const Vec4& sphere_origin, 
     const double& sphere_raduis, 
-    const Vec3& ray_origin, 
-    const Vec3& ray_direction, 
+    const Vec4& ray_origin, 
+    const Vec4& ray_direction, 
     double& distance_min, 
     double& distance_max)
 {
-    const Vec3 o_minus_c = ray_origin - sphere_origin;
+    const Vec4 o_minus_c = ray_origin - sphere_origin;
 
     const double p = glm::dot(ray_direction, o_minus_c);
     const double q = glm::dot(o_minus_c, o_minus_c) - 
@@ -254,10 +254,10 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::sphereIntersection(
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::capIntersection(
     const RodParticle& geometry,
-    const Vec3& ray_origin, 
-    const Vec3& ray_direction, 
-    Vec3& inter_point,
-    Vec3& inter_normal)
+    const Vec4& ray_origin, 
+    const Vec4& ray_direction, 
+    Vec4& inter_point,
+    Vec4& inter_normal)
 {
     if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
@@ -273,7 +273,7 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::capIntersection(
         if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
             geometry.cylinder_radius * geometry.cylinder_radius)
             return false;
-        inter_normal = Vec3(0, 0, 1);
+        inter_normal = Vec4(0, 0, 1, 0);
         return true;
     }
 
@@ -304,10 +304,10 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::capIntersection(
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::indentationIntersection(
     const RodParticle& geometry,
-    const Vec3& ray_origin,
-    const Vec3& ray_direction,
-    Vec3& inter_point,
-    Vec3& inter_normal)
+    const Vec4& ray_origin,
+    const Vec4& ray_direction,
+    Vec4& inter_point,
+    Vec4& inter_normal)
 {
     if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
@@ -322,7 +322,7 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::indentationIntersection(
         if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
             geometry.cylinder_radius * geometry.cylinder_radius)
             return false;
-        inter_normal = Vec3(0, 0, -1);
+        inter_normal = Vec4(0, 0, -1, 0);
         return true;
     }
 

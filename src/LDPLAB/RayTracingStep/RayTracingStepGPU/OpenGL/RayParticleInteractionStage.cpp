@@ -50,20 +50,20 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
             (ParticleMaterialLinearOneDirectional*)m_context->
             particles[rays.index_data[i]].material.get();
 
-        const Vec3& ray_origin = rays.ray_origin_data[i];
-        const Vec3& ray_direction = rays.ray_direction_data[i];
+        const Vec4& ray_origin = rays.ray_origin_data[i];
+        const Vec4& ray_direction = rays.ray_direction_data[i];
         const double ray_intensity = rays.ray_intensity_data[i];
 
-        Vec3& reflected_ray_origin = reflected_rays.ray_origin_data[i];
-        Vec3& reflected_ray_direction = reflected_rays.ray_direction_data[i];
+        Vec4& reflected_ray_origin = reflected_rays.ray_origin_data[i];
+        Vec4& reflected_ray_direction = reflected_rays.ray_direction_data[i];
         double& reflected_ray_intensity = reflected_rays.ray_intensity_data[i];
         
-        Vec3& refracted_ray_origin = refracted_rays.ray_origin_data[i];
-        Vec3& refracted_ray_direction = refracted_rays.ray_direction_data[i];
+        Vec4& refracted_ray_origin = refracted_rays.ray_origin_data[i];
+        Vec4& refracted_ray_direction = refracted_rays.ray_direction_data[i];
         double& refracted_ray_intensity = refracted_rays.ray_intensity_data[i];
         
-        const Vec3& inter_point = intersection.point_data[i];
-        const Vec3& inter_normal = intersection.normal_data[i];
+        const Vec4& inter_point = intersection.point_data[i];
+        const Vec4& inter_normal = intersection.normal_data[i];
 
         double nr = m_context->parameters.medium_reflection_index /
             material->indexOfRefraction(inter_point);
@@ -91,20 +91,21 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
                 output.force_data[rays.index_data[i]] += refracted_ray_intensity *
                     (ray_direction - refracted_ray_direction);
                 output.torque_data[rays.index_data[i]] += refracted_ray_intensity *
-                    glm::cross(
+                    Vec4(glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
-                        (ray_direction - refracted_ray_direction));
+                        Vec3(ray_direction - refracted_ray_direction)), 0);
             }
             else
             {
                 refracted_rays.index_data[i] = -1;
-                Vec3 delta_direction = (nr - 1) * ray_direction + inter_normal * (cos_b - nr * cos_a);
+                Vec4 delta_direction = (nr - 1) * ray_direction + inter_normal * 
+                    (cos_b - nr * cos_a);
                 output.force_data[rays.index_data[i]] += refracted_ray_intensity *
                     delta_direction;
                 output.torque_data[rays.index_data[i]] += refracted_ray_intensity *
-                    glm::cross(
+                    Vec4(glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
-                        delta_direction);
+                        Vec3(delta_direction)), 0);
             }
             // reflected ray
             reflected_ray_intensity = ray_intensity * R;
@@ -120,20 +121,20 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
                 output.force_data[rays.index_data[i]] += reflected_ray_intensity *
                     (ray_direction - reflected_ray_direction);
                 output.torque_data[rays.index_data[i]] += reflected_ray_intensity *
-                    glm::cross(
+                    Vec4(glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
-                        (ray_direction - reflected_ray_direction));
+                        Vec3(ray_direction - reflected_ray_direction)), 0);
             }
             else
             {
                 reflected_rays.index_data[i] = -1;
-                Vec3 delta_direction = inter_normal * (-2.0 * cos_a);
+                Vec4 delta_direction = inter_normal * (-2.0 * cos_a);
                 output.force_data[rays.index_data[i]] += reflected_ray_intensity *
                     delta_direction;
                 output.torque_data[rays.index_data[i]] += reflected_ray_intensity *
-                    glm::cross(
+                    Vec4(glm::cross(
                         m_context->particles[rays.index_data[i]].centre_of_mass,
-                        delta_direction);
+                        Vec3(delta_direction)), 0);
             }
         }
         else
@@ -150,9 +151,9 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
             output.force_data[rays.index_data[i]] += reflected_ray_intensity *
                 (ray_direction - reflected_ray_direction);
             output.torque_data[rays.index_data[i]] += reflected_ray_intensity *
-                glm::cross(
+                Vec4(glm::cross(
                     m_context->particles[rays.index_data[i]].centre_of_mass,
-                    (ray_direction - reflected_ray_direction));
+                    Vec3(ray_direction - reflected_ray_direction)), 0);
         }
     }
 

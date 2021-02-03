@@ -39,9 +39,9 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
 
         // Set particle current transformation
         m_context->particle_transformations[i].w2p_translation =
-            -particle.position;
+            Vec4(-particle.position, 0);
         m_context->particle_transformations[i].p2w_translation =
-            particle.position;
+            Vec4(particle.position, 0);
         m_context->particle_transformations[i].w2p_rotation_scale =
             getRotationMatrix(
                 particle.orientation.x,
@@ -67,20 +67,20 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
             ((BoundingSphereData*)
                 m_context->bounding_volume_data.get())->sphere_data[i].center =
                 m_context->particle_transformations[i].p2w_scale_rotation *
-                ((BoundingVolumeSphere*)
-                    m_context->particles[i].bounding_volume.get())->center +
+                Vec4(((BoundingVolumeSphere*)
+                    m_context->particles[i].bounding_volume.get())->center, 0) +
                 m_context->particle_transformations[i].p2w_translation;
         }
     }
 }
 
-ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
+ldplab::Mat4 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     double rx,
     double ry,
     double rz,
     RotationOrder order)
 {
-    ldplab::Mat3 rotx(0), roty(0), rotz(0);
+    ldplab::Mat4 rotx(0), roty(0), rotz(0);
 
     rotx[0][0] = 1;
     rotx[1][1] = cos(rx);

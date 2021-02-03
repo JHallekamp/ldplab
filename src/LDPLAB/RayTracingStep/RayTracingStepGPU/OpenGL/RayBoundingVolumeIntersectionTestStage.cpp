@@ -44,12 +44,12 @@ size_t
         double min_d = -1.0;
         int32_t min_j = 0;
 
-        const Vec3& o = buffer.ray_origin_data[i];
+        const Vec4& o = buffer.ray_origin_data[i];
         for (int32_t j = 0; j < 
             static_cast<int32_t>(m_context->particles.size()); ++j)
         {
-            const Vec3& oc = o - 
-                m_bounding_spheres[j].center;
+            const Vec4& oc = o - 
+                Vec4(m_bounding_spheres[j].center, 0);
             const double rr =
                 m_bounding_spheres[j].radius *
                 m_bounding_spheres[j].radius;
@@ -113,8 +113,8 @@ size_t
 
 inline void ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
     transformRayFromWorldToParticleSpace(
-        Vec3& origin, 
-        Vec3& direction, 
+        Vec4& origin, 
+        Vec4& direction, 
         size_t pidx) const
 {
     origin = m_context->particle_transformations[pidx].w2p_rotation_scale *

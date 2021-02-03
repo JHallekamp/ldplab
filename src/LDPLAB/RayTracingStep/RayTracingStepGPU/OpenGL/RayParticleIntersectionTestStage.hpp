@@ -92,10 +92,10 @@ namespace ldplab
              */
             bool intersectionTest(
                 const RodParticle& geometry,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the cylinder.
              * @param[in] particle Specifies the particle geometry.
@@ -110,8 +110,8 @@ namespace ldplab
              */
             bool cylinderIntersection(
                 const RodParticle& particle,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
                 double& distance_min,
                 double& distance_max);
             /**
@@ -132,10 +132,10 @@ namespace ldplab
              */
             bool bottomTopIntersection(
                 const RodParticle& particle,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
 
             /**
              * @brief Calculate the intersection point of a ray and the sphere.
@@ -151,10 +151,10 @@ namespace ldplab
              *         false will be returned.
              */
             bool sphereIntersection(
-                const Vec3& sphere_origin,
+                const Vec4& sphere_origin,
                 const double& sphere_raduis,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
                 double& distance_min,
                 double& distance_max);
 
@@ -180,10 +180,10 @@ namespace ldplab
              */
             bool capIntersection(
                 const RodParticle& geometry,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
             /**
              * @brief Calculate the intersection point of a ray and the 
              *        spherical indentation of the rod particle.
@@ -206,10 +206,10 @@ namespace ldplab
              */
             bool indentationIntersection(
                 const RodParticle& geometry,
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                Vec3& inter_point,
-                Vec3& inter_normal);
+                const Vec4& ray_origin,
+                const Vec4& ray_direction,
+                Vec4& inter_point,
+                Vec4& inter_normal);
         private:
             std::shared_ptr<Context> m_context;
             std::vector<RodParticle>& m_rod_particles;

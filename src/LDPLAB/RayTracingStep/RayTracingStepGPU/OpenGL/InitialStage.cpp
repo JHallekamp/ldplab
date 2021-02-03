@@ -274,8 +274,8 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
 
 inline void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     transformRayFromWorldToParticleSpace(
-        Vec3& origin, 
-        Vec3& direction, 
+        Vec4& origin, 
+        Vec4& direction, 
         size_t pidx) const
 {
     origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
@@ -347,9 +347,9 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
                         // Create ray
                         // Set ray origin
                         initial_batch_buffer.ray_origin_data[nr] =
-                            light.origin_corner
+                            Vec4(light.origin_corner
                             + m_rasterization_x * light.horizontal_direction
-                            + m_rasterization_y * light.vertical_direction;
+                            + m_rasterization_y * light.vertical_direction, 0);
                         
                         // Set initial ray intensity
                         initial_batch_buffer.ray_intensity_data[nr] =
@@ -360,7 +360,7 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
                         
                         // Set initial ray direction
                         initial_batch_buffer.ray_direction_data[nr] = 
-                            light.orientation;
+                            Vec4(light.orientation, 0);
 
                         // Set minimum distance
                         initial_batch_buffer.min_bounding_volume_distance_data[nr] =

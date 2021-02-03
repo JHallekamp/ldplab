@@ -40,23 +40,19 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
         UID<Particle> puid = m_context->particle_index_to_uid_map[p];
-        output.force_per_particle[puid] = Vec3{ 0, 0, 0 };
-        output.torque_per_particle[puid] = Vec3{ 0, 0, 0 };
+        Vec4 force = Vec4{ 0, 0, 0, 0 };
+        Vec4 torque = Vec4{ 0, 0, 0, 0 };
         for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
-            output.force_per_particle[puid] += 
-                m_buffer_controls[bc].getOutputBuffer().force_data[p];
-            output.torque_per_particle[puid] += 
-                m_buffer_controls[bc].getOutputBuffer().torque_data[p];
+            force += m_buffer_controls[bc].getOutputBuffer().force_data[p];
+            torque += m_buffer_controls[bc].getOutputBuffer().torque_data[p];
         }
 
         // Transform output from particle into world space
         const ParticleTransformation& trans = m_context->
             particle_transformations[p];
-        output.force_per_particle[puid] = trans.p2w_scale_rotation *
-            output.force_per_particle[puid];
-        output.torque_per_particle[puid] = trans.p2w_scale_rotation *
-            output.force_per_particle[puid];
+        output.force_per_particle[puid] = trans.p2w_scale_rotation * force;
+        output.torque_per_particle[puid] = trans.p2w_scale_rotation * torque;
     }
 }
 

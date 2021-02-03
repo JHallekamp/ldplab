@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSGPU_OGL_OPEN_GL_CONTEXT_HPP
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include <GL/glew.h>
@@ -137,8 +138,15 @@ namespace ldplab
             std::shared_ptr<ShaderStorageBuffer> createShaderStorageBuffer(
                 size_t buffer_size,
                 GLenum buffer_usage = GL_DYNAMIC_READ);
+            /**
+             * @brief Provides a mutex that can be used to sequenzialise GPU
+             *        access.
+             * @returns Reference to said mutex.
+             */
+            inline std::mutex& getGPUMutex() { return m_gpu_mutex; }
         private:
             std::shared_ptr<Context> m_context;
+            std::mutex m_gpu_mutex;
         };
     }
 }

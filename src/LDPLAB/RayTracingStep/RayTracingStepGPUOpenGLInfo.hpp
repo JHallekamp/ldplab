@@ -5,6 +5,7 @@
 #include "..\ThreadPool.hpp"
 
 #include <memory>
+#include <string>
 
 namespace ldplab
 {
@@ -45,6 +46,13 @@ namespace ldplab
          *        branching depth.
          */
         bool emit_warning_on_maximum_branching_depth_discardment;
+        /** 
+         * @brief Contains the path of the LDPLAB shader base directory (which
+         *        contains subdirectories for different shader languages).
+         * @note The directory path needs to include a trailing forewardslash 
+         *       ('/') at the end.
+         */
+        std::string shader_base_directory_path;
     };
 }
 

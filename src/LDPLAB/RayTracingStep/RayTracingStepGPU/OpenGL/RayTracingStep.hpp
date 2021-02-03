@@ -42,7 +42,7 @@ namespace ldplab
              */
             void updateContext(const SimulationState& input);
         private:
-            Mat3 getRotationMatrix(
+            Mat4 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);
             /**
             * @brief Constructor
