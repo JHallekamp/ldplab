@@ -116,8 +116,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
             { new rtscpu::RodParticleIntersectionTest{ctx} };
             if (info.solver_parameters->type() == IEikonalSolver::Type::rk45)
             {
-                ipp = std::unique_ptr <rtscpu::LinearIndexGradientRodParticlePropagation>
-                { new rtscpu::LinearIndexGradientRodParticlePropagation{
+                ipp = std::unique_ptr <rtscpu::RK45RodParticlePropagation>
+                { new rtscpu::RK45RodParticlePropagation{
                     ctx,
                     *((RK45*)info.solver_parameters.get())} };
             }
@@ -131,8 +131,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
             { new rtscpu::SphericalParticleIntersectionTest{ctx} };
             if (info.solver_parameters->type() == IEikonalSolver::Type::rk45)
             {
-                ipp = std::unique_ptr <rtscpu::LinearIndexGradientSphericalParticlePropagation>
-                { new rtscpu::LinearIndexGradientSphericalParticlePropagation{
+                ipp = std::unique_ptr <rtscpu::RK45SphericalParticlePropagation>
+                { new rtscpu::RK45SphericalParticlePropagation{
                     ctx,
                     *((RK45*)info.solver_parameters.get())} };
             }
@@ -253,7 +253,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep>
         debug.ray_particle_interaction =
             std::make_unique<rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction>(ctx);
         debug.inner_particle_propagation =
-            std::make_unique<rtscpu::LinearIndexGradientRodParticlePropagation>(ctx, *((RK45*)info.solver_parameters.get()));
+            std::make_unique<rtscpu::RK45RodParticlePropagation>(ctx, *((RK45*)info.solver_parameters.get()));
 
         return std::shared_ptr<rtscpu::RayTracingStep>(
             new rtscpu::RayTracingStep{ ctx });

@@ -9,22 +9,20 @@
 
 #include <cmath>
 
-ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
-    LinearIndexGradientRodParticlePropagation(
+ldplab::rtscpu::EikonalSolverRK45::
+    EikonalSolverRK45(
         std::shared_ptr<Context> context,
         RK45 parameters)
     :
     m_context{ context },
-    m_rod_particles{ ((RodParticleData*)
-        context->particle_data.get())->particle_data },
     m_parameters{parameters}
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
-        "LinearIndexGradientRodParticlePropagation instance created",
+        "EikonalSolverRK45 instance created",
         m_context->uid);
 }
 
-void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::execute(
+void ldplab::rtscpu::EikonalSolverRK45::execute(
     RayBuffer& rays,
     IntersectionBuffer& intersection,
     OutputBuffer& output)
@@ -53,7 +51,7 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::execute(
         rays.uid);
 }
 
-void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
+void ldplab::rtscpu::EikonalSolverRK45::
     rayPropagation(
         const size_t particle, 
         Ray& ray, 
@@ -76,18 +74,18 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
         double error = rk45(material, x, h, x_new);
         if (error <= m_parameters.epsilon)
         {
-            if (isOutsideParticle(m_rod_particles[particle], x_new.r))
+            if (isOutsideParticle(particle, x_new.r))
             {
                 Vec3 t_new_direction = glm::normalize(x.w);
                 output.force[particle] += ray.intensity *
                     (t_new_direction - ray.direction);
-                output.torque[particle] += ray.intensity *
-                    glm::cross(
-                        m_context->particles[particle].centre_of_mass,
-                        (-t_new_direction + ray.direction));
+                //output.torque[particle] += ray.intensity *
+                //    glm::cross(
+                //         - m_context->particles[particle].centre_of_mass,
+                //        (-t_new_direction + ray.direction));
                 intersected = true;
                 intersection(
-                    m_rod_particles[particle], 
+                    particle, 
                     x, 
                     inter_point, 
                     inter_normal);
@@ -112,9 +110,20 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     }
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
-    isOutsideParticle(const RodParticle& geometry, const Vec3& r)
+ldplab::rtscpu::RK45RodParticlePropagation::RK45RodParticlePropagation(
+    std::shared_ptr<Context> context, 
+    RK45 parameters)
+    :
+    EikonalSolverRK45(context,parameters),
+    m_rod_particles{ ((RodParticleData*)
+        context->particle_data.get())->particle_data }
 {
+}
+
+bool ldplab::rtscpu::RK45RodParticlePropagation::
+    isOutsideParticle(const size_t particle, const Vec3& r)
+{
+    const RodParticle& geometry = m_rod_particles[particle];
     if (r.x * r.x + r.y * r.y >
         geometry.cylinder_radius * geometry.cylinder_radius)
         return true;
@@ -148,7 +157,7 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
         return true;
 }
 
-double ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::rk45(
+double ldplab::rtscpu::EikonalSolverRK45::rk45(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
     const double h,
@@ -214,8 +223,8 @@ double ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::rk45(
     //Arg errorfield = (k[0] * cerr[0] + k[1] * cerr[1] + k[2] * cerr[2] + k[3] * cerr[3] + k[4] * cerr[4] + k[5] * cerr[5]) * h;
 }
 
-inline ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::Arg 
-    ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::eikonal(
+inline ldplab::rtscpu::EikonalSolverRK45::Arg 
+    ldplab::rtscpu::EikonalSolverRK45::eikonal(
         const ParticleMaterialLinearOneDirectional* particle,
         const Arg& x ) const
 {
@@ -227,7 +236,23 @@ inline ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::Arg
         x.w / particle->indexOfRefraction(x.r) };
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
+double ldplab::rtscpu::EikonalSolverRK45::Arg::absoluteMax()
+{
+    double max = std::abs(w.x);
+    if (max < std::abs(w.y))
+        max = std::abs(w.y);
+    if (max < std::abs(w.z))
+        max = std::abs(w.z);
+    if (max < std::abs(r.x))
+        max = std::abs(r.x);
+    if (max < std::abs(r.y))
+        max = std::abs(r.y);
+    if (max < std::abs(r.z))
+        max = std::abs(r.z);
+    return max;
+}
+
+bool ldplab::rtscpu::RK45RodParticlePropagation::
     cylinderIntersection(
         const RodParticle& geometry, 
         const Ray& ray, 
@@ -259,7 +284,7 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
+bool ldplab::rtscpu::RK45RodParticlePropagation::
     capIntersection(
         const RodParticle& geometry,
         const Ray& ray, 
@@ -307,12 +332,12 @@ bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
     return false;
 }
 
-bool ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::
-indentationIntersection(
-    const RodParticle& geometry,
-    const Ray& ray,
-    Vec3& inter_point,
-    Vec3& inter_normal)
+bool ldplab::rtscpu::RK45RodParticlePropagation::
+    indentationIntersection(
+        const RodParticle& geometry,
+        const Ray& ray,
+        Vec3& inter_point,
+        Vec3& inter_normal)
 {
     if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
     {
@@ -355,12 +380,13 @@ indentationIntersection(
     return false;
 }
 
-void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::intersection(
-    const RodParticle& geometry,
+void ldplab::rtscpu::RK45RodParticlePropagation::intersection(
+    const size_t particle,
     const Arg& ray, 
     Vec3& inter_point,
     Vec3& inter_normal)
 {
+    const RodParticle& geometry = m_rod_particles[particle];
     Ray t_ray{ ray.r, glm::normalize(ray.w), -1};
     if (indentationIntersection(geometry, t_ray, inter_point, inter_normal))
         return;
@@ -370,204 +396,38 @@ void ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::intersection(
         return;
 }
 
-double ldplab::rtscpu::LinearIndexGradientRodParticlePropagation::Arg::absoluteMax()
-{
-    double max = std::abs(w.x);
-    if (max < std::abs(w.y))
-        max = std::abs(w.y);
-    if (max < std::abs(w.z))
-        max = std::abs(w.z);
-    if (max < std::abs(r.x))
-        max = std::abs(r.x);
-    if (max < std::abs(r.y))
-        max = std::abs(r.y);
-    if (max < std::abs(r.z))
-        max = std::abs(r.z);
-    return max;
-}
 
-ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::
-    LinearIndexGradientSphericalParticlePropagation(
+ldplab::rtscpu::RK45SphericalParticlePropagation::
+    RK45SphericalParticlePropagation(
         std::shared_ptr<Context> context, 
         RK45 parameters)
     :
-    m_context { context },
-    m_parameters{ parameters }
+    EikonalSolverRK45 (context, parameters)
 {
-    LDPLAB_LOG_INFO("RTSCPU context %i: "\
-        "LinearIndexGradientRodParticlePropagation instance created",
-        m_context->uid);
 }
 
-void ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::execute(
-    RayBuffer& rays, IntersectionBuffer& intersection, OutputBuffer& output)
+bool ldplab::rtscpu::RK45SphericalParticlePropagation::
+    isOutsideParticle(const size_t particle, const Vec3& r)
 {
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute inner particle ray propagation "\
-        "on batch buffer %i",
-        m_context->uid, rays.uid);
-
-    for (size_t i = 0; i < rays.size; i++)
-    {
-        if (rays.index_data[i] < 0 ||
-            rays.index_data[i] >= m_context->particles.size())
-            continue;
-
-        rayPropagation(
-            rays.index_data[i],
-            rays.ray_data[i],
-            intersection.point[i],
-            intersection.normal[i],
-            output);
-    }
-
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Inner particle ray propagation on "\
-        "buffer %i completed",
-        m_context->uid,
-        rays.uid);
-}
-
-void ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::
-    rayPropagation(
-        const size_t particle, 
-        Ray& ray, Vec3& inter_point, 
-        Vec3& inter_normal, 
-        OutputBuffer& output)
-{
-    const ParticleMaterialLinearOneDirectional* material =
-        (ParticleMaterialLinearOneDirectional*) m_context->particles[particle]
-        .material.get();
     const SphericalParticleGeometry* geometry = (SphericalParticleGeometry*)
         m_context->particles[particle].geometry.get();
-    bool intersected = false;
-    Arg x{
-        ray.direction * material->indexOfRefraction(ray.origin),
-        ray.origin };
-    Arg x_new{};
-    double h = m_parameters.initial_step_size;
-    while (!intersected)
-    {
-        double error = rk45(material, x, h, x_new);
-        if (error <= m_parameters.epsilon)
-        {
-            if (isOutsideParticle(geometry, x_new.r))
-            {
-                Vec3 t_new_direction = glm::normalize(x.w);
-                output.force[particle] += ray.intensity *
-                    (t_new_direction - ray.direction);
-                output.torque[particle] += ray.intensity *
-                    glm::cross(
-                        m_context->particles[particle].centre_of_mass,
-                        (-t_new_direction + ray.direction));
-                intersected = true;
-                intersection(
-                    geometry,
-                    x,
-                    inter_point,
-                    inter_normal);
-                ray.direction = t_new_direction;
-                ray.origin = x.r;
-                return;
-            }
-            else
-            {
-                x = x_new;
-                h = m_parameters.safety_factor * h *
-                    std::pow(m_parameters.epsilon / error, 0.2);
-            }
-        }
-        else
-        {
-            h = m_parameters.safety_factor * h *
-                std::pow(m_parameters.epsilon / error, 0.25);
-            LDPLAB_LOG_TRACE("RTSCPU context %i: RK45 Step discarded with"\
-                " error = %f, new step size = %f", m_context->uid, error, h);
-        }
-    }
-}
 
-bool ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::
-    isOutsideParticle(const SphericalParticleGeometry* geometry, const Vec3& r)
-{
     if (r.x * r.x + r.y * r.y + r.z * r.z > 
         geometry->radius * geometry->radius)
         return true;
     return false;
 }
 
-double ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::rk45(
-    const ParticleMaterialLinearOneDirectional* particle, 
-    const Arg& x, 
-    const double h, 
-    Arg& x_new) const
-{
-    Arg k[6]{};
-    Arg error{ {0,0,0}, {0,0,0} };
-    Arg t{};
-    x_new = { {0,0,0}, {0,0,0} };
-    for (size_t i = 0; i < 6; ++i)
-    {
-        Arg x_step = x;
-        for (size_t j = 0; j < i; ++j)
-        {
-            const double hb = h * beta[i * 6 + j];
-            x_step.w.x += k[j].w.x * hb;
-            x_step.w.y += k[j].w.y * hb;
-            x_step.w.z += k[j].w.z * hb;
-            x_step.r.x += k[j].r.x * hb;
-            x_step.r.y += k[j].r.y * hb;
-            x_step.r.z += k[j].r.z * hb;
-        }
-        // eikonal(particle, x_step)
-        k[i].w = particle->direction_times_gradient;
-        const double index_of_refraction =
-            1.0 / particle->indexOfRefraction(x_step.r);
-        k[i].r.x = x_step.w.x * index_of_refraction;
-        k[i].r.y = x_step.w.y * index_of_refraction;
-        k[i].r.z = x_step.w.z * index_of_refraction;
-
-        if (cerr[i] != 0.0)
-        {
-            error.w.x += k[i].w.x * cerr[i];
-            error.w.y += k[i].w.y * cerr[i];
-            error.w.z += k[i].w.z * cerr[i];
-            error.r.x += k[i].r.x * cerr[i];
-            error.r.y += k[i].r.y * cerr[i];
-            error.r.z += k[i].r.z * cerr[i];
-        }
-
-        if (c_star[i] != 0.0)
-        {
-            x_new.w.x += k[i].w.x * c_star[i];
-            x_new.w.y += k[i].w.y * c_star[i];
-            x_new.w.z += k[i].w.z * c_star[i];
-            x_new.r.x += k[i].r.x * c_star[i];
-            x_new.r.y += k[i].r.y * c_star[i];
-            x_new.r.z += k[i].r.z * c_star[i];
-        }
-    }
-    x_new *= h;
-    x_new += x;
-
-    error *= h;
-    return error.absoluteMax();
-}
-
-inline ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::Arg 
-    ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::eikonal(
-        const ParticleMaterialLinearOneDirectional* particle, const Arg& x) const
-{
-    return Arg{
-    particle->direction_times_gradient,
-    x.w / particle->indexOfRefraction(x.r) };
-}
-
-void ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::
+void ldplab::rtscpu::RK45SphericalParticlePropagation::
     intersection(
-        const SphericalParticleGeometry* geometry,
+        const size_t particle,
         const Arg& ray, 
         Vec3& inter_point, 
         Vec3& inter_normal)
 {
+    const SphericalParticleGeometry* geometry = (SphericalParticleGeometry*)
+        m_context->particles[particle].geometry.get();
+
     Ray t_ray{ ray.r, glm::normalize(ray.w), -1 };
     const double p = glm::dot(t_ray.direction, t_ray.origin);
     const double q = glm::dot(t_ray.origin, t_ray.origin) -
@@ -576,20 +436,4 @@ void ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::
     const double distance = -p + std::sqrt(discriminant);
     inter_point = t_ray.origin + distance * t_ray.direction;
     inter_normal = -glm::normalize(inter_point);
-}
-
-double ldplab::rtscpu::LinearIndexGradientSphericalParticlePropagation::Arg::absoluteMax()
-{
-    double max = std::abs(w.x);
-    if (max < std::abs(w.y))
-        max = std::abs(w.y);
-    if (max < std::abs(w.z))
-        max = std::abs(w.z);
-    if (max < std::abs(r.x))
-        max = std::abs(r.x);
-    if (max < std::abs(r.y))
-        max = std::abs(r.y);
-    if (max < std::abs(r.z))
-        max = std::abs(r.z);
-    return max;
 }
