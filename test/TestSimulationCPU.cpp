@@ -5,63 +5,71 @@
 #include <sstream>
 
 // Particle geometry properties (rod particle)
+const bool ROD_PARTICLE = true;
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0;
-const double ROD_PARTICLE_VOLUME_SPHERE_RADIUS = 10.0;
+const double ROD_PARTICLE_KAPPA = 0.875;
+const double PARTICLE_SPHERE_RADIUS = 10.0;
 const double ROD_PARTICLE_CYLINDER_RADIUS = 
-    std::pow(2.0/3.0/ROD_PARTICLE_L,1.0/3.0) * ROD_PARTICLE_VOLUME_SPHERE_RADIUS;
-const double ROD_PARTICLE_CYLINDER_HEIGHT = 
+    std::pow(2.0 / 3.0 / ROD_PARTICLE_L, 1.0 / 3.0) * PARTICLE_SPHERE_RADIUS;
+const double ROD_PARTICLE_CYLINDER_HEIGHT =
     2 * ROD_PARTICLE_L * ROD_PARTICLE_CYLINDER_RADIUS;
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
-const double PARTICLE_MATERIAL_GRADIENT = 0; //0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
-const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = 
-    ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT/2);
 const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
+// Particle material properties cylinder
+const double PARTICLE_MATERIAL_GRADIENT = 0.0 * 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
+const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN =   
+    ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT / 2);
+
+// Particle material properties sphere
+const double PARTICLE_MATERIAL_GRADIENT_SPHERE = 0.2 / PARTICLE_SPHERE_RADIUS;
+const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN_SPHERE =
+    ldplab::Vec3(0, 0, 0);
 
 // Particle bounding volume properties
-const ldplab::Vec3 PARTICLE_BOUNDING_SPHERE_CENTER = ldplab::Vec3(0, 0, 
+const ldplab::Vec3 PARTICLE_BOUNDING_SPHERE_CENTER = ldplab::Vec3(0, 0,
     (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2);
-const double PARTICLE_BOUNDING_SPHERE_RADIUS = 
-   std::sqrt(
-       std::pow((ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2,2.0) + 
-       ROD_PARTICLE_CYLINDER_RADIUS * ROD_PARTICLE_CYLINDER_RADIUS);
+const double PARTICLE_BOUNDING_SPHERE_RADIUS = std::sqrt(
+    std::pow((ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2, 2.0) +
+    ROD_PARTICLE_CYLINDER_RADIUS * ROD_PARTICLE_CYLINDER_RADIUS);
 
 // Light geometry
-const double LIGHT_GEOMETRY_PLANE_EXTENT = 4.0 * PARTICLE_BOUNDING_SPHERE_RADIUS;
-const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER = 
-    ldplab::Vec3(
-        -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0, 
-        (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) * 2.0,
-        -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
+const double LIGHT_GEOMETRY_PLANE_EXTENT = 10.0 * PARTICLE_BOUNDING_SPHERE_RADIUS;
+const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
+ldplab::Vec3(
+    -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
+    PARTICLE_BOUNDING_SPHERE_RADIUS * 2.0,
+    -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
 
 // Light intensity properties
-const double LIGHT_INTENSITY =  0.1 / 2.99792458;
+const double LIGHT_INTENSITY = 0.1 / 2.99792458;
 
 // Simulation properties
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1024.0;
-const size_t MAX_RTS_BRANCHING_DEPTH = 0;
-const double RTS_INTENSITY_CUTOFF = 0.05 * LIGHT_INTENSITY  / 
+const size_t MAX_RTS_BRANCHING_DEPTH = 8;
+const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
-const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
+const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
 const size_t NUM_SIM_ROTATION_STEPS = 512;
 
-constexpr double const_pi() 
-    { return 3.14159265358979323846264338327950288419716939937510; }
+constexpr double const_pi()
+{
+    return 3.14159265358979323846264338327950288419716939937510;
+}
 
 void plotProgress(double progress)
 {
     const double progress_epsilon = 0.00001;
     const size_t steps = 40;
-    const size_t iprogress = 
+    const size_t iprogress =
         static_cast<size_t>((progress + progress_epsilon) * 100.0);
     const size_t threshold = steps * iprogress; // Includes factor of 100
-    
+
     if (threshold == steps)
         bool a = true;
 
@@ -71,8 +79,8 @@ void plotProgress(double progress)
         if (i * 100 <= threshold)
             str_progress_bar[i - 1] = (char)219; // Block character
     }
-    
-    std::cout << "Progress: [" << str_progress_bar << "] " << 
+
+    std::cout << "Progress: [" << str_progress_bar << "] " <<
         iprogress << "%" << std::endl;
 }
 
@@ -87,31 +95,54 @@ int main()
     clog.subscribe();
 
     // Create particle
-    ldplab::Particle rod_particle;
-    rod_particle.position = ldplab::Vec3(0, 0, 0);
-    rod_particle.orientation = ldplab::Vec3(0, 0, 0);
-    rod_particle.material =
-        std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
-            PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-            PARTICLE_MATERIAL_GRADIENT,
-            PARTICLE_MATERIAL_ORIGIN,
-            PARTICLE_MATERIAL_DIRECTION);
-    rod_particle.geometry =
-        std::make_shared<ldplab::RodParticleGeometry>(
-            ROD_PARTICLE_CYLINDER_RADIUS,
-            ROD_PARTICLE_CYLINDER_HEIGHT,
-            ROD_PARTICLE_VOLUME_SPHERE_RADIUS,
-            ROD_PARTICLE_KAPPA);
-    rod_particle.bounding_volume =
-        std::make_shared<ldplab::BoundingVolumeSphere>(
-            PARTICLE_BOUNDING_SPHERE_CENTER,
-            PARTICLE_BOUNDING_SPHERE_RADIUS);
+    ldplab::Particle particle;
+    particle.position = ldplab::Vec3(0, 0, 0);
+    particle.orientation = ldplab::Vec3(0, 0, 0);
+    if (ROD_PARTICLE)
+    {
+        // Rod Particle
+        particle.geometry =
+            std::make_shared<ldplab::RodParticleGeometry>(
+                ROD_PARTICLE_CYLINDER_RADIUS,
+                ROD_PARTICLE_CYLINDER_HEIGHT,
+                PARTICLE_SPHERE_RADIUS,
+                ROD_PARTICLE_KAPPA);
+        particle.bounding_volume =
+            std::make_shared<ldplab::BoundingVolumeSphere>(
+                PARTICLE_BOUNDING_SPHERE_CENTER,
+                PARTICLE_BOUNDING_SPHERE_RADIUS);
+        particle.material =
+            std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
+                PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
+                PARTICLE_MATERIAL_GRADIENT,
+                PARTICLE_MATERIAL_ORIGIN,
+                PARTICLE_MATERIAL_DIRECTION);
+        particle.centre_of_mass = ldplab::getRodParticleCenterOfMass(
+            *(ldplab::RodParticleGeometry*)particle.geometry.get());
+    }
+    else
+    {
+        // Spherical Particle
+        particle.geometry =
+            std::make_shared<ldplab::SphericalParticleGeometry>(
+                PARTICLE_SPHERE_RADIUS);
+        particle.bounding_volume =
+            std::make_shared<ldplab::BoundingVolumeSphere>(
+                ldplab::Vec3(0,0,0),
+                PARTICLE_SPHERE_RADIUS+0.5);
+        particle.material =
+            std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
+                PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
+                PARTICLE_MATERIAL_GRADIENT_SPHERE,
+                PARTICLE_MATERIAL_ORIGIN_SPHERE,
+                PARTICLE_MATERIAL_DIRECTION);
+    }
 
     // Create light source
     ldplab::LightSource light_source;
     light_source.orientation = ldplab::Vec3(0, -1.0, 0);
-    light_source.horizontal_direction = ldplab::Vec3(1.0, 0, 0);
-    light_source.vertical_direction = ldplab::Vec3(0, 0, 1.0);
+    light_source.horizontal_direction = glm::normalize(ldplab::Vec3(1.0, 0, 0));
+    light_source.vertical_direction = glm::normalize(ldplab::Vec3(0, 0, 1.0));
     light_source.horizontal_size = LIGHT_GEOMETRY_PLANE_EXTENT;
     light_source.vertical_size = LIGHT_GEOMETRY_PLANE_EXTENT;
     light_source.origin_corner = LIGHT_GEOMETRY_ORIGIN_CORNER;
@@ -125,7 +156,7 @@ int main()
 
     // Create experimental setup
     ldplab::ExperimentalSetup experimental_setup;
-    experimental_setup.particles.emplace_back(std::move(rod_particle));
+    experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
     experimental_setup.medium_reflection_index = 1.33;
 
@@ -144,6 +175,7 @@ int main()
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
         RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_EPSILON, RTS_SOLVER_SAFETY_FACTOR);
+    rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
             experimental_setup, rtscpu_info);
@@ -154,28 +186,41 @@ int main()
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
     constexpr double offset = 0;
-    constexpr double lim = const_pi(); //2 * const_pi();
+    constexpr double lim = 2* const_pi();
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
     constexpr double angle_shift = const_pi() / 2.0;
     ldplab::RayTracingStepOutput output;
     std::stringstream ss;
-    ss << "force_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
-        "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0)  << 
-        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0)  << 
-        "_bd" << MAX_RTS_BRANCHING_DEPTH << 
+    ss << "D:\\Datein\\Studium\\Master\\Masterarbeit\\Code\\SimData\\f_data\\";
+    if (ROD_PARTICLE)
+        ss << "force_rod_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
+        "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0) <<
+        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0);// <<
+            //"_bd" << MAX_RTS_BRANCHING_DEPTH <<
+            //"_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT <<
+            //"_rk" << std::log10(RTS_SOLVER_EPSILON);
+    else 
+        ss << "force_sphere_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT_SPHERE * 10000.0) <<
+        "_R" << static_cast<int>(PARTICLE_BOUNDING_SPHERE_RADIUS) <<
+        "_bd" << MAX_RTS_BRANCHING_DEPTH <<
         "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
     std::ofstream output_file(ss.str());
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
+    state.particle_instances[puid].orientation.z = const_pi();
+    state.particle_instances[puid].rotation_order = ldplab::RotationOrder::zxy;
     for (double rotation_x = offset + angle_shift;
-        rotation_x < lim + angle_shift + half_step_size; 
+        rotation_x < lim + angle_shift + half_step_size;
         rotation_x += step_size)
     {
         state.particle_instances[puid].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_file << rotation_x - const_pi() / 2 << "\t" << 
-            glm::length(output.force_per_particle[puid]) << std::endl;
+        output_file << rotation_x - const_pi() / 2 <<
+            "\t" << output.force_per_particle[puid].x <<
+            "\t" << output.force_per_particle[puid].y <<
+            "\t" << output.force_per_particle[puid].z <<
+            std::endl;
         plotProgress((rotation_x - offset - angle_shift) / (lim - offset));
     }
 
