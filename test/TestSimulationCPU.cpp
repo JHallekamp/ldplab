@@ -6,49 +6,29 @@
 
 // Particle geometry properties (rod particle)
 const bool ROD_PARTICLE = true;
+const double ROD_SURFACE_AREA = 1;
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.875;
-const double PARTICLE_SPHERE_RADIUS = 10.0;
-const double ROD_PARTICLE_CYLINDER_RADIUS = 
-    std::pow(2.0 / 3.0 / ROD_PARTICLE_L, 1.0 / 3.0) * PARTICLE_SPHERE_RADIUS;
-const double ROD_PARTICLE_CYLINDER_HEIGHT =
-    2 * ROD_PARTICLE_L * ROD_PARTICLE_CYLINDER_RADIUS;
+const double ROD_PARTICLE_KAPPA = 0.0;
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
-const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
-// Particle material properties cylinder
-const double PARTICLE_MATERIAL_GRADIENT = 0.0 * 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
-const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN =   
-    ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT / 2);
-
-// Particle material properties sphere
-const double PARTICLE_MATERIAL_GRADIENT_SPHERE = 0.2 / PARTICLE_SPHERE_RADIUS;
-const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN_SPHERE =
-    ldplab::Vec3(0, 0, 0);
-
-// Particle bounding volume properties
-const ldplab::Vec3 PARTICLE_BOUNDING_SPHERE_CENTER = ldplab::Vec3(0, 0,
-    (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2);
-const double PARTICLE_BOUNDING_SPHERE_RADIUS = std::sqrt(
-    std::pow((ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2, 2.0) +
-    ROD_PARTICLE_CYLINDER_RADIUS * ROD_PARTICLE_CYLINDER_RADIUS);
+const double PARTICLE_MATERIAL_NU = 0 * 0.2;
 
 // Light geometry
-const double LIGHT_GEOMETRY_PLANE_EXTENT = 10.0 * PARTICLE_BOUNDING_SPHERE_RADIUS;
+const double LIGHT_GEOMETRY_PLANE_EXTENT = 10000;
 const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
 ldplab::Vec3(
     -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
-    PARTICLE_BOUNDING_SPHERE_RADIUS * 2.0,
+    50,
     -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
 
 // Light intensity properties
-const double LIGHT_INTENSITY = 0.1 / 2.99792458;
+const double LIGHT_INTENSITY = 1;
 
 // Simulation properties
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1024.0;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1500000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
@@ -96,46 +76,17 @@ int main()
 
     // Create particle
     ldplab::Particle particle;
-    particle.position = ldplab::Vec3(0, 0, 0);
-    particle.orientation = ldplab::Vec3(0, 0, 0);
     if (ROD_PARTICLE)
     {
         // Rod Particle
-        particle.geometry =
-            std::make_shared<ldplab::RodParticleGeometry>(
-                ROD_PARTICLE_CYLINDER_RADIUS,
-                ROD_PARTICLE_CYLINDER_HEIGHT,
-                PARTICLE_SPHERE_RADIUS,
-                ROD_PARTICLE_KAPPA);
-        particle.bounding_volume =
-            std::make_shared<ldplab::BoundingVolumeSphere>(
-                PARTICLE_BOUNDING_SPHERE_CENTER,
-                PARTICLE_BOUNDING_SPHERE_RADIUS);
-        particle.material =
-            std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
-                PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-                PARTICLE_MATERIAL_GRADIENT,
-                PARTICLE_MATERIAL_ORIGIN,
-                PARTICLE_MATERIAL_DIRECTION);
-        particle.centre_of_mass = ldplab::getRodParticleCenterOfMass(
-            *(ldplab::RodParticleGeometry*)particle.geometry.get());
-    }
-    else
-    {
-        // Spherical Particle
-        particle.geometry =
-            std::make_shared<ldplab::SphericalParticleGeometry>(
-                PARTICLE_SPHERE_RADIUS);
-        particle.bounding_volume =
-            std::make_shared<ldplab::BoundingVolumeSphere>(
-                ldplab::Vec3(0,0,0),
-                PARTICLE_SPHERE_RADIUS+0.5);
-        particle.material =
-            std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
-                PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-                PARTICLE_MATERIAL_GRADIENT_SPHERE,
-                PARTICLE_MATERIAL_ORIGIN_SPHERE,
-                PARTICLE_MATERIAL_DIRECTION);
+        particle = ldplab::getRodParticle(
+            ROD_SURFACE_AREA,
+            ROD_PARTICLE_L,
+            ROD_PARTICLE_KAPPA,
+            PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
+            PARTICLE_MATERIAL_NU,
+            ldplab::Vec3(0.0,0.0,0.0),
+            ldplab::Vec3(0.0,0.0,0.0));
     }
 
     // Create light source
@@ -191,25 +142,23 @@ int main()
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
     constexpr double angle_shift = const_pi() / 2.0;
+    // Output file
     ldplab::RayTracingStepOutput output;
     std::stringstream ss;
-    ss << "D:\\Datein\\Studium\\Master\\Masterarbeit\\Code\\SimData\\f_data\\";
+    ss << "D:\\Datein\\Studium\\Master\\Masterarbeit\\Code\\SimData\\force\\";
     if (ROD_PARTICLE)
-        ss << "force_rod_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
+        ss << "force_rod_g" << static_cast<int>(PARTICLE_MATERIAL_NU * 100.0) <<
         "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0) <<
-        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0);// <<
-            //"_bd" << MAX_RTS_BRANCHING_DEPTH <<
+        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0); //<<
+            //"_bd" << MAX_RTS_BRANCHING_DEPTH; // <<
             //"_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT <<
             //"_rk" << std::log10(RTS_SOLVER_EPSILON);
-    else 
-        ss << "force_sphere_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT_SPHERE * 10000.0) <<
-        "_R" << static_cast<int>(PARTICLE_BOUNDING_SPHERE_RADIUS) <<
-        "_bd" << MAX_RTS_BRANCHING_DEPTH <<
-        "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
     std::ofstream output_file(ss.str());
+    
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     state.particle_instances[puid].orientation.z = const_pi();
     state.particle_instances[puid].rotation_order = ldplab::RotationOrder::zxy;
+    
     for (double rotation_x = offset + angle_shift;
         rotation_x < lim + angle_shift + half_step_size;
         rotation_x += step_size)
