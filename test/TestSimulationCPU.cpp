@@ -7,23 +7,25 @@
 // Particle geometry properties (rod particle)
 const bool ROD_PARTICLE = true;
 const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.875;
-const double PARTICLE_SPHERE_RADIUS = 10.0;
-const double ROD_PARTICLE_CYLINDER_RADIUS = 
-    std::pow(2.0 / 3.0 / ROD_PARTICLE_L, 1.0 / 3.0) * PARTICLE_SPHERE_RADIUS;
+const double ROD_PARTICLE_KAPPA = 0.0;
+const double ROD_PARTICLE_CYLINDER_RADIUS = 2.5;
 const double ROD_PARTICLE_CYLINDER_HEIGHT =
     2 * ROD_PARTICLE_L * ROD_PARTICLE_CYLINDER_RADIUS;
 
+const double PARTICLE_SPHERE_RADIUS = 10.0;
+
 // Particle material properties
-const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
+const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
 const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
 // Particle material properties cylinder
-const double PARTICLE_MATERIAL_GRADIENT = 0.0 * 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
+const double PARTICLE_MATERIAL_MAX_DIFFERENZ = 0.0 * 0.2;
+const double PARTICLE_MATERIAL_GRADIENT = PARTICLE_MATERIAL_MAX_DIFFERENZ /
+    (ROD_PARTICLE_CYLINDER_HEIGHT+ ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2;
 const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN =   
-    ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT / 2);
+    ldplab::Vec3(0, 0, (ROD_PARTICLE_CYLINDER_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_CYLINDER_RADIUS) / 2);
 
 // Particle material properties sphere
-const double PARTICLE_MATERIAL_GRADIENT_SPHERE = 0.2 / PARTICLE_SPHERE_RADIUS;
+const double PARTICLE_MATERIAL_GRADIENT_SPHERE = PARTICLE_MATERIAL_MAX_DIFFERENZ / PARTICLE_SPHERE_RADIUS;
 const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN_SPHERE =
     ldplab::Vec3(0, 0, 0);
 
@@ -48,14 +50,18 @@ const double LIGHT_INTENSITY = 0.1 / 2.99792458;
 // Simulation properties
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1024.0;
-const size_t MAX_RTS_BRANCHING_DEPTH = 8;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512;//1024;
+const size_t MAX_RTS_BRANCHING_DEPTH = 4;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
+
+// RK4
+const double RTS_SOLVER_STEP_SIZE = 10*0.1;
+// RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 512;
+const size_t NUM_SIM_ROTATION_STEPS = 1024;
 
 constexpr double const_pi()
 {
@@ -173,8 +179,8 @@ int main()
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
     rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
-        RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_EPSILON, RTS_SOLVER_SAFETY_FACTOR);
+    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4>(
+        RTS_SOLVER_STEP_SIZE);
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
@@ -186,27 +192,34 @@ int main()
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
     constexpr double offset = 0;
-    constexpr double lim = 2* const_pi();
+    constexpr double lim = const_pi()-0.0001;
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
     constexpr double angle_shift = const_pi() / 2.0;
+
     ldplab::RayTracingStepOutput output;
-    std::stringstream ss;
-    ss << "D:\\Datein\\Studium\\Master\\Masterarbeit\\Code\\SimData\\f_data\\";
+    std::stringstream ss_f;
+    ss_f << "D:\\Datein\\Studium\\Master\\Masterarbeit\\Code\\SimData\\force\\";
     if (ROD_PARTICLE)
-        ss << "force_rod_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
+        ss_f << "force_rod_g" << static_cast<int>(PARTICLE_MATERIAL_MAX_DIFFERENZ * 100.0) <<
         "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0) <<
-        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0);// <<
-            //"_bd" << MAX_RTS_BRANCHING_DEPTH <<
-            //"_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT <<
-            //"_rk" << std::log10(RTS_SOLVER_EPSILON);
-    else 
-        ss << "force_sphere_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT_SPHERE * 10000.0) <<
-        "_R" << static_cast<int>(PARTICLE_BOUNDING_SPHERE_RADIUS) <<
-        "_bd" << MAX_RTS_BRANCHING_DEPTH <<
-        "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
-    std::ofstream output_file(ss.str());
+        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0);
+    else
+        ss_f << "force_sphere_g" << static_cast<int>(PARTICLE_MATERIAL_MAX_DIFFERENZ * 10) <<
+        "_R" << static_cast<int>(PARTICLE_SPHERE_RADIUS);
+    std::stringstream ss_t;
+    ss_t << "D:\\Datein\\Studium\\Master\\Masterarbeit\\Code\\SimData\\force\\";
+    if (ROD_PARTICLE)
+        ss_t << "torque_rod_g" << static_cast<int>(PARTICLE_MATERIAL_MAX_DIFFERENZ * 100.0) <<
+        "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0) <<
+        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0);
+    else
+        ss_t << "torque_sphere_g" << static_cast<int>(PARTICLE_MATERIAL_MAX_DIFFERENZ * 10) <<
+        "_R" << static_cast<int>(PARTICLE_SPHERE_RADIUS);
+    std::ofstream output_force(ss_f.str());
+    std::ofstream output_torque(ss_t.str());
+
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     state.particle_instances[puid].orientation.z = const_pi();
     state.particle_instances[puid].rotation_order = ldplab::RotationOrder::zxy;
@@ -216,10 +229,15 @@ int main()
     {
         state.particle_instances[puid].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_file << rotation_x - const_pi() / 2 <<
+        output_force << rotation_x - const_pi() / 2 <<
             "\t" << output.force_per_particle[puid].x <<
             "\t" << output.force_per_particle[puid].y <<
             "\t" << output.force_per_particle[puid].z <<
+            std::endl;
+        output_torque << rotation_x - const_pi() / 2 <<
+            "\t" << output.torque_per_particle[puid].x <<
+            "\t" << output.torque_per_particle[puid].y <<
+            "\t" << output.torque_per_particle[puid].z <<
             std::endl;
         plotProgress((rotation_x - offset - angle_shift) / (lim - offset));
     }
