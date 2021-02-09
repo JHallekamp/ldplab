@@ -4,43 +4,51 @@
 #include <iostream>
 #include <sstream>
 
-// Particle geometry properties (rod particle)
-const bool ROD_PARTICLE = true;
-const double ROD_SURFACE_AREA = 1;
-const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 0.0;
-
-// Particle material properties
-const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
-const double PARTICLE_MATERIAL_NU = 0 * 0.2;
-
-// Light geometry
-const double LIGHT_GEOMETRY_PLANE_EXTENT = 10000;
-const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
-ldplab::Vec3(
-    -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
-    50,
-    -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
-
-// Light intensity properties
-const double LIGHT_INTENSITY = 1;
-
-// Simulation properties
-const size_t NUM_RTS_THREADS = 8;
-const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1500000;
-const size_t MAX_RTS_BRANCHING_DEPTH = 8;
-const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
-    NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
-const double RTS_SOLVER_EPSILON = 0.0000001;
-const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
-const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 512;
-
 constexpr double const_pi()
 {
     return 3.14159265358979323846264338327950288419716939937510;
 }
+
+// Particle geometry properties (rod particle)
+const bool ROD_PARTICLE = true;
+const double ROD_SURFACE_AREA = 235.61944901923449288469825374596;
+const double ROD_PARTICLE_L = 2;
+const double ROD_PARTICLE_KAPPA = 1.0;
+
+const double ROD_PARTICLE_RADIUS = 2.5;
+const double ROD_PARTICLE_HEIGHT = 4 * ROD_PARTICLE_RADIUS;
+
+// Particle material properties
+const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
+const double PARTICLE_MATERIAL_NU = 0.2;
+
+//const double R = std::sqrt(ROD_SURFACE_AREA / 
+//    (2 * const_pi() * ((1 + ROD_PARTICLE_KAPPA) + 2 * ROD_PARTICLE_L)));
+//const double L = ROD_PARTICLE_L * 2 * R;
+const double bounding_sphere_radius =
+    std::sqrt(std::pow((ROD_PARTICLE_HEIGHT + ROD_PARTICLE_KAPPA * ROD_PARTICLE_RADIUS) / 2, 2.0) + ROD_PARTICLE_RADIUS * ROD_PARTICLE_RADIUS);
+// Light geometry
+const double LIGHT_GEOMETRY_PLANE_EXTENT = 10 * bounding_sphere_radius;
+const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
+ldplab::Vec3(
+    -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
+     2 * bounding_sphere_radius,
+    -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0);
+
+// Light intensity properties
+const double LIGHT_INTENSITY = 0.1 / 2.99792458;
+
+// Simulation properties
+const size_t NUM_RTS_THREADS = 8;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1000000 / ROD_SURFACE_AREA;
+const size_t MAX_RTS_BRANCHING_DEPTH = 8;
+const double RTS_INTENSITY_CUTOFF =  0.001 * LIGHT_INTENSITY /
+    NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
+const double RTS_SOLVER_EPSILON = 0.00000001;
+const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
+const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
+const size_t NUM_SIM_ROTATION_STEPS = 512;
 
 void plotProgress(double progress)
 {
@@ -80,8 +88,8 @@ int main()
     {
         // Rod Particle
         particle = ldplab::getRodParticle(
-            ROD_SURFACE_AREA,
-            ROD_PARTICLE_L,
+            ROD_PARTICLE_RADIUS,
+            ROD_PARTICLE_HEIGHT,
             ROD_PARTICLE_KAPPA,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             PARTICLE_MATERIAL_NU,
@@ -137,7 +145,7 @@ int main()
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
     constexpr double offset = 0;
-    constexpr double lim = 2* const_pi();
+    constexpr double lim = const_pi();
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;

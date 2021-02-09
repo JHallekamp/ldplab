@@ -10,9 +10,17 @@ namespace ldplab
     struct Particle;
 
     Vec3 getRodParticleCenterOfMass(const RodParticleGeometry& geometry);
-    Particle getRodParticle(
+    Particle getRodParticleConstArea(
         const double A,
         const double l,
+        const double kappa,
+        const double np,
+        const double nu,
+        const Vec3 position,
+        const Vec3 orientation);
+    Particle getRodParticle(
+        const double R,
+        const double L,
         const double kappa,
         const double np,
         const double nu,
