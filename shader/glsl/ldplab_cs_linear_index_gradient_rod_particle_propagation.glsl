@@ -6,10 +6,10 @@
 layout(local_size_x = 512) in;
 
 // Ray buffer data
-layout(std430, binding = 0) buffer rayIndexData { int ray_index[]; };
-layout(std430, binding = 1) buffer rayOriginnData { dvec3 ray_origin[]; };
+layout(std430, binding = 0) readonly buffer rayIndexData { int ray_index[]; };
+layout(std430, binding = 1) buffer rayOriginData { dvec3 ray_origin[]; };
 layout(std430, binding = 2) buffer rayDirectionData { dvec3 ray_direction[]; };
-layout(std430, binding = 3) buffer rayIntensityData { double ray_intensity[]; };
+layout(std430, binding = 3) readonly buffer rayIntensityData { double ray_intensity[]; };
 
 // Intersectino buffer data
 layout(std430, binding = 4) buffer intersectionPointData
@@ -24,21 +24,21 @@ layout(std430, binding = 7) buffer outputTorqueData
 { dvec4 output_torque_scattered[]; };
 
 // Particle data
-layout(std430, binding = 8) buffer particleCylinderRadiusData
+layout(std430, binding = 8) readonly buffer particleCylinderRadiusData
 { double particle_cylinder_radius[]; };
-layout(std430, binding = 9) buffer particleCylinderLengthData
+layout(std430, binding = 9) readonly buffer particleCylinderLengthData
 { double particle_cylinder_length[]; };
-layout(std430, binding = 10) buffer particleSphereRadiusData
+layout(std430, binding = 10) readonly buffer particleSphereRadiusData
 { double particle_sphere_radius[]; };
-layout(std430, binding = 11) buffer particleCapOriginData
+layout(std430, binding = 11) readonly buffer particleCapOriginData
 { dvec4 particle_cap_origin[]; };
-layout(std430, binding = 12) buffer particleIndentationOriginData
+layout(std430, binding = 12) readonly buffer particleIndentationOriginData
 { dvec4 particle_indentation_origin[]; };
 
 // Particle material data
-layout(std430, binding = 13) buffer particleMaterialIndexOfRefrectionSumTermData
+layout(std430, binding = 13) readonly buffer particleMaterialIndexOfRefrectionSumTermData
 { double particle_material_index_of_refraction_sum_term[]; };
-layout(std430, binding = 14) buffer particleMaterialDirectionTimesGradient
+layout(std430, binding = 14) readonly buffer particleMaterialDirectionTimesGradient
 { dvec4 particle_material_direction_times_gradient[]; };
 
 // Property data
@@ -60,8 +60,8 @@ double rk45(
     const dvec3 x_w,
     const dvec3 x_r,
     const double h,
-    inout dvec3 x_new_w,
-    inout dvec3 x_new_r)
+    out dvec3 x_new_w,
+    out dvec3 x_new_r)
 {
     // Define constant errors
     const double alpha[6] = double[](
@@ -74,9 +74,6 @@ double rk45(
             1932.0 / 2197.0, (-7200.0) / 2197.0, 7296.0 / 2197.0, 0.0, 0.0, 0.0,
             439.0 / 216.0, -8.0, 3680.0 / 513.0, (-845.0) / 4104.0, 0.0, 0.0,
             (-8.0) / 27.0, 2.0, (-3544.0) / 2565.0, 1859.0 / 4104.0, (-11.0) / 40.0, 0.0
-        );
-    const double c[6] = double[](
-            25.0 / 216.0, 0.0, 1408.0 / 2565.0, 2197.0 / 4104.0, (-1.0) / 5.0, 0.0
         );
     const double c_star[6] = double[](
              16.0 / 135.0, 0.0, 6656.0 / 12825.0, 28561.0 / 56430.0, (-9.0) / 50.0, 2.0 / 55.0
@@ -200,15 +197,15 @@ bool cylinderIntersection(
     if (intersection_position[ri].z >= 0 &&
         intersection_position[ri].z <= particle_cylinder_length[pi])
     {
-        intersection_normal[ri].xy = normalize(-intersection_position[ri].xy);
-        intersection_normal[ri].z = 0;
+        intersection_normal[ri].xy = normalize(-0intersection_position[ri].xy);
+        intersection_normal[ri].zw = dvec2(0);
         return true;
     }
     return false;
 }
 
-// Port LinearIndexGradientRodParticlePropagation::capIntersection
-bool capIntersection(
+// Port LinearIndexGradientRodParticlePropagation::indentationIntersection
+bool indentationIntersection(
     const uint ri,
     const int pi,
     const dvec3 origin,
@@ -248,15 +245,16 @@ bool capIntersection(
         intersection_position[ri].z <=
             particle_indentation_origin[pi].z + particle_sphere_radius[pi])
     {
-        intersection_normal[ri] =
-            normalize(intersection_position[ri] - particle_indentation_origin[pi]);
+        intersection_normal[ri].xyz =
+            normalize(intersection_position[ri].xyz -
+                particle_indentation_origin[pi].xyz);
         return true;
     }
     return false;
 }
 
-// Port LinearIndexGradientRodParticlePropagation::indentationIntersection
-bool indentationIntersection(
+// Port LinearIndexGradientRodParticlePropagation::capIntersection
+bool capIntersection(
     const uint ri,
     const int pi,
     const dvec3 origin,
@@ -296,8 +294,8 @@ bool indentationIntersection(
         intersection_position[ri].z <=
             particle_cap_origin[pi].z + particle_sphere_radius[pi])
     {
-        intersection_normal[ri] =
-            normalize(particle_cap_origin[pi] - intersection_position[ri]);
+        intersection_normal[ri].xyz =
+            normalize(particle_cap_origin[pi].xyz - intersection_position[ri].xyz);
         return true;
     }
     return false;
@@ -310,20 +308,15 @@ void intersection(
     const dvec3 x_w,
     const dvec3 x_r)
 {
-    dvec4 t_ray_direction = dvec4(0);
-    t_ray_direction.xyz = normalize(x_w);
-    if (indentationIntersection(ri, pi,
-        intersection_position[ri].xyz, intersection_normal[ri].xyz))
+    if (indentationIntersection(ri, pi, x_r, x_w))
     {
         return;
     }
-    if (cylinderIntersection(ri, pi,
-        intersection_position[ri].xyz, intersection_normal[ri].xyz))
+    if (cylinderIntersection(ri, pi, x_r, x_w))
     {
         return;
     }
-    capIntersection(ri, pi,
-        intersection_position[ri].xyz, intersection_normal[ri].xyz);
+    capIntersection(ri, pi, x_r, x_w);
 }
 
 // Main method
@@ -339,10 +332,6 @@ void main()
     // Check if shader run is legal
     if ((ri >= num_rays_per_buffer) || (pi < 0))
         return;
-
-    // Reset output
-    output_force_scattered[ri].xyz = dvec3(0);
-    output_torque_scattered[ri].xyz = dvec3(0);
 
     // Setting up varibles of the differential equation
     dvec3 x_r = ray_origin[ri].xyz;
@@ -364,8 +353,9 @@ void main()
             {
                 // new ray direction
                 x_w = normalize(x_w);
-                output_force_scattered[ri].xyz +=
-                    ray_intensity[ri] * (x_w - ray_direction[ri]);
+                output_force_scattered[ri].xyz =
+                    ray_intensity[ri] * (x_w - ray_direction[ri].xyz);
+                output_force_scattered[ri].w = 0;
                 //output_torque_scattered[ri] += ray_intensity[ri] * cross();
                 intersection(ri, pi, x_w, x_r);
                 ray_direction[ri].xyz = x_w;

@@ -65,6 +65,19 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::initShaders(
     m_shader_uniform_location_parameter_safety_factor =
         m_compute_shader->getUniformLocation("parameter_safety_factor");
 
+    // Set uniforms
+    //LDPLAB_PROFILING_START(inner_particle_propagation_uniform_update);
+    m_compute_shader->use();
+    glUniform1ui(m_shader_uniform_location_num_rays_per_buffer,
+        m_context->parameters.number_rays_per_buffer);
+    glUniform1d(m_shader_uniform_location_parameter_epsilon,
+        m_parameters.epsilon);
+    glUniform1d(m_shader_uniform_location_parameter_initial_step_size,
+        m_parameters.initial_step_size);
+    glUniform1d(m_shader_uniform_location_parameter_safety_factor,
+        m_parameters.safety_factor);
+    //LDPLAB_PROFILING_STOP(inner_particle_propagation_uniform_update);
+
     // Finish it
     return (m_compute_shader != nullptr);
 }
@@ -77,14 +90,6 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Execute inner particle ray "\
         "propagation on batch buffer %i",
         m_context->uid, rays.uid);
-
-    LDPLAB_PROFILING_START(inner_particle_propagation);
-
-    // Reset output per ray
-    //LDPLAB_PROFILING_START(inner_particle_propagation_reset_output);
-    //std::memset((void*)output.force_per_ray_data, 0, rays.size * sizeof(Vec4));
-    //std::memset((void*)output.torque_per_ray_data, 0, rays.size * sizeof(Vec4));
-    //LDPLAB_PROFILING_STOP(inner_particle_propagation_reset_output);
     
     // Bind GPU to this thread
     LDPLAB_PROFILING_START(inner_particle_propagation_gl_context_binding);
@@ -132,18 +137,6 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     pmd->ssbo.direction_times_gradient->bindToIndex(14);
     LDPLAB_PROFILING_STOP(inner_particle_propagation_ssbo_binding);
     
-    // Update uniforms
-    LDPLAB_PROFILING_START(inner_particle_propagation_uniform_update);
-    glUniform1ui(m_shader_uniform_location_num_rays_per_buffer,
-        m_context->parameters.number_rays_per_buffer);
-    glUniform1d(m_shader_uniform_location_parameter_epsilon,
-        m_parameters.epsilon);
-    glUniform1d(m_shader_uniform_location_parameter_initial_step_size,
-        m_parameters.initial_step_size);
-    glUniform1d(m_shader_uniform_location_parameter_safety_factor,
-        m_parameters.safety_factor);
-    LDPLAB_PROFILING_STOP(inner_particle_propagation_uniform_update);
-    
     // Execute shader
     LDPLAB_PROFILING_START(inner_particle_propagation_shader_execution);
     m_compute_shader->execute(rays.size / 512);
@@ -176,8 +169,6 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
         output.torque_data[rays.index_data[i]] += output.torque_per_ray_data[i];
     }
     LDPLAB_PROFILING_STOP(inner_particle_propagation_gather_output);
-    
-    LDPLAB_PROFILING_STOP(inner_particle_propagation);
 
     /*
     for (size_t i = 0; i < rays.size; i++)
