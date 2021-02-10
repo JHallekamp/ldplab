@@ -6,6 +6,7 @@
 #include <string>
 
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 namespace ldplab
 {
@@ -35,6 +36,16 @@ namespace ldplab
             GLint getUniformLocation(const std::string& name) const;
             /** @brief Uses shader in the current OpenGL rendering state. */
             void use() const;
+            /**
+             * @brief Executes the compute shader.
+             * @param[in] work_group_size_x Workgroup size in dimension x.
+             * @param[in] work_group_size_y Workgroup size in dimension y.
+             * @param[in] work_group_size_z Workgroup size in dimension z.
+             * @note You have to call use before execute.
+             */
+            void execute(size_t work_group_size_x,
+                size_t work_group_size_y = 1,
+                size_t work_group_size_z = 1);
         private:
             ComputeShader();
         private:
@@ -113,11 +124,14 @@ namespace ldplab
         {
         public:
             OpenGLContext(std::shared_ptr<Context> context);
+            ~OpenGLContext();
             /** 
              * @brief Initializes glew, opengl and context data. 
              * @returns true if the initialization was successful.
              */
             bool init();
+            /** @brief Shuts down the opengl. */
+            void shutdown();
             /**
              * @brief Creates a compute shader program.
              * @param[in] shader_name The name of the glsl shader.
@@ -144,9 +158,14 @@ namespace ldplab
              * @returns Reference to said mutex.
              */
             inline std::mutex& getGPUMutex() { return m_gpu_mutex; }
+            /** @brief Binds the opengl context for the current thread. */
+            void bindGlContext();
+            /** @brief Unbinds the opengl context from the current thread. */
+            void unbindGlContext();
         private:
             std::shared_ptr<Context> m_context;
             std::mutex m_gpu_mutex;
+            GLFWwindow* m_gl_offscreen_context;
         };
     }
 }

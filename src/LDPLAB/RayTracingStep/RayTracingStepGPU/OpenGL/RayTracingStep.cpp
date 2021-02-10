@@ -74,6 +74,64 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
     }
 }
 
+void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
+{
+    std::lock_guard<std::mutex> gpu_lock(m_context->ogl->getGPUMutex());
+    m_context->ogl->bindGlContext();
+
+    // Create SSBOs for particle geometry
+    if (m_context->particle_data->type() == IParticleData::Type::rod_particles)
+    {
+        RodParticleData* const particle_data = ((RodParticleData*)
+            m_context->particle_data.get());
+        particle_data->ssbo.cylinder_length =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_data->particle_data.size() * sizeof(double));
+        particle_data->ssbo.cylinder_radius =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_data->particle_data.size() * sizeof(double));
+        particle_data->ssbo.origin_cap =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_data->particle_data.size() * sizeof(Vec4));
+        particle_data->ssbo.origin_indentation =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_data->particle_data.size() * sizeof(Vec4));
+        particle_data->ssbo.sphere_radius =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_data->particle_data.size() * sizeof(double));
+        particle_data->uploadSSBO();
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not create "\
+            "particle SSBOs, particle type not supported", m_context->uid);
+    }
+
+    // Create SSBOs for particle materials
+    if (m_context->particle_material_data->type() ==
+        IParticleMaterialData::Type::linear_one_directional)
+    {
+        ParticleMaterialLinearOneDirectionalData* const particle_material =
+            ((ParticleMaterialLinearOneDirectionalData*)
+                m_context->particle_material_data.get());
+        particle_material->ssbo.direction_times_gradient =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_material->material_data.size() * sizeof(Vec4));
+        particle_material->ssbo.index_of_refraction_sum_term =
+            m_context->ogl->createShaderStorageBuffer(
+                particle_material->material_data.size() * sizeof(double));
+        particle_material->uploadSSBO();
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not create "\
+            "particle material SSBOs, particle material type not supported",
+            m_context->uid);
+    }
+
+    m_context->ogl->unbindGlContext();
+}
+
 ldplab::Mat4 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     double rx,
     double ry,

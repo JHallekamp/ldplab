@@ -286,8 +286,12 @@ namespace ldplab
         private:
             const RK45 m_parameters;
             std::shared_ptr<Context> m_context;
-            std::shared_ptr<ComputeShader> m_compute_shader;
             std::vector<RodParticle>& m_rod_particles;
+            std::shared_ptr<ComputeShader> m_compute_shader;
+            GLint m_shader_uniform_location_num_rays_per_buffer;
+            GLint m_shader_uniform_location_parameter_initial_step_size;
+            GLint m_shader_uniform_location_parameter_epsilon;
+            GLint m_shader_uniform_location_parameter_safety_factor;
         };
     }
 }

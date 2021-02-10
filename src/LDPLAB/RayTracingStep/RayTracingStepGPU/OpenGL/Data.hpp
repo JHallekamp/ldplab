@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../../ExperimentalSetup/BoundingVolume.hpp"
+#include "../../../ExperimentalSetup/ParticleMaterial.hpp"
 #include "../../../Geometry.hpp"
 #include "../../../Utils/UID.hpp"
 
@@ -77,6 +78,10 @@ namespace ldplab
             Vec4* torque_data;
             /** @brief Number of particles. */
             size_t size;
+            /** @brief Array used to mirror the according SSBO. */
+            Vec4* force_per_ray_data;
+            /** @brief Array used to mirror the according SSBO. */
+            Vec4* torque_per_ray_data;
             /** @brief SSBO containing the output force per ray. */
             std::shared_ptr<ShaderStorageBuffer> force_per_ray_ssbo;
             /** @brief SSBO containing the output torque per ray. */
@@ -165,12 +170,23 @@ namespace ldplab
             enum class Type { rod_particles };
             /** @brief Returns the type of the particles. */
             virtual Type type() const = 0;
+            /** @brief Uploads the data to the gpu. */
+            virtual void uploadSSBO() = 0;
         };
 
         /** @brief Contains particle data. */
         struct RodParticleData : public IParticleData
         {
+        private:
+            std::shared_ptr<Context> m_context;
+        public:
+            RodParticleData(std::shared_ptr<Context> context)
+                :
+                m_context{ context }
+            { }
+
             Type type() const override { return Type::rod_particles; }
+            void uploadSSBO() override;
             /** @brief Contains the rod particles. */
             std::vector<RodParticle> particle_data;
             /**
@@ -203,13 +219,26 @@ namespace ldplab
             enum class Type { linear_one_directional };
             /** @brief Returns the type of the particles. */
             virtual Type type() const = 0;
+            /** @brief Uploads the data to the gpu. */
+            virtual void uploadSSBO() = 0;
         };
 
         /** @brief Contains particle material data. */
         struct ParticleMaterialLinearOneDirectionalData : 
             public IParticleMaterialData
         {
+        private:
+            std::shared_ptr<Context> m_context;
+        public:
+            ParticleMaterialLinearOneDirectionalData(
+                std::shared_ptr<Context> context)
+                :
+                m_context{ context }
+            { }
+            
             Type type() const override { return Type::linear_one_directional; }
+            void uploadSSBO() override;
+            std::vector<ParticleMaterialLinearOneDirectional> material_data;
             /**
              * @brief Contains SSBOs for linear one directional particle 
              *        material data.

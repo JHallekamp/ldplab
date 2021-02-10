@@ -72,9 +72,6 @@ namespace ldplab
              * @returns The dummy buffer uid.
              */
             size_t dummyBufferUID();
-            /**
-             * @brief 
-             */
         private:
             void initializeBuffers();
         private:
@@ -89,6 +86,8 @@ namespace ldplab
             std::vector<int32_t> m_intersection_particle_index_data;
             std::vector<Vec4> m_output_force_data;
             std::vector<Vec4> m_output_torque_data;
+            std::vector<Vec4> m_output_force_per_ray_data;
+            std::vector<Vec4> m_output_torque_per_ray_data;
             std::vector<RayBuffer> m_ray_buffers;
             IntersectionBuffer m_intersection_buffer;
             OutputBuffer m_output_buffer;

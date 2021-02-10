@@ -63,7 +63,7 @@ namespace ldplab
         static void initRodParticleGeometryCPU(
             const ExperimentalSetup& setup,
             std::shared_ptr<rtscpu::Context> context);
-        static void initRodParticleGeometryGPUOpenGL(
+        static bool initRodParticleGeometryGPUOpenGL(
             const ExperimentalSetup& setup,
             std::shared_ptr<rtsgpu_ogl::Context> context);
         /**

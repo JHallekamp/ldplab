@@ -4,7 +4,20 @@
 #include "../../../Log.hpp"
 #include "../../../Utils/Assert.hpp"
 
+#include <iomanip>
+#include <sstream>
 #include <vector>
+
+void ldplab::rtsgpu_ogl::ComputeShader::execute(
+    size_t work_group_size_x, 
+    size_t work_group_size_y, 
+    size_t work_group_size_z)
+{
+    glDispatchCompute(
+        work_group_size_x,
+        work_group_size_y,
+        work_group_size_z);
+}
 
 ldplab::rtsgpu_ogl::ComputeShader::ComputeShader()
     :
@@ -50,24 +63,63 @@ void ldplab::rtsgpu_ogl::ComputeShader::use() const
 ldplab::rtsgpu_ogl::OpenGLContext::OpenGLContext(
     std::shared_ptr<Context> context)
     :
-    m_context{ context }
+    m_context{ context },
+    m_gl_offscreen_context{ nullptr }
 { 
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: OpenGLContext instance "\
         "created", m_context->uid);
 }
 
+ldplab::rtsgpu_ogl::OpenGLContext::~OpenGLContext()
+{
+    shutdown();
+}
+
 bool ldplab::rtsgpu_ogl::OpenGLContext::init()
 { 
-    if (glewInit() != GLEW_OK)
+    // Init GLFW
+    if (!glfwInit())
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to initialize "\
-            "OpenGLContext, could not initialize GLEW", m_context->uid);
+            "GLFW", m_context->uid);
         return false;
     }
 
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    m_gl_offscreen_context = glfwCreateWindow(800, 600, "", NULL, NULL);
+    if (!m_gl_offscreen_context)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create GLFW "\
+            "offscreen window", m_context->uid);
+        return false;
+    }
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) Context %i: GLFW initialzed",
+        m_context->uid);
+
+    // Init Glew
+    bindGlContext();
+    glewExperimental = GL_TRUE;
+    GLenum err_code = glewInit();
+    if (err_code != GLEW_OK)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to initialize "\
+            "GLEW: %s", m_context->uid, glewGetErrorString(err_code));
+        return false;
+    }
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) Context %i: GLEW initialzed, uses "\
+        "GLEW %s", m_context->uid, glewGetString(GLEW_VERSION));
+    unbindGlContext();
+
+    // Done
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: OpenGLContext initalized "\
         "successful", m_context->uid);
     return true;
+}
+
+void ldplab::rtsgpu_ogl::OpenGLContext::shutdown()
+{
+    glfwDestroyWindow(m_gl_offscreen_context);
+    glfwTerminate();
 }
 
 std::shared_ptr<ldplab::rtsgpu_ogl::ComputeShader> 
@@ -155,6 +207,16 @@ ldplab::rtsgpu_ogl::OpenGLContext::createShaderStorageBuffer(
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
     return ssbo;
+}
+
+void ldplab::rtsgpu_ogl::OpenGLContext::bindGlContext()
+{
+    glfwMakeContextCurrent(m_gl_offscreen_context);
+}
+
+void ldplab::rtsgpu_ogl::OpenGLContext::unbindGlContext()
+{
+    glfwMakeContextCurrent(nullptr);
 }
 
 void ldplab::rtsgpu_ogl::ShaderStorageBuffer::bindToIndex(

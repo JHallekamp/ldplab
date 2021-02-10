@@ -34,7 +34,7 @@ namespace ldplab
             Context(const std::vector<Particle>& particles,
                 const std::vector<LightSource>& light_sources)
                 :
-                uid{ }, 
+                uid{ },
                 ogl{ nullptr },
                 particles{ particles },
                 light_sources{ light_sources },
@@ -42,6 +42,7 @@ namespace ldplab
                 pipeline{ nullptr },
                 thread_pool{ nullptr },
                 particle_data{ nullptr },
+                particle_material_data{ nullptr },
                 bounding_volume_data{ nullptr },
                 particle_uid_to_index_map{ },
                 light_source_uid_to_index_map{ },
@@ -92,6 +93,8 @@ namespace ldplab
             std::shared_ptr<ThreadPool> thread_pool;
             /** @brief Holds an array with particle data. */
             std::shared_ptr<IParticleData> particle_data;
+            /** @brief Holds particle material data. */
+            std::shared_ptr<IParticleMaterialData> particle_material_data;
             /** @brief Holds an array with bounding volume data. */
             std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
             /** @brief Maps particle UIDs to the internaly used indices. */

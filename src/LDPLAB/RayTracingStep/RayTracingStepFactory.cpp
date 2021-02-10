@@ -300,8 +300,15 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
                 BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
         ctx->particle_data =
             std::shared_ptr<rtsgpu_ogl::IParticleData>(
-                new rtsgpu_ogl::RodParticleData());
-        initRodParticleGeometryGPUOpenGL(setup, ctx);
+                new rtsgpu_ogl::RodParticleData(ctx));
+        ctx->particle_material_data =
+            std::shared_ptr<rtsgpu_ogl::IParticleMaterialData>(
+                new rtsgpu_ogl::ParticleMaterialLinearOneDirectionalData(ctx));
+        if (!initRodParticleGeometryGPUOpenGL(setup, ctx))
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not initialize particle data");
+            return nullptr;
+        }
 
         std::unique_ptr<rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight> initial
         { new rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight{ ctx } };
@@ -315,6 +322,16 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
         { new rtsgpu_ogl::LinearIndexGradientRodParticlePropagation{
             ctx,
             *((RK45*)info.solver_parameters.get())} };
+
+        // Init OpenGL
+        ctx->ogl = std::shared_ptr<rtsgpu_ogl::OpenGLContext>(
+            new rtsgpu_ogl::OpenGLContext(ctx));
+        if (!ctx->ogl->init())
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not initialize "\
+                "ldplab::rtsgpu_ogl::OpenGLContext");
+            return nullptr;
+        }
         if (!ipp->initShaders(info))
         {
             LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
@@ -322,6 +339,7 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
                 "stage");
             return nullptr;
         }
+
         ctx->pipeline = std::make_unique<rtsgpu_ogl::Pipeline>(
             std::move(initial),
             std::move(rbvit),
@@ -331,6 +349,8 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
             ctx);
         std::shared_ptr<rtsgpu_ogl::RayTracingStep> rts(
             new rtsgpu_ogl::RayTracingStep{ ctx });
+        rts->initGPU();        
+
         LDPLAB_LOG_INFO("RTS factory: Creation of "\
             "ldplab::rtsgpu_ogl::RayTracingStep completed");
         return rts;
@@ -383,13 +403,15 @@ void ldplab::RayTracingStepFactory::initRodParticleGeometryCPU(
     }
 }
 
-void ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
+bool ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
     const ExperimentalSetup& setup, 
     std::shared_ptr<rtsgpu_ogl::Context> context)
 {
     for (size_t i = 0; i < setup.particles.size(); ++i)
     {
         const Particle& particle = setup.particles[i];
+        
+        // Geometry
         if (particle.geometry->type() ==
             IParticleGeometry::Type::rod_particle)
         {
@@ -419,7 +441,29 @@ void ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
                     Vec4(origin_cap, 0),
                     Vec4(origin_indentation, 0) });
         }
+        else
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Encountered unsupported particle "\
+                "geometry type");
+            return false;
+        }
+
+        // Material
+        if (particle.material->type() ==
+            IParticleMaterial::Type::linear_one_directional)
+        {
+            ((rtsgpu_ogl::ParticleMaterialLinearOneDirectionalData*)
+                context->particle_material_data.get())->material_data.push_back(
+                *((ParticleMaterialLinearOneDirectional*)particle.material.get()));
+        }
+        else
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Encountered unsupported particle "\
+                "material type");
+            return false;
+        }
     }
+    return true;
 }
 
 bool ldplab::RayTracingStepFactory::checkTypeUniformity(

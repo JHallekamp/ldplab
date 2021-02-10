@@ -2,6 +2,8 @@
 #include "Context.hpp"
 #include "../../../Log.hpp"
 
+#include <mutex>
+
 ldplab::rtsgpu_ogl::BufferControl::BufferControl(std::shared_ptr<Context> context)
     :
     m_context{ context }
@@ -24,6 +26,10 @@ ldplab::rtsgpu_ogl::BufferControl::BufferControl(std::shared_ptr<Context> contex
     
     m_output_force_data.resize(m_context->particles.size());
     m_output_torque_data.resize(m_context->particles.size());
+    m_output_force_per_ray_data.resize(
+        m_context->parameters.number_rays_per_buffer);
+    m_output_torque_per_ray_data.resize(
+        m_context->parameters.number_rays_per_buffer);
     
     initializeBuffers();
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
@@ -140,17 +146,23 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
     // Output buffer
     m_output_buffer.size = m_context->particles.size();
     m_output_buffer.force_data = m_output_force_data.data();
+    m_output_buffer.force_per_ray_data = m_output_force_per_ray_data.data();
     m_output_buffer.torque_data = m_output_torque_data.data();
+    m_output_buffer.torque_per_ray_data = m_output_torque_per_ray_data.data();
+
+    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
+    std::lock_guard<std::mutex> gpu_lock{ gpu_mutex };
+    m_context->ogl->bindGlContext();
 
     // Create ssbos
     for (size_t i = 0; i < m_ray_buffers.size(); ++i)
     {
         m_ray_buffers[i].ray_origin_ssbo = 
             m_context->ogl->createShaderStorageBuffer(
-                m_context->parameters.number_rays_per_buffer * sizeof(Vec3));
+                m_context->parameters.number_rays_per_buffer * sizeof(Vec4));
         m_ray_buffers[i].ray_direction_ssbo =
             m_context->ogl->createShaderStorageBuffer(
-                m_context->parameters.number_rays_per_buffer * sizeof(Vec3));
+                m_context->parameters.number_rays_per_buffer * sizeof(Vec4));
         m_ray_buffers[i].ray_intensity_ssbo =
             m_context->ogl->createShaderStorageBuffer(
                 m_context->parameters.number_rays_per_buffer * sizeof(double));
@@ -164,18 +176,20 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
 
     m_intersection_buffer.point_ssbo = 
         m_context->ogl->createShaderStorageBuffer(
-            m_context->parameters.number_rays_per_buffer * sizeof(Vec3));
+            m_context->parameters.number_rays_per_buffer * sizeof(Vec4));
     m_intersection_buffer.normal_ssbo =
         m_context->ogl->createShaderStorageBuffer(
-            m_context->parameters.number_rays_per_buffer * sizeof(Vec3));
+            m_context->parameters.number_rays_per_buffer * sizeof(Vec4));
     m_intersection_buffer.particle_index_ssbo =
         m_context->ogl->createShaderStorageBuffer(
             m_context->parameters.number_rays_per_buffer * sizeof(int32_t));
 
     m_output_buffer.force_per_ray_ssbo =
         m_context->ogl->createShaderStorageBuffer(
-            m_context->parameters.number_rays_per_buffer * sizeof(Vec3));
+            m_context->parameters.number_rays_per_buffer * sizeof(Vec4));
     m_output_buffer.torque_per_ray_ssbo =
         m_context->ogl->createShaderStorageBuffer(
-            m_context->parameters.number_rays_per_buffer * sizeof(Vec3));
+            m_context->parameters.number_rays_per_buffer * sizeof(Vec4));
+
+    m_context->ogl->unbindGlContext();
 }
