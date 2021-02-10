@@ -3,7 +3,7 @@
 #version 460 core
 
 // Local work group size
-layout(local_size_x = 512) in;
+layout(local_size_x = 64) in;
 
 // Ray buffer data
 layout(std430, binding = 0) readonly buffer rayIndexData { int ray_index[]; };
@@ -197,7 +197,7 @@ bool cylinderIntersection(
     if (intersection_position[ri].z >= 0 &&
         intersection_position[ri].z <= particle_cylinder_length[pi])
     {
-        intersection_normal[ri].xy = normalize(-0intersection_position[ri].xy);
+        intersection_normal[ri].xy = normalize(-intersection_position[ri].xy);
         intersection_normal[ri].zw = dvec2(0);
         return true;
     }
@@ -217,7 +217,7 @@ bool indentationIntersection(
         // cylinder.
         if (direction.z == 0)
             return false;
-        const double t = (particle_cylinder_length[pi] - origin.z) / direction.z;
+        const double t = -origin.z / direction.z;
         if (t <= 1e-9)
             return false;
         intersection_position[ri].xyz = origin + t * direction;
@@ -236,7 +236,7 @@ bool indentationIntersection(
 
     if (discriminant < 0.0)
         return false;
-    const double t = -p + sqrt(discriminant);
+    const double t = -p - sqrt(discriminant);
     if (t <= 1e-9)
         return false;
 
@@ -266,7 +266,7 @@ bool capIntersection(
         // cylinder.
         if (direction.z == 0)
             return false;
-        const double t = -origin.z / direction.z;
+        const double t = (particle_cylinder_length[pi] - origin.z) / direction.z;
         if (t <= 1e-9)
             return false;
         intersection_position[ri].xyz = origin + t * direction;

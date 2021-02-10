@@ -104,8 +104,6 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     rays.ray_direction_ssbo->upload(rays.ray_direction_data);
     rays.ray_intensity_ssbo->upload(rays.ray_intensity_data);
     rays.ray_origin_ssbo->upload(rays.ray_origin_data);
-    intersection.normal_ssbo->upload(intersection.normal_data);
-    intersection.point_ssbo->upload(intersection.point_data);
     LDPLAB_PROFILING_STOP(inner_particle_propagation_data_upload);
     
     // Bind shaders
@@ -139,7 +137,7 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     
     // Execute shader
     LDPLAB_PROFILING_START(inner_particle_propagation_shader_execution);
-    m_compute_shader->execute(rays.size / 512);
+    m_compute_shader->execute(rays.size / 64);
     LDPLAB_PROFILING_STOP(inner_particle_propagation_shader_execution);
     
     // Download intersection and output

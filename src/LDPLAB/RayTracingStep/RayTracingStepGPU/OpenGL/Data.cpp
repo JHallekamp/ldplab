@@ -44,7 +44,7 @@ void ldplab::rtsgpu_ogl::RodParticleData::uploadSSBO()
         temp_vec4_vec[i] = particle_data[i].
             origin_cap;
     }
-    ssbo.origin_cap->upload(temp_double_vec.data());
+    ssbo.origin_cap->upload(temp_vec4_vec.data());
 
     // Upload origin indentation
     for (size_t i = 0; i < num_particles; ++i)
@@ -52,7 +52,7 @@ void ldplab::rtsgpu_ogl::RodParticleData::uploadSSBO()
         temp_vec4_vec[i] = particle_data[i].
             origin_indentation;
     }
-    ssbo.origin_indentation->upload(temp_double_vec.data());
+    ssbo.origin_indentation->upload(temp_vec4_vec.data());
 
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished uploading rod "\
         "particle data to SSBO", m_context->uid);
