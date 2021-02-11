@@ -5,7 +5,7 @@ namespace ldplab
 {
     struct IEikonalSolver
     {
-        enum class Type { rk45 };
+        enum class Type { rk45, rk4 };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IEikonalSolver.
@@ -19,6 +19,7 @@ namespace ldplab
             switch (type())
             {
             case Type::rk45: return "rk45";
+            case Type::rk4: return "rk4";
             default: return "unknown_type";
             }
         }
@@ -40,6 +41,18 @@ namespace ldplab
         double safety_factor;
 
         Type type() const override { return IEikonalSolver::Type::rk45; }
+    };
+
+    struct RK4 : public IEikonalSolver
+    {
+        RK4(double step_size)
+            :
+            step_size{ step_size }
+        {}
+        /** @brief Initial step size for each integration method. */
+        double step_size;
+
+        Type type() const override { return IEikonalSolver::Type::rk4; }
     };
 }
 

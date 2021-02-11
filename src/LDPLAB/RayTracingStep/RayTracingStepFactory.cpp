@@ -121,6 +121,13 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
                     ctx,
                     *((RK45*)info.solver_parameters.get())} };
             }
+            else if (info.solver_parameters->type() == IEikonalSolver::Type::rk4)
+            {
+                ipp = std::unique_ptr <rtscpu::RK4RodParticlePropagation>
+                { new rtscpu::RK4RodParticlePropagation{
+                    ctx,
+                    *((RK4*)info.solver_parameters.get())} };
+            }
             else
                 return combinationError();
         }
@@ -135,6 +142,13 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
                 { new rtscpu::RK45SphericalParticlePropagation{
                     ctx,
                     *((RK45*)info.solver_parameters.get())} };
+            }
+            else if (info.solver_parameters->type() == IEikonalSolver::Type::rk4)
+            {
+                ipp = std::unique_ptr <rtscpu::RK4SphericalParticlePropagation>
+                { new rtscpu::RK4SphericalParticlePropagation{
+                    ctx,
+                    *((RK4*)info.solver_parameters.get())} };
             }
             else
                 return combinationError();
