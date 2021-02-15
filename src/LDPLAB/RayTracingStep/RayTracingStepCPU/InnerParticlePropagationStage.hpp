@@ -46,7 +46,44 @@ namespace ldplab
                 OutputBuffer& output) = 0;
         };
 
-        class EikonalSolverRK4 : public IInnerParticlePropagationStage
+        class IInnerParticlePropagationParticle
+        {
+        protected:
+            /**
+             * @brief Check if the position is outside of the particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] r Position to check.
+             * @retuns true if the position is outside the particle, false if
+             *         the position is inside.
+             */
+            virtual bool isOutsideParticle(const size_t particle, const Vec3& r) = 0;
+            /**
+             * @brief Calculating the intersection of the ray and the particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          inside the particle.
+             */
+            virtual void intersection(
+                const size_t particle,
+                const Vec3& ray_origin_in,
+                const Vec3& ray_origin_out,
+                Vec3& inter_point,
+                Vec3& inter_normal) = 0;
+        };
+
+        /**
+        * @brief Class implementing the inner particle propagation for
+        *        linear index of refraction gradient in one direction.
+        * @detail The light propagation is calculated by solving the Eikonal
+        *         equation with the Runge–Kutta method.
+        */
+        class EikonalSolverRK4 : public IInnerParticlePropagationStage, IInnerParticlePropagationParticle
         {
         protected:
             /**
@@ -136,7 +173,7 @@ namespace ldplab
              * @retuns true if the position is outside the particle, false if
              *         the position is inside.
              */
-            virtual bool isOutsideParticle(const size_t particle, const Vec3& r) = 0;
+            //virtual bool isOutsideParticle(const size_t particle, const Vec3& r) = 0;
             /**
              * @brief Integration step of the Runge-Kutta method.
              * @param[in] particle Pointer to the particle material containing
@@ -174,11 +211,12 @@ namespace ldplab
              *                          point. The normal is pointing
              *                          inside the particle.
              */
-            virtual void intersection(
-                const size_t particle,
-                const Arg& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal) = 0;
+            //virtual void intersection(
+            //    const size_t particle,
+            //    const Vec3& origin_in,
+            //    const Vec3& origin_out,
+            //    Vec3& inter_point,
+            //    Vec3& inter_normal) = 0;
         private:
             const RK4 m_parameters;
         protected:
@@ -191,7 +229,8 @@ namespace ldplab
         * @detail The light propagation is calculated by solving the Eikonal
         *         equation with the Runge–Kutta–Fehlberg(45) method.
         */
-        class EikonalSolverRK45 : public IInnerParticlePropagationStage
+        class EikonalSolverRK45 : public IInnerParticlePropagationStage, 
+            IInnerParticlePropagationParticle
         {
         protected:
             /**
@@ -280,14 +319,6 @@ namespace ldplab
                 Vec3& inter_normal,
                 OutputBuffer& output);
             /**
-             * @brief Check if the position is outside of the particle.
-             * @param[in] particle Index of the particle.
-             * @param[in] r Position to check.
-             * @retuns true if the position is outside the particle, false if
-             *         the position is inside.
-             */
-            virtual bool isOutsideParticle(const size_t particle, const Vec3& r) = 0;
-            /**
              * @brief Integration step of the Runge-Kutta-Fehlberg method.
              * @param[in] particle Pointer to the particle material containing
              *            the index of reflection distribution.
@@ -312,24 +343,6 @@ namespace ldplab
             inline Arg eikonal(
                 const ParticleMaterialLinearOneDirectional* particle,
                 const Arg& x) const;
-            /**
-             * @brief Calculating the intersection of the ray and the particle.
-             * @warning It is necessary that the ray origin is inside the
-             *          particle.
-             * @param[in] particle Index of the particle.
-             * @param[in] ray Specifies the ray.
-             * @param[out] inter_point Resulting intersection point with
-             *                         the particle surface.
-             * @param[out] inter_normal Resulting normal of the particle
-             *                          surface at the intersection
-             *                          point. The normal is pointing
-             *                          inside the particle.
-             */
-            virtual void intersection(
-                const size_t particle,
-                const Arg& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal) = 0;
         private:
             const double alpha[6]{ 0.0, 1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0 };
             const double beta[36]{
@@ -348,6 +361,78 @@ namespace ldplab
             std::shared_ptr<Context> m_context;
         };
 
+        class IPPRodParticle : public IInnerParticlePropagationParticle
+        {
+        protected:
+            IPPRodParticle(std::shared_ptr<Context> context);
+            /**
+             * @brief Check if the position is outside of the particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] r Position to check.
+             * @retuns true if the position is outside the particle, false if
+             *         the position is inside.
+             */
+            bool isOutsideParticle(const size_t particle, const Vec3& r) override;
+            /**
+             * @brief Calculating the intersection of the ray and the particle.
+             * @warning It is necessary that the ray origin is inside the
+             *          particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          inside the particle.
+             */
+            void intersection(
+                const size_t particle,
+                const Vec3& origin_in,
+                const Vec3& origin_out,
+                Vec3& inter_point,
+                Vec3& inter_normal) override;
+            private:
+                std::vector<RodParticle>& m_rod_particles;
+        };
+
+        class IPPSphereParticle : public IInnerParticlePropagationParticle
+        {
+        protected:
+            IPPSphereParticle(std::shared_ptr<Context> context);
+            /**
+             * @brief Check if the position is outside of the particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] r Position to check.
+             * @retuns true if the position is outside the particle, false if
+             *         the position is inside.
+             */
+            bool isOutsideParticle(const size_t particle, const Vec3& r) override;
+            /**
+             * @brief Calculating the intersection of the ray and the particle.
+             * @warning It is necessary that the ray origin is inside the
+             *          particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          inside the particle.
+             */
+            void intersection(
+                const size_t particle,
+                const Vec3& origin_in,
+                const Vec3& origin_out,
+                Vec3& inter_point,
+                Vec3& inter_normal) override;
+        private:
+            std::shared_ptr<Context> m_context;
+        };
+
         /**
          * @brief Class implementing the inner particle propagation for 
          *        linear index of refraction gradient in one direction.
@@ -355,7 +440,7 @@ namespace ldplab
          *         equation with the Runge–Kutta–Fehlberg(45) method.
          */
         class RK45RodParticlePropagation
-            : public EikonalSolverRK45
+            : public EikonalSolverRK45, IPPRodParticle
         {
         public:
             /**
@@ -382,7 +467,8 @@ namespace ldplab
              * @warning It is necessary that the ray origin is inside the 
              *          particle.
              * @param[in] particle Index of the particle.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
@@ -392,73 +478,10 @@ namespace ldplab
              */
             void intersection(
                 const size_t particle,
-                const Arg& ray,
+                const Vec3& ray_in,
+                const Vec3& ray_out,
                 Vec3& inter_point,
                 Vec3& inter_normal) override;
-            /**
-             * @brief Calculate the intersection point of a ray and the cylinder.
-             * @warning It is assumed that the rays origin is inside the 
-             *          particle.
-             * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
-             * @param[out] inter_point Resulting intersection point with
-             *                         the cap.
-             * @param[out] inter_normal Resulting normal of the particle
-             *                          surface at the intersection
-             *                          point. The normal is pointing
-             *                          inside the particle.
-             * @retuns true if the cylinder and the ray are intersecting, else
-             *         false will be returned.
-             */
-            bool cylinderIntersection(
-                const RodParticle& geometry,
-                const Ray& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
-            /**
-             * @brief Calculate the intersection point of a ray and the
-             *        spherical cap of the rod particle.
-             * @warning It is assumed that the rays origin is inside the 
-             *          particle.
-             * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
-             * @param[out] inter_point Resulting intersection point with
-             *                         the cap.
-             * @param[out] inter_normal Resulting normal of the particle
-             *                          surface at the intersection
-             *                          point. The normal is pointing
-             *                          inside the particle.
-             * @retuns true if the cap and the ray are intersecting, else
-             *         false will be returned.
-             */
-            bool capIntersection(
-                const RodParticle& geometry,
-                const Ray& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
-            /**
-             * @brief Calculate the intersection point of a ray and the
-             *        spherical indentation of the rod particle.
-             * @warning It is assumed that the rays origin is inside the 
-             *          particle.
-             * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
-             * @param[out] intersection_point Resulting intersection point with
-             *                                the indentation.
-             * @param[out] intersection_normal Resulting normal of the particle
-             *                                 surface at the intersection
-             *                                 point. The normal is pointing
-             *                                 inside the particle.
-             * @retuns true if the indentation and the ray are intersecting, 
-             *         else false will be returned.
-             */
-            bool indentationIntersection(
-                const RodParticle& geometry,
-                const Ray& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
-        private:
-            std::vector<RodParticle>& m_rod_particles;
         };
 
         /**
@@ -468,7 +491,7 @@ namespace ldplab
         *         equation with the Runge–Kutta method.
         */
         class RK4RodParticlePropagation
-            : public EikonalSolverRK4
+            : public EikonalSolverRK4, IPPRodParticle
         {
         public:
             /**
@@ -495,7 +518,8 @@ namespace ldplab
              * @warning It is necessary that the ray origin is inside the
              *          particle.
              * @param[in] particle Index of the particle.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
@@ -505,73 +529,10 @@ namespace ldplab
              */
             void intersection(
                 const size_t particle,
-                const Arg& ray,
+                const Vec3& ray_in,
+                const Vec3& ray_out,
                 Vec3& inter_point,
                 Vec3& inter_normal) override;
-            /**
-             * @brief Calculate the intersection point of a ray and the cylinder.
-             * @warning It is assumed that the rays origin is inside the
-             *          particle.
-             * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
-             * @param[out] inter_point Resulting intersection point with
-             *                         the cap.
-             * @param[out] inter_normal Resulting normal of the particle
-             *                          surface at the intersection
-             *                          point. The normal is pointing
-             *                          inside the particle.
-             * @retuns true if the cylinder and the ray are intersecting, else
-             *         false will be returned.
-             */
-            bool cylinderIntersection(
-                const RodParticle& geometry,
-                const Ray& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
-            /**
-             * @brief Calculate the intersection point of a ray and the
-             *        spherical cap of the rod particle.
-             * @warning It is assumed that the rays origin is inside the
-             *          particle.
-             * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
-             * @param[out] inter_point Resulting intersection point with
-             *                         the cap.
-             * @param[out] inter_normal Resulting normal of the particle
-             *                          surface at the intersection
-             *                          point. The normal is pointing
-             *                          inside the particle.
-             * @retuns true if the cap and the ray are intersecting, else
-             *         false will be returned.
-             */
-            bool capIntersection(
-                const RodParticle& geometry,
-                const Ray& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
-            /**
-             * @brief Calculate the intersection point of a ray and the
-             *        spherical indentation of the rod particle.
-             * @warning It is assumed that the rays origin is inside the
-             *          particle.
-             * @param[in] geometry Specifies the particle geometry.
-             * @param[in] ray Specifies the ray.
-             * @param[out] intersection_point Resulting intersection point with
-             *                                the indentation.
-             * @param[out] intersection_normal Resulting normal of the particle
-             *                                 surface at the intersection
-             *                                 point. The normal is pointing
-             *                                 inside the particle.
-             * @retuns true if the indentation and the ray are intersecting,
-             *         else false will be returned.
-             */
-            bool indentationIntersection(
-                const RodParticle& geometry,
-                const Ray& ray,
-                Vec3& inter_point,
-                Vec3& inter_normal);
-        private:
-            std::vector<RodParticle>& m_rod_particles;
         };
 
         /**
@@ -580,7 +541,7 @@ namespace ldplab
          *         equation with the Runge–Kutta–Fehlberg(45) method.
          */
         class RK45SphericalParticlePropagation :
-            public EikonalSolverRK45
+            public EikonalSolverRK45, IPPSphereParticle
         {
         public:
             /**
@@ -609,7 +570,8 @@ namespace ldplab
              * @warning It is necessary that the ray origin is inside the
              *          particle.
              * @param[in] particle Index of the particle.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
@@ -619,7 +581,8 @@ namespace ldplab
              */
             void intersection(
                 const size_t particle,
-                const Arg& ray,
+                const Vec3& ray_in,
+                const Vec3& ray_out,
                 Vec3& inter_point,
                 Vec3& inter_normal) override;
         };
@@ -630,7 +593,7 @@ namespace ldplab
          *         equation with the Runge–Kutta method.
          */
         class RK4SphericalParticlePropagation :
-            public EikonalSolverRK4
+            public EikonalSolverRK4, IPPSphereParticle
         {
         public:
             /**
@@ -653,13 +616,14 @@ namespace ldplab
              */
             bool isOutsideParticle(
                 const size_t particle,
-                const Vec3& r) override;
+                const Vec3& r);
             /**
              * @brief Calculating the intersection of the ray and the particle.
              * @warning It is necessary that the ray origin is inside the
              *          particle.
              * @param[in] particle Index of the particle.
-             * @param[in] ray Specifies the ray.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
              * @param[out] inter_point Resulting intersection point with
              *                         the particle surface.
              * @param[out] inter_normal Resulting normal of the particle
@@ -669,9 +633,10 @@ namespace ldplab
              */
             void intersection(
                 const size_t particle,
-                const Arg& ray,
+                const Vec3& ray_in,
+                const Vec3& ray_out,
                 Vec3& inter_point,
-                Vec3& inter_normal) override;
+                Vec3& inter_normal);
         };
     }
 }
