@@ -7,8 +7,8 @@ layout(local_size_x = 64) in;
 
 // Ray buffer data
 layout(std430, binding = 0) readonly buffer rayIndexData { int ray_index[]; };
-layout(std430, binding = 1) buffer rayOriginData { dvec3 ray_origin[]; };
-layout(std430, binding = 2) buffer rayDirectionData { dvec3 ray_direction[]; };
+layout(std430, binding = 1) buffer rayOriginData { dvec4 ray_origin[]; };
+layout(std430, binding = 2) buffer rayDirectionData { dvec4 ray_direction[]; };
 layout(std430, binding = 3) readonly buffer rayIntensityData { double ray_intensity[]; };
 
 // Intersectino buffer data

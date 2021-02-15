@@ -71,6 +71,8 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
                     m_context->particles[i].bounding_volume.get())->center, 0) +
                 m_context->particle_transformations[i].p2w_translation;
         }
+        // Upload ssbos
+        m_context->bounding_volume_data->uploadSSBO();
     }
 }
 

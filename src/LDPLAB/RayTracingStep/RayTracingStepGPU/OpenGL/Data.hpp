@@ -189,10 +189,7 @@ namespace ldplab
             void uploadSSBO() override;
             /** @brief Contains the rod particles. */
             std::vector<RodParticle> particle_data;
-            /**
-             * @brief Contains SSBOs for the rod particle data.
-             * @note This is initialized by the BufferControl.
-             */
+            /** @brief Contains SSBOs for the rod particle data. */
             struct
             {
                 /** @brief Corresponding to RodParticle::cylinder_radius. */
@@ -242,7 +239,6 @@ namespace ldplab
             /**
              * @brief Contains SSBOs for linear one directional particle 
              *        material data.
-             * @note This is initialized by the BufferControl.
              */
             struct
             {
@@ -271,6 +267,8 @@ namespace ldplab
             enum class Type { spheres };
             /** @brief Returns the type of the bounding volumes. */
             virtual Type type() const = 0;
+            /** @brief Uploads the data to the gpu. */
+            virtual void uploadSSBO() = 0;
         };
 
         /** @brief Contains the data of the transformed bounding spheres. */
@@ -279,6 +277,19 @@ namespace ldplab
             Type type() const override { return Type::spheres; }
             /** @brief Bounding sphere data in world space. */
             std::vector<BoundingVolumeSphere> sphere_data;
+            /** @brief Uploads the data to the gpu. */
+            virtual void uploadSSBO() override;
+            /** 
+             * @brief Contains shader storage buffer objects for 
+             *        bounding sphere data.
+             */
+            struct
+            {
+                /** @brief Contains bounding sphere centers. */
+                std::shared_ptr<ShaderStorageBuffer> center;
+                /** @brief Contains bounding sphere radii. */
+                std::shared_ptr<ShaderStorageBuffer> radius;
+            } ssbo;
         };
     }
 }

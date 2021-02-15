@@ -88,3 +88,27 @@ void ldplab::rtsgpu_ogl::ParticleMaterialLinearOneDirectionalData::uploadSSBO()
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished uploading particle "\
         "material data to SSBO", m_context->uid);
 }
+
+void ldplab::rtsgpu_ogl::BoundingSphereData::uploadSSBO()
+{
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Begin uploading bounding "\
+        "sphere data to SSBO", m_context->uid);
+    const size_t num_particles = sphere_data.size();
+
+    // Upload sphere center
+    std::vector<Vec4> temp_sphere_center;
+    temp_sphere_center.resize(num_particles);
+    for (size_t i = 0; i < num_particles; ++i)
+        temp_sphere_center[i] = Vec4(sphere_data[i].center, 0);
+    ssbo.center->upload(temp_sphere_center.data());
+
+    // Upload sphere radii
+    std::vector<double> temp_sphere_radius;
+    temp_sphere_radius.resize(num_particles);
+    for (size_t i = 0; i < num_particles; ++i)
+        temp_sphere_radius[i] = sphere_data[i].radius;
+    ssbo.radius->upload(temp_sphere_radius.data());
+
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished uploading bounding "\
+        "sphere data to SSBO", m_context->uid);
+}
