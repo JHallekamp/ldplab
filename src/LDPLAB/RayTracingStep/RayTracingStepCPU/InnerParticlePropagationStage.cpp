@@ -383,33 +383,6 @@ void ldplab::rtscpu::RK45RodParticlePropagation::intersection(
     IPPRodParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
 }
 
-ldplab::rtscpu::RK45SphericalParticlePropagation::
-    RK45SphericalParticlePropagation(
-        std::shared_ptr<Context> context, 
-        RK45 parameters)
-    :
-    EikonalSolverRK45 (context, parameters),
-    IPPSphereParticle(context)
-{
-}
-
-bool ldplab::rtscpu::RK45SphericalParticlePropagation::
-    isOutsideParticle(const size_t particle, const Vec3& r)
-{
-    return IPPSphereParticle::isOutsideParticle(particle, r);
-}
-
-void ldplab::rtscpu::RK45SphericalParticlePropagation::
-    intersection(
-        const size_t particle,
-        const Vec3& ray_in,
-        const Vec3& ray_out,
-        Vec3& inter_point, 
-        Vec3& inter_normal)
-{
-    IPPSphereParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
-}
-
 ldplab::rtscpu::RK4RodParticlePropagation::RK4RodParticlePropagation(
     std::shared_ptr<Context> context,
     RK4 parameters)
@@ -433,7 +406,7 @@ void ldplab::rtscpu::RK4RodParticlePropagation::intersection(
     Vec3& inter_point,
     Vec3& inter_normal)
 {
-    intersection(
+    IPPRodParticle::intersection(
         particle,
         ray_in,
         ray_out,
@@ -467,6 +440,34 @@ intersection(
 {
     IPPSphereParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
 }
+
+ldplab::rtscpu::RK45SphericalParticlePropagation::
+RK45SphericalParticlePropagation(
+    std::shared_ptr<Context> context,
+    RK45 parameters)
+    :
+    EikonalSolverRK45(context, parameters),
+    IPPSphereParticle(context)
+{
+}
+
+bool ldplab::rtscpu::RK45SphericalParticlePropagation::
+isOutsideParticle(const size_t particle, const Vec3& r)
+{
+    return IPPSphereParticle::isOutsideParticle(particle, r);
+}
+
+void ldplab::rtscpu::RK45SphericalParticlePropagation::
+intersection(
+    const size_t particle,
+    const Vec3& ray_in,
+    const Vec3& ray_out,
+    Vec3& inter_point,
+    Vec3& inter_normal)
+{
+    IPPSphereParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
+}
+
 
 ldplab::rtscpu::IPPRodParticle::IPPRodParticle(std::shared_ptr<Context> context)
     :
