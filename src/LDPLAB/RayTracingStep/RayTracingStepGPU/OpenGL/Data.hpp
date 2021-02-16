@@ -24,25 +24,24 @@ namespace ldplab
                 uid{ },
                 depth{ depth },
                 size{ size },
-                ray_origin_data{ nullptr },
-                ray_direction_data{ nullptr },
-                ray_intensity_data{ nullptr },
-                index_data{ nullptr },
-                min_bounding_volume_distance_data{ nullptr },
+                ray_properties_data{ nullptr },
+                particle_index_data{ nullptr },
                 active_rays{ 0 },
                 world_space_rays{ 0 },
                 inner_particle_rays{ false }
             { }
-            /** @brief Array containing the origin for each ray. */
-            Vec4* ray_origin_data;
-            /** @brief Array containing the direction for each ray. */
-            Vec4* ray_direction_data;
-            /** @brief Array containing intensity for each ray element. */
-            double* ray_intensity_data;
-            /** @brief Array containing size (particle) indices. */
-            int32_t* index_data;
-            /** @brief Array containing the min distance to bounding volumes */
-            double* min_bounding_volume_distance_data;
+            /** @brief Contains GPU applicable ray data. */
+            struct RayProperties
+            {
+                Vec3 origin;
+                double intensity;
+                Vec3 direction;
+                double min_bounding_volume_distance;
+            };
+            /** @brief Array containing the ray properties per ray. */
+            RayProperties* ray_properties_data;
+            /** @brief Array containing the particle indices per ray. */
+            int32_t* particle_index_data;
             /** @brief Counter for the still active rays inside this. */
             size_t active_rays;
             /** @brief Counter for the active rays that are in world space. */
@@ -53,18 +52,16 @@ namespace ldplab
             const size_t depth;
             /** @brief Number of elements in ray_data and index_data arrays. */
             const size_t size;
-            /** @brief SSBO corresponding to ray_orgin_data. */
-            std::shared_ptr<ShaderStorageBuffer> ray_origin_ssbo;
-            /** @brief SSBO corresponding to ray_direction_data. */
-            std::shared_ptr<ShaderStorageBuffer> ray_direction_ssbo;
-            /** @brief SSBO corresponding to ray_intensity_data. */
-            std::shared_ptr<ShaderStorageBuffer> ray_intensity_ssbo;
-            /** @brief SSBO corresponding to index_data. */
-            std::shared_ptr<ShaderStorageBuffer> index_ssbo;
-            /** @brief SSBO corresponding to min_bounding_volume_distance_data. */
-            std::shared_ptr<ShaderStorageBuffer> min_bounding_volume_distance_ssbo;
             /** @brief Unique identifier of the buffer. */
             UID<RayBuffer> uid;
+            /** @brief Containing the shader buffer storage objects. */
+            struct
+            {
+                /** @brief Corresponding to ray_properties_data. */
+                std::shared_ptr<ShaderStorageBuffer> ray_properties;
+                /** @brief Corresponding to index_data. */
+                std::shared_ptr<ShaderStorageBuffer> particle_index;
+            } ssbo;
         };
 
         /**
@@ -72,20 +69,28 @@ namespace ldplab
          */
         struct OutputBuffer
         {
+            /** @brief Contains GPU applicable scattered output element. */
+            struct ScatteredOutput
+            {
+                Vec3 force;
+                double UNUSED_00;
+                Vec3 torque;
+                double UNUSED_01;
+            };
             /** @brief Array containing size force changes per particle. */
-            Vec4* force_data;
+            Vec3* force_data;
             /** @brief Array containing size torque changes per particle. */
-            Vec4* torque_data;
+            Vec3* torque_data;
             /** @brief Number of particles. */
             size_t size;
             /** @brief Array used to mirror the according SSBO. */
-            Vec4* force_per_ray_data;
-            /** @brief Array used to mirror the according SSBO. */
-            Vec4* torque_per_ray_data;
-            /** @brief SSBO containing the output force per ray. */
-            std::shared_ptr<ShaderStorageBuffer> force_per_ray_ssbo;
-            /** @brief SSBO containing the output torque per ray. */
-            std::shared_ptr<ShaderStorageBuffer> torque_per_ray_ssbo;
+            ScatteredOutput* output_per_ray_data;
+            /** @brief Containint the shader buffer storage objects. */
+            struct
+            {
+                /** @brief Corresponding to output_per_ray. */
+                std::shared_ptr<ShaderStorageBuffer> output_per_ray;
+            } ssbo;
         };
 
         /**
@@ -94,20 +99,28 @@ namespace ldplab
          */
         struct IntersectionBuffer
         {
-            /** @brief Array containing size intersection points. */
-            Vec4* point_data;
-            /** @brief Array containing size intersection normals. */
-            Vec4* normal_data;
+            /** @brief Contains GPU applicable intersection data. */
+            struct IntersectionProperties
+            {
+                Vec3 point;
+                double UNUSED_00;
+                Vec3 normal;
+                double UNUSED_01;
+            };
+            /** @brief Array containing intersection properties. */
+            IntersectionProperties* intersection_properties_data;
             /** @brief Array containing indices of intersected particles. */
             int32_t* particle_index_data;
             /** @brief Number of elements in point and normal arrays. */
             size_t size;
-            /** @brief SSBO corresponding to point_data. */
-            std::shared_ptr<ShaderStorageBuffer> point_ssbo;
-            /** @brief SSBO corresponding to normal_data. */
-            std::shared_ptr<ShaderStorageBuffer> normal_ssbo;
-            /** @brief SSBO corresponding to particle_index_data. */
-            std::shared_ptr<ShaderStorageBuffer> particle_index_ssbo;
+            /** @brief Containint the shader buffer storage objects. */
+            struct
+            {
+                /** @brief Corresponding to intersection_properties_data. */
+                std::shared_ptr<ShaderStorageBuffer> intersection_properties;
+                /** @brief Corresponding to particle_index_data. */
+                std::shared_ptr<ShaderStorageBuffer> particle_index;
+            } ssbo;
         };
 
         /**
@@ -116,57 +129,34 @@ namespace ldplab
          */
         struct ParticleTransformationData
         {
-            /** 
-             * @brief Vector from particle space origin (in world space) to 
-             *        world space origin.
-             */
-            std::vector<Vec4> w2p_translation_data;
+            // Raw transformations
+            std::vector<Mat3> w2p_rotation_scale;
+            std::vector<Vec3> w2p_translation;
+            std::vector<Mat3> p2w_scale_rotation;
+            std::vector<Vec3> p2w_translation;
             /**
              * @brief Matrix that transforms a world space vector (when the
              *        vector is applied to the matrix from the right-hand side) 
-             *        by first rotating and then scaling it into particle space
-             *        (safe for translation).
+             *        by first rotating and then scaling it into particle 
+             *        space.
+             * @details Includes translation (using homogenous coordinates).
              */
-            std::vector<Mat4> w2p_rotation_scale_data;
-            /**
-             * @brief Vector to the particle space (in world space)
-             */
-            std::vector<Vec4> p2w_translation_data;
+            std::vector<Mat4> w2p_data;
             /**
              * @brief Matrix that transforms a particle space vector (when the
              *        vector is applied to the matrix from the right-hand side)
-             *        by first scaling and then rotating it into world space
-             *        (safe for translation).
+             *        by first scaling and then rotating it into world space.
+             * * @details Includes translation (using homogenous coordinates).
              */
-            std::vector<Mat4> p2w_scale_rotation_data;
+            std::vector<Mat4> p2w_data;
             /** @brief Containing the SSBOs. */
             struct
             {
-                std::shared_ptr<ShaderStorageBuffer> w2p_translation;
-                std::shared_ptr<ShaderStorageBuffer> w2p_rotation_scale;
-                std::shared_ptr<ShaderStorageBuffer> p2w_translation;
-                std::shared_ptr<ShaderStorageBuffer> p2w_scale_rotation;
+                /** @brief Corresponds to w2p_data. */
+                std::shared_ptr<ShaderStorageBuffer> w2p;
+                /** @brief Corresponds to p2w_data. */
+                std::shared_ptr<ShaderStorageBuffer> p2w;
             } ssbo;
-            /** @brief Uploads transformation data to the GPU buffers. */
-            void uploadSSBO();
-        };
-
-        /**
-         * @brief Structure models the geometries of a rod like particle. The 
-         *        particle is cylindric shaped with a spherical cap and a 
-         *        spherical indent at the bottom.
-         * @detail The orientation of the cylinder is pointing to the 
-         *         z-direction. The origin is of the coordinate system is set 
-         *         in the middle point of bottom surface where the indentation 
-         *         is.
-         */
-        struct RodParticle
-        {
-            double cylinder_radius;
-            double cylinder_length;
-            double sphere_radius;
-            Vec4 origin_cap;
-            Vec4 origin_indentation;
         };
 
         /**
@@ -180,7 +170,7 @@ namespace ldplab
             enum class Type { rod_particles };
             /** @brief Returns the type of the particles. */
             virtual Type type() const = 0;
-            /** @brief Uploads the data to the gpu. */
+            /** @brief Used to upload particle data to GPU. */
             virtual void uploadSSBO() = 0;
         };
 
@@ -194,24 +184,24 @@ namespace ldplab
                 :
                 m_context{ context }
             { }
-
             Type type() const override { return Type::rod_particles; }
             void uploadSSBO() override;
+            /** @brief Contains GPU applicable rod particle data. */
+            struct RodParticleProperties
+            {
+                double cap_origin_z;
+                double indentation_origin_z;
+                double cylinder_radius;
+                double cylinder_length;
+                double sphere_radius;
+            };
             /** @brief Contains the rod particles. */
-            std::vector<RodParticle> particle_data;
+            std::vector<RodParticleProperties> rod_particles_data;
             /** @brief Contains SSBOs for the rod particle data. */
             struct
             {
-                /** @brief Corresponding to RodParticle::cylinder_radius. */
-                std::shared_ptr<ShaderStorageBuffer> cylinder_radius;
-                /** @brief Corresponding to RodParticle::cylinder_length. */
-                std::shared_ptr<ShaderStorageBuffer> cylinder_length;
-                /** @brief Corresponding to RodParticle::sphere_radius. */
-                std::shared_ptr<ShaderStorageBuffer> sphere_radius;
-                /** @brief Corresponding to RodParticle::origin_cap. */
-                std::shared_ptr<ShaderStorageBuffer> origin_cap;
-                /** @brief Corresponding to RodParticle::origin_indentation. */
-                std::shared_ptr<ShaderStorageBuffer> origin_indentation;
+                /** @brief Corresponding to particle_data. */
+                std::shared_ptr<ShaderStorageBuffer> rod_particles;
             } ssbo;
         };
 
@@ -226,7 +216,7 @@ namespace ldplab
             enum class Type { linear_one_directional };
             /** @brief Returns the type of the particles. */
             virtual Type type() const = 0;
-            /** @brief Uploads the data to the gpu. */
+            /** @brief Used to upload particle data to GPU. */
             virtual void uploadSSBO() = 0;
         };
 
@@ -242,27 +232,23 @@ namespace ldplab
                 :
                 m_context{ context }
             { }
-            
             Type type() const override { return Type::linear_one_directional; }
             void uploadSSBO() override;
-            std::vector<ParticleMaterialLinearOneDirectional> material_data;
+            /** @brief Contains GPU applicable material data. */
+            struct LinearOneDirectionalMaterialProperties
+            {
+                Vec3 direction_times_gradient;
+                double index_of_refraction_sum_term;
+            };
+            std::vector<LinearOneDirectionalMaterialProperties> material_data;
             /**
              * @brief Contains SSBOs for linear one directional particle 
              *        material data.
              */
             struct
             {
-                /** 
-                 * @brief Contains the sum terms, which is equal to
-                 *        $i - dot(g * V, O)$, where i is the index of 
-                 *        refraction, g is the gradient, V is the gradient
-                 *        direction and O is the origin of the index change.
-                 */
-                std::shared_ptr<ShaderStorageBuffer> 
-                    index_of_refraction_sum_term;
-                /** @brief Contains the direction times the gradient. */
-                std::shared_ptr<ShaderStorageBuffer>
-                    direction_times_gradient;
+                /** @brief Corresponding to material_data. */
+                std::shared_ptr<ShaderStorageBuffer> material;
             } ssbo;
         };
 
@@ -277,7 +263,7 @@ namespace ldplab
             enum class Type { spheres };
             /** @brief Returns the type of the bounding volumes. */
             virtual Type type() const = 0;
-            /** @brief Uploads the data to the gpu. */
+            /** @brief Used to upload particle data to GPU. */
             virtual void uploadSSBO() = 0;
         };
 
@@ -285,20 +271,23 @@ namespace ldplab
         struct BoundingSphereData : public IBoundingVolumeData
         {
             Type type() const override { return Type::spheres; }
+            void uploadSSBO() override;
+            /** @brief Contains GPU applicable bounding sphere data. */
+            struct BoundingSphereProperties
+            {
+                Vec3 center;
+                double radius;
+            };
             /** @brief Bounding sphere data in world space. */
-            std::vector<BoundingVolumeSphere> sphere_data;
-            /** @brief Uploads the data to the gpu. */
-            virtual void uploadSSBO() override;
+            std::vector<BoundingSphereProperties> sphere_properties_data;
             /** 
              * @brief Contains shader storage buffer objects for 
              *        bounding sphere data.
              */
             struct
             {
-                /** @brief Contains bounding sphere centers. */
-                std::shared_ptr<ShaderStorageBuffer> center;
-                /** @brief Contains bounding sphere radii. */
-                std::shared_ptr<ShaderStorageBuffer> radius;
+                /** @brief Corresponding to sphere_properties_data. */
+                std::shared_ptr<ShaderStorageBuffer> sphere_properties;
             } ssbo;
         };
     }

@@ -43,8 +43,10 @@ namespace ldplab
             /** @brief Initializes the GPU part of the ray tracing step. */
             void initGPU();
         private:
-            Mat4 getRotationMatrix(
+            Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);
+            Mat4 buildTranformationMatrix(
+                Mat3 rotation_scale, Vec3 translation);
             /**
             * @brief Constructor
             */

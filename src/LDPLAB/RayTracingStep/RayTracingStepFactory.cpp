@@ -281,13 +281,17 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
         std::shared_ptr<rtsgpu_ogl::Context> ctx{ new rtsgpu_ogl::Context{
         setup.particles, setup.light_sources } };
         ctx->thread_pool = info.thread_pool;
-        ctx->particle_transformation_data.p2w_scale_rotation_data.resize(
+        ctx->particle_transformation_data.p2w_data.resize(
             ctx->particles.size());
-        ctx->particle_transformation_data.p2w_translation_data.resize(
+        ctx->particle_transformation_data.p2w_scale_rotation.resize(
             ctx->particles.size());
-        ctx->particle_transformation_data.w2p_rotation_scale_data.resize(
+        ctx->particle_transformation_data.p2w_translation.resize(
             ctx->particles.size());
-        ctx->particle_transformation_data.w2p_translation_data.resize(
+        ctx->particle_transformation_data.w2p_data.resize(
+            ctx->particles.size());
+        ctx->particle_transformation_data.w2p_rotation_scale.resize(
+            ctx->particles.size());
+        ctx->particle_transformation_data.w2p_translation.resize(
             ctx->particles.size());
         ctx->parameters.intensity_cutoff = info.intensity_cutoff;
         ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
@@ -303,8 +307,9 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
             std::shared_ptr<rtsgpu_ogl::IBoundingVolumeData>(
                 new rtsgpu_ogl::BoundingSphereData());
         ((rtsgpu_ogl::BoundingSphereData*)ctx->bounding_volume_data.get())->
-            sphere_data.resize(ctx->particles.size(),
-                BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
+            sphere_properties_data.resize(ctx->particles.size(),
+                rtsgpu_ogl::BoundingSphereData::BoundingSphereProperties{ 
+                    Vec3{ 0, 0, 0 }, 0 });
         ctx->particle_data =
             std::shared_ptr<rtsgpu_ogl::IParticleData>(
                 new rtsgpu_ogl::RodParticleData(ctx));
@@ -469,12 +474,13 @@ bool ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
             Vec3 origin_cap{ 0.0 , 0.0, geometry->cylinder_length + h - sphere_radius };
             Vec3 origin_indentation{ 0.0 , 0.0,h - sphere_radius };
             ((rtsgpu_ogl::RodParticleData*)context->particle_data.get())->
-                particle_data.push_back(rtsgpu_ogl::RodParticle{
-                    geometry->cylinder_radius,
-                    geometry->cylinder_length,
-                    sphere_radius,
-                    Vec4(origin_cap, 0),
-                    Vec4(origin_indentation, 0) });
+                rod_particles_data.push_back(
+                    rtsgpu_ogl::RodParticleData::RodParticleProperties{
+                        origin_cap.z,
+                        origin_indentation.z,
+                        geometry->cylinder_radius,
+                        geometry->cylinder_length,
+                        sphere_radius });
         }
         else
         {
@@ -487,9 +493,12 @@ bool ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
         if (particle.material->type() ==
             IParticleMaterial::Type::linear_one_directional)
         {
+            const ParticleMaterialLinearOneDirectional* pm =
+                (ParticleMaterialLinearOneDirectional*)particle.material.get();
             ((rtsgpu_ogl::ParticleMaterialLinearOneDirectionalData*)
                 context->particle_material_data.get())->material_data.push_back(
-                *((ParticleMaterialLinearOneDirectional*)particle.material.get()));
+                    rtsgpu_ogl::ParticleMaterialLinearOneDirectionalData::LinearOneDirectionalMaterialProperties
+                        {pm->direction_times_gradient, pm->index_of_refraction_minus_partial_dot});
         }
         else
         {

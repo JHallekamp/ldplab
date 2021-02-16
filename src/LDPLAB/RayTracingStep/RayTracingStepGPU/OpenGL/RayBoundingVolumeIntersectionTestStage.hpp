@@ -71,7 +71,6 @@ namespace ldplab
             size_t execute(RayBuffer& buffer) override;
         private:
             std::shared_ptr<Context> m_context;
-            std::vector<BoundingVolumeSphere>& m_bounding_spheres;
             std::shared_ptr<ComputeShader> m_compute_shader;
             GLint m_shader_uniform_location_num_rays_per_buffer;
             GLint m_shader_uniform_location_num_particles;

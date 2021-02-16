@@ -14,9 +14,7 @@
 ldplab::rtsgpu_ogl::RodParticleIntersectionTest::
     RodParticleIntersectionTest(std::shared_ptr<Context> context)
     :
-    m_context{ context },
-    m_rod_particles{ ((RodParticleData*)
-        context->particle_data.get())->particle_data }
+    m_context{ context }
 { }
 
 bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::initShaders(
@@ -87,21 +85,7 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(particle_intersection_test_ssbo_binding);
-    rays.ray_origin_ssbo->bindToIndex(0);
-    rays.ray_direction_ssbo->bindToIndex(1);
-    rays.index_ssbo->bindToIndex(2);
-    intersection.point_ssbo->bindToIndex(3);
-    intersection.normal_ssbo->bindToIndex(4);
-    intersection.particle_index_ssbo->bindToIndex(5);
-    const RodParticleData* pd =
-        ((RodParticleData*)m_context->particle_data.get());
-    pd->ssbo.cylinder_radius->bindToIndex(6);
-    pd->ssbo.cylinder_length->bindToIndex(7);
-    pd->ssbo.sphere_radius->bindToIndex(8);
-    pd->ssbo.origin_cap->bindToIndex(9);
-    pd->ssbo.origin_indentation->bindToIndex(10);
-    m_context->particle_transformation_data.ssbo.p2w_scale_rotation->bindToIndex(11);
-    m_context->particle_transformation_data.ssbo.p2w_translation->bindToIndex(12);
+    // TODO
     LDPLAB_PROFILING_STOP(particle_intersection_test_ssbo_binding);
 
     // Execute shader
@@ -111,7 +95,7 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
 
     // Download index data
     LDPLAB_PROFILING_START(particle_intersection_test_data_download);
-    rays.index_ssbo->download(rays.index_data);
+    rays.ssbo.particle_index->download(rays.particle_index_data);
     LDPLAB_PROFILING_STOP(particle_intersection_test_data_download);
 
     // Unbind gl context
@@ -123,7 +107,7 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
     size_t num_world_space_rays = 0;
     for (size_t i = 0; i < rays.size; ++i)
     {
-        if (rays.index_data[i] >= m_context->particles.size())
+        if (rays.particle_index_data[i] >= m_context->particles.size())
             ++num_world_space_rays;
     }
     rays.world_space_rays = num_world_space_rays;

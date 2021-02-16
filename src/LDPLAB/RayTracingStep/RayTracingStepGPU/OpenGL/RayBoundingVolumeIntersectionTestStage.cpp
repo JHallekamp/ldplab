@@ -11,9 +11,7 @@ ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
         std::shared_ptr<Context> context)
     :
-    m_context{ context },
-    m_bounding_spheres{ ((BoundingSphereData*) 
-        context->bounding_volume_data.get())->sphere_data }
+    m_context{ context }
 {
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "RayBoundingSphereIntersectionTestStageBruteForce instance created",
@@ -94,16 +92,7 @@ size_t
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(bounding_volume_intersection_test_ssbo_binding);
-    buffer.ray_origin_ssbo->bindToIndex(0);
-    buffer.ray_direction_ssbo->bindToIndex(1);
-    buffer.index_ssbo->bindToIndex(2);
-    buffer.min_bounding_volume_distance_ssbo->bindToIndex(3);
-    const BoundingSphereData* bsd = 
-        (BoundingSphereData*)m_context->bounding_volume_data.get();
-    bsd->ssbo.center->bindToIndex(4);
-    bsd->ssbo.radius->bindToIndex(5);
-    m_context->particle_transformation_data.ssbo.w2p_rotation_scale->bindToIndex(6);
-    m_context->particle_transformation_data.ssbo.w2p_translation->bindToIndex(7);
+    // TODO
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_ssbo_binding);
 
     // Execute shader
@@ -113,7 +102,7 @@ size_t
 
     // Download index data
     LDPLAB_PROFILING_START(bounding_volume_intersection_test_data_download);
-    buffer.index_ssbo->download(buffer.index_data);
+    buffer.ssbo.particle_index->download(buffer.particle_index_data);
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_data_download);
 
     // Unbind gl context
@@ -126,7 +115,7 @@ size_t
     size_t num_rays_hitting_boundary_sphere = 0;
     for (size_t i = 0; i < buffer.size; ++i)
     {
-        if (buffer.index_data[i] >= 0)
+        if (buffer.particle_index_data[i] >= 0)
             ++num_rays_hitting_boundary_sphere;
     }
 

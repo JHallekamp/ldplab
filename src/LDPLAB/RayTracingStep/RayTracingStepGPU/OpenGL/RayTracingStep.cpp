@@ -38,46 +38,59 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
         const ParticleInstance& particle = particle_it->second;
 
         // Set particle current transformation
-        m_context->particle_transformation_data.w2p_translation_data[i] =
-            Vec4(-particle.position, 0);
-        m_context->particle_transformation_data.p2w_translation_data[i] =
-            Vec4(particle.position, 0);
-        m_context->particle_transformation_data.w2p_rotation_scale_data[i] =
+        m_context->particle_transformation_data.w2p_translation[i] =
+            -particle.position;
+        m_context->particle_transformation_data.p2w_translation[i] =
+            particle.position;
+        m_context->particle_transformation_data.w2p_rotation_scale[i] =
             getRotationMatrix(
                 particle.orientation.x,
                 particle.orientation.y,
                 particle.orientation.z,
                 particle.rotation_order);
-        m_context->particle_transformation_data.p2w_scale_rotation_data[i] =
+        m_context->particle_transformation_data.p2w_scale_rotation[i] =
             getRotationMatrix(
                 -particle.orientation.x,
                 -particle.orientation.y,
                 -particle.orientation.z,
                 invertRotationOrder(particle.rotation_order));
+        m_context->particle_transformation_data.w2p_data[i] =
+            buildTranformationMatrix(
+                m_context->particle_transformation_data.w2p_rotation_scale[i],
+                m_context->particle_transformation_data.w2p_translation[i]);
+        m_context->particle_transformation_data.p2w_data[i] =
+            buildTranformationMatrix(
+                m_context->particle_transformation_data.p2w_scale_rotation[i],
+                m_context->particle_transformation_data.p2w_translation[i]);
 
         // Transform bounding volumes
         if (m_context->bounding_volume_data->type() ==
             IBoundingVolumeData::Type::spheres)
         {
+            BoundingSphereData* transformed_bounding_sphere =
+                (BoundingSphereData*)m_context->bounding_volume_data.get();
+            const BoundingVolumeSphere* original_sphere =
+                (BoundingVolumeSphere*)m_context->particles[i].bounding_volume.get();
+
             // Set sphere radius
-            ((BoundingSphereData*)
-                m_context->bounding_volume_data.get())->sphere_data[i].radius =
-                ((BoundingVolumeSphere*)
-                    m_context->particles[i].bounding_volume.get())->radius;
+            transformed_bounding_sphere->sphere_properties_data[i].radius =
+                original_sphere->radius;
+
             // Set sphere center
-            ((BoundingSphereData*)
-                m_context->bounding_volume_data.get())->sphere_data[i].center =
-                m_context->particle_transformation_data.p2w_scale_rotation_data[i] *
-                Vec4(((BoundingVolumeSphere*)
-                    m_context->particles[i].bounding_volume.get())->center, 0) +
-                m_context->particle_transformation_data.p2w_translation_data[i];
+            transformed_bounding_sphere->sphere_properties_data[i].center =
+                m_context->particle_transformation_data.p2w_scale_rotation[i] *
+                original_sphere->center +
+                m_context->particle_transformation_data.p2w_translation[i];
         }
     }
 
     // Upload ssbos
     std::unique_lock<std::mutex> lck{ m_context->ogl->getGPUMutex() };
     m_context->ogl->bindGlContext();
-    m_context->particle_transformation_data.uploadSSBO();
+    m_context->particle_transformation_data.ssbo.p2w->upload(
+        m_context->particle_transformation_data.p2w_data.data());
+    m_context->particle_transformation_data.ssbo.w2p->upload(
+        m_context->particle_transformation_data.w2p_data.data());
     m_context->bounding_volume_data->uploadSSBO();
     m_context->ogl->unbindGlContext();
 }
@@ -92,22 +105,12 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
     {
         RodParticleData* const particle_data = ((RodParticleData*)
             m_context->particle_data.get());
-        particle_data->ssbo.cylinder_length =
+        particle_data->ssbo.rod_particles =
             m_context->ogl->createShaderStorageBuffer(
-                particle_data->particle_data.size() * sizeof(double));
-        particle_data->ssbo.cylinder_radius =
-            m_context->ogl->createShaderStorageBuffer(
-                particle_data->particle_data.size() * sizeof(double));
-        particle_data->ssbo.origin_cap =
-            m_context->ogl->createShaderStorageBuffer(
-                particle_data->particle_data.size() * sizeof(Vec4));
-        particle_data->ssbo.origin_indentation =
-            m_context->ogl->createShaderStorageBuffer(
-                particle_data->particle_data.size() * sizeof(Vec4));
-        particle_data->ssbo.sphere_radius =
-            m_context->ogl->createShaderStorageBuffer(
-                particle_data->particle_data.size() * sizeof(double));
-        particle_data->uploadSSBO();
+                particle_data->rod_particles_data.size() * 
+                sizeof(RodParticleData::RodParticleProperties));
+        particle_data->ssbo.rod_particles->upload(
+            particle_data->rod_particles_data.data());
     }
     else
     {
@@ -122,13 +125,13 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
         ParticleMaterialLinearOneDirectionalData* const particle_material =
             ((ParticleMaterialLinearOneDirectionalData*)
                 m_context->particle_material_data.get());
-        particle_material->ssbo.direction_times_gradient =
+        particle_material->ssbo.material =
             m_context->ogl->createShaderStorageBuffer(
-                particle_material->material_data.size() * sizeof(Vec4));
-        particle_material->ssbo.index_of_refraction_sum_term =
-            m_context->ogl->createShaderStorageBuffer(
-                particle_material->material_data.size() * sizeof(double));
-        particle_material->uploadSSBO();
+                particle_material->material_data.size() * 
+                sizeof(ParticleMaterialLinearOneDirectionalData::
+                    LinearOneDirectionalMaterialProperties));
+        particle_material->ssbo.material->upload(
+            particle_material->material_data.data());
     }
     else
     {
@@ -139,25 +142,20 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
 
     // Create SSBOs for space transformations
     const size_t num_particles = m_context->particles.size();
-    m_context->particle_transformation_data.ssbo.p2w_scale_rotation =
+    m_context->particle_transformation_data.ssbo.w2p =
         m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Mat4));
-    m_context->particle_transformation_data.ssbo.p2w_translation =
-        m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Vec4));
-    m_context->particle_transformation_data.ssbo.w2p_rotation_scale =
+    m_context->particle_transformation_data.ssbo.p2w =
         m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Mat4));
-    m_context->particle_transformation_data.ssbo.w2p_translation =
-        m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Vec4));
-
     m_context->ogl->unbindGlContext();
 }
 
-ldplab::Mat4 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
+ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     double rx,
     double ry,
     double rz,
     RotationOrder order)
 {
-    ldplab::Mat4 rotx(0), roty(0), rotz(0);
+    ldplab::Mat3 rotx(0), roty(0), rotz(0);
 
     rotx[0][0] = 1;
     rotx[1][1] = cos(rx);
@@ -191,6 +189,27 @@ ldplab::Mat4 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Encountered unknown "\
         "rotation order, assumes xyz instead.");
     return rotz * roty * rotx;
+}
+
+ldplab::Mat4 ldplab::rtsgpu_ogl::RayTracingStep::buildTranformationMatrix(
+    Mat3 rotation_scale, 
+    Vec3 translation)
+{
+    Mat4 trsf(0);
+    trsf[0][0] = rotation_scale[0][0];
+    trsf[0][1] = rotation_scale[0][1];
+    trsf[0][2] = rotation_scale[0][2];
+    trsf[0][3] = translation.x;
+    trsf[1][0] = rotation_scale[1][0];
+    trsf[1][1] = rotation_scale[1][1];
+    trsf[1][2] = rotation_scale[1][2];
+    trsf[1][3] = translation.y;
+    trsf[2][0] = rotation_scale[2][0];
+    trsf[2][1] = rotation_scale[2][1];
+    trsf[2][2] = rotation_scale[2][2];
+    trsf[2][3] = translation.z;
+    trsf[3][3] = 1.0;
+    return trsf;
 }
 
 void ldplab::rtsgpu_ogl::RayTracingStep::execute(

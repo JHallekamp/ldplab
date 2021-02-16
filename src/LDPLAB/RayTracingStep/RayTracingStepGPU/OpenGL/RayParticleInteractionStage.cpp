@@ -101,29 +101,7 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(ray_particle_interaction_ssbo_binding);
-    rays.ray_origin_ssbo->bindToIndex(0);
-    rays.ray_direction_ssbo->bindToIndex(1);
-    rays.ray_intensity_ssbo->bindToIndex(2);
-    rays.index_ssbo->bindToIndex(3);
-    reflected_rays.ray_origin_ssbo->bindToIndex(4);
-    reflected_rays.ray_direction_ssbo->bindToIndex(5);
-    reflected_rays.ray_intensity_ssbo->bindToIndex(6);
-    reflected_rays.index_ssbo->bindToIndex(7);
-    reflected_rays.min_bounding_volume_distance_ssbo->bindToIndex(8);
-    refracted_rays.ray_origin_ssbo->bindToIndex(9);
-    refracted_rays.ray_direction_ssbo->bindToIndex(10);
-    refracted_rays.ray_intensity_ssbo->bindToIndex(11);
-    refracted_rays.index_ssbo->bindToIndex(12);
-    refracted_rays.min_bounding_volume_distance_ssbo->bindToIndex(13);
-    intersection.point_ssbo->bindToIndex(14);
-    intersection.normal_ssbo->bindToIndex(15);
-    const ParticleMaterialLinearOneDirectionalData* pmd =
-        ((ParticleMaterialLinearOneDirectionalData*)
-            m_context->particle_material_data.get());
-    pmd->ssbo.index_of_refraction_sum_term->bindToIndex(16);
-    pmd->ssbo.direction_times_gradient->bindToIndex(17);
-    output.force_per_ray_ssbo->bindToIndex(18);
-    output.torque_per_ray_ssbo->bindToIndex(19);
+    // TODO
     LDPLAB_PROFILING_STOP(ray_particle_interaction_ssbo_binding);
 
     // Bind uniforms
@@ -141,10 +119,11 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
 
     // Download data
     LDPLAB_PROFILING_START(ray_particle_interaction_data_download);
-    reflected_rays.index_ssbo->download(reflected_rays.index_data);
-    refracted_rays.index_ssbo->download(reflected_rays.index_data);
-    output.force_per_ray_ssbo->download(output.force_per_ray_data);
-    output.torque_per_ray_ssbo->download(output.torque_per_ray_data);
+    reflected_rays.ssbo.particle_index->download(
+        reflected_rays.particle_index_data);
+    refracted_rays.ssbo.particle_index->download(
+        reflected_rays.particle_index_data);
+    output.ssbo.output_per_ray->download(output.output_per_ray_data);
     LDPLAB_PROFILING_STOP(ray_particle_interaction_data_download);
 
     // Unbind gl context
@@ -160,17 +139,19 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
     refracted_rays.active_rays = 0;
     for (size_t i = 0; i < rays.size; ++i)
     {
-        if (reflected_rays.index_data[i] >= 0)
+        if (reflected_rays.particle_index_data[i] >= 0)
             ++reflected_rays.active_rays;
-        if (refracted_rays.index_data[i] >= 0)
+        if (refracted_rays.particle_index_data[i] >= 0)
             ++refracted_rays.active_rays;
     }
 
     // Gather output
     for (size_t i = 0; i < rays.size; ++i)
     {
-        output.force_data[rays.index_data[i]] += output.force_per_ray_data[i];
-        output.torque_data[rays.index_data[i]] += output.torque_per_ray_data[i];
+        output.force_data[rays.particle_index_data[i]] += 
+            output.output_per_ray_data[i].force;
+        output.torque_data[rays.particle_index_data[i]] += 
+            output.output_per_ray_data[i].torque;
     }
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Ray particle interaction on batch "\

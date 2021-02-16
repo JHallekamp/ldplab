@@ -96,14 +96,6 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     m_context->ogl->bindGlContext();
     LDPLAB_PROFILING_STOP(inner_particle_propagation_gl_context_binding);
     
-    // Upload intersection and ray buffers
-    //LDPLAB_PROFILING_START(inner_particle_propagation_data_upload);
-    //rays.index_ssbo->upload(rays.index_data);
-    //rays.ray_direction_ssbo->upload(rays.ray_direction_data);
-    //rays.ray_intensity_ssbo->upload(rays.ray_intensity_data);
-    //rays.ray_origin_ssbo->upload(rays.ray_origin_data);
-    //LDPLAB_PROFILING_STOP(inner_particle_propagation_data_upload);
-    
     // Bind shaders
     LDPLAB_PROFILING_START(inner_particle_propagation_shader_binding);
     m_compute_shader->use();
@@ -111,26 +103,7 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     
     // Bind buffers
     LDPLAB_PROFILING_START(inner_particle_propagation_ssbo_binding);
-    rays.index_ssbo->bindToIndex(0);
-    rays.ray_origin_ssbo->bindToIndex(1);
-    rays.ray_direction_ssbo->bindToIndex(2);
-    rays.ray_intensity_ssbo->bindToIndex(3);
-    intersection.point_ssbo->bindToIndex(4);
-    intersection.normal_ssbo->bindToIndex(5);
-    output.force_per_ray_ssbo->bindToIndex(6);
-    output.torque_per_ray_ssbo->bindToIndex(7);
-    const RodParticleData* pd = 
-        ((RodParticleData*)m_context->particle_data.get());
-    const ParticleMaterialLinearOneDirectionalData* pmd =
-        ((ParticleMaterialLinearOneDirectionalData*)
-            m_context->particle_material_data.get());
-    pd->ssbo.cylinder_radius->bindToIndex(8);
-    pd->ssbo.cylinder_length->bindToIndex(9);
-    pd->ssbo.sphere_radius->bindToIndex(10);
-    pd->ssbo.origin_cap->bindToIndex(11);
-    pd->ssbo.origin_indentation->bindToIndex(12);
-    pmd->ssbo.index_of_refraction_sum_term->bindToIndex(13);
-    pmd->ssbo.direction_times_gradient->bindToIndex(14);
+    // TODO
     LDPLAB_PROFILING_STOP(inner_particle_propagation_ssbo_binding);
     
     // Execute shader
@@ -138,34 +111,12 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     m_compute_shader->execute(rays.size / 64);
     LDPLAB_PROFILING_STOP(inner_particle_propagation_shader_execution);
     
-    // Download intersection and output
-    LDPLAB_PROFILING_START(inner_particle_propagation_data_download);
-    //rays.ray_origin_ssbo->download(rays.ray_origin_data);
-    //rays.ray_direction_ssbo->download(rays.ray_direction_data);
-    //intersection.point_ssbo->download(intersection.point_data);
-    //intersection.normal_ssbo->download(intersection.normal_data);
-    output.force_per_ray_ssbo->download(output.force_per_ray_data);
-    output.torque_per_ray_ssbo->download(output.torque_per_ray_data);
-    LDPLAB_PROFILING_STOP(inner_particle_propagation_data_download);
-    
     // Unbind gl context
     LDPLAB_PROFILING_START(inner_particle_propagation_gl_context_unbinding);
     m_context->ogl->unbindGlContext();
     gpu_lock.unlock();
     LDPLAB_PROFILING_STOP(inner_particle_propagation_gl_context_unbinding);
-    
-    // Gather output
-    //LDPLAB_PROFILING_START(inner_particle_propagation_gather_output);
-    //for (size_t i = 0; i < rays.size; ++i)
-    //{
-    //    if (rays.index_data[i] < 0 ||
-    //        rays.index_data[i] >= m_context->particles.size())
-    //        continue;
-    //    output.force_data[rays.index_data[i]] += output.force_per_ray_data[i];
-    //    output.torque_data[rays.index_data[i]] += output.torque_per_ray_data[i];
-    //}
-    //LDPLAB_PROFILING_STOP(inner_particle_propagation_gather_output);
-
+   
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Inner particle ray propagation on "\
         "buffer %i completed",
         m_context->uid,

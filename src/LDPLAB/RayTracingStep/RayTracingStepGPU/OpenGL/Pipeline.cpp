@@ -86,8 +86,8 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
     for (size_t p = 0; p < m_context->particles.size(); ++p)
     {
         UID<Particle> puid = m_context->particle_index_to_uid_map[p];
-        Vec4 force = Vec4{ 0, 0, 0, 0 };
-        Vec4 torque = Vec4{ 0, 0, 0, 0 };
+        Vec3 force = Vec3{ 0, 0, 0 };
+        Vec3 torque = Vec3{ 0, 0, 0 };
         for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
             force += m_buffer_controls[bc].getOutputBuffer().force_data[p];
@@ -95,8 +95,8 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
         }
 
         // Transform output from particle into world space
-        const Mat4& p2w = 
-            m_context->particle_transformation_data.p2w_scale_rotation_data[p];
+        const Mat3& p2w = 
+            m_context->particle_transformation_data.p2w_scale_rotation[p];
         output.force_per_particle[puid] = p2w * force;
         output.torque_per_particle[puid] = p2w * torque;
     }
@@ -240,27 +240,11 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
     else if (buffer.active_rays > 0 &&
         m_context->flags.emit_warning_on_maximum_branching_depth_discardment)
     {
-        // Compute max and average length
-        double max_intensity = 0.0, avg_intensity = 0.0;
-        for (size_t i = 0; i < buffer.size; ++i)
-        {
-            if (buffer.index_data[i] < 0)
-                continue;
-
-            double intensity = buffer.ray_intensity_data[i];
-            avg_intensity += intensity;
-            if (intensity > max_intensity)
-                max_intensity = intensity;
-        }
-        avg_intensity /= static_cast<double>(buffer.active_rays);
         LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Pipeline reached max "\
-            "branching depth %i with a total of %i still active rays, which "\
-            "include a max intensity of %f and average intensity of %f",
+            "branching depth %i with a total of %i still active rays",
             m_context->uid,
             m_context->parameters.maximum_branching_depth,
-            buffer.active_rays,
-            max_intensity,
-            avg_intensity);
+            buffer.active_rays);
     }
 }
 
@@ -282,9 +266,7 @@ void ldplab::rtsgpu_ogl::Pipeline::resetBuffers(
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(pipeline_reset_buffers_ssbo_binding);
-    intersection.particle_index_ssbo->bindToIndex(0);
-    output.force_per_ray_ssbo->bindToIndex(1);
-    output.torque_per_ray_ssbo->bindToIndex(2);
+    // TODO
     LDPLAB_PROFILING_STOP(pipeline_reset_buffers_ssbo_binding);
 
     // Execute shader
@@ -310,12 +292,7 @@ void ldplab::rtsgpu_ogl::Pipeline::uploadInitialBatch(RayBuffer& buffer)
 
     // Upload data
     LDPLAB_PROFILING_START(pipeline_upload_initial_batch_data_upload);
-    buffer.index_ssbo->upload(buffer.index_data);
-    buffer.ray_origin_ssbo->upload(buffer.ray_origin_data);
-    buffer.ray_direction_ssbo->upload(buffer.ray_direction_data);
-    buffer.ray_intensity_ssbo->upload(buffer.ray_intensity_data);
-    buffer.min_bounding_volume_distance_ssbo->upload(
-        buffer.min_bounding_volume_distance_data);
+    // TODO
     LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_data_upload);
 
     // Unbind gl context
