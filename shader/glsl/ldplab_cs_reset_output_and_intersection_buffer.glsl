@@ -1,5 +1,5 @@
 // Part of the WWU/LDPLAB Project
-// Compute Shader: UnpolirzedLight1DLinearIndexGradientInteraction
+// Compute Shader: Reset buffer
 #version 460 core
 
 // Local work group size

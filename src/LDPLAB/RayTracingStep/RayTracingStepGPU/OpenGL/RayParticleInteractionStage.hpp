@@ -2,6 +2,8 @@
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_PARTICLE_INTERACTION_HPP
 
 #include "../../RayTracingStepGPUOpenGLInfo.hpp"
+#include "Data.hpp"
+
 #include <memory>
 
 namespace ldplab

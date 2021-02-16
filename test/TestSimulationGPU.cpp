@@ -41,8 +41,8 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
 const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 8;
-const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
+const size_t NUM_RTS_THREADS = 2;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 0;
 const double RTS_INTENSITY_CUTOFF = 0.01 * LIGHT_INTENSITY  / 
@@ -51,6 +51,7 @@ const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
 const size_t NUM_SIM_ROTATION_STEPS = 64;
+const std::string BASE_SHADER_DIRECTORY = "shader/";
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
@@ -80,7 +81,7 @@ void plotProgress(double progress)
 int main()
 {
     // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "test_simulation_cpu.log" };
+    ldplab::LogCallbackFileStream flog{ "test_simulation_gpu.log" };
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
@@ -135,19 +136,20 @@ int main()
         std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
 
     // Create ray tracing step
-    ldplab::RayTracingStepCPUInfo rtscpu_info;
-    rtscpu_info.thread_pool = thread_pool;
-    rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
-    rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
-    rtscpu_info.light_source_ray_density_per_unit_area =
+    ldplab::RayTracingStepGPUOpenGLInfo rtsgpu_info;
+    rtsgpu_info.thread_pool = thread_pool;
+    rtsgpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
+    rtsgpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
+    rtsgpu_info.light_source_ray_density_per_unit_area =
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
-    rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
-    rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
+    rtsgpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
+    rtsgpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
+    rtsgpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
         RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_EPSILON, RTS_SOLVER_SAFETY_FACTOR);
+    rtsgpu_info.shader_base_directory_path = BASE_SHADER_DIRECTORY;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
-        ldplab::RayTracingStepFactory::createRayTracingStepCPU(
-            experimental_setup, rtscpu_info);
+        ldplab::RayTracingStepFactory::createRayTracingStepGPUOpenGL(
+            experimental_setup, rtsgpu_info);
 
     if (ray_tracing_step == nullptr)
         return -1;
@@ -163,14 +165,14 @@ int main()
     ldplab::RayTracingStepOutput output;
     
     std::stringstream identificator;
-    identificator << "cpu_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
+    identificator << "gpu_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
         "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
         "_bd" << MAX_RTS_BRANCHING_DEPTH <<
         "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT <<
         "_rs" << NUM_SIM_ROTATION_STEPS;
     std::ofstream output_file("force_" + identificator.str());
-    
+
     std::chrono::steady_clock::time_point start =
         std::chrono::steady_clock::now();
 

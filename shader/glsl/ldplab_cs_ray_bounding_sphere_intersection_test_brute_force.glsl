@@ -17,15 +17,15 @@ layout(std430, binding = 3) buffer rayMinBoundingVolumeDistanceData
 
 // Bounding sphere data
 layout(std430, binding = 4) readonly buffer boundingSphereCenterData
-{ dvec4 bounding_sphere_center[]; }
+{ dvec4 bounding_sphere_center[]; };
 layout(std430, binding = 5) readonly buffer boundingSphereRadiusData
-{ double bounding_sphere_radius[]; }
+{ double bounding_sphere_radius[]; };
 
 // World to particle transformation
 layout(std430, binding = 6) readonly buffer transformWorld2ParticleMatData
-{ dmat4 transform_w2p_mat[]; }
+{ dmat4 transform_w2p_mat[]; };
 layout(std430, binding = 7) readonly buffer transformWorld2ParticleVecData
-{ dvec4 transform_w2p_vec[]; }
+{ dvec4 transform_w2p_vec[]; };
 
 // Property data
 uniform uint num_rays_per_buffer;
@@ -50,15 +50,15 @@ void main()
     int min_i = 0;
 
     const dvec3 origin = ray_origin[ri].xyz;
-    for (uint i = 0; i < num_particles; ++i)
+    for (int i = 0; i < num_particles; ++i)
     {
-        const dvec3 oc = origin - bounding_sphere_center[i].xyz;
-        const double q = glm::dot(oc, oc) -
+        const dvec3 oc = ray_origin[ri].xyz - bounding_sphere_center[i].xyz;
+        const double q = dot(oc, oc) -
             bounding_sphere_radius[i] * bounding_sphere_radius[i];
         if (q < 1e-9)
             continue;
 
-        const double p = dot(ray_direction[ri], oc);
+        const double p = dot(ray_direction[ri].xyz, oc);
         const double discriminant = p * p - q;
         if (discriminant < 1e-9)
             continue;

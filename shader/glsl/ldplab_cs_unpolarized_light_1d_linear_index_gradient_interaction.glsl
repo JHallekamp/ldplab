@@ -5,37 +5,69 @@
 // Local work group size
 layout(local_size_x = 64) in;
 
+struct RayData
+{
+    // xyz: Ray origin
+    // w: Ray intensity
+    dvec4 origin_and_intensity;
+    // xyz: Ray direction
+    // w: Minimum bounding volume distance
+    dvec4 direction_and_min_bounding_volume_distance;
+};
+
+struct IntersectionData
+{
+    // xyz: Intersection point
+    // w: UNUSED
+    dvec4 position;
+    // xyz: Intersection normal
+    // w: UNUSED
+    dvec4 normal;
+};
+
+struct OutputData
+{
+    // xyz: Force vector
+    // w: UNUSED
+    dvec4 force;
+    // xyz: Torque vector
+    // w: UNUSED
+    dvec4 torque;
+};
+
+// 6
+
 // Ray buffer data
 layout(std430, binding = 0) readonly buffer rayOriginData
 { dvec4 ray_origin[]; };
 layout(std430, binding = 1) readonly buffer rayDirectionData
 { dvec4 ray_direction[]; };
 layout(std430, binding = 2) readonly buffer rayIntensityData
-{ double ray_intensity[]; }
+{ double ray_intensity[]; };
 layout(std430, binding = 3) readonly buffer rayIndexData
 { int ray_index[]; };
 
 // Reflected rays
 layout(std430, binding = 4) buffer reflectedRayOriginData
-{ dvec4 reflected_ray_origin[]; }
+{ dvec4 reflected_ray_origin[]; };
 layout(std430, binding = 5) buffer reflectedRayDirectionData
-{ dvec4 reflected_ray_direction[]; }
+{ dvec4 reflected_ray_direction[]; };
 layout(std430, binding = 6) buffer reflectedRayIntensityData
-{ double reflected_ray_intensity[]; }
+{ double reflected_ray_intensity[]; };
 layout(std430, binding = 7) buffer reflectedRayIndexData
-{ int reflected_ray_index[]; }
+{ int reflected_ray_index[]; };
 layout(std430, binding = 8) buffer reflectedRayMinBoundingVolumeDistanceData
 { double reflected_ray_min_bounding_volume_distance[]; };
 
 // Refracted rays
 layout(std430, binding = 9) buffer refractedRayOriginData
-{ dvec4 refracted_ray_origin[]; }
+{ dvec4 refracted_ray_origin[]; };
 layout(std430, binding = 10) buffer refractedRayDirectionData
-{ dvec4 refracted_ray_direction[]; }
+{ dvec4 refracted_ray_direction[]; };
 layout(std430, binding = 11) buffer refractedRayIntensityData
-{ double refracted_ray_intensity[]; }
+{ double refracted_ray_intensity[]; };
 layout(std430, binding = 12) buffer refractedRayIndexData
-{ int refracted_ray_index[]; }
+{ int refracted_ray_index[]; };
 layout(std430, binding = 13) buffer refractedRayMinBoundingVolumeDistanceData
 { double refracted_ray_min_bounding_volume_distance[]; };
 
@@ -96,7 +128,7 @@ void main()
 
     // Check if particle index is legal
     if (pi >= num_particles)
-        return
+        return;
     else if (pi < 0)
     {
         reflected_ray_index[ri] = -1;
@@ -105,7 +137,7 @@ void main()
     }
 
     double n_r = parameter_medium_reflection_index /
-        particleMaterialIndexOfRefrection(pi, intersection_position[ri]);
+        particleMaterialIndexOfRefrection(pi, intersection_position[ri].xyz);
     if (inner_particle_rays)
         n_r = 1.0 / n_r;
     const double cos_a = -dot(ray_direction[ri], intersection_normal[ri]);

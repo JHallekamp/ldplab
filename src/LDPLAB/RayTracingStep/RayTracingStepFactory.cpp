@@ -339,6 +339,27 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
                 "ldplab::rtsgpu_ogl::OpenGLContext");
             return nullptr;
         }
+        if (!rbvit->initShaders(info))
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
+                "ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce "\
+                "stage");
+            return nullptr;
+        }
+        if (!rpit->initShaders(info))
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
+                "ldplab::rtsgpu_ogl::RodParticleIntersectionTest "\
+                "stage");
+            return nullptr;
+        }
+        if (!rpi->initShaders(info))
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
+                "ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction "\
+                "stage");
+            return nullptr;
+        }
         if (!ipp->initShaders(info))
         {
             LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
@@ -354,6 +375,13 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
             std::move(rpi),
             std::move(ipp),
             ctx);
+        if (!ctx->pipeline->initShaders(info))
+        {
+            LDPLAB_LOG_ERROR("RTS factory: Could not fully initialize "\
+                "ldplab::rtsgpu_ogl::Pipeline");
+            return nullptr;
+        }
+
         std::shared_ptr<rtsgpu_ogl::RayTracingStep> rts(
             new rtsgpu_ogl::RayTracingStep{ ctx });
         rts->initGPU();        
