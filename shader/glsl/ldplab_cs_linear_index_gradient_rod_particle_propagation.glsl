@@ -326,11 +326,15 @@ void main()
     const uint ri =
         gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
 
+    // Check if shader run is legal
+    if (ri >= num_rays_per_buffer)
+        return;
+
     // Load the particle index
     const int pi = ray_index[ri];
 
-    // Check if shader run is legal
-    if ((ri >= num_rays_per_buffer) || (pi < 0))
+    // Check if index is legal
+    if (pi < 0)
         return;
 
     // Setting up varibles of the differential equation

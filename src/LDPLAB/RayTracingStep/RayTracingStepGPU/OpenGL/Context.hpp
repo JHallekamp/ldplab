@@ -38,7 +38,6 @@ namespace ldplab
                 ogl{ nullptr },
                 particles{ particles },
                 light_sources{ light_sources },
-                particle_transformations{ },
                 pipeline{ nullptr },
                 thread_pool{ nullptr },
                 particle_data{ nullptr },
@@ -86,7 +85,7 @@ namespace ldplab
              * @details The index of a particle transformation directly
              *          corresponds to the index of the related particle.
              */
-            std::vector<ParticleTransformation> particle_transformations;
+            ParticleTransformationData particle_transformation_data;
             /** @brief The ray tracing step cpu pipeline. */
             std::shared_ptr<Pipeline> pipeline;
             /** @brief The thread pool used by the ray tracing step. */

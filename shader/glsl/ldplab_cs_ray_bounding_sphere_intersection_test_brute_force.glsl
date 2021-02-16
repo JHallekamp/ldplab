@@ -38,7 +38,11 @@ void main()
     const uint ri =
         gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
 
-    // Check if ray is legal
+    // Check if local work item is within bounds
+    if (ri >= num_rays_per_buffer)
+        return;
+
+    // Check if ray index is legal
     if (ray_index[ri] == -1 || ray_index[ri] < num_particles)
         return;
 

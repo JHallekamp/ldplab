@@ -9,6 +9,7 @@
 #include "RayParticleIntersectionTestStage.hpp"
 
 #include "../../RayTracingStepOutput.hpp"
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
 #include "../../../ThreadPool.hpp"
 
 #include <memory>
@@ -43,6 +44,11 @@ namespace ldplab
                 std::unique_ptr<IInnerParticlePropagationStage> ipp,
                 std::shared_ptr<Context> context);
             /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            /**
              * @brief Sets up the pipeline stages.
              * @note Only called once per ray tracing step execution.
              */
@@ -58,6 +64,10 @@ namespace ldplab
             void processBatch(
                 RayBuffer& buffer,
                 BufferControl& buffer_control);
+            void resetBuffers(
+                OutputBuffer& output, 
+                IntersectionBuffer& intersection);
+            void uploadInitialBatch(RayBuffer& buffer);
         private:
             std::unique_ptr<IInitialStage> 
                 m_initial_stage;
@@ -72,6 +82,8 @@ namespace ldplab
             std::shared_ptr<Context> m_context;
             std::vector<BufferControl>
                 m_buffer_controls;
+            std::shared_ptr<ComputeShader> m_reset_buffer_cs;
+            GLint m_reset_buffer_shader_uniform_location_num_rays_per_buffer;
         };
     }
 }

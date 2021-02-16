@@ -5,6 +5,8 @@
 #include "../../../Utils/Assert.hpp"
 #include "../../../Utils/Profiler.hpp"
 
+#include <sstream>
+
 ldplab::rtsgpu_ogl::Pipeline::Pipeline(
     std::unique_ptr<IInitialStage> initial, 
     std::unique_ptr<IRayBoundingVolumeIntersectionTestStage> rbvit,
@@ -26,6 +28,49 @@ ldplab::rtsgpu_ogl::Pipeline::Pipeline(
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "Pipeline instance created",
         m_context->uid);
+}
+
+bool ldplab::rtsgpu_ogl::Pipeline::initShaders(
+    const RayTracingStepGPUOpenGLInfo& info)
+{
+    std::string shader_path = info.shader_base_directory_path +
+        "glsl/ldplab_cs_reset_output_and_intersection_buffer.glsl";
+
+    // Load file
+    std::ifstream file(shader_path);
+    if (!file)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Unable to open shader "\
+            "source file \"%s\"", m_context->uid, shader_path.c_str());
+        return false;
+    }
+    std::stringstream code;
+    code << file.rdbuf();
+
+    // Create shader
+    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
+    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
+    m_context->ogl->bindGlContext();
+
+    m_reset_buffer_cs =
+        m_context->ogl->createComputeShader(
+            "ResetOutputAndIntersectionBuffer", code.str());
+    file.close();
+
+    // Set uniforms
+    if (m_reset_buffer_cs != nullptr)
+    {
+        m_reset_buffer_shader_uniform_location_num_rays_per_buffer =
+            m_reset_buffer_cs->getUniformLocation("num_rays_per_buffer");
+
+        m_reset_buffer_cs->use();
+        glUniform1ui(m_reset_buffer_shader_uniform_location_num_rays_per_buffer,
+            m_context->parameters.number_rays_per_buffer);
+    }
+
+    // Finish
+    m_context->ogl->unbindGlContext();
+    return (m_reset_buffer_cs != nullptr);
 }
 
 void ldplab::rtsgpu_ogl::Pipeline::setup()
@@ -50,10 +95,10 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
         }
 
         // Transform output from particle into world space
-        const ParticleTransformation& trans = m_context->
-            particle_transformations[p];
-        output.force_per_particle[puid] = trans.p2w_scale_rotation * force;
-        output.torque_per_particle[puid] = trans.p2w_scale_rotation * torque;
+        const Mat4& p2w = 
+            m_context->particle_transformation_data.p2w_scale_rotation_data[p];
+        output.force_per_particle[puid] = p2w * force;
+        output.torque_per_particle[puid] = p2w * torque;
     }
 }
 
@@ -88,6 +133,7 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
                 m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
             ++num_batches;
 
+            uploadInitialBatch(initial_batch_buffer);
             processBatch(initial_batch_buffer, buffer_control);
 
             LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Pipeline instance %i "\
@@ -115,9 +161,7 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
         buffer_control.getReflectionBuffer(buffer);
     RayBuffer& transmission_buffer =
         buffer_control.getTransmissionBuffer(buffer);
-    // Reset intersection buffer
-    for (size_t i = 0; i < intersection_buffer.size; ++i)
-        intersection_buffer.particle_index_data[i] = -1;
+    resetBuffers(output_buffer, intersection_buffer);
     LDPLAB_PROFILING_STOP(pipeline_buffer_setup);
 
     if (buffer.inner_particle_rays)
@@ -218,4 +262,65 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
             max_intensity,
             avg_intensity);
     }
+}
+
+void ldplab::rtsgpu_ogl::Pipeline::resetBuffers(
+    OutputBuffer& output, 
+    IntersectionBuffer& intersection)
+{
+    // Bind GPU to this thread
+    LDPLAB_PROFILING_START(pipeline_reset_buffers_gl_context_binding);
+    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
+    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
+    m_context->ogl->bindGlContext();
+    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_gl_context_binding);
+
+    // Bind shaders
+    LDPLAB_PROFILING_START(pipeline_reset_buffers_shader_binding);
+    m_reset_buffer_cs->use();
+    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_shader_binding);
+
+    // Bind SSBOs
+    LDPLAB_PROFILING_START(pipeline_reset_buffers_ssbo_binding);
+    intersection.particle_index_ssbo->bindToIndex(0);
+    output.force_per_ray_ssbo->bindToIndex(1);
+    output.torque_per_ray_ssbo->bindToIndex(2);
+    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_ssbo_binding);
+
+    // Execute shader
+    LDPLAB_PROFILING_START(pipeline_reset_buffers_shader_execution);
+    m_reset_buffer_cs->execute(m_context->parameters.number_rays_per_buffer / 64);
+    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_shader_execution);
+
+    // Unbind gl context
+    LDPLAB_PROFILING_START(pipeline_reset_buffers_gl_context_unbinding);
+    m_context->ogl->unbindGlContext();
+    gpu_lock.unlock();
+    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_gl_context_unbinding);
+}
+
+void ldplab::rtsgpu_ogl::Pipeline::uploadInitialBatch(RayBuffer& buffer)
+{
+    // Bind GPU to this thread
+    LDPLAB_PROFILING_START(pipeline_upload_initial_batch_gl_context_binding);
+    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
+    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
+    m_context->ogl->bindGlContext();
+    LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_gl_context_binding);
+
+    // Upload data
+    LDPLAB_PROFILING_START(pipeline_upload_initial_batch_data_upload);
+    buffer.index_ssbo->upload(buffer.index_data);
+    buffer.ray_origin_ssbo->upload(buffer.ray_origin_data);
+    buffer.ray_direction_ssbo->upload(buffer.ray_direction_data);
+    buffer.ray_intensity_ssbo->upload(buffer.ray_intensity_data);
+    buffer.min_bounding_volume_distance_ssbo->upload(
+        buffer.min_bounding_volume_distance_data);
+    LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_data_upload);
+
+    // Unbind gl context
+    LDPLAB_PROFILING_START(pipeline_upload_initial_batch_gl_context_unbinding);
+    m_context->ogl->unbindGlContext();
+    gpu_lock.unlock();
+    LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_gl_context_unbinding);
 }

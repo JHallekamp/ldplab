@@ -112,3 +112,17 @@ void ldplab::rtsgpu_ogl::BoundingSphereData::uploadSSBO()
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished uploading bounding "\
         "sphere data to SSBO", m_context->uid);
 }
+
+void ldplab::rtsgpu_ogl::ParticleTransformationData::uploadSSBO()
+{
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Begin uploading particle "\
+        "transformation data to SSBO", m_context->uid);
+
+    ssbo.p2w_scale_rotation->upload(p2w_scale_rotation_data.data());
+    ssbo.p2w_translation->upload(p2w_translation_data.data());
+    ssbo.w2p_rotation_scale->upload(w2p_rotation_scale_data.data());
+    ssbo.w2p_translation->upload(w2p_translation_data.data());
+
+    LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished uploading particle "\
+        "transformation data to SSBO", m_context->uid);
+}

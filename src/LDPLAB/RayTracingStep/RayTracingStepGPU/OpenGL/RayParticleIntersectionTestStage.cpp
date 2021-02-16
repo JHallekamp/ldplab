@@ -48,12 +48,13 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
             inter_normal))
         {
             // Transformation to world space
-            ParticleTransformation& trans = m_context->
-                particle_transformations[rays.index_data[i]];
-            ray_origin = trans.p2w_scale_rotation * ray_origin +
-                trans.p2w_translation;
-            ray_direction =
-                glm::normalize(trans.p2w_scale_rotation * ray_direction);
+            const size_t pidx = rays.index_data[i];
+            const Mat4& scale_rotation = 
+                m_context->particle_transformation_data.p2w_scale_rotation_data[pidx];
+            const Vec4& translation =
+                m_context->particle_transformation_data.p2w_translation_data[pidx];
+            ray_origin = scale_rotation * ray_origin + translation;
+            ray_direction = glm::normalize(scale_rotation * ray_direction);
             // Ray missed particle
             rays.index_data[i] = 
                 static_cast<int32_t>(m_context->particles.size());

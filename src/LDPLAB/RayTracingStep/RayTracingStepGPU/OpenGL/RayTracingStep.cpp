@@ -38,22 +38,23 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
         const ParticleInstance& particle = particle_it->second;
 
         // Set particle current transformation
-        m_context->particle_transformations[i].w2p_translation =
+        m_context->particle_transformation_data.w2p_translation_data[i] =
             Vec4(-particle.position, 0);
-        m_context->particle_transformations[i].p2w_translation =
+        m_context->particle_transformation_data.p2w_translation_data[i] =
             Vec4(particle.position, 0);
-        m_context->particle_transformations[i].w2p_rotation_scale =
+        m_context->particle_transformation_data.w2p_rotation_scale_data[i] =
             getRotationMatrix(
                 particle.orientation.x,
                 particle.orientation.y,
                 particle.orientation.z,
                 particle.rotation_order);
-        m_context->particle_transformations[i].p2w_scale_rotation =
+        m_context->particle_transformation_data.p2w_scale_rotation_data[i] =
             getRotationMatrix(
                 -particle.orientation.x,
                 -particle.orientation.y,
                 -particle.orientation.z,
                 invertRotationOrder(particle.rotation_order));
+
         // Transform bounding volumes
         if (m_context->bounding_volume_data->type() ==
             IBoundingVolumeData::Type::spheres)
@@ -66,14 +67,19 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
             // Set sphere center
             ((BoundingSphereData*)
                 m_context->bounding_volume_data.get())->sphere_data[i].center =
-                m_context->particle_transformations[i].p2w_scale_rotation *
+                m_context->particle_transformation_data.p2w_scale_rotation_data[i] *
                 Vec4(((BoundingVolumeSphere*)
                     m_context->particles[i].bounding_volume.get())->center, 0) +
-                m_context->particle_transformations[i].p2w_translation;
+                m_context->particle_transformation_data.p2w_translation_data[i];
         }
-        // Upload ssbos
-        m_context->bounding_volume_data->uploadSSBO();
     }
+
+    // Upload ssbos
+    std::unique_lock<std::mutex> lck{ m_context->ogl->getGPUMutex() };
+    m_context->ogl->bindGlContext();
+    m_context->particle_transformation_data.uploadSSBO();
+    m_context->bounding_volume_data->uploadSSBO();
+    m_context->ogl->unbindGlContext();
 }
 
 void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
@@ -130,6 +136,17 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
             "particle material SSBOs, particle material type not supported",
             m_context->uid);
     }
+
+    // Create SSBOs for space transformations
+    const size_t num_particles = m_context->particles.size();
+    m_context->particle_transformation_data.ssbo.p2w_scale_rotation =
+        m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Mat4));
+    m_context->particle_transformation_data.ssbo.p2w_translation =
+        m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Vec4));
+    m_context->particle_transformation_data.ssbo.w2p_rotation_scale =
+        m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Mat4));
+    m_context->particle_transformation_data.ssbo.w2p_translation =
+        m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Vec4));
 
     m_context->ogl->unbindGlContext();
 }

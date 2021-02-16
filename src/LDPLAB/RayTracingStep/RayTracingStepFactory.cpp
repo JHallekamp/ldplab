@@ -281,7 +281,14 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
         std::shared_ptr<rtsgpu_ogl::Context> ctx{ new rtsgpu_ogl::Context{
         setup.particles, setup.light_sources } };
         ctx->thread_pool = info.thread_pool;
-        ctx->particle_transformations.resize(ctx->particles.size());
+        ctx->particle_transformation_data.p2w_scale_rotation_data.resize(
+            ctx->particles.size());
+        ctx->particle_transformation_data.p2w_translation_data.resize(
+            ctx->particles.size());
+        ctx->particle_transformation_data.w2p_rotation_scale_data.resize(
+            ctx->particles.size());
+        ctx->particle_transformation_data.w2p_translation_data.resize(
+            ctx->particles.size());
         ctx->parameters.intensity_cutoff = info.intensity_cutoff;
         ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
         ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;

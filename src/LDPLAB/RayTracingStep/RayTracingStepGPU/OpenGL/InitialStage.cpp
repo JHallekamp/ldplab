@@ -66,15 +66,8 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
-            //BoundingVolumeSphere* bounding_sphere = (BoundingVolumeSphere*) 
-            //    m_context->particles[j].bounding_volume.get();
-            ParticleTransformation& trans = m_context->
-                particle_transformations[j];
-            //const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
-            //    bounding_sphere->center + trans.p2w_translation;
             const BoundingVolumeSphere& bounding_sphere =
                 m_bounding_spheres[j];
-
             const double t =
                 glm::dot(light_direction, 
                     plane_base - bounding_sphere.center) * division_term;
@@ -278,10 +271,10 @@ inline void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
         Vec4& direction, 
         size_t pidx) const
 {
-    origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
-        (origin + m_context->particle_transformations[pidx].w2p_translation);
+    origin = m_context->particle_transformation_data.w2p_rotation_scale_data[pidx] *
+        (origin + m_context->particle_transformation_data.w2p_translation_data[pidx]);
     direction = glm::normalize(
-        m_context->particle_transformations[pidx].w2p_rotation_scale *
+        m_context->particle_transformation_data.w2p_rotation_scale_data[pidx] *
         direction);
 }
 

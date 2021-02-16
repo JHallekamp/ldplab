@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_BOUNDING_VOLUME_INTERSECTION_TEST_STAGE_HPP
 
 #include "Data.hpp"
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
 
 #include <memory>
 
@@ -53,6 +54,11 @@ namespace ldplab
         public:
             RayBoundingSphereIntersectionTestStageBruteForce(
                 std::shared_ptr<Context> context);
+            /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
             /** 
              * @brief Inherited via
              * ldplab::rtsgpu_ogl::IRayBoundingVolumeIntersectionTestStage 
@@ -64,11 +70,11 @@ namespace ldplab
              */
             size_t execute(RayBuffer& buffer) override;
         private:
-            inline void transformRayFromWorldToParticleSpace(
-                Vec4& origin, Vec4& direction, size_t pidx) const;
-        private:
             std::shared_ptr<Context> m_context;
             std::vector<BoundingVolumeSphere>& m_bounding_spheres;
+            std::shared_ptr<ComputeShader> m_compute_shader;
+            GLint m_shader_uniform_location_num_rays_per_buffer;
+            GLint m_shader_uniform_location_num_particles;
         };
     }
 }

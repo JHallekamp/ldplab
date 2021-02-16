@@ -114,31 +114,41 @@ namespace ldplab
          * @brief Holds data that is used to transform world space rays into
          *        particle space or the other way around.
          */
-        struct ParticleTransformation
+        struct ParticleTransformationData
         {
             /** 
              * @brief Vector from particle space origin (in world space) to 
              *        world space origin.
              */
-            Vec4 w2p_translation;
+            std::vector<Vec4> w2p_translation_data;
             /**
              * @brief Matrix that transforms a world space vector (when the
              *        vector is applied to the matrix from the right-hand side) 
              *        by first rotating and then scaling it into particle space
              *        (safe for translation).
              */
-            Mat4 w2p_rotation_scale;
+            std::vector<Mat4> w2p_rotation_scale_data;
             /**
              * @brief Vector to the particle space (in world space)
              */
-            Vec4 p2w_translation;
+            std::vector<Vec4> p2w_translation_data;
             /**
              * @brief Matrix that transforms a particle space vector (when the
              *        vector is applied to the matrix from the right-hand side)
              *        by first scaling and then rotating it into world space
              *        (safe for translation).
              */
-            Mat4 p2w_scale_rotation;
+            std::vector<Mat4> p2w_scale_rotation_data;
+            /** @brief Containing the SSBOs. */
+            struct
+            {
+                std::shared_ptr<ShaderStorageBuffer> w2p_translation;
+                std::shared_ptr<ShaderStorageBuffer> w2p_rotation_scale;
+                std::shared_ptr<ShaderStorageBuffer> p2w_translation;
+                std::shared_ptr<ShaderStorageBuffer> p2w_scale_rotation;
+            } ssbo;
+            /** @brief Uploads transformation data to the GPU buffers. */
+            void uploadSSBO();
         };
 
         /**

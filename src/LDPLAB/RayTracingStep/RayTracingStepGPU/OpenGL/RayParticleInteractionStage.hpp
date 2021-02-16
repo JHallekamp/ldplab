@@ -1,6 +1,7 @@
 #ifndef WWU_LDPLAB_RTSGPU_OGL_RAY_PARTICLE_INTERACTION_HPP
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_PARTICLE_INTERACTION_HPP
 
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
 #include <memory>
 
 namespace ldplab
@@ -61,6 +62,11 @@ namespace ldplab
             UnpolirzedLight1DLinearIndexGradientInteraction(
                 std::shared_ptr<Context> context);
             /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            /**
              * @brief Inherited via ldplab::rtsgpu_ogl::IRayParticleInteractionStage.
              * @brief Calculating resulting rays of the interaction of the 
              *        incident ray with a particle surface.
@@ -82,17 +88,13 @@ namespace ldplab
                 RayBuffer& refracted_rays,
                 OutputBuffer& output) override;
         private:
-            /** 
-             * @brief Calculates the reflectance coefficient for unpolarized 
-             *        light.
-             * @param cos_alpha Cosine of the incidence angle.
-             * @param cos_beta Cosine of the angle of refraction
-             * @param ratio of the index of reflection
-             */
-            double reflectance(double cos_alpha, double cos_beta, double n_r);
-        private:
             std::shared_ptr<Context> m_context;
-        
+            std::shared_ptr<ComputeShader> m_compute_shader;
+            GLint m_shader_uniform_location_num_rays_per_buffer;
+            GLint m_shader_uniform_location_num_particles;
+            GLint m_shader_uniform_location_parameter_medium_reflection_index;
+            GLint m_shader_uniform_location_parameter_intensity_cutoff;
+            GLint m_shader_uniform_location_inner_particle_rays;
         };
     }
 }
