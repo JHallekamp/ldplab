@@ -1,5 +1,6 @@
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
 
+#include "Constants.hpp"
 #include "Context.hpp"
 #include "../../../Log.hpp"
 #include "../../../Utils/Profiler.hpp"
@@ -45,19 +46,28 @@ bool ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::initS
             "RayBoundingSphereIntersectionTestStageBruteForce", code.str());
     file.close();
 
-    // Set uniforms
     if (m_compute_shader != nullptr)
     {
+        // Get uniform location
         m_shader_uniform_location_num_rays_per_buffer =
             m_compute_shader->getUniformLocation("num_rays_per_buffer");
         m_shader_uniform_location_num_particles =
             m_compute_shader->getUniformLocation("num_particles");
 
+        // Set uniforms
         m_compute_shader->use();
         glUniform1ui(m_shader_uniform_location_num_rays_per_buffer,
             m_context->parameters.number_rays_per_buffer);
         glUniform1ui(m_shader_uniform_location_num_particles,
             m_context->particles.size());
+
+        // Compute number of dispatched work groups
+        const size_t num_rays_per_buffer =
+            m_context->parameters.number_rays_per_buffer;
+        m_shader_num_work_groups =
+            num_rays_per_buffer / constant::glsl_local_group_size +
+            (num_rays_per_buffer % constant::glsl_local_group_size ?
+                1 : 0);
     }
 
     m_context->ogl->unbindGlContext();
@@ -97,7 +107,7 @@ size_t
 
     // Execute shader
     LDPLAB_PROFILING_START(bounding_volume_intersection_test_shader_execution);
-    m_compute_shader->execute(buffer.size / 64);
+    m_compute_shader->execute(m_shader_num_work_groups);
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_shader_execution);
 
     // Download index data

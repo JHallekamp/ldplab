@@ -1,8 +1,8 @@
 #include "RayParticleInteractionStage.hpp"
 
+#include "Constants.hpp"
 #include "Context.hpp"
 #include "Data.hpp"
-
 #include "../../../Log.hpp"
 #include "../../../Utils/Profiler.hpp"
 
@@ -47,9 +47,9 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::initSh
             "UnpolirzedLight1DLinearIndexGradientInteraction", code.str());
     file.close();
 
-    // Set uniforms
     if (m_compute_shader != nullptr)
     {
+        // Get uniform location
         m_shader_uniform_location_num_rays_per_buffer =
             m_compute_shader->getUniformLocation("num_rays_per_buffer");
         m_shader_uniform_location_num_particles =
@@ -61,6 +61,7 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::initSh
         m_shader_uniform_location_inner_particle_rays =
             m_compute_shader->getUniformLocation("inner_particle_rays");
 
+        // Set uniforms
         m_compute_shader->use();
         glUniform1ui(m_shader_uniform_location_num_rays_per_buffer,
             m_context->parameters.number_rays_per_buffer);
@@ -70,6 +71,14 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::initSh
             m_context->parameters.medium_reflection_index);
         glUniform1d(m_shader_uniform_location_parameter_intensity_cutoff,
             m_context->parameters.intensity_cutoff);
+
+        // Compute number of dispatched work groups
+        const size_t num_rays_per_buffer =
+            m_context->parameters.number_rays_per_buffer;
+        m_shader_num_work_groups =
+            num_rays_per_buffer / constant::glsl_local_group_size +
+            (num_rays_per_buffer % constant::glsl_local_group_size ?
+                1 : 0);
     }
 
     m_context->ogl->unbindGlContext();
@@ -114,7 +123,7 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
 
     // Execute shader
     LDPLAB_PROFILING_START(ray_particle_interaction_shader_execution);
-    m_compute_shader->execute(rays.size / 64);
+    m_compute_shader->execute(m_shader_num_work_groups);
     LDPLAB_PROFILING_STOP(ray_particle_interaction_shader_execution);
 
     // Download data

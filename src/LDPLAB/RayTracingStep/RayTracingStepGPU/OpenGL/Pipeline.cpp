@@ -1,5 +1,6 @@
 #include "Pipeline.hpp"
 
+#include "Constants.hpp"
 #include "Context.hpp"
 #include "../../../Log.hpp"
 #include "../../../Utils/Assert.hpp"
@@ -57,15 +58,24 @@ bool ldplab::rtsgpu_ogl::Pipeline::initShaders(
             "ResetOutputAndIntersectionBuffer", code.str());
     file.close();
 
-    // Set uniforms
     if (m_reset_buffer_cs != nullptr)
     {
+        // Get uniform location
         m_reset_buffer_shader_uniform_location_num_rays_per_buffer =
             m_reset_buffer_cs->getUniformLocation("num_rays_per_buffer");
 
+        // Set uniforms
         m_reset_buffer_cs->use();
         glUniform1ui(m_reset_buffer_shader_uniform_location_num_rays_per_buffer,
             m_context->parameters.number_rays_per_buffer);
+
+        // Compute number of dispatched work groups
+        const size_t num_rays_per_buffer =
+            m_context->parameters.number_rays_per_buffer;
+        m_shader_num_work_groups =
+            num_rays_per_buffer / constant::glsl_local_group_size +
+            (num_rays_per_buffer % constant::glsl_local_group_size ?
+                1 : 0);
     }
 
     // Finish
@@ -271,7 +281,7 @@ void ldplab::rtsgpu_ogl::Pipeline::resetBuffers(
 
     // Execute shader
     LDPLAB_PROFILING_START(pipeline_reset_buffers_shader_execution);
-    m_reset_buffer_cs->execute(m_context->parameters.number_rays_per_buffer / 64);
+    m_reset_buffer_cs->execute(m_shader_num_work_groups);
     LDPLAB_PROFILING_STOP(pipeline_reset_buffers_shader_execution);
 
     // Unbind gl context

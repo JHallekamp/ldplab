@@ -93,6 +93,7 @@ namespace ldplab
             GLint m_shader_uniform_location_parameter_initial_step_size;
             GLint m_shader_uniform_location_parameter_epsilon;
             GLint m_shader_uniform_location_parameter_safety_factor;
+            size_t m_shader_num_work_groups;
         };
     }
 }

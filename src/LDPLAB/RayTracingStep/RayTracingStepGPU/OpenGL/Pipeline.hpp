@@ -84,6 +84,7 @@ namespace ldplab
                 m_buffer_controls;
             std::shared_ptr<ComputeShader> m_reset_buffer_cs;
             GLint m_reset_buffer_shader_uniform_location_num_rays_per_buffer;
+            size_t m_shader_num_work_groups;
         };
     }
 }

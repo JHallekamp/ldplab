@@ -97,6 +97,7 @@ namespace ldplab
             GLint m_shader_uniform_location_parameter_medium_reflection_index;
             GLint m_shader_uniform_location_parameter_intensity_cutoff;
             GLint m_shader_uniform_location_inner_particle_rays;
+            size_t m_shader_num_work_groups;
         };
     }
 }

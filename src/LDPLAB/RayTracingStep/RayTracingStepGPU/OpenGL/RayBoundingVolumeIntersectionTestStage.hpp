@@ -74,6 +74,7 @@ namespace ldplab
             std::shared_ptr<ComputeShader> m_compute_shader;
             GLint m_shader_uniform_location_num_rays_per_buffer;
             GLint m_shader_uniform_location_num_particles;
+            size_t m_shader_num_work_groups;
         };
     }
 }

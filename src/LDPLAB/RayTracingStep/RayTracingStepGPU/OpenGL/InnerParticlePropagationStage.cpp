@@ -1,5 +1,6 @@
 #include "InnerParticlePropagationStage.hpp"
 
+#include "Constants.hpp"
 #include "Data.hpp"
 #include "Context.hpp"
 #include "../../../ExperimentalSetup/Particle.hpp"
@@ -17,7 +18,8 @@ ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
         RK45 parameters)
     :
     m_context{ context },
-    m_parameters{parameters}
+    m_parameters{parameters},
+    m_shader_num_work_groups{ 0 }
 {
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "LinearIndexGradientRodParticlePropagation instance created",
@@ -50,10 +52,10 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::initShaders(
         m_context->ogl->createComputeShader(
             "LinearIndexGradientRodParticlePropagation", code.str());
     file.close();
-
-    // Get uniform locations
+    
     if (m_compute_shader != nullptr)
     {
+        // Get uniform locations
         m_shader_uniform_location_num_rays_per_buffer =
             m_compute_shader->getUniformLocation("num_rays_per_buffer");
         m_shader_uniform_location_parameter_epsilon =
@@ -73,6 +75,14 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::initShaders(
             m_parameters.initial_step_size);
         glUniform1d(m_shader_uniform_location_parameter_safety_factor,
             m_parameters.safety_factor);
+
+        // Compute number of dispatched work groups
+        const size_t num_rays_per_buffer = 
+            m_context->parameters.number_rays_per_buffer;
+        m_shader_num_work_groups =
+            num_rays_per_buffer / constant::glsl_local_group_size +
+            (num_rays_per_buffer % constant::glsl_local_group_size ?
+                1 : 0);
     }
 
     // Finish it
@@ -108,7 +118,7 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     
     // Execute shader
     LDPLAB_PROFILING_START(inner_particle_propagation_shader_execution);
-    m_compute_shader->execute(rays.size / 64);
+    m_compute_shader->execute(m_shader_num_work_groups);
     LDPLAB_PROFILING_STOP(inner_particle_propagation_shader_execution);
     
     // Unbind gl context
