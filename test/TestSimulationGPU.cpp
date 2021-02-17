@@ -135,6 +135,10 @@ int main()
     std::shared_ptr<ldplab::ThreadPool> thread_pool =
         std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
 
+    // Start timing
+    std::chrono::steady_clock::time_point start =
+        std::chrono::steady_clock::now();
+
     // Create ray tracing step
     ldplab::RayTracingStepGPUOpenGLInfo rtsgpu_info;
     rtsgpu_info.thread_pool = thread_pool;
@@ -173,9 +177,7 @@ int main()
         "_rs" << NUM_SIM_ROTATION_STEPS;
     std::ofstream output_file("force_" + identificator.str());
 
-    std::chrono::steady_clock::time_point start =
-        std::chrono::steady_clock::now();
-
+    // Run simulation
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     for (double rotation_x = offset + angle_shift;
         rotation_x < lim + angle_shift + half_step_size; 
@@ -188,6 +190,7 @@ int main()
         plotProgress((rotation_x - offset - angle_shift) / (lim - offset));
     }
 
+    // Stop timing
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
