@@ -167,6 +167,24 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
             m_context->uid);
     }
 
+    // Create SSBOs for boundary volume
+    if (m_context->bounding_volume_data->type() ==
+        IBoundingVolumeData::Type::spheres)
+    {
+        BoundingSphereData* const spheres =
+            (BoundingSphereData*)m_context->bounding_volume_data.get();
+        spheres->ssbo.sphere_properties =
+            m_context->ogl->createShaderStorageBuffer(
+                spheres->sphere_properties_data.size() *
+                sizeof(BoundingSphereData::BoundingSphereProperties));
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not create "\
+            "bounding volume SSBOs, bounding volume type not supported",
+            m_context->uid);
+    }
+
     // Create SSBOs for space transformations
     const size_t num_particles = m_context->particles.size();
     m_context->particle_transformation_data.ssbo.w2p =

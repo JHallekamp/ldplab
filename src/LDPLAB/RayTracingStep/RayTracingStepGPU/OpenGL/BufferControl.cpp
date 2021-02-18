@@ -123,6 +123,7 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
     // Output buffer
     m_output_buffer.size = m_context->particles.size();
     m_output_buffer.force_data = m_output_force_data.data();
+    m_output_buffer.torque_data = m_output_torque_data.data();
     m_output_buffer.output_per_ray_data = m_output_scattered_data.data();
 
     // Create ssbos

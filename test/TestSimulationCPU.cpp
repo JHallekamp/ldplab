@@ -16,7 +16,7 @@ const double ROD_PARTICLE_CYLINDER_HEIGHT =
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
-const double PARTICLE_MATERIAL_GRADIENT = 0; //0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
+const double PARTICLE_MATERIAL_GRADIENT = 0.2 / ROD_PARTICLE_CYLINDER_HEIGHT / 2;
 const ldplab::Vec3 PARTICLE_MATERIAL_ORIGIN = 
     ldplab::Vec3(0, 0, ROD_PARTICLE_CYLINDER_HEIGHT/2);
 const ldplab::Vec3 PARTICLE_MATERIAL_DIRECTION = ldplab::Vec3(0, 0, 1);
@@ -44,7 +44,7 @@ const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 8;
+const size_t NUM_RTS_THREADS = 4;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 0;
@@ -53,15 +53,17 @@ const double RTS_INTENSITY_CUTOFF = 0.01 * LIGHT_INTENSITY  /
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 64;
+const size_t NUM_SIM_ROTATION_STEPS = 32;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
 
 // Prototypes
 void plotProgress(double progress);
-void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup);
-void runSimulation(ldplab::ExperimentalSetup& experimental_setup,
+void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient);
+void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
     std::shared_ptr<ldplab::ThreadPool> thread_pool,
     double kappa,
     double gradient,
@@ -77,10 +79,6 @@ int main()
     flog.subscribe();
     clog.subscribe();
 
-    // Create experimental setup
-    ldplab::ExperimentalSetup experimental_setup;
-    createExperimentalSetup(experimental_setup);
-
     // Thread pool
     std::shared_ptr<ldplab::ThreadPool> thread_pool =
         std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
@@ -95,6 +93,13 @@ int main()
         {
             for (size_t k = 0; k < vec_branching_depth.size(); ++k)
             {
+                // Create experimental setup
+                ldplab::ExperimentalSetup experimental_setup;
+                createExperimentalSetup(
+                    experimental_setup,
+                    vec_kappa[i],
+                    vec_gradient[j]);
+                // Run simulation
                 runSimulation(
                     experimental_setup,
                     thread_pool,
@@ -131,7 +136,10 @@ void plotProgress(double progress)
         iprogress << "%" << std::endl;
 }
 
-void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
+void createExperimentalSetup(
+    ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient)
 {
     // Create particle
     ldplab::Particle rod_particle;
@@ -140,7 +148,7 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
     rod_particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-            PARTICLE_MATERIAL_GRADIENT,
+            gradient,
             PARTICLE_MATERIAL_ORIGIN,
             PARTICLE_MATERIAL_DIRECTION);
     rod_particle.geometry =
@@ -148,7 +156,7 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
             ROD_PARTICLE_CYLINDER_RADIUS,
             ROD_PARTICLE_CYLINDER_HEIGHT,
             ROD_PARTICLE_VOLUME_SPHERE_RADIUS,
-            ROD_PARTICLE_KAPPA);
+            kappa);
     rod_particle.bounding_volume =
         std::make_shared<ldplab::BoundingVolumeSphere>(
             PARTICLE_BOUNDING_SPHERE_CENTER,
@@ -177,7 +185,7 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
 }
 
 void runSimulation(
-    ldplab::ExperimentalSetup& experimental_setup,
+    const ldplab::ExperimentalSetup& experimental_setup,
     std::shared_ptr<ldplab::ThreadPool> thread_pool,
     double kappa,
     double gradient,
@@ -186,15 +194,6 @@ void runSimulation(
     // Start timing
     std::chrono::steady_clock::time_point start =
         std::chrono::steady_clock::now();
-
-    // Update experimental setup
-    ldplab::RodParticleGeometry* particle = (ldplab::RodParticleGeometry*)
-        experimental_setup.particles.back().geometry.get();
-    particle->kappa = kappa;
-    ldplab::ParticleMaterialLinearOneDirectional* material =
-        (ldplab::ParticleMaterialLinearOneDirectional*)
-        experimental_setup.particles.back().material.get();
-    material->gradient = gradient;
 
     // Create ray tracing step
     ldplab::RayTracingStepCPUInfo rtscpu_info;
@@ -207,6 +206,7 @@ void runSimulation(
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
         RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_EPSILON, RTS_SOLVER_SAFETY_FACTOR);
+    rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
             experimental_setup, rtscpu_info);
@@ -225,7 +225,7 @@ void runSimulation(
     ldplab::RayTracingStepOutput output;
 
     std::stringstream identificator;
-    identificator << "cpu_force_" << static_cast<int>(gradient * 10000.0) <<
+    identificator << "cpu_force_g" << static_cast<int>(gradient * 10000.0) <<
         "_k" << static_cast<int>(kappa * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
         "_bd" << branching_depth <<

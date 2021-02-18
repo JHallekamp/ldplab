@@ -53,7 +53,7 @@ const double RTS_INTENSITY_CUTOFF = 0.01 * LIGHT_INTENSITY  /
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 64;
+const size_t NUM_SIM_ROTATION_STEPS = 32;
 const std::string BASE_SHADER_DIRECTORY = "shader/";
 
 constexpr double const_pi() 
@@ -61,8 +61,12 @@ constexpr double const_pi()
 
 // Prototypes
 void plotProgress(double progress);
-void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup);
-void runSimulation(ldplab::ExperimentalSetup& experimental_setup,
+void createExperimentalSetup(
+    ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient);
+void runSimulation(
+    const ldplab::ExperimentalSetup& experimental_setup,
     std::shared_ptr<ldplab::ThreadPool> thread_pool,
     double kappa,
     double gradient,
@@ -78,10 +82,6 @@ int main()
     flog.subscribe();
     clog.subscribe();
 
-    // Create experimental setup
-    ldplab::ExperimentalSetup experimental_setup;
-    createExperimentalSetup(experimental_setup);
-
     // Thread pool
     std::shared_ptr<ldplab::ThreadPool> thread_pool =
         std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
@@ -96,6 +96,13 @@ int main()
         {
             for (size_t k = 0; k < vec_branching_depth.size(); ++k)
             {
+                // Create experimental setup
+                ldplab::ExperimentalSetup experimental_setup;
+                createExperimentalSetup(
+                    experimental_setup,
+                    vec_kappa[i],
+                    vec_gradient[j]);
+                // Run simulation
                 runSimulation(
                     experimental_setup,
                     thread_pool,
@@ -132,7 +139,10 @@ void plotProgress(double progress)
         iprogress << "%" << std::endl;
 }
 
-void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
+void createExperimentalSetup(
+    ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient)
 {
     // Create particle
     ldplab::Particle rod_particle;
@@ -141,7 +151,7 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
     rod_particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-            PARTICLE_MATERIAL_GRADIENT,
+            gradient,
             PARTICLE_MATERIAL_ORIGIN,
             PARTICLE_MATERIAL_DIRECTION);
     rod_particle.geometry =
@@ -149,7 +159,7 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
             ROD_PARTICLE_CYLINDER_RADIUS,
             ROD_PARTICLE_CYLINDER_HEIGHT,
             ROD_PARTICLE_VOLUME_SPHERE_RADIUS,
-            ROD_PARTICLE_KAPPA);
+            kappa);
     rod_particle.bounding_volume =
         std::make_shared<ldplab::BoundingVolumeSphere>(
             PARTICLE_BOUNDING_SPHERE_CENTER,
@@ -178,24 +188,15 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
 }
 
 void runSimulation(
-    ldplab::ExperimentalSetup& experimental_setup, 
-    std::shared_ptr<ldplab::ThreadPool> thread_pool,
-    double kappa, 
-    double gradient, 
+    const ldplab::ExperimentalSetup& experimental_setup, 
+    std::shared_ptr<ldplab::ThreadPool> thread_pool, 
+    double kappa,
+    double gradient,
     size_t branching_depth)
 {
     // Start timing
     std::chrono::steady_clock::time_point start =
         std::chrono::steady_clock::now();
-
-    // Update experimental setup
-    ldplab::RodParticleGeometry* particle = (ldplab::RodParticleGeometry*)
-        experimental_setup.particles.back().geometry.get();
-    particle->kappa = kappa;
-    ldplab::ParticleMaterialLinearOneDirectional* material =
-        (ldplab::ParticleMaterialLinearOneDirectional*)
-        experimental_setup.particles.back().material.get();
-    material->gradient = gradient;
 
     // Create ray tracing step
     ldplab::RayTracingStepGPUOpenGLInfo rtsgpu_info;
@@ -209,6 +210,7 @@ void runSimulation(
     rtsgpu_info.solver_parameters = std::make_shared<ldplab::RK45>(
         RTS_SOLVER_INITIAL_STEP_SIZE, RTS_SOLVER_EPSILON, RTS_SOLVER_SAFETY_FACTOR);
     rtsgpu_info.shader_base_directory_path = BASE_SHADER_DIRECTORY;
+    rtsgpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepGPUOpenGL(
             experimental_setup, rtsgpu_info);
@@ -227,7 +229,7 @@ void runSimulation(
     ldplab::RayTracingStepOutput output;
 
     std::stringstream identificator;
-    identificator << "gpu_force_" << static_cast<int>(gradient * 10000.0) <<
+    identificator << "gpu_force_g" << static_cast<int>(gradient * 10000.0) <<
         "_k" << static_cast<int>(kappa * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
         "_bd" << branching_depth <<
