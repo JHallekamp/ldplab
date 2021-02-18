@@ -40,6 +40,9 @@ const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
 // Light intensity properties
 const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 
+// Reflexion index of the medium
+const double MEDIUM_REFLEXION_INDEX = 1.33;
+
 // Simulation properties
 const size_t NUM_RTS_THREADS = 8;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
@@ -55,27 +58,14 @@ const size_t NUM_SIM_ROTATION_STEPS = 64;
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
 
-void plotProgress(double progress)
-{
-    const double progress_epsilon = 0.00001;
-    const size_t steps = 40;
-    const size_t iprogress = 
-        static_cast<size_t>((progress + progress_epsilon) * 100.0);
-    const size_t threshold = steps * iprogress; // Includes factor of 100
-    
-    if (threshold == steps)
-        bool a = true;
-
-    std::string str_progress_bar(steps, ' ');
-    for (size_t i = 1; i <= steps; ++i)
-    {
-        if (i * 100 <= threshold)
-            str_progress_bar[i - 1] = (char)219; // Block character
-    }
-    
-    std::cout << "Progress: [" << str_progress_bar << "] " << 
-        iprogress << "%" << std::endl;
-}
+// Prototypes
+void plotProgress(double progress);
+void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup);
+void runSimulation(ldplab::ExperimentalSetup& experimental_setup,
+    std::shared_ptr<ldplab::ThreadPool> thread_pool,
+    double kappa,
+    double gradient,
+    size_t branching_depth);
 
 int main()
 {
@@ -87,6 +77,62 @@ int main()
     flog.subscribe();
     clog.subscribe();
 
+    // Create experimental setup
+    ldplab::ExperimentalSetup experimental_setup;
+    createExperimentalSetup(experimental_setup);
+
+    // Thread pool
+    std::shared_ptr<ldplab::ThreadPool> thread_pool =
+        std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
+
+    // Run simulations
+    std::vector<double> vec_gradient = { 0.0, PARTICLE_MATERIAL_GRADIENT };
+    std::vector<double> vec_kappa = { 0.0, 0.3 };
+    std::vector<size_t> vec_branching_depth = { 0, 8 };
+    for (size_t i = 0; i < vec_kappa.size(); ++i)
+    {
+        for (size_t j = 0; j < vec_gradient.size(); ++j)
+        {
+            for (size_t k = 0; k < vec_branching_depth.size(); ++k)
+            {
+                runSimulation(
+                    experimental_setup,
+                    thread_pool,
+                    vec_kappa[i],
+                    vec_gradient[j],
+                    vec_branching_depth[k]);
+            }
+        }
+    }
+
+    thread_pool->terminate();
+    return 0;
+}
+
+void plotProgress(double progress)
+{
+    const double progress_epsilon = 0.00001;
+    const size_t steps = 40;
+    const size_t iprogress =
+        static_cast<size_t>((progress + progress_epsilon) * 100.0);
+    const size_t threshold = steps * iprogress; // Includes factor of 100
+
+    if (threshold == steps)
+        bool a = true;
+
+    std::string str_progress_bar(steps, ' ');
+    for (size_t i = 1; i <= steps; ++i)
+    {
+        if (i * 100 <= threshold)
+            str_progress_bar[i - 1] = (char)219; // Block character
+    }
+
+    std::cout << "Progress: [" << str_progress_bar << "] " <<
+        iprogress << "%" << std::endl;
+}
+
+void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup)
+{
     // Create particle
     ldplab::Particle rod_particle;
     rod_particle.position = ldplab::Vec3(0, 0, 0);
@@ -124,19 +170,31 @@ int main()
         std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
 
-    // Create experimental setup
-    ldplab::ExperimentalSetup experimental_setup;
+    // Set experimental setup
     experimental_setup.particles.emplace_back(std::move(rod_particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
-    experimental_setup.medium_reflection_index = 1.33;
+    experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
+}
 
-    // Thread pool
-    std::shared_ptr<ldplab::ThreadPool> thread_pool =
-        std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
-
+void runSimulation(
+    ldplab::ExperimentalSetup& experimental_setup,
+    std::shared_ptr<ldplab::ThreadPool> thread_pool,
+    double kappa,
+    double gradient,
+    size_t branching_depth)
+{
     // Start timing
     std::chrono::steady_clock::time_point start =
         std::chrono::steady_clock::now();
+
+    // Update experimental setup
+    ldplab::RodParticleGeometry* particle = (ldplab::RodParticleGeometry*)
+        experimental_setup.particles.back().geometry.get();
+    particle->kappa = kappa;
+    ldplab::ParticleMaterialLinearOneDirectional* material =
+        (ldplab::ParticleMaterialLinearOneDirectional*)
+        experimental_setup.particles.back().material.get();
+    material->gradient = gradient;
 
     // Create ray tracing step
     ldplab::RayTracingStepCPUInfo rtscpu_info;
@@ -154,7 +212,7 @@ int main()
             experimental_setup, rtscpu_info);
 
     if (ray_tracing_step == nullptr)
-        return -1;
+        return;
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
@@ -165,12 +223,12 @@ int main()
     constexpr double half_step_size = step_size / 2.0;
     constexpr double angle_shift = const_pi() / 2.0;
     ldplab::RayTracingStepOutput output;
-    
+
     std::stringstream identificator;
-    identificator << "cpu_g" << static_cast<int>(PARTICLE_MATERIAL_GRADIENT * 10000.0) <<
-        "_k" << static_cast<int>(ROD_PARTICLE_KAPPA * 100.0) <<
+    identificator << "cpu_force_" << static_cast<int>(gradient * 10000.0) <<
+        "_k" << static_cast<int>(kappa * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
-        "_bd" << MAX_RTS_BRANCHING_DEPTH <<
+        "_bd" << branching_depth <<
         "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT <<
         "_rs" << NUM_SIM_ROTATION_STEPS;
     std::ofstream output_file("force_" + identificator.str());
@@ -178,12 +236,12 @@ int main()
     // Run simulation
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     for (double rotation_x = offset + angle_shift;
-        rotation_x < lim + angle_shift + half_step_size; 
+        rotation_x < lim + angle_shift + half_step_size;
         rotation_x += step_size)
     {
         state.particle_instances[puid].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_file << rotation_x - const_pi() / 2 << "\t" << 
+        output_file << rotation_x - const_pi() / 2 << "\t" <<
             glm::length(output.force_per_particle[puid]) << std::endl;
         plotProgress((rotation_x - offset - angle_shift) / (lim - offset));
     }
@@ -193,9 +251,9 @@ int main()
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
         end - start).count();
-    std::ofstream elapsed_time_file("simulation_time_" + identificator.str());
+    std::ofstream elapsed_time_file("cpu_simulation_time_" + identificator.str());
     elapsed_time_file << elapsed_time << "s" << std::endl;
 
-    thread_pool->terminate();
-    return 0;
+    // Profiling
+    ldplab::Profiling::printReports("cpu_profiling_report_" + identificator.str());
 }
