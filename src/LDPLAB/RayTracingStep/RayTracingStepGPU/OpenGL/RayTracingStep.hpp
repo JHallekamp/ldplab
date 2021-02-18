@@ -45,8 +45,6 @@ namespace ldplab
         private:
             Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);
-            Mat4 buildTranformationMatrix(
-                Mat3 rotation_scale, Vec3 translation);
             /**
             * @brief Constructor
             */

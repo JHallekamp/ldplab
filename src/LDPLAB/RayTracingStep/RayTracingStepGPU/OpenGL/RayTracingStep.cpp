@@ -1,11 +1,38 @@
 #include "RayTracingStep.hpp"
 #include "Context.hpp"
+#include "Data.hpp"
 
 #include "../../../Log.hpp"
 #include "../../../Utils/Assert.hpp"
 
 #include <chrono>
 #include <glm/ext.hpp>
+
+ldplab::rtsgpu_ogl::ParticleTransformationData::Transformation
+    buildTranformationData(ldplab::Mat3 rotation_scale, ldplab::Vec3 translation)
+{
+    ldplab::rtsgpu_ogl::ParticleTransformationData::Transformation trsf;
+    trsf.rotation_scale = ldplab::Mat4(0.0);
+    trsf.rotation_scale[0][0] = rotation_scale[0][0];
+    trsf.rotation_scale[0][1] = rotation_scale[0][1];
+    trsf.rotation_scale[0][2] = rotation_scale[0][2];
+    trsf.rotation_scale[1][0] = rotation_scale[1][0];
+    trsf.rotation_scale[1][1] = rotation_scale[1][1];
+    trsf.rotation_scale[1][2] = rotation_scale[1][2];
+    trsf.rotation_scale[2][0] = rotation_scale[2][0];
+    trsf.rotation_scale[2][1] = rotation_scale[2][1];
+    trsf.rotation_scale[2][2] = rotation_scale[2][2];
+    trsf.rotation_scale[3][3] = 1.0;
+    trsf.translation = ldplab::Mat4(0.0);
+    trsf.translation[0][0] = 1.0;
+    trsf.translation[0][3] = translation.x;
+    trsf.translation[1][1] = 1.0;
+    trsf.translation[1][3] = translation.y;
+    trsf.translation[2][2] = 1.0;
+    trsf.translation[2][3] = translation.z;
+    trsf.translation[3][3] = 1.0;
+    return trsf;
+}
 
 ldplab::rtsgpu_ogl::RayTracingStep::RayTracingStep(
     std::shared_ptr<Context> context)
@@ -55,11 +82,11 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
                 -particle.orientation.z,
                 invertRotationOrder(particle.rotation_order));
         m_context->particle_transformation_data.w2p_data[i] =
-            buildTranformationMatrix(
+            buildTranformationData(
                 m_context->particle_transformation_data.w2p_rotation_scale[i],
                 m_context->particle_transformation_data.w2p_translation[i]);
         m_context->particle_transformation_data.p2w_data[i] =
-            buildTranformationMatrix(
+            buildTranformationData(
                 m_context->particle_transformation_data.p2w_scale_rotation[i],
                 m_context->particle_transformation_data.p2w_translation[i]);
 
@@ -189,27 +216,6 @@ ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(
     LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Encountered unknown "\
         "rotation order, assumes xyz instead.");
     return rotz * roty * rotx;
-}
-
-ldplab::Mat4 ldplab::rtsgpu_ogl::RayTracingStep::buildTranformationMatrix(
-    Mat3 rotation_scale, 
-    Vec3 translation)
-{
-    Mat4 trsf(0);
-    trsf[0][0] = rotation_scale[0][0];
-    trsf[0][1] = rotation_scale[0][1];
-    trsf[0][2] = rotation_scale[0][2];
-    trsf[0][3] = translation.x;
-    trsf[1][0] = rotation_scale[1][0];
-    trsf[1][1] = rotation_scale[1][1];
-    trsf[1][2] = rotation_scale[1][2];
-    trsf[1][3] = translation.y;
-    trsf[2][0] = rotation_scale[2][0];
-    trsf[2][1] = rotation_scale[2][1];
-    trsf[2][2] = rotation_scale[2][2];
-    trsf[2][3] = translation.z;
-    trsf[3][3] = 1.0;
-    return trsf;
 }
 
 void ldplab::rtsgpu_ogl::RayTracingStep::execute(

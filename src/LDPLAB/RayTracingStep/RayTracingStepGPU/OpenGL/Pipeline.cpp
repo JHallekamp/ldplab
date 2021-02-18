@@ -73,9 +73,10 @@ bool ldplab::rtsgpu_ogl::Pipeline::initShaders(
         const size_t num_rays_per_buffer =
             m_context->parameters.number_rays_per_buffer;
         m_shader_num_work_groups =
-            num_rays_per_buffer / constant::glsl_local_group_size +
-            (num_rays_per_buffer % constant::glsl_local_group_size ?
-                1 : 0);
+            (num_rays_per_buffer / constant::glsl_local_group_sizes::
+                reset_output_and_intersection_buffer) +
+            (num_rays_per_buffer % constant::glsl_local_group_sizes::
+                reset_output_and_intersection_buffer ? 1 : 0);
     }
 
     // Finish
@@ -143,8 +144,10 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
                 m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
             ++num_batches;
 
+            LDPLAB_PROFILING_START(pipeline_process_batch);
             uploadInitialBatch(initial_batch_buffer);
             processBatch(initial_batch_buffer, buffer_control);
+            LDPLAB_PROFILING_STOP(pipeline_process_batch);
 
             LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Pipeline instance %i "\
                 "finished batch execution",
@@ -250,11 +253,30 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
     else if (buffer.active_rays > 0 &&
         m_context->flags.emit_warning_on_maximum_branching_depth_discardment)
     {
+        // Download data
+        buffer.ssbo.ray_properties->download(buffer.ray_properties_data);
+        buffer.ssbo.particle_index->download(buffer.particle_index_data);
+        // Compute max and average length
+        double max_intensity = 0.0, avg_intensity = 0.0;
+        for (size_t i = 0; i < buffer.size; ++i)
+        {
+            if (buffer.particle_index_data[i] < 0)
+                continue;
+
+            double intensity = buffer.ray_properties_data[i].intensity;
+            avg_intensity += intensity;
+            if (intensity > max_intensity)
+                max_intensity = intensity;
+        }
+        avg_intensity /= static_cast<double>(buffer.active_rays);
         LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Pipeline reached max "\
-            "branching depth %i with a total of %i still active rays",
+            "branching depth %i with a total of %i still active rays, which "\
+            "include a max intensity of %f and average intensity of %f",
             m_context->uid,
             m_context->parameters.maximum_branching_depth,
-            buffer.active_rays);
+            buffer.active_rays,
+            max_intensity,
+            avg_intensity);
     }
 }
 
@@ -276,7 +298,8 @@ void ldplab::rtsgpu_ogl::Pipeline::resetBuffers(
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(pipeline_reset_buffers_ssbo_binding);
-    // TODO
+    intersection.ssbo.particle_index->bindToIndex(0);
+    output.ssbo.output_per_ray->bindToIndex(1);
     LDPLAB_PROFILING_STOP(pipeline_reset_buffers_ssbo_binding);
 
     // Execute shader

@@ -3,17 +3,26 @@
 #version 460 core
 
 // Local work group size
-layout(local_size_x = 64) in;
+layout(local_size_x = 128) in;
+
+// Data structures
+struct OutputData
+{
+    // xyz: Force vector
+    // w: UNUSED
+    dvec4 force;
+    // xyz: Torque vector
+    // w: UNUSED
+    dvec4 torque;
+};
 
 // Intersection indices
 layout(std430, binding = 0) buffer intersectionIndexData
 { int intersection_index[]; };
 
 // Output buffer data
-layout(std430, binding = 1) buffer outputForceData
-{ dvec4 output_force_scattered[]; };
-layout(std430, binding = 2) buffer outputTorqueData
-{ dvec4 output_torque_scattered[]; };
+layout(std430, binding = 1) buffer outputData
+{ OutputData output_data[]; };
 
 // Property data
 uniform uint num_rays_per_buffer;
@@ -31,6 +40,6 @@ void main()
 
     // Reset values
     intersection_index[ri] = -1;
-    output_force_scattered[ri] = dvec4(0);
-    output_torque_scattered[ri] = dvec4(0);
+    output_data[ri].force.xyz = dvec3(0);
+    output_data[ri].torque.xyz = dvec3(0);
 }

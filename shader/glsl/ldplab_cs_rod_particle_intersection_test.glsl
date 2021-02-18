@@ -5,39 +5,61 @@
 // Local work group size
 layout(local_size_x = 64) in;
 
+// Data structures
+struct RayData
+{
+    // xyz: Ray origin
+    // w: Ray intensity
+    dvec4 origin_and_intensity;
+    // xyz: Ray direction
+    // w: Minimum bounding volume distance
+    dvec4 direction_and_min_bounding_volume_distance;
+};
+
+struct IntersectionData
+{
+    // xyz: Intersection point
+    // w: UNUSED
+    dvec4 position;
+    // xyz: Intersection normal
+    // w: UNUSED
+    dvec4 normal;
+};
+
+struct ParticleGeometryRodParticle
+{
+    double cap_origin_z;
+    double indentation_origin_z;
+    double cylinder_radius;
+    double cylinder_length;
+    double sphere_radius;
+};
+
+struct Transformation
+{
+    dmat4 rotate_scale;
+    dmat4 translate;
+};
+
 // Ray buffer data
-layout(std430, binding = 0) buffer rayOriginData
-{ dvec4 ray_origin[]; };
-layout(std430, binding = 1) buffer rayDirectionData
-{ dvec4 ray_direction[]; };
-layout(std430, binding = 2) buffer rayIndexData
+layout(std430, binding = 0) buffer rayData
+{ RayData ray_data[]; };
+layout(std430, binding = 1) buffer rayIndexData
 { int ray_index[]; };
 
 // Intersection buffer data
-layout(std430, binding = 3) buffer intersectionPointData
-{ dvec4 intersection_position[]; };
-layout(std430, binding = 4) buffer intersectionNormalData
-{ dvec4 intersection_normal[]; };
-layout(std430, binding = 5) buffer intersectionIndexData
+layout(std430, binding = 2) buffer intersectionData
+{ IntersectionData intersection_data[]; };
+layout(std430, binding = 3) buffer intersectionIndexData
 { int intersection_index[]; };
 
 // Particle data
-layout(std430, binding = 6) readonly buffer particleCylinderRadiusData
-{ double particle_cylinder_radius[]; };
-layout(std430, binding = 7) readonly buffer particleCylinderLengthData
-{ double particle_cylinder_length[]; };
-layout(std430, binding = 8) readonly buffer particleSphereRadiusData
-{ double particle_sphere_radius[]; };
-layout(std430, binding = 9) readonly buffer particleCapOriginData
-{ dvec4 particle_cap_origin[]; };
-layout(std430, binding = 10) readonly buffer particleIndentationOriginData
-{ dvec4 particle_indentation_origin[]; };
+layout(std430, binding = 4) readonly buffer particleData
+{ ParticleGeometryRodParticle particle_data[]; };
 
 // Particle to world transformation
-layout(std430, binding = 11) readonly buffer transformParticle2WorldMatData
-{ dmat4 transform_p2w_mat[]; };
-layout(std430, binding = 12) readonly buffer transformParticle2WorldVecData
-{ dvec4 transform_p2w_vec[]; };
+layout(std430, binding = 5) readonly buffer p2wTransformationData
+{ Transformation p2w_data[]; };
 
 // Uniforms
 uniform uint num_rays_per_buffer;
@@ -50,11 +72,15 @@ bool cylinderIntersection(
     inout double dist_min,
     inout double dist_max)
 {
-    const double p = dot(ray_origin[ri].xy, ray_direction[ri].xy) /
-        dot(ray_direction[ri].xy, ray_direction[ri].xy);
-    const double q = (dot(ray_origin[ri].xy, ray_origin[ri].xy) -
-        particle_sphere_radius[pi] * particle_sphere_radius[pi]) /
-        dot(ray_direction[ri].xy, ray_direction[ri].xy);
+    const double p = dot(ray_data[ri].origin_and_intensity.xy,
+        ray_data[ri].direction_and_min_bounding_volume_distance.xy) /
+        dot(ray_data[ri].direction_and_min_bounding_volume_distance.xy,
+            ray_data[ri].direction_and_min_bounding_volume_distance.xy);
+    const double q = (dot(ray_data[ri].origin_and_intensity.xy,
+        ray_data[ri].origin_and_intensity.xy) -
+        particle_data[pi].sphere_radius * particle_data[pi].sphere_radius) /
+        dot(ray_data[ri].direction_and_min_bounding_volume_distance.xy,
+            ray_data[ri].direction_and_min_bounding_volume_distance.xy);
 
     const double discriminant = p * p - q;
     if (discriminant < 0.0)
@@ -67,13 +93,15 @@ bool cylinderIntersection(
 // Port RodParticleIntersectionTest::sphereIntersection
 bool sphereIntersection(
     const uint ri,
-    const dvec4 sphere_origin,
+    const double sphere_origin_z,
     const double sphere_radius,
     inout double dist_min,
     inout double dist_max)
 {
-    const dvec4 o_minus_c = ray_origin[ri] - sphere_origin;
-    const double p = dot(ray_direction[ri].xyz, o_minus_c.xyz);
+    const dvec3 o_minus_c =
+        ray_data[ri].origin_and_intensity.xyz - dvec3(0, 0, sphere_origin_z);
+    const double p =
+        dot(ray_data[ri].direction_and_min_bounding_volume_distance.xyz, o_minus_c);
     const double q = dot(o_minus_c.xyz, o_minus_c.xyz) -
         sphere_radius * sphere_radius;
 
@@ -90,21 +118,23 @@ bool capIntersection(
     const uint ri,
     const int pi)
 {
-    if (particle_indentation_origin[pi].z + particle_sphere_radius[pi] < 1e-3)
+    if (particle_data[pi].indentation_origin_z + particle_data[pi].sphere_radius < 1e-3)
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
-        if (ray_direction[ri].z == 0)
+        if (ray_data[ri].direction_and_min_bounding_volume_distance.z == 0)
             return false;
-        const double t = (particle_cylinder_length[pi] - ray_origin[ri].z) /
-            ray_direction[ri].z;
+        const double t =
+            (particle_data[pi].cylinder_length - ray_data[ri].origin_and_intensity.z) /
+            ray_data[ri].direction_and_min_bounding_volume_distance.z;
         if (t <= 1e-9)
             return false;
-        intersection_position[ri] = ray_origin[ri] + t * ray_direction[ri];
-        if (dot(intersection_position[ri].xy, intersection_position[ri].xy) >
-            particle_cylinder_radius[pi] * particle_cylinder_radius[pi])
+        intersection_data[ri].position.xyz = ray_data[ri].origin_and_intensity.xyz +
+            t * ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
+        if (dot(intersection_data[ri].position.xy, intersection_data[ri].position.xy) >
+            particle_data[pi].cylinder_radius * particle_data[pi].cylinder_radius)
             return false;
-        intersection_normal[ri].xyz = dvec3(0, 0, 1);
+        intersection_data[ri].normal.xyz = dvec3(0, 0, 1);
         return true;
     }
 
@@ -112,21 +142,22 @@ bool capIntersection(
     double isec_second = 0;
     if (sphereIntersection(
         ri,
-        particle_cap_origin[pi],
-        particle_sphere_radius[pi],
+        particle_data[pi].cap_origin_z,
+        particle_data[pi].sphere_radius,
         isec_first,
         isec_second))
     {
         if (isec_first < 0)
             return false;
-        intersection_position[ri] = ray_origin[ri] + isec_first *
-            ray_direction[ri];
-        if (intersection_position[ri].z > particle_cylinder_length[pi] &&
-            intersection_position[ri].z <= particle_cap_origin[pi].z +
-                particle_sphere_radius[pi])
+        intersection_data[ri].position.xyz = ray_data[ri].origin_and_intensity.xyz +
+            isec_first * ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
+        if (intersection_data[ri].position.z > particle_data[pi].cylinder_length &&
+            intersection_data[ri].position.z <= particle_data[pi].cap_origin_z +
+                particle_data[pi].sphere_radius)
         {
-            intersection_normal[ri] = normalize(intersection_position[ri] -
-                particle_cap_origin[pi]);
+            intersection_data[ri].normal.xyz = normalize(
+                intersection_data[ri].position.xyz -
+                dvec3(0, 0, particle_data[pi].cap_origin_z));
             return true;
         }
         else
@@ -141,20 +172,23 @@ bool indentationIntersection(
     const uint ri,
     const int pi)
 {
-    if (particle_indentation_origin[pi].z + particle_sphere_radius[pi] < 1e-3)
+    if (particle_data[pi].indentation_origin_z + particle_data[pi].sphere_radius < 1e-3)
     {
         // Kappa is too small (or 0) and therefore assume the shape as perfect
         // cylinder.
-        if (ray_direction[ri].z == 0)
+        if (ray_data[ri].direction_and_min_bounding_volume_distance.z == 0)
             return false;
-        const double t = -ray_origin[ri].z / ray_direction[ri].z;
+        const double t = -ray_data[ri].origin_and_intensity.z /
+            ray_data[ri].direction_and_min_bounding_volume_distance.z;
         if (t <= 1e-9)
             return false;
-        intersection_position[ri] = ray_origin[ri] + t * ray_direction[ri];
-        if (dot(intersection_position[ri].xy, intersection_position[ri].xy) >
-            particle_cylinder_radius[pi] * particle_cylinder_radius[pi])
+        intersection_data[ri].position.xyz =
+            ray_data[ri].origin_and_intensity.xyz +
+            t * ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
+        if (dot(intersection_data[ri].position.xy, intersection_data[ri].position.xy) >
+            particle_data[pi].cylinder_radius * particle_data[pi].cylinder_radius)
             return false;
-        intersection_normal[ri].xyz = dvec3(0, 0, -1);
+        intersection_data[ri].normal.xyz = dvec3(0, 0, -1);
         return true;
     }
 
@@ -162,19 +196,20 @@ bool indentationIntersection(
     double isec_second = 0;
     if (sphereIntersection(
         ri,
-        particle_indentation_origin[pi],
-        particle_sphere_radius[pi],
+        particle_data[pi].indentation_origin_z,
+        particle_data[pi].sphere_radius,
         isec_first,
         isec_second))
     {
-        intersection_position[ri] = ray_origin[ri] + isec_second *
-            ray_direction[ri];
-        if (intersection_position[ri].z > 0 &&
-            intersection_position[ri].z <= particle_indentation_origin[pi].z +
-                particle_sphere_radius[pi])
+        intersection_data[ri].position.xyz = ray_data[ri].origin_and_intensity.xyz +
+            isec_second * ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
+        if (intersection_data[ri].position.z > 0 &&
+            intersection_data[ri].position.z <= particle_data[pi].indentation_origin_z +
+                particle_data[pi].sphere_radius)
         {
-            intersection_normal[ri] = normalize(particle_indentation_origin[pi] -
-                intersection_position[ri]);
+            intersection_data[ri].normal.xyz = normalize(
+                dvec3(0, 0, particle_data[pi].indentation_origin_z) -
+                intersection_data[ri].position.xyz);
             return true;
         }
         else
@@ -189,27 +224,28 @@ bool bottomTopIntersection(
     const uint ri,
     const int pi)
 {
-    if (ray_origin[ri].z <= 0)
+    if (ray_data[ri].origin_and_intensity.z <= 0)
     {
-        if (ray_direction[ri].z <= 0)
+        if (ray_data[ri].direction_and_min_bounding_volume_distance.z <= 0)
             return false;
         else
             return indentationIntersection(ri, pi);
     }
 
     const double particle_height =
-        particle_cap_origin[pi].z + particle_sphere_radius[pi];
-    if (ray_origin[ri].z >= particle_height)
+        particle_data[pi].cap_origin_z + particle_data[pi].sphere_radius;
+    if (ray_data[ri].origin_and_intensity.z >= particle_height)
     {
-        if (ray_direction[ri].z >= 0)
+        if (ray_data[ri].direction_and_min_bounding_volume_distance.z >= 0)
             return false;
         else
             return capIntersection(ri, pi);
     }
 
     const double dist =
-        length(particle_indentation_origin[pi].xyz - ray_origin[ri].xyz);
-    if (dist <= particle_sphere_radius[pi] + 1e-9)
+        length(dvec3(0, 0, particle_data[pi].indentation_origin_z) -
+            ray_data[ri].origin_and_intensity.xyz);
+    if (dist <= particle_data[pi].sphere_radius + 1e-9)
         return indentationIntersection(ri, pi);
     else
         return capIntersection(ri, pi);
@@ -225,16 +261,17 @@ bool intersectionTest(const uint ri, const int pi)
     {
         if (isec_first >= 0)
         {
-            intersection_position[ri] = ray_origin[ri] + isec_first *
-                ray_direction[ri];
-            if (intersection_position[ri].z >= 0 &&
-                intersection_position[ri].z <= particle_cylinder_length[pi])
+            intersection_data[ri].position.xyz =
+                ray_data[ri].origin_and_intensity.xyz +
+                isec_first * ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
+            if (intersection_data[ri].position.z >= 0 &&
+                intersection_data[ri].position.z <= particle_data[pi].cylinder_length)
             {
-                intersection_normal[ri].xy = normalize(intersection_position[ri].xy);
-                intersection_normal[ri].zw = dvec2(0.0);
+                intersection_data[ri].normal.xy = normalize(intersection_data[ri].position.xy);
+                intersection_data[ri].normal.zw = dvec2(0.0);
                 return true;
             }
-            else if (intersection_position[ri].z < 0.0)
+            else if (intersection_data[ri].position.z < 0.0)
                 return indentationIntersection(ri, pi);
             else
                 return capIntersection(ri, pi);
@@ -244,8 +281,9 @@ bool intersectionTest(const uint ri, const int pi)
     }
     else
     {
-        double dist = dot(ray_origin[ri].xy, ray_origin[ri].xy);
-        if (dist <= particle_cylinder_radius[pi] * particle_cylinder_radius[pi])
+        double dist =
+            dot(ray_data[ri].origin_and_intensity.xy, ray_data[ri].origin_and_intensity.xy);
+        if (dist <= particle_data[pi].cylinder_radius * particle_data[pi].cylinder_radius)
             return bottomTopIntersection(ri, pi);
     }
 
@@ -275,13 +313,17 @@ void main()
     // Perform intersection test
     if (intersectionTest(ri, pi))
     {
-        intersection_index[ri] = ray_index[ri];
+        intersection_index[ri] = pi;
     }
     else
     {
-        ray_origin[ri] =
-            transform_p2w_mat[pi] * ray_origin[ri] + transform_p2w_vec[pi];
-        ray_direction[ri] = normalize(transform_p2w_mat[pi] * ray_direction[ri]);
+        ray_data[ri].origin_and_intensity.xyz = (
+            p2w_data[pi].translate *
+            p2w_data[pi].rotate_scale *
+            dvec4(ray_data[ri].origin_and_intensity.xyz, 1)).xyz;
+        ray_data[ri].direction_and_min_bounding_volume_distance.xyz =
+            normalize(p2w_data[pi].rotate_scale *
+            dvec4(ray_data[ri].direction_and_min_bounding_volume_distance.xyz, 1)).xyz;
         ray_index[ri] = int(num_particles);
     }
 }

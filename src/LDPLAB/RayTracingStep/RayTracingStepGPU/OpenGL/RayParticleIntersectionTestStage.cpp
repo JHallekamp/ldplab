@@ -64,9 +64,10 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::initShaders(
         const size_t num_rays_per_buffer =
             m_context->parameters.number_rays_per_buffer;
         m_shader_num_work_groups =
-            num_rays_per_buffer / constant::glsl_local_group_size +
-            (num_rays_per_buffer % constant::glsl_local_group_size ?
-                1 : 0);
+            (num_rays_per_buffer / constant::glsl_local_group_sizes::
+                rod_particle_intersection_test) +
+            (num_rays_per_buffer % constant::glsl_local_group_sizes::
+                rod_particle_intersection_test ? 1 : 0);
     }
 
     m_context->ogl->unbindGlContext();
@@ -95,7 +96,13 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(particle_intersection_test_ssbo_binding);
-    // TODO
+    rays.ssbo.ray_properties->bindToIndex(0);
+    rays.ssbo.particle_index->bindToIndex(1);
+    intersection.ssbo.intersection_properties->bindToIndex(2);
+    intersection.ssbo.particle_index->bindToIndex(3);
+    RodParticleData* pd = (RodParticleData*)m_context->particle_data.get();
+    pd->ssbo.rod_particles->bindToIndex(4);
+    m_context->particle_transformation_data.ssbo.p2w->bindToIndex(5);
     LDPLAB_PROFILING_STOP(particle_intersection_test_ssbo_binding);
 
     // Execute shader

@@ -129,6 +129,11 @@ namespace ldplab
          */
         struct ParticleTransformationData
         {
+            struct Transformation
+            {
+                Mat4 rotation_scale;
+                Mat4 translation;
+            };
             // Raw transformations
             std::vector<Mat3> w2p_rotation_scale;
             std::vector<Vec3> w2p_translation;
@@ -139,16 +144,14 @@ namespace ldplab
              *        vector is applied to the matrix from the right-hand side) 
              *        by first rotating and then scaling it into particle 
              *        space.
-             * @details Includes translation (using homogenous coordinates).
              */
-            std::vector<Mat4> w2p_data;
+            std::vector<Transformation> w2p_data;
             /**
              * @brief Matrix that transforms a particle space vector (when the
              *        vector is applied to the matrix from the right-hand side)
              *        by first scaling and then rotating it into world space.
-             * * @details Includes translation (using homogenous coordinates).
              */
-            std::vector<Mat4> p2w_data;
+            std::vector<Transformation> p2w_data;
             /** @brief Containing the SSBOs. */
             struct
             {

@@ -76,9 +76,10 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::initSh
         const size_t num_rays_per_buffer =
             m_context->parameters.number_rays_per_buffer;
         m_shader_num_work_groups =
-            num_rays_per_buffer / constant::glsl_local_group_size +
-            (num_rays_per_buffer % constant::glsl_local_group_size ?
-                1 : 0);
+            (num_rays_per_buffer / constant::glsl_local_group_sizes::
+                unpolarized_light_1d_linear_index_gradient_interaction) +
+            (num_rays_per_buffer % constant::glsl_local_group_sizes::
+                unpolarized_light_1d_linear_index_gradient_interaction ? 1 : 0);
     }
 
     m_context->ogl->unbindGlContext();
@@ -110,7 +111,18 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(ray_particle_interaction_ssbo_binding);
-    // TODO
+    rays.ssbo.ray_properties->bindToIndex(0);
+    rays.ssbo.particle_index->bindToIndex(1);
+    reflected_rays.ssbo.ray_properties->bindToIndex(2);
+    reflected_rays.ssbo.particle_index->bindToIndex(3);
+    refracted_rays.ssbo.ray_properties->bindToIndex(4);
+    refracted_rays.ssbo.particle_index->bindToIndex(5);
+    intersection.ssbo.intersection_properties->bindToIndex(6);
+    ParticleMaterialLinearOneDirectionalData* pmd =
+        (ParticleMaterialLinearOneDirectionalData*)
+        m_context->particle_material_data.get();
+    pmd->ssbo.material->bindToIndex(7);
+    output.ssbo.output_per_ray->bindToIndex(8);
     LDPLAB_PROFILING_STOP(ray_particle_interaction_ssbo_binding);
 
     // Bind uniforms

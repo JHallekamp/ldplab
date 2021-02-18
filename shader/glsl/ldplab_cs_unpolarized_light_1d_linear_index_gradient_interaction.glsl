@@ -3,8 +3,9 @@
 #version 460 core
 
 // Local work group size
-layout(local_size_x = 64) in;
+layout(local_size_x = 128) in;
 
+// Data structures
 struct RayData
 {
     // xyz: Ray origin
@@ -35,59 +36,42 @@ struct OutputData
     dvec4 torque;
 };
 
-// 6
+struct ParticleMaterialLinearOneDirectional
+{
+    // xyz: Direction times gradient
+    // w: Index of refraction sum term
+    dvec4 direction_times_gradient_and_ior_sum_term;
+};
 
 // Ray buffer data
-layout(std430, binding = 0) readonly buffer rayOriginData
-{ dvec4 ray_origin[]; };
-layout(std430, binding = 1) readonly buffer rayDirectionData
-{ dvec4 ray_direction[]; };
-layout(std430, binding = 2) readonly buffer rayIntensityData
-{ double ray_intensity[]; };
-layout(std430, binding = 3) readonly buffer rayIndexData
+layout(std430, binding = 0) readonly buffer rayData
+{ RayData ray_data[]; };
+layout(std430, binding = 1) readonly buffer rayIndexData
 { int ray_index[]; };
 
 // Reflected rays
-layout(std430, binding = 4) buffer reflectedRayOriginData
-{ dvec4 reflected_ray_origin[]; };
-layout(std430, binding = 5) buffer reflectedRayDirectionData
-{ dvec4 reflected_ray_direction[]; };
-layout(std430, binding = 6) buffer reflectedRayIntensityData
-{ double reflected_ray_intensity[]; };
-layout(std430, binding = 7) buffer reflectedRayIndexData
+layout(std430, binding = 2) buffer reflectedRayData
+{ RayData reflected_ray_data[]; };
+layout(std430, binding = 3) buffer reflectedRayIndexData
 { int reflected_ray_index[]; };
-layout(std430, binding = 8) buffer reflectedRayMinBoundingVolumeDistanceData
-{ double reflected_ray_min_bounding_volume_distance[]; };
 
 // Refracted rays
-layout(std430, binding = 9) buffer refractedRayOriginData
-{ dvec4 refracted_ray_origin[]; };
-layout(std430, binding = 10) buffer refractedRayDirectionData
-{ dvec4 refracted_ray_direction[]; };
-layout(std430, binding = 11) buffer refractedRayIntensityData
-{ double refracted_ray_intensity[]; };
-layout(std430, binding = 12) buffer refractedRayIndexData
+layout(std430, binding = 4) buffer refractedRayData
+{ RayData refracted_ray_data[]; };
+layout(std430, binding = 5) buffer refractedRayIndexData
 { int refracted_ray_index[]; };
-layout(std430, binding = 13) buffer refractedRayMinBoundingVolumeDistanceData
-{ double refracted_ray_min_bounding_volume_distance[]; };
 
-// Intersectino buffer data
-layout(std430, binding = 14) readonly buffer intersectionPointData
-{ dvec4 intersection_position[]; };
-layout(std430, binding = 15) readonly buffer intersectionNormalData
-{ dvec4 intersection_normal[]; };
+// Intersection buffer data
+layout(std430, binding = 6) readonly buffer intersectionData
+{ IntersectionData intersection_data[]; };
 
 // Particle material data
-layout(std430, binding = 16) readonly buffer particleMaterialIndexOfRefrectionSumTermData
-{ double particle_material_index_of_refraction_sum_term[]; };
-layout(std430, binding = 17) readonly buffer particleMaterialDirectionTimesGradient
-{ dvec4 particle_material_direction_times_gradient[]; };
+layout(std430, binding = 7) readonly buffer materialData
+{ ParticleMaterialLinearOneDirectional material_data[]; };
 
 // Output buffer data
-layout(std430, binding = 18) buffer outputForceData
-{ dvec4 output_force_scattered[]; };
-layout(std430, binding = 19) buffer outputTorqueData
-{ dvec4 output_torque_scattered[]; };
+layout(std430, binding = 8) buffer outputForceData
+{ OutputData output_scattered[]; };
 
 // Property data
 uniform uint num_rays_per_buffer;
@@ -99,8 +83,8 @@ uniform bool inner_particle_rays;
 // Port ParticleMaterialLinearOneDirectional::indexOfRefraction(const Vec3&)
 double particleMaterialIndexOfRefrection(const int pi, const dvec3 pos)
 {
-    return particle_material_index_of_refraction_sum_term[pi] +
-        dot(particle_material_direction_times_gradient[pi].xyz, pos);
+    return material_data[pi].direction_times_gradient_and_ior_sum_term.w +
+        dot(material_data[pi].direction_times_gradient_and_ior_sum_term.xyz, pos);
 }
 
 // Port UnpolirzedLight1DLinearIndexGradientInteraction::reflectance
@@ -137,59 +121,71 @@ void main()
     }
 
     double n_r = parameter_medium_reflection_index /
-        particleMaterialIndexOfRefrection(pi, intersection_position[ri].xyz);
+        particleMaterialIndexOfRefrection(pi, intersection_data[ri].position.xyz);
     if (inner_particle_rays)
         n_r = 1.0 / n_r;
-    const double cos_a = -dot(ray_direction[ri], intersection_normal[ri]);
+
+    const dvec3 ray_origin = ray_data[ri].origin_and_intensity.xyz;
+    const double ray_intensity = ray_data[ri].origin_and_intensity.w;
+    const dvec3 ray_direction =
+        ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
+
+    const double cos_a = -dot(ray_direction, intersection_data[ri].normal.xyz);
     if (1.0 - n_r * n_r * (1.0 - cos_a * cos_a) >= 0.0)
     {
         const double cos_b = sqrt(1.0 - n_r * n_r * (1.0 - cos_a * cos_a));
         const double R = reflectance(cos_a, cos_b, n_r);
 
         // Refracted ray
-        refracted_ray_intensity[ri] = ray_intensity[ri] * (1.0 - R);
-        if (refracted_ray_intensity[ri] > parameter_intensity_cutoff)
+        refracted_ray_data[ri].origin_and_intensity.w = ray_intensity * (1.0 - R);
+        if (refracted_ray_data[ri].origin_and_intensity.w > parameter_intensity_cutoff)
         {
-            refracted_ray_index[ri] = ray_index[ri];
-            refracted_ray_min_bounding_volume_distance[ri] = 0.0;
-            refracted_ray_origin[ri] = intersection_position[ri];
-            refracted_ray_direction[ri] = n_r * ray_direction[ri] +
-                intersection_normal[ri] * (-cos_b + n_r * cos_a);
+            refracted_ray_data[ri].origin_and_intensity.xyz =
+                intersection_data[ri].position.xyz;
+            refracted_ray_data[ri].direction_and_min_bounding_volume_distance.xyz =
+                n_r * ray_direction +
+                intersection_data[ri].normal.xyz * (-cos_b + n_r * cos_a);
+            refracted_ray_data[ri].direction_and_min_bounding_volume_distance.w = 0.0;
+            refracted_ray_index[ri] = pi;
 
-            output_force_scattered[ri] += refracted_ray_intensity[ri] *
-                (ray_direction[ri] - refracted_ray_direction[ri]);
+            output_scattered[ri].force.xyz +=
+                refracted_ray_data[ri].origin_and_intensity.w * (ray_direction -
+                 refracted_ray_data[ri].direction_and_min_bounding_volume_distance.xyz);
             // output_torque_scattered
         }
         else
         {
             refracted_ray_index[ri] = -1;
-            dvec4 delta_direction = (n_r - 1.0) * ray_direction[ri] +
-                intersection_normal[ri] * (cos_b - n_r * cos_a);
-            output_force_scattered[ri] += refracted_ray_intensity[ri] *
+            const dvec3 delta_direction = (n_r - 1.0) * ray_direction +
+                intersection_data[ri].normal.xyz * (cos_b - n_r * cos_a);
+            output_scattered[ri].force.xyz +=
+                refracted_ray_data[ri].origin_and_intensity.w *
                 delta_direction;
             // output_torque_scattered
         }
 
         // Reflacted ray
-        reflected_ray_intensity[ri] = ray_intensity[ri] * R;
-        if (reflected_ray_intensity[ri] > parameter_intensity_cutoff)
+        reflected_ray_data[ri].origin_and_intensity.w = ray_intensity * R;
+        if (reflected_ray_data[ri].origin_and_intensity.w > parameter_intensity_cutoff)
         {
-            reflected_ray_index[ri] = ray_index[ri];
-            reflected_ray_min_bounding_volume_distance[ri] = 0.0;
-            reflected_ray_origin[ri] = intersection_position[ri];
-            reflected_ray_direction[ri] = ray_direction[ri] +
-                intersection_normal[ri] * 2.0 * cos_a;
+            reflected_ray_data[ri].origin_and_intensity.xyz =
+                intersection_data[ri].position.xyz;
+            reflected_ray_data[ri].direction_and_min_bounding_volume_distance.xyz =
+                ray_direction + intersection_data[ri].normal.xyz * 2.0 * cos_a;
+            reflected_ray_data[ri].direction_and_min_bounding_volume_distance.w = 0.0;
+            reflected_ray_index[ri] = pi;
 
-            output_force_scattered[ri] += reflected_ray_intensity[ri] *
-                (ray_direction[ri] - reflected_ray_direction[ri]);
+            output_scattered[ri].force.xyz +=
+                reflected_ray_data[ri].origin_and_intensity.w * (ray_direction -
+                 reflected_ray_data[ri].direction_and_min_bounding_volume_distance.xyz);
             // output_torque_scattered
         }
         else
         {
             reflected_ray_index[ri] = -1;
-            dvec4 delta_direction = intersection_normal[ri] * (-2.0 * cos_a);
-            output_force_scattered[ri] += reflected_ray_intensity[ri] *
-                delta_direction;
+            dvec3 delta_direction = intersection_data[ri].normal.xyz * (-2.0 * cos_a);
+            output_scattered[ri].force.xyz +=
+                reflected_ray_data[ri].origin_and_intensity.w * delta_direction;
             // output_torque_scattered
         }
     }
@@ -198,15 +194,16 @@ void main()
         // Total reflected ray
         refracted_ray_index[ri] = -1;
 
-        reflected_ray_index[ri] = ray_index[ri];
-        reflected_ray_min_bounding_volume_distance[ri] = 0.0;
-        reflected_ray_origin[ri] = intersection_position[ri];
-        reflected_ray_direction[ri] = ray_direction[ri] +
-            intersection_normal[ri] * 2.0 * cos_a;
-        reflected_ray_intensity[ri] = ray_intensity[ri];
+        reflected_ray_index[ri] = pi;
+        reflected_ray_data[ri].origin_and_intensity.xyz =
+            intersection_data[ri].position.xyz;
+        reflected_ray_data[ri].origin_and_intensity.w = ray_intensity;
+        reflected_ray_data[ri].direction_and_min_bounding_volume_distance.xyz =
+            ray_direction + intersection_data[ri].normal.xyz * 2.0 * cos_a;
+        reflected_ray_data[ri].direction_and_min_bounding_volume_distance.w = 0.0;
 
-        output_force_scattered[ri] += reflected_ray_intensity[ri] *
-            (ray_direction[ri] - reflected_ray_direction[ri]);
+        output_scattered[ri].force.xyz += ray_intensity * (ray_direction -
+            reflected_ray_data[ri].direction_and_min_bounding_volume_distance.xyz);
         // output_torque_scattered
     }
 }

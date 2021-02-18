@@ -65,8 +65,10 @@ bool ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::initS
         const size_t num_rays_per_buffer =
             m_context->parameters.number_rays_per_buffer;
         m_shader_num_work_groups =
-            num_rays_per_buffer / constant::glsl_local_group_size +
-            (num_rays_per_buffer % constant::glsl_local_group_size ?
+            (num_rays_per_buffer / constant::glsl_local_group_sizes::
+                ray_bounding_sphere_intersection_test_brute_force) +
+            (num_rays_per_buffer % constant::glsl_local_group_sizes::
+                ray_bounding_sphere_intersection_test_brute_force ?
                 1 : 0);
     }
 
@@ -102,7 +104,12 @@ size_t
 
     // Bind SSBOs
     LDPLAB_PROFILING_START(bounding_volume_intersection_test_ssbo_binding);
-    // TODO
+    buffer.ssbo.ray_properties->bindToIndex(0);
+    buffer.ssbo.particle_index->bindToIndex(1);
+    BoundingSphereData* bsd = 
+        (BoundingSphereData*)m_context->bounding_volume_data.get();
+    bsd->ssbo.sphere_properties->bindToIndex(2);
+    m_context->particle_transformation_data.ssbo.w2p->bindToIndex(3);
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_ssbo_binding);
 
     // Execute shader

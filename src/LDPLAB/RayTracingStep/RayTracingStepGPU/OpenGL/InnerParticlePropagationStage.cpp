@@ -80,9 +80,10 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::initShaders(
         const size_t num_rays_per_buffer = 
             m_context->parameters.number_rays_per_buffer;
         m_shader_num_work_groups =
-            num_rays_per_buffer / constant::glsl_local_group_size +
-            (num_rays_per_buffer % constant::glsl_local_group_size ?
-                1 : 0);
+            (num_rays_per_buffer / constant::glsl_local_group_sizes::
+                linear_index_gradient_rod_particle_propagation) +
+            (num_rays_per_buffer % constant::glsl_local_group_sizes::
+                linear_index_gradient_rod_particle_propagation ? 1 : 0);
     }
 
     // Finish it
@@ -113,7 +114,16 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
     
     // Bind buffers
     LDPLAB_PROFILING_START(inner_particle_propagation_ssbo_binding);
-    // TODO
+    rays.ssbo.particle_index->bindToIndex(0);
+    rays.ssbo.ray_properties->bindToIndex(1);
+    intersection.ssbo.intersection_properties->bindToIndex(2);
+    output.ssbo.output_per_ray->bindToIndex(3);
+    RodParticleData* pd = (RodParticleData*)m_context->particle_data.get();
+    pd->ssbo.rod_particles->bindToIndex(4);
+    ParticleMaterialLinearOneDirectionalData* pmd =
+        (ParticleMaterialLinearOneDirectionalData*)
+        m_context->particle_material_data.get();
+    pmd->ssbo.material->bindToIndex(5);
     LDPLAB_PROFILING_STOP(inner_particle_propagation_ssbo_binding);
     
     // Execute shader

@@ -16,4 +16,7 @@
 #include "LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"
 #include "LDPLAB/RayTracingStep/RayTracingStepOutput.hpp"
 
+// Profiling interface
+#include "LDPLAB/Utils/Profiler.hpp"
+
 #endif
