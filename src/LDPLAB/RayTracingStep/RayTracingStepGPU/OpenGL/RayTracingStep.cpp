@@ -71,16 +71,16 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
             particle.position;
         m_context->particle_transformation_data.w2p_rotation_scale[i] =
             getRotationMatrix(
-                particle.orientation.x,
-                particle.orientation.y,
-                particle.orientation.z,
-                particle.rotation_order);
-        m_context->particle_transformation_data.p2w_scale_rotation[i] =
-            getRotationMatrix(
                 -particle.orientation.x,
                 -particle.orientation.y,
                 -particle.orientation.z,
                 invertRotationOrder(particle.rotation_order));
+        m_context->particle_transformation_data.p2w_scale_rotation[i] =
+            getRotationMatrix(
+                particle.orientation.x,
+                particle.orientation.y,
+                particle.orientation.z,
+                particle.rotation_order);
         m_context->particle_transformation_data.w2p_data[i] =
             buildTranformationData(
                 m_context->particle_transformation_data.w2p_rotation_scale[i],
