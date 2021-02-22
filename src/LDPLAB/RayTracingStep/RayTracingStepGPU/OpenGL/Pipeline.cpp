@@ -325,7 +325,8 @@ void ldplab::rtsgpu_ogl::Pipeline::uploadInitialBatch(RayBuffer& buffer)
 
     // Upload data
     LDPLAB_PROFILING_START(pipeline_upload_initial_batch_data_upload);
-    // TODO
+    buffer.ssbo.particle_index->upload(buffer.particle_index_data);
+    buffer.ssbo.ray_properties->upload(buffer.ray_properties_data);
     LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_data_upload);
 
     // Unbind gl context
