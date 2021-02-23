@@ -157,19 +157,19 @@ void ldplab::rtscpu::Pipeline::processBatch(
                 pipeline_world_space_particle_intersection_test);
         }
 
-        if (buffer.world_space_rays > 0)
+        while (buffer.world_space_rays > 0)
         {
             do
             {
                 LDPLAB_PROFILING_START(
                     pipeline_world_space_bounding_volume_intersection_test);
-                const bool intersects_bv =
+                const size_t intersects_bv =
                     m_ray_bounding_volume_intersection_test_stage->execute(
                         buffer);
                 LDPLAB_PROFILING_STOP(
                     pipeline_world_space_bounding_volume_intersection_test);
 
-                if (intersects_bv)
+                if (intersects_bv > 0)
                 {
                     LDPLAB_PROFILING_START(
                         pipeline_world_space_particle_intersection_test);

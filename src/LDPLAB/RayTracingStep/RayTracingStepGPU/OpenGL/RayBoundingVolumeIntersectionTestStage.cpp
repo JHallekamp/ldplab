@@ -129,16 +129,18 @@ size_t
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_gl_context_unbinding);
 
     // Calculate number of rays hitting bounding spheres
-    size_t num_rays_hitting_boundary_sphere = 0;
+    size_t num_invalid_rays = 0;
     for (size_t i = 0; i < buffer.size; ++i)
     {
-        if (buffer.particle_index_data[i] >= 0)
-            ++num_rays_hitting_boundary_sphere;
+        if (buffer.particle_index_data[i] < 0)
+            ++num_invalid_rays;
     }
 
-    size_t num_rays_exiting_scene = 
-        buffer.active_rays - num_rays_hitting_boundary_sphere;
-    buffer.active_rays = num_rays_hitting_boundary_sphere;
+    size_t num_rays_exiting_scene = num_invalid_rays -
+        (buffer.size - buffer.active_rays);
+    size_t num_rays_hitting_boundary_sphere = buffer.world_space_rays -
+        num_rays_exiting_scene;
+    buffer.active_rays -= num_rays_exiting_scene;
     buffer.world_space_rays = 0;
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Bounding sphere intersection "\
