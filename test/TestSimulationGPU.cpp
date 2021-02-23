@@ -44,16 +44,16 @@ const double LIGHT_INTENSITY =  0.1 / 2.99792458;
 const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 2;
-const size_t NUM_RTS_RAYS_PER_BUFFER = 4096;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512.0;
+const size_t NUM_RTS_THREADS = 1;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 256.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 0;
 const double RTS_INTENSITY_CUTOFF = 0.01 * LIGHT_INTENSITY  / 
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 32;
+const size_t NUM_SIM_ROTATION_STEPS = 24;
 const std::string BASE_SHADER_DIRECTORY = "shader/";
 
 constexpr double const_pi() 
@@ -195,6 +195,7 @@ void runSimulation(
     size_t branching_depth)
 {
     // Start timing
+    ldplab::Profiling::reset();
     std::chrono::steady_clock::time_point start =
         std::chrono::steady_clock::now();
 
