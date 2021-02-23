@@ -78,7 +78,7 @@ bool cylinderIntersection(
             ray_data[ri].direction_and_min_bounding_volume_distance.xy);
     const double q = (dot(ray_data[ri].origin_and_intensity.xy,
         ray_data[ri].origin_and_intensity.xy) -
-        particle_data[pi].sphere_radius * particle_data[pi].sphere_radius) /
+        particle_data[pi].cylinder_radius * particle_data[pi].cylinder_radius) /
         dot(ray_data[ri].direction_and_min_bounding_volume_distance.xy,
             ray_data[ri].direction_and_min_bounding_volume_distance.xy);
 

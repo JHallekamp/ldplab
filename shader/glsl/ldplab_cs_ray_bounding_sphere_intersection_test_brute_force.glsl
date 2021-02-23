@@ -62,7 +62,7 @@ void main()
     const int pi = ray_index[ri];
 
     // Check if ray index is legal
-    if (pi == -1 || pi < num_particles)
+    if (pi < num_particles)
         return;
 
     double min_d = -1.0;
@@ -111,9 +111,9 @@ void main()
              w2p_data[min_i].rotate_scale *
              w2p_data[min_i].translate *
              dvec4(ray_data[ri].origin_and_intensity.xyz, 1)).xyz;
-        ray_data[ri].direction_and_min_bounding_volume_distance.w = min_d;
         ray_data[ri].direction_and_min_bounding_volume_distance.xyz =
             normalize((w2p_data[min_i].rotate_scale *
-                dvec4(ray_data[ri].origin_and_intensity.xyz, 0)).xyz);
+                dvec4(ray_data[ri].origin_and_intensity.xyz, 1)).xyz);
+        ray_data[ri].direction_and_min_bounding_volume_distance.w = min_d;
     }
 }
