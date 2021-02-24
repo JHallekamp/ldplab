@@ -159,29 +159,26 @@ void ldplab::rtscpu::Pipeline::processBatch(
 
         while (buffer.world_space_rays > 0)
         {
-            do
+            LDPLAB_PROFILING_START(
+                pipeline_world_space_bounding_volume_intersection_test);
+            const size_t intersects_bv =
+                m_ray_bounding_volume_intersection_test_stage->execute(
+                    buffer);
+            LDPLAB_PROFILING_STOP(
+                pipeline_world_space_bounding_volume_intersection_test);
+
+            if (intersects_bv > 0)
             {
                 LDPLAB_PROFILING_START(
-                    pipeline_world_space_bounding_volume_intersection_test);
-                const size_t intersects_bv =
-                    m_ray_bounding_volume_intersection_test_stage->execute(
-                        buffer);
+                    pipeline_world_space_particle_intersection_test);
+                m_ray_particle_intersection_test_stage->execute(
+                    buffer,
+                    intersection_buffer);
                 LDPLAB_PROFILING_STOP(
-                    pipeline_world_space_bounding_volume_intersection_test);
-
-                if (intersects_bv > 0)
-                {
-                    LDPLAB_PROFILING_START(
-                        pipeline_world_space_particle_intersection_test);
-                    m_ray_particle_intersection_test_stage->execute(
-                        buffer,
-                        intersection_buffer);
-                    LDPLAB_PROFILING_STOP(
-                        pipeline_world_space_particle_intersection_test);
-                }
-                else if (buffer.active_rays == 0)
-                    return;
-            } while (buffer.world_space_rays > 0);
+                    pipeline_world_space_particle_intersection_test);
+            }
+            else if (buffer.active_rays == 0)
+                return;
         }
 
         LDPLAB_PROFILING_START(pipeline_world_space_particle_interaction);

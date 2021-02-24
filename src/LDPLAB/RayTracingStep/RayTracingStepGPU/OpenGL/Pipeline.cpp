@@ -241,8 +241,8 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
     }
 
     // Check if there are still active rays left and print a warning to the log
-    if (reflection_buffer.uid != buffer_control.dummyBufferDepth() &&
-        transmission_buffer.uid != buffer_control.dummyBufferDepth())
+    if (reflection_buffer.depth < buffer_control.dummyBufferDepth() &&
+        transmission_buffer.depth < buffer_control.dummyBufferDepth())
     {
         processBatch(reflection_buffer, buffer_control);
         processBatch(transmission_buffer, buffer_control);
@@ -251,8 +251,12 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
         m_context->flags.emit_warning_on_maximum_branching_depth_discardment)
     {
         // Download data
+        std::unique_lock<std::mutex> lck{ m_context->ogl->getGPUMutex() };
+        m_context->ogl->bindGlContext();
         buffer.ssbo.ray_properties->download(buffer.ray_properties_data);
         buffer.ssbo.particle_index->download(buffer.particle_index_data);
+        m_context->ogl->unbindGlContext();
+        lck.unlock();
         // Compute max and average length
         double max_intensity = 0.0, avg_intensity = 0.0;
         for (size_t i = 0; i < buffer.size; ++i)
