@@ -112,20 +112,17 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
 
     // Download index data
     LDPLAB_PROFILING_START(particle_intersection_test_data_download);
-    rays.ssbo.particle_index->download(rays.particle_index_data);
+    rays.ssbo.particle_index->download(rays.particle_index_data);   
 
-    std::vector<int32_t> ray_indices(rays.size);
-    std::vector<RayBuffer::RayProperties> ray_properties(rays.size);
-    std::vector<int32_t> intersection_indices(rays.size);
-    std::vector<IntersectionBuffer::IntersectionProperties> intersection_properties(rays.size);
-    rays.ssbo.particle_index->download(ray_indices.data());
-    rays.ssbo.ray_properties->download(ray_properties.data());
-    intersection.ssbo.particle_index->download(intersection_indices.data());
-    intersection.ssbo.intersection_properties->download(intersection_properties.data());
-    pd->ssbo.rod_particles->download(pd->rod_particles_data.data());
-    m_context->particle_transformation_data.ssbo.p2w->download(
-        m_context->particle_transformation_data.p2w_data.data());
-    
+    //std::vector<RayBuffer::RayProperties> ray_properties(rays.size);
+    //std::vector<int32_t> ray_index(rays.size);
+    //std::vector<IntersectionBuffer::IntersectionProperties> intersection_properties(rays.size);
+    //std::vector<int32_t> intersection_index(rays.size);
+    //rays.ssbo.particle_index->download(ray_index.data());
+    //rays.ssbo.ray_properties->download(ray_properties.data());
+    //intersection.ssbo.particle_index->download(intersection_index.data());
+    //intersection.ssbo.intersection_properties->download(intersection_properties.data());
+
     LDPLAB_PROFILING_STOP(particle_intersection_test_data_download);
 
     // Unbind gl context

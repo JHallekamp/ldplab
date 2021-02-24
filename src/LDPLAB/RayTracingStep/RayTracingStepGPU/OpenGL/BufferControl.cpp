@@ -9,7 +9,7 @@ ldplab::rtsgpu_ogl::BufferControl::BufferControl(std::shared_ptr<Context> contex
     m_context{ context }
 {    
     const size_t num_rays = m_context->parameters.number_rays_per_buffer *
-        (m_context->parameters.maximum_branching_depth + 1) * 2;
+        (m_context->parameters.maximum_branching_depth * 2 + 3);
     
     m_ray_properties_data.resize(num_rays);
     m_ray_particle_index_data.resize(num_rays);
@@ -44,15 +44,15 @@ ldplab::rtsgpu_ogl::RayBuffer&
 {
     if (buffer.depth >= m_context->parameters.maximum_branching_depth)
         return m_ray_buffers[1]; //return m_dummy;
-    return m_ray_buffers[2 * buffer.depth + 2];
+    return m_ray_buffers[2 * buffer.depth + 3];
 }
 
 ldplab::rtsgpu_ogl::RayBuffer& 
     ldplab::rtsgpu_ogl::BufferControl::getTransmissionBuffer(RayBuffer& buffer)
 {
     if (buffer.depth >= m_context->parameters.maximum_branching_depth)
-        return m_ray_buffers[1]; //return m_dummy;
-    return m_ray_buffers[2 * buffer.depth + 3];
+        return m_ray_buffers[2]; //return m_dummy;
+    return m_ray_buffers[2 * buffer.depth + 4];
 }
 
 ldplab::rtsgpu_ogl::IntersectionBuffer& 
@@ -75,9 +75,9 @@ void ldplab::rtsgpu_ogl::BufferControl::resetOutputBuffer()
     }
 }
 
-size_t ldplab::rtsgpu_ogl::BufferControl::dummyBufferUID()
+size_t ldplab::rtsgpu_ogl::BufferControl::dummyBufferDepth()
 {
-    return m_ray_buffers[1].uid; //m_dummy.uid;
+    return m_ray_buffers[1].depth;
 }
 
 void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
@@ -86,7 +86,7 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
     m_ray_buffers.emplace_back(0, m_context->parameters.number_rays_per_buffer);
     m_ray_buffers.back().ray_properties_data = m_ray_properties_data.data();
     m_ray_buffers.back().particle_index_data = m_ray_particle_index_data.data();
-    // Dummy buffer
+    // Dummy buffers
     m_ray_buffers.emplace_back(
         m_context->parameters.maximum_branching_depth + 1, 
         m_context->parameters.number_rays_per_buffer);
@@ -96,16 +96,25 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
     m_ray_buffers.back().particle_index_data =
         m_ray_particle_index_data.data() +
         m_context->parameters.number_rays_per_buffer;
+    m_ray_buffers.emplace_back(
+        m_context->parameters.maximum_branching_depth + 1,
+        m_context->parameters.number_rays_per_buffer);
+    m_ray_buffers.back().ray_properties_data =
+        m_ray_properties_data.data() +
+        2 * m_context->parameters.number_rays_per_buffer;
+    m_ray_buffers.back().particle_index_data =
+        m_ray_particle_index_data.data() +
+        2 * m_context->parameters.number_rays_per_buffer;
 
     // Branching buffers
-    for (size_t i = 1; i <= m_context->parameters.maximum_branching_depth; ++i)
+    for (size_t i = 0; i < m_context->parameters.maximum_branching_depth; ++i)
     {
         for (size_t j = 0; j < 2; ++j)
         {
             m_ray_buffers.emplace_back(i, 
                 m_context->parameters.number_rays_per_buffer);
             const size_t offset =
-                (2 * i + j) * m_context->parameters.number_rays_per_buffer;
+                (2 * i + j + 3) * m_context->parameters.number_rays_per_buffer;
             m_ray_buffers.back().ray_properties_data = 
                 m_ray_properties_data.data() + offset;
             m_ray_buffers.back().particle_index_data = 

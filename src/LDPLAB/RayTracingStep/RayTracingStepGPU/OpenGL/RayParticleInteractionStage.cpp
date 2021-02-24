@@ -145,6 +145,24 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
     refracted_rays.ssbo.particle_index->download(
         reflected_rays.particle_index_data);
     output.ssbo.output_per_ray->download(output.output_per_ray_data);
+
+    //std::vector<RayBuffer::RayProperties> ray_properties(rays.size);
+    //std::vector<RayBuffer::RayProperties> reflected_properties(rays.size);
+    //std::vector<RayBuffer::RayProperties> transmitted_properties(rays.size);
+    //std::vector<int32_t> ray_index(rays.size);
+    //std::vector<int32_t> reflected_index(rays.size);
+    //std::vector<int32_t> transmitted_index(rays.size);
+    //std::vector<IntersectionBuffer::IntersectionProperties> intersection_properties(rays.size);
+    //std::vector<OutputBuffer::ScatteredOutput> scattered_output(rays.size);
+    //rays.ssbo.particle_index->download(ray_index.data());
+    //rays.ssbo.ray_properties->download(ray_properties.data());
+    //reflected_rays.ssbo.particle_index->download(reflected_index.data());
+    //reflected_rays.ssbo.ray_properties->download(reflected_properties.data());
+    //refracted_rays.ssbo.particle_index->download(transmitted_index.data());
+    //refracted_rays.ssbo.ray_properties->download(transmitted_properties.data());
+    //intersection.ssbo.intersection_properties->download(intersection_properties.data());
+    //output.ssbo.output_per_ray->download(scattered_output.data());
+
     LDPLAB_PROFILING_STOP(ray_particle_interaction_data_download);
 
     // Unbind gl context

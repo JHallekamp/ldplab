@@ -102,8 +102,7 @@ bool sphereIntersection(
         ray_data[ri].origin_and_intensity.xyz - dvec3(0, 0, sphere_origin_z);
     const double p =
         dot(ray_data[ri].direction_and_min_bounding_volume_distance.xyz, o_minus_c);
-    const double q = dot(o_minus_c.xyz, o_minus_c.xyz) -
-        sphere_radius * sphere_radius;
+    const double q = dot(o_minus_c, o_minus_c) - sphere_radius * sphere_radius;
 
     const double discriminant = p * p - q;
     if (discriminant < 1e-9)
@@ -127,7 +126,7 @@ bool capIntersection(
         const double t =
             (particle_data[pi].cylinder_length - ray_data[ri].origin_and_intensity.z) /
             ray_data[ri].direction_and_min_bounding_volume_distance.z;
-        if (t <= 1e-9)
+        if (t < 1e-9)
             return false;
         intersection_data[ri].position.xyz = ray_data[ri].origin_and_intensity.xyz +
             t * ray_data[ri].direction_and_min_bounding_volume_distance.xyz;
@@ -180,7 +179,7 @@ bool indentationIntersection(
             return false;
         const double t = -ray_data[ri].origin_and_intensity.z /
             ray_data[ri].direction_and_min_bounding_volume_distance.z;
-        if (t <= 1e-9)
+        if (t < 1e-9)
             return false;
         intersection_data[ri].position.xyz =
             ray_data[ri].origin_and_intensity.xyz +
@@ -306,7 +305,7 @@ void main()
 
     // Check if particle index is legal
     if (pi < 0 ||
-        pi >= num_particles ||
+        pi >= int(num_particles) ||
         pi == intersection_index[ri])
         return;
 

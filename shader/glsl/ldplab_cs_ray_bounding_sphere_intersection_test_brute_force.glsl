@@ -62,7 +62,7 @@ void main()
     const int pi = ray_index[ri];
 
     // Check if ray index is legal
-    if (pi < num_particles)
+    if (pi < int(num_particles))
         return;
 
     double min_d = -1.0;

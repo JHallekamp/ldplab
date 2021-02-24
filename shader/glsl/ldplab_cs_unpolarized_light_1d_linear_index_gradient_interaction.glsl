@@ -83,8 +83,9 @@ uniform bool inner_particle_rays;
 // Port ParticleMaterialLinearOneDirectional::indexOfRefraction(const Vec3&)
 double particleMaterialIndexOfRefrection(const int pi, const dvec3 pos)
 {
-    return material_data[pi].direction_times_gradient_and_ior_sum_term.w +
-        dot(material_data[pi].direction_times_gradient_and_ior_sum_term.xyz, pos);
+    return
+        dot(material_data[pi].direction_times_gradient_and_ior_sum_term.xyz, pos) +
+        material_data[pi].direction_times_gradient_and_ior_sum_term.w;
 }
 
 // Port UnpolirzedLight1DLinearIndexGradientInteraction::reflectance
@@ -111,9 +112,7 @@ void main()
     const int pi = ray_index[ri];
 
     // Check if particle index is legal
-    if (pi >= num_particles)
-        return;
-    else if (pi < 0)
+    if (pi < 0)
     {
         reflected_ray_index[ri] = -1;
         refracted_ray_index[ri] = -1;

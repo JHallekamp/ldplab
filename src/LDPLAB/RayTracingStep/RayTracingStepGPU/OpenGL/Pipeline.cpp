@@ -241,8 +241,8 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
     }
 
     // Check if there are still active rays left and print a warning to the log
-    if (reflection_buffer.uid != buffer_control.dummyBufferUID() &&
-        transmission_buffer.uid != buffer_control.dummyBufferUID())
+    if (reflection_buffer.uid != buffer_control.dummyBufferDepth() &&
+        transmission_buffer.uid != buffer_control.dummyBufferDepth())
     {
         processBatch(reflection_buffer, buffer_control);
         processBatch(transmission_buffer, buffer_control);

@@ -120,6 +120,12 @@ size_t
     // Download index data
     LDPLAB_PROFILING_START(bounding_volume_intersection_test_data_download);
     buffer.ssbo.particle_index->download(buffer.particle_index_data);
+
+    //std::vector<RayBuffer::RayProperties> ray_properties(buffer.size);
+    //std::vector<int32_t> ray_index(buffer.size);
+    //buffer.ssbo.ray_properties->download(ray_properties.data());
+    //buffer.ssbo.particle_index->download(ray_index.data());
+
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_data_download);
 
     // Unbind gl context

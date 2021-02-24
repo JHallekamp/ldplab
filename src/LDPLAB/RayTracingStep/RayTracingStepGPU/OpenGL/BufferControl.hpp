@@ -68,10 +68,10 @@ namespace ldplab
              */
             void resetOutputBuffer();
             /**
-             * @brief Provides the buffer index to identify a dummy buffer.
-             * @returns The dummy buffer uid.
+             * @brief Provides the buffer depth to identify a dummy buffer.
+             * @returns The dummy buffer branching depth.
              */
-            size_t dummyBufferUID();
+            size_t dummyBufferDepth();
         private:
             void initializeBuffers();
         private:
