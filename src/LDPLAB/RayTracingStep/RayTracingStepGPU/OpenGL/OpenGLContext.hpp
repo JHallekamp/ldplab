@@ -143,6 +143,16 @@ namespace ldplab
                 const std::string& shader_name,
                 const std::string& glsl_code) const;
             /**
+             * @brief Creates a compute shader program from file.
+             * @param[in] shader_name The name of the glsl shader.
+             * @param[in] path The file path to the shader code.
+             * @returns Shared pointer to the shader or nullptr if the shader
+             *          has not been created successfully.
+             */
+            std::shared_ptr<ComputeShader> createComputeShaderFromFile(
+                const std::string& shader_name,
+                const std::string& path);
+            /**
              * @brief Creates a shader storage buffer object (SSBO).
              * @param[in] buffer_size Size of the buffer in bytes.
              * @param[in] buffer_usage Specifies OpenGL usage pattern.

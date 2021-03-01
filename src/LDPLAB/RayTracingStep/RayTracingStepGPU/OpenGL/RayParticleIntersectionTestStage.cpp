@@ -7,6 +7,7 @@
 #include "../../../SimulationState.hpp"
 #include "../../../Log.hpp"
 #include "../../../Utils/Profiler.hpp"
+#include "../../../Utils/ComputeHelper.hpp"
 
 #include <glm/glm.hpp>
 #include <cmath>
@@ -18,60 +19,33 @@ ldplab::rtsgpu_ogl::RodParticleIntersectionTest::
     m_context{ context }
 { }
 
-bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::initShaders(
-    const RayTracingStepGPUOpenGLInfo& info)
+bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::initShaders()
 {
-    std::string shader_path = info.shader_base_directory_path +
-        "glsl/ldplab_cs_rod_particle_intersection_test.glsl";
-
-    // Load file
-    std::ifstream file(shader_path);
-    if (!file)
-    {
-        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Unable to open shader "\
-            "source file \"%s\"", m_context->uid, shader_path.c_str());
-        return false;
-    }
-    std::stringstream code;
-    code << file.rdbuf();
-
     // Create shader
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
+    if (!m_context->shared_shaders.createShaderByName(
+            constant::glsl_shader_name::rod_particle_intersection_test,
+            m_cs_intersection.shader))
+        return false;
 
-    m_compute_shader =
-        m_context->ogl->createComputeShader(
-            "RodParticleIntersectionTest", code.str());
-    file.close();
+    // Compute work group size
+    m_cs_intersection.num_work_groups = ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::rod_particle_intersection_test);
 
-    if (m_compute_shader != nullptr)
-    {
-        // Get uniform location
-        m_shader_uniform_location_num_rays_per_buffer =
-            m_compute_shader->getUniformLocation("num_rays_per_buffer");
-        m_shader_uniform_location_num_particles =
-            m_compute_shader->getUniformLocation("num_particles");
+    // Get uniform locations
+    m_cs_intersection.uniform_num_particles =
+        m_cs_intersection.shader->getUniformLocation("num_particles");
+    m_cs_intersection.uniform_num_rays_per_buffer =
+        m_cs_intersection.shader->getUniformLocation("num_rays_per_buffer");
 
-        // Set uniforms
-        m_compute_shader->use();
-        glUniform1ui(m_shader_uniform_location_num_rays_per_buffer,
-            m_context->parameters.number_rays_per_buffer);
-        glUniform1ui(m_shader_uniform_location_num_particles,
-            m_context->particles.size());
+    m_cs_intersection.shader->use();
+    glUniform1ui(m_cs_intersection.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+    glUniform1ui(m_cs_intersection.uniform_num_rays_per_buffer,
+        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
 
-        // Compute number of dispatched work groups
-        const size_t num_rays_per_buffer =
-            m_context->parameters.number_rays_per_buffer;
-        m_shader_num_work_groups =
-            (num_rays_per_buffer / constant::glsl_local_group_sizes::
-                rod_particle_intersection_test) +
-            (num_rays_per_buffer % constant::glsl_local_group_sizes::
-                rod_particle_intersection_test ? 1 : 0);
-    }
-
-    m_context->ogl->unbindGlContext();
-    return (m_compute_shader != nullptr);
+    // Done
+    return true;
 }
 
 void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
@@ -82,16 +56,9 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
         " test on batch buffer %i",
         m_context->uid, rays.uid);
     
-    // Bind GPU to this thread
-    LDPLAB_PROFILING_START(particle_intersection_test_gl_context_binding);
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
-    LDPLAB_PROFILING_STOP(particle_intersection_test_gl_context_binding);
-
     // Bind shaders
     LDPLAB_PROFILING_START(particle_intersection_test_shader_binding);
-    m_compute_shader->use();
+    m_cs_intersection.shader->use();
     LDPLAB_PROFILING_STOP(particle_intersection_test_shader_binding);
 
     // Bind SSBOs
@@ -107,38 +74,11 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
 
     // Execute shader
     LDPLAB_PROFILING_START(particle_intersection_test_shader_execution);
-    m_compute_shader->execute(m_shader_num_work_groups);
+    m_cs_intersection.shader->execute(m_cs_intersection.num_work_groups);
     LDPLAB_PROFILING_STOP(particle_intersection_test_shader_execution);
 
-    // Download index data
-    LDPLAB_PROFILING_START(particle_intersection_test_data_download);
-    rays.ssbo.particle_index->download(rays.particle_index_data);   
-
-    //std::vector<RayBuffer::RayProperties> ray_properties(rays.size);
-    //std::vector<int32_t> ray_index(rays.size);
-    //std::vector<IntersectionBuffer::IntersectionProperties> intersection_properties(rays.size);
-    //std::vector<int32_t> intersection_index(rays.size);
-    //rays.ssbo.particle_index->download(ray_index.data());
-    //rays.ssbo.ray_properties->download(ray_properties.data());
-    //intersection.ssbo.particle_index->download(intersection_index.data());
-    //intersection.ssbo.intersection_properties->download(intersection_properties.data());
-
-    LDPLAB_PROFILING_STOP(particle_intersection_test_data_download);
-
-    // Unbind gl context
-    LDPLAB_PROFILING_START(particle_intersection_test_gl_context_unbinding);
-    m_context->ogl->unbindGlContext();
-    gpu_lock.unlock();
-    LDPLAB_PROFILING_STOP(particle_intersection_test_gl_context_unbinding);
-    
-    size_t num_world_space_rays = 0;
-    for (size_t i = 0; i < rays.size; ++i)
-    {
-        if (rays.particle_index_data[i] >= 0 &&
-            rays.particle_index_data[i] >= m_context->particles.size())
-            ++num_world_space_rays;
-    }
-    rays.world_space_rays = num_world_space_rays;
+    // Update ray buffer index data
+    m_context->shared_shaders.updateRayBufferState(rays);
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Ray particle intersection test on "\
         "batch buffer %i completed",

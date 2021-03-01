@@ -70,26 +70,28 @@ namespace ldplab
         struct OutputBuffer
         {
             /** @brief Contains GPU applicable scattered output element. */
-            struct ScatteredOutput
+            struct OutputData
             {
                 Vec3 force;
                 double UNUSED_00;
                 Vec3 torque;
                 double UNUSED_01;
             };
-            /** @brief Array containing size force changes per particle. */
-            Vec3* force_data;
-            /** @brief Array containing size torque changes per particle. */
-            Vec3* torque_data;
             /** @brief Number of particles. */
             size_t size;
             /** @brief Array used to mirror the according SSBO. */
-            ScatteredOutput* output_per_ray_data;
+            OutputData* output_per_ray_data;
+            /** @brief Array used to mirror the according SSBO. */
+            OutputData* output_gathered_data;
             /** @brief Containint the shader buffer storage objects. */
             struct
             {
                 /** @brief Corresponding to output_per_ray. */
                 std::shared_ptr<ShaderStorageBuffer> output_per_ray;
+                /** @brief Corresponding to output_gathered. */
+                std::shared_ptr<ShaderStorageBuffer> output_gathered;
+                /** @brief Used for temporary storage in gather shader. */
+                std::shared_ptr<ShaderStorageBuffer> gather_temp;
             } ssbo;
         };
 

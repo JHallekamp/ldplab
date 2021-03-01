@@ -8,6 +8,7 @@
 #include "Pipeline.hpp"
 #include "Data.hpp"
 #include "OpenGLContext.hpp"
+#include "SharedShaders.hpp"
 
 #include "../../RayTracingStepOutput.hpp"
 #include "../../../Geometry.hpp"
@@ -47,7 +48,9 @@ namespace ldplab
                 light_source_uid_to_index_map{ },
                 particle_index_to_uid_map{ },
                 light_source_index_to_uid_map{ },
-                parameters{ }
+                parameters{ },
+                flags{ },
+                shared_shaders{ std::shared_ptr<Context>(this) }
             {
                 // Create uid, index maps
                 for (size_t i = 0; i < particles.size(); ++i)
@@ -104,6 +107,8 @@ namespace ldplab
             std::map<size_t, UID<Particle>> particle_index_to_uid_map;
             /** @brief Maps the internaly used light source indices to UIDs. */
             std::map<size_t, UID<LightSource>> light_source_index_to_uid_map;
+            /** @brief Instance used to executed shared shaders. */
+            SharedShaders shared_shaders;
             /** @brief Structure holding simulation parameters. */
             struct
             {
@@ -122,6 +127,8 @@ namespace ldplab
                 size_t number_rays_per_unit;
                 /** @brief Number of parallel pipeline instances. */
                 size_t number_parallel_pipelines;
+                /** @brief Base directory for shader files. */
+                std::string shader_base_directory;
             } parameters;
             /** @brief Structure holding simulation flags. */
             struct

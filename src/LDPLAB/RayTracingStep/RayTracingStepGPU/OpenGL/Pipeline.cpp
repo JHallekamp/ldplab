@@ -31,57 +31,26 @@ ldplab::rtsgpu_ogl::Pipeline::Pipeline(
         m_context->uid);
 }
 
-bool ldplab::rtsgpu_ogl::Pipeline::initShaders(
-    const RayTracingStepGPUOpenGLInfo& info)
+bool ldplab::rtsgpu_ogl::Pipeline::initShaders()
 {
-    std::string shader_path = info.shader_base_directory_path +
-        "glsl/ldplab_cs_reset_output_and_intersection_buffer.glsl";
+    // Initialize buffer control SSBOs
+    for (size_t i = 0; i < m_buffer_controls.size(); ++i)
+        m_buffer_controls[i].initSSBO();
 
-    // Load file
-    std::ifstream file(shader_path);
-    if (!file)
-    {
-        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Unable to open shader "\
-            "source file \"%s\"", m_context->uid, shader_path.c_str());
+    // Initialize shared shaders
+    if (!m_context->shared_shaders.initShaders())
         return false;
-    }
-    std::stringstream code;
-    code << file.rdbuf();
+    if (!m_inner_particle_propagation_stage->initShaders())
+        return false;
+    if (!m_ray_bounding_volume_intersection_test_stage->initShaders())
+        return false;
+    if (!m_ray_particle_interaction_stage->initShaders())
+        return false;
+    if (!m_ray_particle_intersection_test_stage->initShaders())
+        return false;
 
-    // Create shader
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
-
-    m_reset_buffer_cs =
-        m_context->ogl->createComputeShader(
-            "ResetOutputAndIntersectionBuffer", code.str());
-    file.close();
-
-    if (m_reset_buffer_cs != nullptr)
-    {
-        // Get uniform location
-        m_reset_buffer_shader_uniform_location_num_rays_per_buffer =
-            m_reset_buffer_cs->getUniformLocation("num_rays_per_buffer");
-
-        // Set uniforms
-        m_reset_buffer_cs->use();
-        glUniform1ui(m_reset_buffer_shader_uniform_location_num_rays_per_buffer,
-            m_context->parameters.number_rays_per_buffer);
-
-        // Compute number of dispatched work groups
-        const size_t num_rays_per_buffer =
-            m_context->parameters.number_rays_per_buffer;
-        m_shader_num_work_groups =
-            (num_rays_per_buffer / constant::glsl_local_group_sizes::
-                reset_output_and_intersection_buffer) +
-            (num_rays_per_buffer % constant::glsl_local_group_sizes::
-                reset_output_and_intersection_buffer ? 1 : 0);
-    }
-
-    // Finish
-    m_context->ogl->unbindGlContext();
-    return (m_reset_buffer_cs != nullptr);
+    // Done
+    return true;
 }
 
 void ldplab::rtsgpu_ogl::Pipeline::setup()
@@ -101,8 +70,8 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
         Vec3 torque = Vec3{ 0, 0, 0 };
         for (size_t bc = 0; bc < m_buffer_controls.size(); ++bc)
         {
-            force += m_buffer_controls[bc].getOutputBuffer().force_data[p];
-            torque += m_buffer_controls[bc].getOutputBuffer().torque_data[p];
+            force += m_buffer_controls[bc].getOutputBuffer().output_gathered_data[p].force;
+            torque += m_buffer_controls[bc].getOutputBuffer().output_gathered_data[p].torque;
         }
 
         // Transform output from particle into world space
@@ -144,16 +113,40 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
                 m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
             ++num_batches;
 
+            // Bind GPU to this thread
+            LDPLAB_PROFILING_START(pipeline_gl_context_binding);
+            std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
+            std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
+            m_context->ogl->bindGlContext();
+            LDPLAB_PROFILING_STOP(pipeline_gl_context_binding);
+
             LDPLAB_PROFILING_START(pipeline_process_batch);
-            uploadInitialBatch(initial_batch_buffer);
+            m_context->shared_shaders.uploadRayBufferData(initial_batch_buffer);
             processBatch(initial_batch_buffer, buffer_control);
             LDPLAB_PROFILING_STOP(pipeline_process_batch);
+
+            // Unbind gl context
+            LDPLAB_PROFILING_START(pipeline_gl_context_unbinding);
+            m_context->ogl->unbindGlContext();
+            gpu_lock.unlock();
+            LDPLAB_PROFILING_STOP(pipeline_gl_context_unbinding);
 
             LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Pipeline instance %i "\
                 "finished batch execution",
                 m_context->uid, job_id);
         }
     } while(batches_left);
+
+    // Download gathered output
+    LDPLAB_PROFILING_START(pipeline_download_gathered_output);
+    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
+    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
+    m_context->ogl->bindGlContext();
+    OutputBuffer& output = buffer_control.getOutputBuffer();
+    output.ssbo.output_gathered->download(output.output_gathered_data);
+    m_context->ogl->unbindGlContext();
+    gpu_lock.unlock();
+    LDPLAB_PROFILING_STOP(pipeline_download_gathered_output);
 
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Pipeline instance %i executed "\
         "successfully in a total of %i batches",
@@ -174,7 +167,8 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
         buffer_control.getReflectionBuffer(buffer);
     RayBuffer& transmission_buffer =
         buffer_control.getTransmissionBuffer(buffer);
-    resetBuffers(output_buffer, intersection_buffer);
+    m_context->shared_shaders.resetOutputAndIntersectionBuffer(
+        output_buffer, intersection_buffer);
     LDPLAB_PROFILING_STOP(pipeline_buffer_setup);
 
     if (buffer.inner_particle_rays)
@@ -279,60 +273,4 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
             max_intensity,
             avg_intensity);
     }
-}
-
-void ldplab::rtsgpu_ogl::Pipeline::resetBuffers(
-    OutputBuffer& output, 
-    IntersectionBuffer& intersection)
-{
-    // Bind GPU to this thread
-    LDPLAB_PROFILING_START(pipeline_reset_buffers_gl_context_binding);
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
-    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_gl_context_binding);
-
-    // Bind shaders
-    LDPLAB_PROFILING_START(pipeline_reset_buffers_shader_binding);
-    m_reset_buffer_cs->use();
-    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_shader_binding);
-
-    // Bind SSBOs
-    LDPLAB_PROFILING_START(pipeline_reset_buffers_ssbo_binding);
-    intersection.ssbo.particle_index->bindToIndex(0);
-    output.ssbo.output_per_ray->bindToIndex(1);
-    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_ssbo_binding);
-
-    // Execute shader
-    LDPLAB_PROFILING_START(pipeline_reset_buffers_shader_execution);
-    m_reset_buffer_cs->execute(m_shader_num_work_groups);
-    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_shader_execution);
-
-    // Unbind gl context
-    LDPLAB_PROFILING_START(pipeline_reset_buffers_gl_context_unbinding);
-    m_context->ogl->unbindGlContext();
-    gpu_lock.unlock();
-    LDPLAB_PROFILING_STOP(pipeline_reset_buffers_gl_context_unbinding);
-}
-
-void ldplab::rtsgpu_ogl::Pipeline::uploadInitialBatch(RayBuffer& buffer)
-{
-    // Bind GPU to this thread
-    LDPLAB_PROFILING_START(pipeline_upload_initial_batch_gl_context_binding);
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
-    LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_gl_context_binding);
-
-    // Upload data
-    LDPLAB_PROFILING_START(pipeline_upload_initial_batch_data_upload);
-    buffer.ssbo.particle_index->upload(buffer.particle_index_data);
-    buffer.ssbo.ray_properties->upload(buffer.ray_properties_data);
-    LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_data_upload);
-
-    // Unbind gl context
-    LDPLAB_PROFILING_START(pipeline_upload_initial_batch_gl_context_unbinding);
-    m_context->ogl->unbindGlContext();
-    gpu_lock.unlock();
-    LDPLAB_PROFILING_STOP(pipeline_upload_initial_batch_gl_context_unbinding);
 }

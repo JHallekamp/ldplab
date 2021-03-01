@@ -19,10 +19,10 @@ ldplab::rtsgpu_ogl::BufferControl::BufferControl(std::shared_ptr<Context> contex
     m_intersection_particle_index_data.resize(
         m_context->parameters.number_rays_per_buffer);
     
-    m_output_force_data.resize(m_context->particles.size());
-    m_output_torque_data.resize(m_context->particles.size());
     m_output_scattered_data.resize(
         m_context->parameters.number_rays_per_buffer);
+    m_output_gathered_data.resize(
+        m_context->particles.size());
     
     initializeBuffers();
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
@@ -32,6 +32,39 @@ ldplab::rtsgpu_ogl::BufferControl::BufferControl(std::shared_ptr<Context> contex
         m_ray_buffers.size(), 
         num_rays, 
         m_context->parameters.maximum_branching_depth);
+}
+
+void ldplab::rtsgpu_ogl::BufferControl::initSSBO()
+{
+    // Create ssbos
+    const size_t num_rays_per_buffer =
+        m_context->parameters.number_rays_per_buffer;
+    for (size_t i = 0; i < m_ray_buffers.size(); ++i)
+    {
+        m_ray_buffers[i].ssbo.particle_index =
+            m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
+                sizeof(int32_t));
+        m_ray_buffers[i].ssbo.ray_properties =
+            m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
+                sizeof(RayBuffer::RayProperties));
+    }
+
+    m_intersection_buffer.ssbo.particle_index =
+        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
+            sizeof(int32_t));
+    m_intersection_buffer.ssbo.intersection_properties =
+        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
+            sizeof(IntersectionBuffer::IntersectionProperties));
+
+    m_output_buffer.ssbo.output_per_ray =
+        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
+            sizeof(OutputBuffer::OutputData));
+    m_output_buffer.ssbo.output_gathered =
+        m_context->ogl->createShaderStorageBuffer(m_context->particles.size() *
+            sizeof(OutputBuffer::OutputData));
+    m_output_buffer.ssbo.gather_temp =
+        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
+            sizeof(OutputBuffer::OutputData));
 }
 
 ldplab::rtsgpu_ogl::RayBuffer& ldplab::rtsgpu_ogl::BufferControl::initialBuffer()
@@ -70,9 +103,15 @@ void ldplab::rtsgpu_ogl::BufferControl::resetOutputBuffer()
 {
     for (size_t i = 0; i < m_output_buffer.size; ++i)
     {
-        m_output_buffer.force_data[i] = { 0.0, 0.0, 0.0 };
-        m_output_buffer.torque_data[i] = { 0.0, 0.0, 0.0 };
+        m_output_buffer.output_gathered_data[i].force = Vec3{ 0, 0, 0 };
+        m_output_buffer.output_gathered_data[i].torque = Vec3{ 0, 0, 0 };
     }
+
+    std::unique_lock<std::mutex> gpu_lck{ m_context->ogl->getGPUMutex() };
+    m_context->ogl->bindGlContext();
+    m_output_buffer.ssbo.output_gathered->upload(
+        m_output_buffer.output_gathered_data);
+    m_context->ogl->unbindGlContext();
 }
 
 size_t ldplab::rtsgpu_ogl::BufferControl::dummyBufferDepth()
@@ -132,37 +171,6 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
 
     // Output buffer
     m_output_buffer.size = m_context->particles.size();
-    m_output_buffer.force_data = m_output_force_data.data();
-    m_output_buffer.torque_data = m_output_torque_data.data();
     m_output_buffer.output_per_ray_data = m_output_scattered_data.data();
-
-    // Create ssbos
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::lock_guard<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
-
-    const size_t num_rays_per_buffer = 
-        m_context->parameters.number_rays_per_buffer;
-    for (size_t i = 0; i < m_ray_buffers.size(); ++i)
-    {
-        m_ray_buffers[i].ssbo.particle_index =
-            m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
-                sizeof(int32_t));
-        m_ray_buffers[i].ssbo.ray_properties =
-            m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
-                sizeof(RayBuffer::RayProperties));
-    }
-
-    m_intersection_buffer.ssbo.particle_index = 
-        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer *
-            sizeof(int32_t));
-    m_intersection_buffer.ssbo.intersection_properties =
-        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer * 
-            sizeof(IntersectionBuffer::IntersectionProperties));
-
-    m_output_buffer.ssbo.output_per_ray =
-        m_context->ogl->createShaderStorageBuffer(num_rays_per_buffer * 
-            sizeof(OutputBuffer::ScatteredOutput));
-
-    m_context->ogl->unbindGlContext();
+    m_output_buffer.output_gathered_data = m_output_gathered_data.data();
 }

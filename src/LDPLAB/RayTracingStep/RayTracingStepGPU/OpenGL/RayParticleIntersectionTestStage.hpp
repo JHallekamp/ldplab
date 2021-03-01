@@ -46,6 +46,8 @@ namespace ldplab
             virtual void execute(
                 RayBuffer& rays,
                 IntersectionBuffer& intersection) = 0;
+            /** @brief Initializes the shader data. */
+            virtual bool initShaders() = 0;
         };
         
 
@@ -65,7 +67,7 @@ namespace ldplab
              * @brief Initializes the shader.
              * @returns true, if the initialization succeeds.
              */
-            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            bool initShaders() override;
             /**
              * @brief Inherited via ldplab::rtsgpu_ogl::IRayParticleIntersectionTestStage.  
              * @detail Start calculating the intersection points of the rays 
@@ -84,11 +86,14 @@ namespace ldplab
                 RayBuffer& rays,
                 IntersectionBuffer& intersection) override;
         private:
+            struct IntersectionShader {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_num_particles;
+                GLint uniform_num_rays_per_buffer;
+                size_t num_work_groups;
+            } m_cs_intersection;
+        private:
             std::shared_ptr<Context> m_context;
-            std::shared_ptr<ComputeShader> m_compute_shader;
-            GLint m_shader_uniform_location_num_rays_per_buffer;
-            GLint m_shader_uniform_location_num_particles;
-            size_t m_shader_num_work_groups;
         };
     }
 }

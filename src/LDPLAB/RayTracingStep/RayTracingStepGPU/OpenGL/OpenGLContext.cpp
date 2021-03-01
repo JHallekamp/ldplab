@@ -4,6 +4,7 @@
 #include "../../../Log.hpp"
 #include "../../../Utils/Assert.hpp"
 
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
@@ -14,9 +15,9 @@ void ldplab::rtsgpu_ogl::ComputeShader::execute(
     size_t work_group_size_z)
 {
     glDispatchCompute(
-        work_group_size_x,
-        work_group_size_y,
-        work_group_size_z);
+        static_cast<GLuint>(work_group_size_x),
+        static_cast<GLuint>(work_group_size_y),
+        static_cast<GLuint>(work_group_size_z));
 }
 
 ldplab::rtsgpu_ogl::ComputeShader::ComputeShader()
@@ -191,6 +192,24 @@ ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
     return shader;
 }
 
+std::shared_ptr<ldplab::rtsgpu_ogl::ComputeShader> 
+    ldplab::rtsgpu_ogl::OpenGLContext::createComputeShaderFromFile(
+        const std::string& shader_name, const std::string& path)
+{
+    // Load file
+    std::ifstream file(path);
+    if (!file)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Unable to open shader "\
+            "source file \"%s\"", m_context->uid, path.c_str());
+        return nullptr;
+    }
+    std::stringstream code;
+    code << file.rdbuf();
+    // Create and return shader
+    return createComputeShader(shader_name, code.str());
+}
+
 std::shared_ptr<ldplab::rtsgpu_ogl::ShaderStorageBuffer> 
 ldplab::rtsgpu_ogl::OpenGLContext::createShaderStorageBuffer(
     size_t buffer_size, 
@@ -246,9 +265,17 @@ void ldplab::rtsgpu_ogl::ShaderStorageBuffer::download(
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_glid);
     GLvoid* ssbo_data = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    ssbo_data = (void*)(((char*)ssbo_data) + offset);
-    std::memcpy(target, ssbo_data, size);
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    if (ssbo_data != nullptr)
+    {
+        ssbo_data = (void*)(((char*)ssbo_data) + offset);
+        std::memcpy(target, ssbo_data, size);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL): Failed to download data from "\
+            "SSBO", );
+    }
 }
 
 void ldplab::rtsgpu_ogl::ShaderStorageBuffer::download(void* target)

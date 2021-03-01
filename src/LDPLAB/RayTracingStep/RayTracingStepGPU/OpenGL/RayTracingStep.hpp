@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_TRACING_STEP_CPU_HPP
 
 #include "..\..\IRayTracingStep.hpp"
+#include "..\..\RayTracingStepGPUOpenGLInfo.hpp"
 #include "..\..\..\Geometry.hpp"
 
 #include <memory>
@@ -41,7 +42,7 @@ namespace ldplab
              */
             void updateContext(const SimulationState& input);
             /** @brief Initializes the GPU part of the ray tracing step. */
-            void initGPU();
+            bool initGPU(const RayTracingStepGPUOpenGLInfo& info);
         private:
             Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);

@@ -31,6 +31,8 @@ namespace ldplab
         {
         public:
             BufferControl(std::shared_ptr<Context> context);
+            /** @brief Initializes shader buffer objects. */
+            void initSSBO();
             /** 
              * @brief Provides the initial batch buffer (depth 0).
              * @returns The root buffer of the buffer tree.
@@ -82,9 +84,8 @@ namespace ldplab
             std::vector<IntersectionBuffer::IntersectionProperties> 
                 m_intersection_properties_data;
             std::vector<int32_t> m_intersection_particle_index_data;
-            std::vector<OutputBuffer::ScatteredOutput> m_output_scattered_data;
-            std::vector<Vec3> m_output_force_data;
-            std::vector<Vec3> m_output_torque_data;
+            std::vector<OutputBuffer::OutputData> m_output_scattered_data;
+            std::vector<OutputBuffer::OutputData> m_output_gathered_data;
             // The buffers themselve
             std::vector<RayBuffer> m_ray_buffers;
             IntersectionBuffer m_intersection_buffer;

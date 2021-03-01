@@ -4,6 +4,7 @@
 #include "Context.hpp"
 #include "Data.hpp"
 #include "../../../Log.hpp"
+#include "../../../Utils/ComputeHelper.hpp"
 #include "../../../Utils/Profiler.hpp"
 
 #include <glm/glm.hpp>
@@ -20,70 +21,59 @@ ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
         m_context->uid);
 }
 
-bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::initShaders(
-    const RayTracingStepGPUOpenGLInfo& info)
+bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
+    initShaders()
 {
-    std::string shader_path = info.shader_base_directory_path +
-        "glsl/ldplab_cs_unpolarized_light_1d_linear_index_gradient_interaction.glsl";
-
-    // Load file
-    std::ifstream file(shader_path);
-    if (!file)
-    {
-        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Unable to open shader "\
-            "source file \"%s\"", m_context->uid, shader_path.c_str());
-        return false;
-    }
-    std::stringstream code;
-    code << file.rdbuf();
-
     // Create shader
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
+    if (!m_context->shared_shaders.createShaderByName(
+            constant::glsl_shader_name::unpolarized_light_1d_linear_index_gradient_interaction,
+            m_cs_interaction.shader))
+        return false;
+    if (!m_context->shared_shaders.createShaderByName(
+            constant::glsl_shader_name::gather_output,
+            m_cs_gather_output.shader))
+        return false;
 
-    m_compute_shader =
-        m_context->ogl->createComputeShader(
-            "UnpolirzedLight1DLinearIndexGradientInteraction", code.str());
-    file.close();
+    // Set work group size
+    m_cs_interaction.num_work_groups = ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::unpolarized_light_1d_linear_index_gradient_interaction);
+    m_cs_gather_output.num_work_groups = ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::gather_output);
 
-    if (m_compute_shader != nullptr)
-    {
-        // Get uniform location
-        m_shader_uniform_location_num_rays_per_buffer =
-            m_compute_shader->getUniformLocation("num_rays_per_buffer");
-        m_shader_uniform_location_num_particles =
-            m_compute_shader->getUniformLocation("num_particles");
-        m_shader_uniform_location_parameter_medium_reflection_index =
-            m_compute_shader->getUniformLocation("parameter_medium_reflection_index");
-        m_shader_uniform_location_parameter_intensity_cutoff =
-            m_compute_shader->getUniformLocation("parameter_intensity_cutoff");
-        m_shader_uniform_location_inner_particle_rays =
-            m_compute_shader->getUniformLocation("inner_particle_rays");
+    // Update interaction shader uniforms
+    m_cs_interaction.uniform_inner_particle_rays =
+        m_cs_interaction.shader->getUniformLocation("inner_particle_rays");
+    m_cs_interaction.uniform_num_rays_per_buffer =
+        m_cs_interaction.shader->getUniformLocation("num_rays_per_buffer");
+    m_cs_interaction.uniform_parameter_intensity_cutoff =
+        m_cs_interaction.shader->getUniformLocation("parameter_intensity_cutoff");
+    m_cs_interaction.uniform_parameter_medium_reflection_index =
+        m_cs_interaction.shader->getUniformLocation("parameter_medium_reflection_index");
+    
+    m_cs_interaction.shader->use();
+    glUniform1ui(m_cs_interaction.uniform_num_rays_per_buffer,
+        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+    glUniform1d(m_cs_interaction.uniform_parameter_intensity_cutoff,
+        m_context->parameters.intensity_cutoff);
+    glUniform1d(m_cs_interaction.uniform_parameter_medium_reflection_index,
+        m_context->parameters.medium_reflection_index);
 
-        // Set uniforms
-        m_compute_shader->use();
-        glUniform1ui(m_shader_uniform_location_num_rays_per_buffer,
-            m_context->parameters.number_rays_per_buffer);
-        glUniform1ui(m_shader_uniform_location_num_particles,
-            m_context->particles.size());
-        glUniform1d(m_shader_uniform_location_parameter_medium_reflection_index,
-            m_context->parameters.medium_reflection_index);
-        glUniform1d(m_shader_uniform_location_parameter_intensity_cutoff,
-            m_context->parameters.intensity_cutoff);
+    // Update gather output shader uniforms
+    m_cs_gather_output.uniform_num_particles =
+        m_cs_gather_output.shader->getUniformLocation("num_particles");
+    m_cs_gather_output.uniform_num_rays_per_buffer =
+        m_cs_gather_output.shader->getUniformLocation("num_rays_per_buffer");
 
-        // Compute number of dispatched work groups
-        const size_t num_rays_per_buffer =
-            m_context->parameters.number_rays_per_buffer;
-        m_shader_num_work_groups =
-            (num_rays_per_buffer / constant::glsl_local_group_sizes::
-                unpolarized_light_1d_linear_index_gradient_interaction) +
-            (num_rays_per_buffer % constant::glsl_local_group_sizes::
-                unpolarized_light_1d_linear_index_gradient_interaction ? 1 : 0);
-    }
-
-    m_context->ogl->unbindGlContext();
-    return (m_compute_shader != nullptr);
+    m_cs_gather_output.shader->use();
+    glUniform1ui(m_cs_gather_output.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+    glUniform1ui(m_cs_gather_output.uniform_num_rays_per_buffer,
+        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+    
+    // Finished
+    return true;
 }
 
 void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
@@ -97,16 +87,9 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
         "on batch buffer %i",
         m_context->uid, rays.uid);
 
-    // Bind GPU to this thread
-    LDPLAB_PROFILING_START(ray_particle_interaction_gl_context_binding);
-    std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
-    std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
-    m_context->ogl->bindGlContext();
-    LDPLAB_PROFILING_STOP(ray_particle_interaction_gl_context_binding);
-
-    // Bind shaders
+    // Bind interaction shaders
     LDPLAB_PROFILING_START(ray_particle_interaction_shader_binding);
-    m_compute_shader->use();
+    m_cs_interaction.shader->use();
     LDPLAB_PROFILING_STOP(ray_particle_interaction_shader_binding);
 
     // Bind SSBOs
@@ -128,70 +111,37 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
     // Bind uniforms
     LDPLAB_PROFILING_START(ray_particle_interaction_uniform_binding);
     if (rays.inner_particle_rays)
-        glUniform1i(m_shader_uniform_location_inner_particle_rays, 1);
+        glUniform1i(m_cs_interaction.uniform_inner_particle_rays, 1);
     else
-        glUniform1i(m_shader_uniform_location_inner_particle_rays, 0);
+        glUniform1i(m_cs_interaction.uniform_inner_particle_rays, 0);
     LDPLAB_PROFILING_STOP(ray_particle_interaction_uniform_binding);
 
     // Execute shader
     LDPLAB_PROFILING_START(ray_particle_interaction_shader_execution);
-    m_compute_shader->execute(m_shader_num_work_groups);
+    m_cs_interaction.shader->execute(m_cs_interaction.num_work_groups);
     LDPLAB_PROFILING_STOP(ray_particle_interaction_shader_execution);
 
-    // Download data
-    LDPLAB_PROFILING_START(ray_particle_interaction_data_download);
-    reflected_rays.ssbo.particle_index->download(
-        reflected_rays.particle_index_data);
-    refracted_rays.ssbo.particle_index->download(
-        reflected_rays.particle_index_data);
-    output.ssbo.output_per_ray->download(output.output_per_ray_data);
+    // Bind gather shader
+    LDPLAB_PROFILING_START(scattered_output_gather_shader_binding);
+    m_cs_gather_output.shader->use();
+    LDPLAB_PROFILING_STOP(scattered_output_gather_shader_binding);
 
-    //std::vector<RayBuffer::RayProperties> ray_properties(rays.size);
-    //std::vector<RayBuffer::RayProperties> reflected_properties(rays.size);
-    //std::vector<RayBuffer::RayProperties> transmitted_properties(rays.size);
-    //std::vector<int32_t> ray_index(rays.size);
-    //std::vector<int32_t> reflected_index(rays.size);
-    //std::vector<int32_t> transmitted_index(rays.size);
-    //std::vector<IntersectionBuffer::IntersectionProperties> intersection_properties(rays.size);
-    //std::vector<OutputBuffer::ScatteredOutput> scattered_output(rays.size);
-    //rays.ssbo.particle_index->download(ray_index.data());
-    //rays.ssbo.ray_properties->download(ray_properties.data());
-    //reflected_rays.ssbo.particle_index->download(reflected_index.data());
-    //reflected_rays.ssbo.ray_properties->download(reflected_properties.data());
-    //refracted_rays.ssbo.particle_index->download(transmitted_index.data());
-    //refracted_rays.ssbo.ray_properties->download(transmitted_properties.data());
-    //intersection.ssbo.intersection_properties->download(intersection_properties.data());
-    //output.ssbo.output_per_ray->download(scattered_output.data());
+    // Bind SSBOs
+    LDPLAB_PROFILING_START(scattered_output_gather_shader_ssbo_binding);
+    output.ssbo.output_per_ray->bindToIndex(0);
+    rays.ssbo.particle_index->bindToIndex(1);
+    output.ssbo.gather_temp->bindToIndex(2);
+    output.ssbo.output_gathered->bindToIndex(3);
+    LDPLAB_PROFILING_STOP(scattered_output_gather_shader_ssbo_binding);
 
-    LDPLAB_PROFILING_STOP(ray_particle_interaction_data_download);
+    // Execute shader
+    LDPLAB_PROFILING_START(scattered_output_gather_shader_execution);
+    m_cs_gather_output.shader->execute(m_cs_gather_output.num_work_groups);
+    LDPLAB_PROFILING_STOP(scattered_output_gather_shader_execution);
 
-    // Unbind gl context
-    LDPLAB_PROFILING_START(ray_particle_interaction_gl_context_unbinding);
-    m_context->ogl->unbindGlContext();
-    gpu_lock.unlock();
-    LDPLAB_PROFILING_STOP(ray_particle_interaction_gl_context_unbinding);
-
-    // Get number of active rays for reflected and refracted rays
-    reflected_rays.inner_particle_rays = rays.inner_particle_rays;
-    refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
-    reflected_rays.active_rays = 0;
-    refracted_rays.active_rays = 0;
-    for (size_t i = 0; i < rays.size; ++i)
-    {
-        if (reflected_rays.particle_index_data[i] >= 0)
-            ++reflected_rays.active_rays;
-        if (refracted_rays.particle_index_data[i] >= 0)
-            ++refracted_rays.active_rays;
-    }
-
-    // Gather output
-    for (size_t i = 0; i < rays.size; ++i)
-    {
-        output.force_data[rays.particle_index_data[i]] += 
-            output.output_per_ray_data[i].force;
-        output.torque_data[rays.particle_index_data[i]] += 
-            output.output_per_ray_data[i].torque;
-    }
+    // Update ray buffers
+    m_context->shared_shaders.updateRayBufferState(reflected_rays);
+    m_context->shared_shaders.updateRayBufferState(refracted_rays);
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Ray particle interaction on batch "\
         "buffer %i executed, buffer %i now holds %i reflected rays, buffer "\

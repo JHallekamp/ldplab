@@ -47,7 +47,7 @@ namespace ldplab
              * @brief Initializes the shader.
              * @returns true, if the initialization succeeds.
              */
-            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            bool initShaders();
             /**
              * @brief Sets up the pipeline stages.
              * @note Only called once per ray tracing step execution.
@@ -64,10 +64,6 @@ namespace ldplab
             void processBatch(
                 RayBuffer& buffer,
                 BufferControl& buffer_control);
-            void resetBuffers(
-                OutputBuffer& output, 
-                IntersectionBuffer& intersection);
-            void uploadInitialBatch(RayBuffer& buffer);
         private:
             std::unique_ptr<IInitialStage> 
                 m_initial_stage;
@@ -82,9 +78,6 @@ namespace ldplab
             std::shared_ptr<Context> m_context;
             std::vector<BufferControl>
                 m_buffer_controls;
-            std::shared_ptr<ComputeShader> m_reset_buffer_cs;
-            GLint m_reset_buffer_shader_uniform_location_num_rays_per_buffer;
-            size_t m_shader_num_work_groups;
         };
     }
 }

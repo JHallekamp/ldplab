@@ -122,7 +122,8 @@ void ldplab::rtsgpu_ogl::RayTracingStep::updateContext(
     m_context->ogl->unbindGlContext();
 }
 
-void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
+bool ldplab::rtsgpu_ogl::RayTracingStep::initGPU(
+    const RayTracingStepGPUOpenGLInfo& info)
 {
     std::lock_guard<std::mutex> gpu_lock(m_context->ogl->getGPUMutex());
     m_context->ogl->bindGlContext();
@@ -136,6 +137,13 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
             m_context->ogl->createShaderStorageBuffer(
                 particle_data->rod_particles_data.size() * 
                 sizeof(RodParticleData::RodParticleProperties));
+        if (particle_data->ssbo.rod_particles == nullptr)
+        {
+            LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create "\
+                "rod particle data SSBO",
+                m_context->uid);
+            return false;
+        }
         particle_data->ssbo.rod_particles->upload(
             particle_data->rod_particles_data.data());
     }
@@ -143,6 +151,7 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not create "\
             "particle SSBOs, particle type not supported", m_context->uid);
+        return false;
     }
 
     // Create SSBOs for particle materials
@@ -157,6 +166,13 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
                 particle_material->material_data.size() * 
                 sizeof(ParticleMaterialLinearOneDirectionalData::
                     LinearOneDirectionalMaterialProperties));
+        if (particle_material->ssbo.material == nullptr)
+        {
+            LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create "\
+                "particle material SSBO",
+                m_context->uid);
+            return false;
+        }
         particle_material->ssbo.material->upload(
             particle_material->material_data.data());
     }
@@ -165,6 +181,7 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not create "\
             "particle material SSBOs, particle material type not supported",
             m_context->uid);
+        return false;
     }
 
     // Create SSBOs for boundary volume
@@ -177,21 +194,57 @@ void ldplab::rtsgpu_ogl::RayTracingStep::initGPU()
             m_context->ogl->createShaderStorageBuffer(
                 spheres->sphere_properties_data.size() *
                 sizeof(BoundingSphereData::BoundingSphereProperties));
+        if (spheres->ssbo.sphere_properties == nullptr)
+        {
+            LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create "\
+                "bounding volume SSBO",
+                m_context->uid);
+            return false;
+        }
     }
     else
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Could not create "\
             "bounding volume SSBOs, bounding volume type not supported",
             m_context->uid);
+        return false;
     }
 
     // Create SSBOs for space transformations
     const size_t num_particles = m_context->particles.size();
     m_context->particle_transformation_data.ssbo.w2p =
         m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Mat4));
+    if (m_context->particle_transformation_data.ssbo.w2p == nullptr)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create "\
+            "particle transformation w2p SSBO",
+            m_context->uid);
+        return false;
+    }
     m_context->particle_transformation_data.ssbo.p2w =
         m_context->ogl->createShaderStorageBuffer(num_particles * sizeof(Mat4));
+    if (m_context->particle_transformation_data.ssbo.p2w == nullptr)
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create "\
+            "particle transformation p2w SSBO",
+            m_context->uid);
+        return false;
+    }
+
+    // Initialize pipeline
+    m_context->parameters.shader_base_directory = 
+        info.shader_base_directory_path;
+    if (!m_context->pipeline->initShaders())
+    {
+        LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to initialize "\
+            "pipeline shaders",
+            m_context->uid);
+        return false;
+    }
+
+    // Done
     m_context->ogl->unbindGlContext();
+    return true;
 }
 
 ldplab::Mat3 ldplab::rtsgpu_ogl::RayTracingStep::getRotationMatrix(

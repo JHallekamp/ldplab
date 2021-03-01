@@ -75,7 +75,6 @@ layout(std430, binding = 8) buffer outputForceData
 
 // Property data
 uniform uint num_rays_per_buffer;
-uniform uint num_particles;
 uniform double parameter_medium_reflection_index;
 uniform double parameter_intensity_cutoff;
 uniform bool inner_particle_rays;

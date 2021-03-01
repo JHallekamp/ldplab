@@ -45,6 +45,8 @@ namespace ldplab
                 RayBuffer& rays,
                 IntersectionBuffer& intersection,
                 OutputBuffer& output) = 0;
+            /** @brief Initializes the shader data. */
+            virtual bool initShaders() = 0;
         };
 
         /**
@@ -71,7 +73,7 @@ namespace ldplab
              * @brief Initializes the shader.
              * @returns true, if the initialization succeeds.
              */
-            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            bool initShaders() override;
             /**
              * @brief Inherited via ldplab::rtsgpu_ogl::IInnerParticlePropagationStage.
              * @details Calculating the path of the rays threw the particle.
@@ -86,14 +88,17 @@ namespace ldplab
                 IntersectionBuffer& intersection,
                 OutputBuffer& output) override;
         private:
+            struct InnerParticlePropagationShader {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_num_rays_per_buffer;
+                GLint uniform_parameter_initial_step_size;
+                GLint uniform_parameter_epsilon;
+                GLint uniform_parameter_safety_factor;
+                size_t num_work_groups;
+            } m_cs_inner_particle_propagation;
+        private:
             const RK45 m_parameters;
             std::shared_ptr<Context> m_context;
-            std::shared_ptr<ComputeShader> m_compute_shader;
-            GLint m_shader_uniform_location_num_rays_per_buffer;
-            GLint m_shader_uniform_location_parameter_initial_step_size;
-            GLint m_shader_uniform_location_parameter_epsilon;
-            GLint m_shader_uniform_location_parameter_safety_factor;
-            size_t m_shader_num_work_groups;
         };
     }
 }

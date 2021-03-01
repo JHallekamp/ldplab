@@ -48,6 +48,8 @@ namespace ldplab
                 RayBuffer& reflected_rays,
                 RayBuffer& refracted_rays,
                 OutputBuffer& output) = 0;
+            /** @brief Initializes the shader data. */
+            virtual bool initShaders() = 0;
         };
         /**
          * @brief Class implementing the ray particle interaction for 
@@ -67,7 +69,7 @@ namespace ldplab
              * @brief Initializes the shader.
              * @returns true, if the initialization succeeds.
              */
-            bool initShaders(const RayTracingStepGPUOpenGLInfo& info);
+            bool initShaders() override;
             /**
              * @brief Inherited via ldplab::rtsgpu_ogl::IRayParticleInteractionStage.
              * @brief Calculating resulting rays of the interaction of the 
@@ -90,14 +92,24 @@ namespace ldplab
                 RayBuffer& refracted_rays,
                 OutputBuffer& output) override;
         private:
+            /** @brief Structure holding data for the interaction shader. */
+            struct InteractionShader {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_inner_particle_rays;
+                GLint uniform_num_rays_per_buffer;
+                GLint uniform_parameter_medium_reflection_index;
+                GLint uniform_parameter_intensity_cutoff;
+                size_t num_work_groups;
+            } m_cs_interaction;
+            /** @brief Structure holding data for the gather output shader. */
+            struct GatherOutputShader {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_num_rays_per_buffer;
+                GLint uniform_num_particles;
+                size_t num_work_groups;
+            } m_cs_gather_output;
+        private:
             std::shared_ptr<Context> m_context;
-            std::shared_ptr<ComputeShader> m_compute_shader;
-            GLint m_shader_uniform_location_num_rays_per_buffer;
-            GLint m_shader_uniform_location_num_particles;
-            GLint m_shader_uniform_location_parameter_medium_reflection_index;
-            GLint m_shader_uniform_location_parameter_intensity_cutoff;
-            GLint m_shader_uniform_location_inner_particle_rays;
-            size_t m_shader_num_work_groups;
         };
     }
 }
