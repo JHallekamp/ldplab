@@ -13,11 +13,14 @@
 #include "EikonalSolver.hpp"
 #include "../Log.hpp"
 
+#include "../Utils/Profiler.hpp"
+
 std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
     createRayTracingStepCPU(
         const ExperimentalSetup& setup,
         const RayTracingStepCPUInfo& info)
 {
+    LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscpu);
     LDPLAB_LOG_INFO("RTS factory: Begins creation of "\
         "ldplab::rtscpu::RayTracingStep");
 
@@ -232,9 +235,9 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
         const ExperimentalSetup& setup, 
         const RayTracingStepGPUOpenGLInfo& info)
 {
+    LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtsgpu_ogl);
     LDPLAB_LOG_INFO("RTS factory: Begins creation of "\
         "ldplab::rtsgpu_ogl::RayTracingStep");
-
     bool error = false;
     if (setup.light_sources.size() < 1)
     {

@@ -28,10 +28,6 @@ layout(std430, binding = 1) readonly buffer rayIndexData
 layout(std430, binding = 2) buffer tempData
 { OutputData temp_data[]; };
 
-// Gather result
-layout(std430, binding = 3) buffer resultData
-{ OutputData result_data[]; };
-
 // Uniforms
 uniform uint num_rays_per_buffer;
 uniform uint num_particles;
@@ -43,30 +39,16 @@ void main()
     const uint gi =
         gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
 
+    if (gi >= num_rays_per_buffer)
+        return;
+
     // Fill temp data
     OutputData null_data;
     null_data.force = dvec4(0, 0, 0, 0);
     null_data.torque = dvec4(0, 0, 0, 0);
     for (uint i = 0; i < num_particles; ++i)
     {
-        temp_data[gi + i] =
+        temp_data[gi * num_particles + i] =
             (ray_index_data[gi] == i) ? output_data[gi] : null_data;
-        // Calculate the first offset
-        uint offset = (num_rays_per_buffer / 2) + uint(mod(num_rays_per_buffer, 2));
-        // Calculate the first limit
-        uint lim = num_rays_per_buffer;
-        // Gather the scattered data from the temp data
-        while(gi + offset < lim && lim > 1)
-        {
-            temp_data[gi].force += temp_data[gi + offset].force;
-            temp_data[gi].torque += temp_data[gi + offset].torque;
-            lim = offset;
-            offset = (lim / 2) + uint(mod(lim, 2));
-        }
-        if (gi == 0)
-        {
-            result_data[i].force += temp_data[0].force;
-            result_data[i].torque += temp_data[0].torque;
-        }
     }
 }

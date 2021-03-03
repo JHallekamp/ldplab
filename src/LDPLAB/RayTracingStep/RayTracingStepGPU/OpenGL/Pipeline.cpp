@@ -114,9 +114,9 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
             ++num_batches;
 
             // Bind GPU to this thread
-            LDPLAB_PROFILING_START(pipeline_gl_context_binding);
             std::mutex& gpu_mutex = m_context->ogl->getGPUMutex();
             std::unique_lock<std::mutex> gpu_lock{ gpu_mutex };
+            LDPLAB_PROFILING_START(pipeline_gl_context_binding);
             m_context->ogl->bindGlContext();
             LDPLAB_PROFILING_STOP(pipeline_gl_context_binding);
 
@@ -128,8 +128,8 @@ void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
             // Unbind gl context
             LDPLAB_PROFILING_START(pipeline_gl_context_unbinding);
             m_context->ogl->unbindGlContext();
-            gpu_lock.unlock();
             LDPLAB_PROFILING_STOP(pipeline_gl_context_unbinding);
+            gpu_lock.unlock();
 
             LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Pipeline instance %i "\
                 "finished batch execution",

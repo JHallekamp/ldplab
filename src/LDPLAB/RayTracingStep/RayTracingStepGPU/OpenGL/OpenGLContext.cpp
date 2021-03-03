@@ -18,6 +18,7 @@ void ldplab::rtsgpu_ogl::ComputeShader::execute(
         static_cast<GLuint>(work_group_size_x),
         static_cast<GLuint>(work_group_size_y),
         static_cast<GLuint>(work_group_size_z));
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 ldplab::rtsgpu_ogl::ComputeShader::ComputeShader()

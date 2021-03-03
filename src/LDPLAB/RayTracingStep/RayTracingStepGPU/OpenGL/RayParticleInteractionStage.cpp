@@ -30,17 +30,28 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
             m_cs_interaction.shader))
         return false;
     if (!m_context->shared_shaders.createShaderByName(
-            constant::glsl_shader_name::gather_output,
-            m_cs_gather_output.shader))
+            constant::glsl_shader_name::gather_output_pre_stage,
+            m_cs_gather_output_pre_stage.shader))
+        return false;
+    if (!m_context->shared_shaders.createShaderByName(
+        constant::glsl_shader_name::gather_output_post_stage,
+        m_cs_gather_output_post_stage.shader))
+        return false;
+    if (!m_context->shared_shaders.createShaderByName(
+        constant::glsl_shader_name::gather_output_reduction_stage,
+        m_cs_gather_output_reduction_stage.shader))
         return false;
 
     // Set work group size
     m_cs_interaction.num_work_groups = ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::unpolarized_light_1d_linear_index_gradient_interaction);
-    m_cs_gather_output.num_work_groups = ComputeHelper::getNumWorkGroups(
+    m_cs_gather_output_pre_stage.num_work_groups = ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
-        constant::glsl_local_group_size::gather_output);
+        constant::glsl_local_group_size::gather_output_pre_stage);
+    m_cs_gather_output_post_stage.num_work_groups = ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::gather_output_post_stage);
 
     // Update interaction shader uniforms
     m_cs_interaction.uniform_inner_particle_rays =
@@ -61,17 +72,35 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
         m_context->parameters.medium_reflection_index);
 
     // Update gather output shader uniforms
-    m_cs_gather_output.uniform_num_particles =
-        m_cs_gather_output.shader->getUniformLocation("num_particles");
-    m_cs_gather_output.uniform_num_rays_per_buffer =
-        m_cs_gather_output.shader->getUniformLocation("num_rays_per_buffer");
+    m_cs_gather_output_pre_stage.uniform_num_particles =
+        m_cs_gather_output_pre_stage.shader->getUniformLocation("num_particles");
+    m_cs_gather_output_pre_stage.uniform_num_rays_per_buffer =
+        m_cs_gather_output_pre_stage.shader->getUniformLocation("num_rays_per_buffer");
 
-    m_cs_gather_output.shader->use();
-    glUniform1ui(m_cs_gather_output.uniform_num_particles,
+    m_cs_gather_output_reduction_stage.uniform_num_particles =
+        m_cs_gather_output_reduction_stage.shader->getUniformLocation("num_particles");
+    m_cs_gather_output_reduction_stage.uniform_buffer_size =
+        m_cs_gather_output_reduction_stage.shader->getUniformLocation("buffer_size");
+    m_cs_gather_output_reduction_stage.uniform_source_offset =
+        m_cs_gather_output_reduction_stage.shader->getUniformLocation("source_offset");
+
+    m_cs_gather_output_post_stage.uniform_num_particles =
+        m_cs_gather_output_post_stage.shader->getUniformLocation("num_particles");
+
+    m_cs_gather_output_pre_stage.shader->use();
+    glUniform1ui(m_cs_gather_output_pre_stage.uniform_num_particles,
         static_cast<GLuint>(m_context->particles.size()));
-    glUniform1ui(m_cs_gather_output.uniform_num_rays_per_buffer,
+    glUniform1ui(m_cs_gather_output_pre_stage.uniform_num_rays_per_buffer,
         static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
     
+    m_cs_gather_output_post_stage.shader->use();
+    glUniform1ui(m_cs_gather_output_post_stage.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+
+    m_cs_gather_output_reduction_stage.shader->use();
+    glUniform1ui(m_cs_gather_output_reduction_stage.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+
     // Finished
     return true;
 }
@@ -121,25 +150,50 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
     m_cs_interaction.shader->execute(m_cs_interaction.num_work_groups);
     LDPLAB_PROFILING_STOP(ray_particle_interaction_shader_execution);
 
-    // Bind gather shader
-    LDPLAB_PROFILING_START(scattered_output_gather_shader_binding);
-    m_cs_gather_output.shader->use();
-    LDPLAB_PROFILING_STOP(scattered_output_gather_shader_binding);
-
-    // Bind SSBOs
-    LDPLAB_PROFILING_START(scattered_output_gather_shader_ssbo_binding);
+    // Gather output pre stage
+    LDPLAB_PROFILING_START(gather_output_pre_stage);
+    m_cs_gather_output_pre_stage.shader->use();
     output.ssbo.output_per_ray->bindToIndex(0);
     rays.ssbo.particle_index->bindToIndex(1);
     output.ssbo.gather_temp->bindToIndex(2);
-    output.ssbo.output_gathered->bindToIndex(3);
-    LDPLAB_PROFILING_STOP(scattered_output_gather_shader_ssbo_binding);
+    m_cs_gather_output_pre_stage.shader->execute(
+        m_cs_gather_output_pre_stage.num_work_groups);
+    LDPLAB_PROFILING_STOP(gather_output_pre_stage);
 
-    // Execute shader
-    LDPLAB_PROFILING_START(scattered_output_gather_shader_execution);
-    m_cs_gather_output.shader->execute(m_cs_gather_output.num_work_groups);
-    LDPLAB_PROFILING_STOP(scattered_output_gather_shader_execution);
+    // Gather output reduction stage
+    LDPLAB_PROFILING_START(gather_output_reduction_stage);
+    m_cs_gather_output_reduction_stage.shader->use();
+    output.ssbo.gather_temp->bindToIndex(0);
+    const size_t num_particles = m_context->particles.size();
+    size_t num_threads = m_context->parameters.number_rays_per_buffer;
+    GLuint buffer_size, source_offset;
+    do
+    {
+        buffer_size = static_cast<GLuint>(num_threads * num_particles);
+        num_threads = num_threads / 2 + num_threads % 2;
+        source_offset = static_cast<GLuint>(num_threads * num_particles);
+        glUniform1ui(m_cs_gather_output_reduction_stage.uniform_buffer_size,
+            buffer_size);
+        glUniform1ui(m_cs_gather_output_reduction_stage.uniform_source_offset,
+            source_offset);
+        m_cs_gather_output_reduction_stage.shader->execute(
+            ComputeHelper::getNumWorkGroups(num_threads,
+                constant::glsl_local_group_size::gather_output_reduction_stage));
+    } while (num_threads > 1);
+    LDPLAB_PROFILING_STOP(gather_output_reduction_stage);
+
+    // Gather output post stage
+    LDPLAB_PROFILING_START(gather_output_post_stage);
+    m_cs_gather_output_post_stage.shader->use();
+    output.ssbo.gather_temp->bindToIndex(0);
+    output.ssbo.output_gathered->bindToIndex(1);
+    m_cs_gather_output_post_stage.shader->execute(
+        m_cs_gather_output_post_stage.num_work_groups);
+    LDPLAB_PROFILING_STOP(gather_output_post_stage);
 
     // Update ray buffers
+    reflected_rays.inner_particle_rays = rays.inner_particle_rays;
+    refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
     m_context->shared_shaders.updateRayBufferState(reflected_rays);
     m_context->shared_shaders.updateRayBufferState(refracted_rays);
 

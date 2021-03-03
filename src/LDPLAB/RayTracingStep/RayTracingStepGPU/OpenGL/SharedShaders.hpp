@@ -34,14 +34,25 @@ namespace ldplab
             void uploadRayBufferData(RayBuffer& buffer);
         private:
             /** @brief Contains count ray buffer shader data. */
-            struct CountRayBufferStateShader {
+            struct CountRayBufferStateShaderPreStage {
                 std::shared_ptr<ComputeShader> shader;
                 std::shared_ptr<ShaderStorageBuffer> ssbo_temp;
-                std::shared_ptr<ShaderStorageBuffer> ssbo_output;
                 GLint uniform_num_particles;
                 GLint uniform_num_rays_per_buffer;
                 size_t num_work_groups;
-            } m_cs_count_ray_buffer_state;
+            } m_cs_count_ray_buffer_state_pre_stage;
+            /** @brief Contains count ray buffer shader data. */
+            struct CountRayBufferStateShaderPostStage {
+                std::shared_ptr<ComputeShader> shader;
+                std::shared_ptr<ShaderStorageBuffer> ssbo_output;
+                size_t num_work_groups;
+            } m_cs_count_ray_buffer_state_post_stage;
+            /** @brief Contains count ray buffer shader data. */
+            struct CountRayBufferStateShaderReductionStage {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_source_offset;
+                GLint uniform_buffer_size;
+            } m_cs_count_ray_buffer_state_reduction_stage;
             /** @brief Contains reset output and intersection buffer shader. */
             struct ResetOutputAndIntersectionShader {
                 std::shared_ptr<ComputeShader> shader;

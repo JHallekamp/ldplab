@@ -13,13 +13,6 @@ layout(std430, binding = 0) readonly buffer rayIndexData
 layout(std430, binding = 1) buffer tempData
 { ivec2 temp_data[]; };
 
-// Output
-layout(std430, binding = 2) writeonly buffer rayStatusCount
-{
-    int num_active_rays;
-    int num_world_space_rays;
-};
-
 // Uniforms
 uniform uint num_rays_per_buffer;
 uniform uint num_particles;
@@ -31,23 +24,11 @@ void main()
     const uint gi =
         gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
 
+    // Check if global index is within range
+    if (gi >= num_rays_per_buffer)
+        return;
+
+    // Copy data into temp buffer
     temp_data[gi].x = (ray_index_data[gi] >= 0) ? 1 : 0;
     temp_data[gi].y = (ray_index_data[gi] >= int(num_particles)) ? 1 : 0;
-    // Calculate the first offset
-    uint offset = (num_rays_per_buffer / 2) + uint(mod(num_rays_per_buffer, 2));
-    // Calculate the first limit
-    uint lim = num_rays_per_buffer;
-    // Gather the scattered data from the temp data
-    while(gi + offset < lim && lim > 1)
-    {
-        temp_data[gi] += temp_data[gi + offset];
-        lim = offset;
-        offset = (lim / 2) + uint(mod(lim, 2));
-    }
-
-    if (gi == 0)
-    {
-        num_active_rays = temp_data[0].x;
-        num_world_space_rays = temp_data[0].y;
-    }
 }

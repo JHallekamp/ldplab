@@ -4,6 +4,7 @@
 
 #include "../../../Log.hpp"
 #include "../../../Utils/Assert.hpp"
+#include "../../../Utils/Profiler.hpp"
 
 #include <chrono>
 #include <glm/ext.hpp>
@@ -300,17 +301,24 @@ void ldplab::rtsgpu_ogl::RayTracingStep::execute(
     std::chrono::steady_clock::time_point start = 
         std::chrono::steady_clock::now();
     
+    LDPLAB_PROFILING_START(rtsgpu_ogl_update_context);
     updateContext(input);
+    LDPLAB_PROFILING_STOP(rtsgpu_ogl_update_context);
 
     // Execute pipeline
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Setup ray tracing pipeline",
         m_context->uid);
+    LDPLAB_PROFILING_START(rtsgpu_ogl_setup_pipeline);
     m_context->pipeline->setup();
+    LDPLAB_PROFILING_STOP(rtsgpu_ogl_setup_pipeline);
+
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Execute ray tracing pipeline",
         m_context->uid);
+    LDPLAB_PROFILING_START(rtsgpu_ogl_execute_pipeline);
     m_context->thread_pool->executeJobBatch(
         m_context->pipeline, m_context->parameters.number_parallel_pipelines);
     m_context->pipeline->finalizeOutput(output);
+    LDPLAB_PROFILING_STOP(rtsgpu_ogl_execute_pipeline);
 
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
