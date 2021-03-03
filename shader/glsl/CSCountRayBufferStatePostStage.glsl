@@ -11,10 +11,7 @@ layout(std430, binding = 0) readonly buffer tempData
 
 // Output
 layout(std430, binding = 1) writeonly buffer rayStatusCount
-{
-    int num_active_rays;
-    int num_world_space_rays;
-};
+{ ivec2 result_data; };
 
 // Shader main
 void main()
@@ -24,8 +21,5 @@ void main()
         gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
 
     if (gi == 0)
-    {
-        num_active_rays = temp_data[0].x;
-        num_world_space_rays = temp_data[0].y;
-    }
+        result_data = temp_data[0];
 }

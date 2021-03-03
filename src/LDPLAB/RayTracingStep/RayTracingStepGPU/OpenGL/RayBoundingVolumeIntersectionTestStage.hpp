@@ -44,7 +44,7 @@ namespace ldplab
              *          set to be invalid.
              * @returns The number of rays that hit a particle bounding volume.
              */
-            virtual size_t execute(RayBuffer& buffer) = 0;
+            virtual void execute(RayBuffer& buffer) = 0;
             /** @brief Initializes the shader data. */
             virtual bool initShaders() = 0;
         };
@@ -70,7 +70,7 @@ namespace ldplab
              * @brief Inherited via
              * ldplab::rtsgpu_ogl::IRayBoundingVolumeIntersectionTestStage
              */
-            size_t execute(RayBuffer& buffer) override;
+            void execute(RayBuffer& buffer) override;
         private:
             struct BoundingVolumeIntersectionShader {
                 std::shared_ptr<ComputeShader> shader;

@@ -55,7 +55,7 @@ void ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::setup
     // For the brute force method, no setup is needed
 }
 
-size_t 
+void 
     ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         RayBuffer& buffer)
 {
@@ -84,22 +84,8 @@ size_t
     m_cs_bv_intersection.shader->execute(m_cs_bv_intersection.num_work_groups);
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_shader_execution);
 
-    // Update buffer state
-    size_t prev_active = buffer.active_rays;
-    size_t prev_world = buffer.world_space_rays;
-    m_context->shared_shaders.updateRayBufferState(buffer);
-    size_t num_rays_exiting_scene = prev_active - buffer.active_rays;
-    size_t num_rays_hitting_boundary_sphere = prev_world - 
-        num_rays_exiting_scene;
-
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Bounding sphere intersection "\
-        "test on batch buffer %i completed, of %i tested rays %i hit "\
-        "bounding spheres and %i rays exited the scene",
+        "test on batch buffer %i completed",
         m_context->uid,
-        buffer.uid,
-        num_rays_hitting_boundary_sphere + num_rays_exiting_scene,
-        num_rays_hitting_boundary_sphere,
-        num_rays_exiting_scene);
-
-    return num_rays_hitting_boundary_sphere;
+        buffer.uid);
 }

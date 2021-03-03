@@ -194,8 +194,6 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
     // Update ray buffers
     reflected_rays.inner_particle_rays = rays.inner_particle_rays;
     refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
-    m_context->shared_shaders.updateRayBufferState(reflected_rays);
-    m_context->shared_shaders.updateRayBufferState(refracted_rays);
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Ray particle interaction on batch "\
         "buffer %i executed, buffer %i now holds %i reflected rays, buffer "\

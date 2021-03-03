@@ -186,10 +186,20 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
             transmission_buffer,
             output_buffer);
         LDPLAB_PROFILING_STOP(pipeline_inner_particle_interaction);
+
+        // Update ray buffer index count
+        m_context->shared_shaders.countRayBufferIndexState(
+            0,
+            reflection_buffer,
+            transmission_buffer,
+            reflection_buffer.active_rays,
+            transmission_buffer.active_rays);
+        reflection_buffer.world_space_rays = 0;
+        transmission_buffer.world_space_rays = 0;
     }
     else
     {
-        if (buffer.world_space_rays == 0)
+        do
         {
             LDPLAB_PROFILING_START(
                 pipeline_world_space_particle_intersection_test);
@@ -198,31 +208,24 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
                 intersection_buffer);
             LDPLAB_PROFILING_STOP(
                 pipeline_world_space_particle_intersection_test);
-        }
 
-        while (buffer.world_space_rays > 0)
-        {
             LDPLAB_PROFILING_START(
                 pipeline_world_space_bounding_volume_intersection_test);
-            const size_t intersects_bv = 
-                m_ray_bounding_volume_intersection_test_stage->execute(
-                    buffer);
+            m_ray_bounding_volume_intersection_test_stage->execute(buffer);
             LDPLAB_PROFILING_STOP(
                 pipeline_world_space_bounding_volume_intersection_test);
 
-            if (intersects_bv > 0)
-            {
-                LDPLAB_PROFILING_START(
-                    pipeline_world_space_particle_intersection_test);
-                m_ray_particle_intersection_test_stage->execute(
-                    buffer,
-                    intersection_buffer);
-                LDPLAB_PROFILING_STOP(
-                    pipeline_world_space_particle_intersection_test);
-            }
-            else if (buffer.active_rays == 0)
-                return;
-        }
+            // Update buffer index count
+            m_context->shared_shaders.countRayBufferIndexState(
+                0,
+                m_context->particles.size(),
+                buffer,
+                buffer.active_rays,
+                buffer.world_space_rays);
+        } while (buffer.world_space_rays > 0);
+
+        if (buffer.active_rays == 0)
+            return;
 
         LDPLAB_PROFILING_START(pipeline_world_space_particle_interaction);
         m_ray_particle_interaction_stage->execute(
@@ -232,14 +235,26 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
             transmission_buffer,
             output_buffer);
         LDPLAB_PROFILING_STOP(pipeline_world_space_particle_interaction);
+
+        // Update ray buffer index count
+        m_context->shared_shaders.countRayBufferIndexState(
+            0,
+            reflection_buffer,
+            transmission_buffer,
+            reflection_buffer.active_rays,
+            transmission_buffer.active_rays);
+        reflection_buffer.world_space_rays = 0;
+        transmission_buffer.world_space_rays = 0;
     }
 
     // Check if there are still active rays left and print a warning to the log
     if (reflection_buffer.depth < buffer_control.dummyBufferDepth() &&
         transmission_buffer.depth < buffer_control.dummyBufferDepth())
     {
-        processBatch(reflection_buffer, buffer_control);
-        processBatch(transmission_buffer, buffer_control);
+        if (reflection_buffer.active_rays > 0)
+            processBatch(reflection_buffer, buffer_control);
+        if (transmission_buffer.active_rays > 0)
+            processBatch(transmission_buffer, buffer_control);
     }
     else if (buffer.active_rays > 0 &&
         m_context->flags.emit_warning_on_maximum_branching_depth_discardment)

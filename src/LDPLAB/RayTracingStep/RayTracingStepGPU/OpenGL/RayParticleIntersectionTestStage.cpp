@@ -77,9 +77,6 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
     m_cs_intersection.shader->execute(m_cs_intersection.num_work_groups);
     LDPLAB_PROFILING_STOP(particle_intersection_test_shader_execution);
 
-    // Update ray buffer index data
-    m_context->shared_shaders.updateRayBufferState(rays);
-
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Ray particle intersection test on "\
         "batch buffer %i completed",
         m_context->uid, 

@@ -53,7 +53,7 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
 
     // Create SSBOs
     m_cs_count_ray_buffer_state_post_stage.ssbo_output =
-        m_context->ogl->createShaderStorageBuffer(sizeof(int32_t) * 2);
+        m_context->ogl->createShaderStorageBuffer(sizeof(int32_t) * 2, GL_STREAM_READ);
     m_cs_count_ray_buffer_state_pre_stage.ssbo_temp =
         m_context->ogl->createShaderStorageBuffer(sizeof(int32_t) * 2 *
             m_context->parameters.number_rays_per_buffer);
@@ -76,12 +76,18 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
             constant::glsl_local_group_size::reset_output_and_intersection_buffer);
 
     // Get uniform locations
-    m_cs_count_ray_buffer_state_pre_stage.uniform_num_particles =
-        m_cs_count_ray_buffer_state_pre_stage.shader->getUniformLocation(
-            "num_particles");
     m_cs_count_ray_buffer_state_pre_stage.uniform_num_rays_per_buffer =
         m_cs_count_ray_buffer_state_pre_stage.shader->getUniformLocation(
             "num_rays_per_buffer");
+    m_cs_count_ray_buffer_state_pre_stage.uniform_second_ray_buffer =
+        m_cs_count_ray_buffer_state_pre_stage.shader->getUniformLocation(
+            "second_ray_index_buffer");
+    m_cs_count_ray_buffer_state_pre_stage.uniform_threshold1 =
+        m_cs_count_ray_buffer_state_pre_stage.shader->getUniformLocation(
+            "threshold1");
+    m_cs_count_ray_buffer_state_pre_stage.uniform_threshold2 =
+        m_cs_count_ray_buffer_state_pre_stage.shader->getUniformLocation(
+            "threshold2");
 
     m_cs_count_ray_buffer_state_reduction_stage.uniform_buffer_size =
         m_cs_count_ray_buffer_state_reduction_stage.shader->getUniformLocation(
@@ -91,8 +97,6 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
             "source_offset");
 
     m_cs_count_ray_buffer_state_pre_stage.shader->use();
-    glUniform1ui(m_cs_count_ray_buffer_state_pre_stage.uniform_num_particles,
-        static_cast<GLuint>(m_context->particles.size()));
     glUniform1ui(m_cs_count_ray_buffer_state_pre_stage.uniform_num_rays_per_buffer,
         static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
 
@@ -108,17 +112,97 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
     return true;
 }
 
-void ldplab::rtsgpu_ogl::SharedShaders::updateRayBufferState(RayBuffer& buffer)
+void ldplab::rtsgpu_ogl::SharedShaders::countRayBufferIndexState(
+    size_t threshold1,
+    size_t threshold2,
+    RayBuffer& buffer, 
+    size_t& count1,
+    size_t& count2)
 {
     // Pre stage
     LDPLAB_PROFILING_START(update_ray_buffer_state_pre_stage);
     m_cs_count_ray_buffer_state_pre_stage.shader->use();
     buffer.ssbo.particle_index->bindToIndex(0);
-    m_cs_count_ray_buffer_state_pre_stage.ssbo_temp->bindToIndex(1);
+    m_cs_count_ray_buffer_state_pre_stage.ssbo_temp->bindToIndex(2);
+    glUniform1i(
+        m_cs_count_ray_buffer_state_pre_stage.uniform_second_ray_buffer, 0);
+    glUniform1ui(m_cs_count_ray_buffer_state_pre_stage.uniform_threshold1, 
+        static_cast<GLuint>(threshold1));
+    glUniform1ui(m_cs_count_ray_buffer_state_pre_stage.uniform_threshold2,
+        static_cast<GLuint>(threshold2));
     m_cs_count_ray_buffer_state_pre_stage.shader->execute(
         m_cs_count_ray_buffer_state_pre_stage.num_work_groups);
     LDPLAB_PROFILING_STOP(update_ray_buffer_state_pre_stage);
 
+    // Reduction and Post
+    countBufferIndexState();
+    count1 = static_cast<size_t>(
+        m_cs_count_ray_buffer_state_post_stage.output_buffer[0]);
+    count2 = static_cast<size_t>(
+        m_cs_count_ray_buffer_state_post_stage.output_buffer[1]);
+}
+
+void ldplab::rtsgpu_ogl::SharedShaders::countRayBufferIndexState(
+    size_t threshold,
+    RayBuffer& buffer1, 
+    RayBuffer& buffer2, 
+    size_t& count1, 
+    size_t& count2)
+{
+    // Pre stage
+    LDPLAB_PROFILING_START(update_ray_buffer_state_pre_stage);
+    m_cs_count_ray_buffer_state_pre_stage.shader->use();
+    buffer1.ssbo.particle_index->bindToIndex(0);
+    buffer2.ssbo.particle_index->bindToIndex(1);
+    m_cs_count_ray_buffer_state_pre_stage.ssbo_temp->bindToIndex(2);
+    glUniform1i(
+        m_cs_count_ray_buffer_state_pre_stage.uniform_second_ray_buffer, 1);
+    glUniform1ui(m_cs_count_ray_buffer_state_pre_stage.uniform_threshold1,
+        static_cast<GLuint>(threshold));
+    m_cs_count_ray_buffer_state_pre_stage.shader->execute(
+        m_cs_count_ray_buffer_state_pre_stage.num_work_groups);
+    LDPLAB_PROFILING_STOP(update_ray_buffer_state_pre_stage);
+
+    // Reduction and Post
+    countBufferIndexState();
+    count1 = static_cast<size_t>(
+        m_cs_count_ray_buffer_state_post_stage.output_buffer[0]);
+    count2 = static_cast<size_t>(
+        m_cs_count_ray_buffer_state_post_stage.output_buffer[1]);
+}
+
+void ldplab::rtsgpu_ogl::SharedShaders::resetOutputAndIntersectionBuffer(
+    OutputBuffer& output, IntersectionBuffer& intersection)
+{
+    // Bind shaders
+    LDPLAB_PROFILING_START(reset_output_and_intersection_shader_binding);
+    m_cs_reset_output_and_intersection.shader->use();
+    LDPLAB_PROFILING_STOP(reset_output_and_intersection_shader_binding);
+
+    // Bind SSBOs
+    LDPLAB_PROFILING_START(reset_output_and_intersection_ssbo_binding);
+    intersection.ssbo.particle_index->bindToIndex(0);
+    output.ssbo.output_per_ray->bindToIndex(1);
+    LDPLAB_PROFILING_STOP(reset_output_and_intersection_ssbo_binding);
+
+    // Execute shader
+    LDPLAB_PROFILING_START(reset_output_and_intersection_shader_execution);
+    m_cs_reset_output_and_intersection.shader->execute(
+        m_cs_reset_output_and_intersection.num_work_groups);
+    LDPLAB_PROFILING_STOP(reset_output_and_intersection_shader_execution);
+}
+
+void ldplab::rtsgpu_ogl::SharedShaders::uploadRayBufferData(RayBuffer& buffer)
+{
+    // Upload data
+    LDPLAB_PROFILING_START(ray_buffer_data_upload);
+    buffer.ssbo.particle_index->upload(buffer.particle_index_data);
+    buffer.ssbo.ray_properties->upload(buffer.ray_properties_data);
+    LDPLAB_PROFILING_STOP(ray_buffer_data_upload);
+}
+
+void ldplab::rtsgpu_ogl::SharedShaders::countBufferIndexState()
+{
     // Reduction stage
     LDPLAB_PROFILING_START(update_ray_buffer_state_reduction_stage);
     m_cs_count_ray_buffer_state_reduction_stage.shader->use();
@@ -153,41 +237,7 @@ void ldplab::rtsgpu_ogl::SharedShaders::updateRayBufferState(RayBuffer& buffer)
 
     // Download data
     LDPLAB_PROFILING_START(update_ray_buffer_state_data_download);
-    int32_t output_data[2] = { 0 };
-    m_cs_count_ray_buffer_state_post_stage.ssbo_output->download(output_data);
+    m_cs_count_ray_buffer_state_post_stage.ssbo_output->download(
+        m_cs_count_ray_buffer_state_post_stage.output_buffer);
     LDPLAB_PROFILING_STOP(update_ray_buffer_state_data_download);
-
-    // Update ray buffer state
-    buffer.active_rays = output_data[0];
-    buffer.world_space_rays = output_data[1];
-}
-
-void ldplab::rtsgpu_ogl::SharedShaders::resetOutputAndIntersectionBuffer(
-    OutputBuffer& output, IntersectionBuffer& intersection)
-{
-    // Bind shaders
-    LDPLAB_PROFILING_START(reset_output_and_intersection_shader_binding);
-    m_cs_reset_output_and_intersection.shader->use();
-    LDPLAB_PROFILING_STOP(reset_output_and_intersection_shader_binding);
-
-    // Bind SSBOs
-    LDPLAB_PROFILING_START(reset_output_and_intersection_ssbo_binding);
-    intersection.ssbo.particle_index->bindToIndex(0);
-    output.ssbo.output_per_ray->bindToIndex(1);
-    LDPLAB_PROFILING_STOP(reset_output_and_intersection_ssbo_binding);
-
-    // Execute shader
-    LDPLAB_PROFILING_START(reset_output_and_intersection_shader_execution);
-    m_cs_reset_output_and_intersection.shader->execute(
-        m_cs_reset_output_and_intersection.num_work_groups);
-    LDPLAB_PROFILING_STOP(reset_output_and_intersection_shader_execution);
-}
-
-void ldplab::rtsgpu_ogl::SharedShaders::uploadRayBufferData(RayBuffer& buffer)
-{
-    // Upload data
-    LDPLAB_PROFILING_START(ray_buffer_data_upload);
-    buffer.ssbo.particle_index->upload(buffer.particle_index_data);
-    buffer.ssbo.ray_properties->upload(buffer.ray_properties_data);
-    LDPLAB_PROFILING_STOP(ray_buffer_data_upload);
 }
