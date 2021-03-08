@@ -1,9 +1,6 @@
 #include "RayTracingStepFactory.hpp"
 
-#include "RayTracingStepCPU/Context.hpp"
-#include "RayTracingStepCPU/Data.hpp"
-#include "RayTracingStepCPU/Pipeline.hpp"
-#include "RayTracingStepCPU/RayTracingStep.hpp"
+#include "RayTracingStepCPU/Factory.hpp"
 
 #include "RayTracingStepGPU/OpenGL/Context.hpp"
 #include "RayTracingStepGPU/OpenGL/Data.hpp"
@@ -15,222 +12,26 @@
 
 #include "../Utils/Profiler.hpp"
 
-std::shared_ptr<ldplab::rtscpu::RayTracingStep> ldplab::RayTracingStepFactory::
+std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
     createRayTracingStepCPU(
         const ExperimentalSetup& setup,
         const RayTracingStepCPUInfo& info)
 {
     LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscpu);
-    LDPLAB_LOG_INFO("RTS factory: Begins creation of "\
-        "ldplab::rtscpu::RayTracingStep");
-
-    bool error = false;
-    if (setup.light_sources.size() < 1)
-    {
-        LDPLAB_LOG_ERROR("RTS factory: Experimental setup contains no "\
-            "light sources");
-        error = true;
-    }
-
-    if (setup.particles.size() < 1)
-    {
-        LDPLAB_LOG_ERROR("RTS factory: Experimental setup contains no "\
-            "particles");
-        error = true;
-    }
-    
-    if (!checkTypeUniformity(setup))
-    {
-        LDPLAB_LOG_ERROR("RTS factory: Not supporting multiple types of "\
-            "objects in the experimental setup");
-        error = true;
-    }
-
-    if (error)
-    {
-        LDPLAB_LOG_INFO("RTS factory: Creation of "\
-            "ldplab::rtscpu::RayTracingStep failed");
-        return nullptr;
-    }
-    
-    if (setup.light_sources[0].direction->type() ==
-        ILightDirection::Type::homogeneous &&
-        setup.light_sources[0].intensity_distribution->type() ==
-        ILightDistribution::Type::homogeneous &&
-        setup.light_sources[0].polarisation->type() ==
-        ILightPolarisation::Type::unpolarized &&
-        setup.particles[0].bounding_volume->type() ==
-        IBoundingVolume::Type::sphere &&
-        setup.particles[0].geometry->type() ==
-        IParticleGeometry::Type::rod_particle &&
-        setup.particles[0].material->type() ==
-        IParticleMaterial::Type::linear_one_directional &&
-        info.solver_parameters->type() == IEikonalSolver::Type::rk45)
-    {
-        std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
-        setup.particles, setup.light_sources } };
-        ctx->thread_pool = info.thread_pool;
-        ctx->particle_transformations.resize(ctx->particles.size());
-        ctx->parameters.intensity_cutoff = info.intensity_cutoff;
-        ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
-        ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
-        ctx->parameters.number_rays_per_unit = static_cast<size_t>(
-            sqrt(info.light_source_ray_density_per_unit_area));
-        ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
-        ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
-        ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
-            info.emit_warning_on_maximum_branching_depth_discardment;
-
-        ctx->bounding_volume_data =
-            std::shared_ptr<rtscpu::IBoundingVolumeData>(
-                new rtscpu::BoundingSphereData());
-        ((rtscpu::BoundingSphereData*)ctx->bounding_volume_data.get())->
-            sphere_data.resize(ctx->particles.size(), 
-                BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
-        ctx->particle_data =
-            std::shared_ptr<rtscpu::IParticleData>(
-                new rtscpu::RodParticleData());
-        initRodParticleGeometryCPU(setup, ctx);
-
-        std::unique_ptr<rtscpu::InitialStageBoundingSpheresHomogenousLight> initial
-        { new rtscpu::InitialStageBoundingSpheresHomogenousLight{ ctx } };
-        std::unique_ptr<rtscpu::RayBoundingSphereIntersectionTestStageBruteForce> rbvit
-        { new rtscpu::RayBoundingSphereIntersectionTestStageBruteForce {ctx} };
-        std::unique_ptr<rtscpu::RodParticleIntersectionTest> rpit
-        { new rtscpu::RodParticleIntersectionTest{ctx} };
-        std::unique_ptr<rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction> rpi
-        { new rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction{ ctx } };
-        std::unique_ptr<rtscpu::LinearIndexGradientRodParticlePropagation> ipp
-        { new rtscpu::LinearIndexGradientRodParticlePropagation{
-            ctx,
-            *((RK45*) info.solver_parameters.get())} };
-        ctx->pipeline = std::make_unique<rtscpu::Pipeline>(
-            std::move(initial),
-            std::move(rbvit),
-            std::move(rpit),
-            std::move(rpi),
-            std::move(ipp),
-            ctx);
-        std::shared_ptr<rtscpu::RayTracingStep> rts(
-            new rtscpu::RayTracingStep{ ctx });
-        LDPLAB_LOG_INFO("RTS factory: Creation of "\
-            "ldplab::rtscpu::RayTracingStep completed");
-        return rts;
-    }
-
-    LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
-        "types in the experimental setup is not yet supported by "\
-        "ldplab::rtscpu::RayTracingStep");
-    LDPLAB_LOG_INFO("RTS factory: Creation of "\
-        "ldplab::rtscpu::RayTracingStep failed");
-    return nullptr;
+    return rtscpu::Factory::createRTS(setup, info);
 }
 
-std::shared_ptr<ldplab::rtscpu::RayTracingStep> 
+std::shared_ptr<ldplab::IRayTracingStep> 
     ldplab::RayTracingStepFactory::createRayTracingStepCPUDebug(
         const ExperimentalSetup& setup, 
         const RayTracingStepCPUInfo& info, 
         RayTracingStepCPUDebugInfo& debug)
 {
-    LDPLAB_LOG_INFO("RTS factory: Begins creation of "\
-        "ldplab::rtscpu::RayTracingStep (debug variant)");
-
-    bool error = false;
-    if (setup.light_sources.size() < 1)
-    {
-        LDPLAB_LOG_ERROR("RTS factory: Experimental setup contains no "\
-            "light sources");
-        error = true;
-    }
-
-    if (setup.particles.size() < 1)
-    {
-        LDPLAB_LOG_ERROR("RTS factory: Experimental setup contains no "\
-            "particles");
-        error = true;
-    }
-
-    if (!checkTypeUniformity(setup))
-    {
-        LDPLAB_LOG_ERROR("RTS factory: Not supporting multiple types of "\
-            "objects in the experimental setup");
-        error = true;
-    }
-
-    if (error)
-    {
-        LDPLAB_LOG_INFO("RTS factory: Creation of "\
-            "ldplab::rtscpu::RayTracingStep (debug variant) failed");
-        return nullptr;
-    }
-
-    if (setup.light_sources[0].direction->type() ==
-        ILightDirection::Type::homogeneous &&
-        setup.light_sources[0].intensity_distribution->type() ==
-        ILightDistribution::Type::homogeneous &&
-        setup.light_sources[0].polarisation->type() ==
-        ILightPolarisation::Type::unpolarized &&
-        setup.particles[0].bounding_volume->type() ==
-        IBoundingVolume::Type::sphere &&
-        setup.particles[0].geometry->type() ==
-        IParticleGeometry::Type::rod_particle &&
-        setup.particles[0].material->type() ==
-        IParticleMaterial::Type::linear_one_directional &&
-        info.solver_parameters->type() == IEikonalSolver::Type::rk45)
-    {
-        std::shared_ptr<rtscpu::Context> ctx{ new rtscpu::Context{
-        setup.particles, setup.light_sources } };
-        ctx->thread_pool = info.thread_pool;
-        ctx->particle_transformations.resize(ctx->particles.size());
-        ctx->parameters.intensity_cutoff = info.intensity_cutoff;
-        ctx->parameters.medium_reflection_index = setup.medium_reflection_index;
-        ctx->parameters.number_rays_per_buffer = info.number_rays_per_buffer;
-        ctx->parameters.number_rays_per_unit = static_cast<size_t>(
-            sqrt(info.light_source_ray_density_per_unit_area));
-        ctx->parameters.maximum_branching_depth = info.maximum_branching_depth;
-        ctx->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
-        ctx->flags.emit_warning_on_maximum_branching_depth_discardment =
-            info.emit_warning_on_maximum_branching_depth_discardment;
-
-        ctx->bounding_volume_data =
-            std::shared_ptr<rtscpu::IBoundingVolumeData>(
-                new rtscpu::BoundingSphereData());
-        ((rtscpu::BoundingSphereData*)ctx->bounding_volume_data.get())->
-            sphere_data.resize(ctx->particles.size(),
-                BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
-        ctx->particle_data =
-            std::shared_ptr<rtscpu::IParticleData>(
-                new rtscpu::RodParticleData());
-        initRodParticleGeometryCPU(setup, ctx);
-
-        debug.context = ctx;
-        debug.initial_stage = 
-            std::make_unique<rtscpu::InitialStageBoundingSpheresHomogenousLight>(ctx);
-        debug.ray_bounding_volume_intersection_test =
-            std::make_unique<rtscpu::RayBoundingSphereIntersectionTestStageBruteForce>(ctx);
-        debug.ray_particle_intersection_test =
-            std::make_unique<rtscpu::RodParticleIntersectionTest>(ctx);
-        debug.ray_particle_interaction =
-            std::make_unique<rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction>(ctx);
-        debug.inner_particle_propagation =
-            std::make_unique<rtscpu::LinearIndexGradientRodParticlePropagation>(ctx, *((RK45*)info.solver_parameters.get()));
-
-        std::shared_ptr<rtscpu::RayTracingStep> rts(
-            new rtscpu::RayTracingStep{ ctx });
-        LDPLAB_LOG_INFO("RTS factory: Creation of "\
-            "ldplab::rtscpu::RayTracingStep (debug variant) completed");
-        return rts;
-    }
-
-    LDPLAB_LOG_ERROR("RTS factory: The given combination of object "\
-        "types in the experimental setup is not yet supported by "\
-        "ldplab::rtscpu::RayTracingStep (debug variant)");
-    LDPLAB_LOG_INFO("RTS factory: Creation of "\
-        "ldplab::rtscpu::RayTracingStep (debug variant) failed");
-    return nullptr;
+    LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscpu);
+    return rtscpu::Factory::createRTSDebug(setup, info, debug);
 }
 
-std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
+std::shared_ptr<ldplab::IRayTracingStep>
     ldplab::RayTracingStepFactory::createRayTracingStepGPUOpenGL(
         const ExperimentalSetup& setup, 
         const RayTracingStepGPUOpenGLInfo& info)
@@ -374,45 +175,6 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
     LDPLAB_LOG_INFO("RTS factory: Creation of "\
         "ldplab::rtsgpu_ogl::RayTracingStep failed");
     return nullptr;
-}
-
-void ldplab::RayTracingStepFactory::initRodParticleGeometryCPU(
-    const ExperimentalSetup& setup, 
-    std::shared_ptr<rtscpu::Context> context)
-{
-    for (size_t i = 0; i < setup.particles.size(); ++i)
-    {
-        const Particle& particle = setup.particles[i];
-        if (particle.geometry->type() ==
-            IParticleGeometry::Type::rod_particle)
-        {
-            RodParticleGeometry* geometry =
-                (RodParticleGeometry*)particle.geometry.get();
-            double h;
-            double sphere_radius;
-            if (geometry->kappa <= 0.001)
-            {
-                h = 0;
-                sphere_radius = 0;
-            }
-            else
-            {
-                h = geometry->kappa * geometry->cylinder_radius;
-                sphere_radius =
-                    (h + geometry->cylinder_radius * 
-                        geometry->cylinder_radius / h) / 2.0;
-            }
-            Vec3 origin_cap{ 0.0 , 0.0, geometry->cylinder_length + h - sphere_radius };
-            Vec3 origin_indentation{ 0.0 , 0.0,h - sphere_radius };
-            ((rtscpu::RodParticleData*)context->particle_data.get())->
-                particle_data.push_back(rtscpu::RodParticle{
-                    geometry->cylinder_radius,
-                    geometry->cylinder_length,
-                    sphere_radius,
-                    origin_cap,
-                    origin_indentation });
-        }
-    }
 }
 
 bool ldplab::RayTracingStepFactory::initRodParticleGeometryGPUOpenGL(
