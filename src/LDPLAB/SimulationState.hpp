@@ -18,17 +18,21 @@ namespace ldplab
         ParticleInstance()
             :
             position{ 0, 0, 0 },
-            orientation{ 0, 0, 0 }
+            orientation{ 0, 0, 0 },
+            rotation_order{ RotationOrder::xyz }
         { }
         ParticleInstance(const Particle& particle)
             :
             position{ particle.position },
-            orientation{ particle.orientation }
+            orientation{ particle.orientation },
+            rotation_order{ particle.rotation_order }
         { }
         /** @brief Position of the particle in world space. */
         Vec3 position;
-        /** @brief Rotation around each coordinate axis in particle space. */
+        /** @brief Rotation around each respective axis in particle space. */
         Vec3 orientation;
+        /** @brief Defines the order of rotation around respective axis. */
+        RotationOrder rotation_order;
     };
 
     /**

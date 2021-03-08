@@ -13,8 +13,10 @@
 
 // Ray tracing step
 #include "LDPLAB/RayTracingStep/IRayTracingStep.hpp"
-#include "LDPLAB/RayTracingStep/RayTracingStepCPUInfo.hpp"
 #include "LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"
 #include "LDPLAB/RayTracingStep/RayTracingStepOutput.hpp"
+
+// Profiling interface
+#include "LDPLAB/Utils/Profiler.hpp"
 
 #endif

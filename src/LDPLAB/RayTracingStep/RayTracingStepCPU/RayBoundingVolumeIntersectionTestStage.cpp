@@ -48,14 +48,13 @@ size_t
         for (int32_t j = 0; j < 
             static_cast<int32_t>(m_context->particles.size()); ++j)
         {
-            const Vec3& oc = o - 
-                m_bounding_spheres[j].center;
-            const double rr =
-                m_bounding_spheres[j].radius *
+            const Vec3& oc = o -  m_bounding_spheres[j].center;
+            const double rr = m_bounding_spheres[j].radius *
                 m_bounding_spheres[j].radius;
 
             const double q = glm::dot(oc, oc) - rr;
-            if (q <= 1e-9)
+            // Check if the ray origin lies within the sphere
+            if (q < 1e-9)
                 continue;
 
             const double p = glm::dot(buffer.ray_data[i].direction, oc);
