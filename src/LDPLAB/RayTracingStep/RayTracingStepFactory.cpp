@@ -2,6 +2,7 @@
 
 #include "RayTracingStepCPU/Factory.hpp"
 #include "RayTracingStepGPU/OpenGL/Factory.hpp"
+#include "../Utils/Log.hpp"
 #include "../Utils/Profiler.hpp"
 
 std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
@@ -28,6 +29,13 @@ std::shared_ptr<ldplab::IRayTracingStep>
         const ExperimentalSetup& setup, 
         const RayTracingStepGPUOpenGLInfo& info)
 {
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
     LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtsgpu_ogl);
     return rtsgpu_ogl::Factory::createRTS(setup, info);
+#else
+    LDPLAB_LOG_ERROR("RTS factory: Could not create ray tracing step gpu "\
+        "(OpenGL) because library has been build with "\
+        "LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL");
+    return nullptr;
+#endif
 }

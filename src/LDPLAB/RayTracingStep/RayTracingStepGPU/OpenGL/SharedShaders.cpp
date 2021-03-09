@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "SharedShaders.hpp"
 
 #include "Constants.hpp"
@@ -241,3 +243,5 @@ void ldplab::rtsgpu_ogl::SharedShaders::countBufferIndexState()
         m_cs_count_ray_buffer_state_post_stage.output_buffer);
     LDPLAB_PROFILING_STOP(update_ray_buffer_state_data_download);
 }
+
+#endif

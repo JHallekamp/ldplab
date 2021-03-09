@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "InnerParticlePropagationStage.hpp"
 
 #include "Constants.hpp"
@@ -104,3 +106,5 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
         m_context->uid,
         rays.uid);
 }
+
+#endif

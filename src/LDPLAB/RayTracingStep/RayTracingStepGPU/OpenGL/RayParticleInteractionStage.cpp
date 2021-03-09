@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayParticleInteractionStage.hpp"
 
 #include "Constants.hpp"
@@ -205,3 +207,5 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
         refracted_rays.uid, 
         refracted_rays.active_rays);
 }
+
+#endif

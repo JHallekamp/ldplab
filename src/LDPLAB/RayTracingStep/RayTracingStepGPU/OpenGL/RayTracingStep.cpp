@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayTracingStep.hpp"
 #include "Context.hpp"
 #include "Data.hpp"
@@ -327,3 +329,5 @@ void ldplab::rtsgpu_ogl::RayTracingStep::execute(
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);
 }
+
+#endif

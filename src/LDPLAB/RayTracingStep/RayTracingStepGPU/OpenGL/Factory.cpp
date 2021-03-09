@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "Factory.hpp"
 
 #include "../../../Constants.hpp"
@@ -472,3 +474,5 @@ bool ldplab::rtsgpu_ogl::Factory::createRayParticleIntersectionTestStage(
         return false;
     }
 }
+
+#endif

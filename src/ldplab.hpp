@@ -1,6 +1,8 @@
 #ifndef WWU_LDPLAB_HPP
 #define WWU_LDPLAB_HPP
 
+/** @file Includes the LDPLAB library interface. */
+
 // Logging
 #include "LDPLAB/LogCallback.hpp"
 
@@ -16,7 +18,7 @@
 #include "LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"
 #include "LDPLAB/RayTracingStep/RayTracingStepOutput.hpp"
 
-// Profiling interface
+// Profiling
 #include "LDPLAB/Profiling.hpp"
 
 #endif

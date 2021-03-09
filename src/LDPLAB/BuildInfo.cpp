@@ -39,3 +39,12 @@ bool ldplab::BuildInfo::profilingEnabled()
     return false;
 #endif
 }
+
+bool ldplab::BuildInfo::RTSGPUOpenGLEnabled()
+{
+#ifdef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+    return false;
+#else
+    return true;
+#endif
+}

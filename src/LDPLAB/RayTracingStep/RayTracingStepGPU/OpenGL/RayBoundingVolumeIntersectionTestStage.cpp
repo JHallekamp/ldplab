@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
 
 #include "Constants.hpp"
@@ -89,3 +91,5 @@ void
         m_context->uid,
         buffer.uid);
 }
+
+#endif

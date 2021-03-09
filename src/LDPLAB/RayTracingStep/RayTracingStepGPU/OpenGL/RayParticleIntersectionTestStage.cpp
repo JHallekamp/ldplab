@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayParticleIntersectionTestStage.hpp"
 
 #include "Constants.hpp"
@@ -82,3 +84,5 @@ void ldplab::rtsgpu_ogl::RodParticleIntersectionTest::execute(
         m_context->uid, 
         rays.uid);
 }
+
+#endif

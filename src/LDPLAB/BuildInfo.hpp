@@ -11,14 +11,16 @@ namespace ldplab
     {
         /** @brief No instances allowed. */
         BuildInfo() = delete;
-        /** @brief Querys whether logging is enabled in the build. */
+        /** @brief Queries whether logging is enabled in the build. */
         static bool loggingEnabled();
-        /** @brief Querys whether debug logging is enabled in the build. */
+        /** @brief Queries whether debug logging is enabled in the build. */
         static bool debugLoggingEnabled();
-        /** @brief Querys whether debug asserts are enabled in the build. */
+        /** @brief Queries whether debug asserts are enabled in the build. */
         static bool debugAssertsEnabled();
-        /** @brief Querys whether profiling is enabled in the build. */
+        /** @brief Queries whether profiling is enabled in the build. */
         static bool profilingEnabled();
+        /** @brief Queries if the build supports RTS on GPU using OpenGL. */
+        static bool RTSGPUOpenGLEnabled();
     };
 }
 
