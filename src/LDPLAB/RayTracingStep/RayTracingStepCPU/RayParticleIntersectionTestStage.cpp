@@ -6,7 +6,7 @@
 #include "Debug/Debug.hpp"
 
 #include "../../SimulationState.hpp"
-#include "../../Log.hpp"
+#include "../../Utils/Log.hpp"
 
 #include "../../../../libs/glm/glm.hpp"
 

@@ -1,8 +1,10 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "Pipeline.hpp"
 
 #include "Constants.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 #include "../../../Utils/Assert.hpp"
 #include "../../../Utils/Profiler.hpp"
 
@@ -289,3 +291,5 @@ void ldplab::rtsgpu_ogl::Pipeline::processBatch(
             avg_intensity);
     }
 }
+
+#endif

@@ -1,6 +1,6 @@
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
 #include "Context.hpp"
-#include "../../Log.hpp"
+#include "../../Utils/Log.hpp"
 
 #include <limits>
 

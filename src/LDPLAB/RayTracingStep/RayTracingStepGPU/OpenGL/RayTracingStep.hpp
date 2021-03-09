@@ -10,9 +10,6 @@
 
 namespace ldplab
 {
-    // Protoype
-    class RayTracingStepFactory;
-
     namespace rtsgpu_ogl
     {
         // Prototype
@@ -24,7 +21,7 @@ namespace ldplab
          */
         class RayTracingStep : public IRayTracingStep
         {
-            friend RayTracingStepFactory;
+            friend class Factory;
         public:
             /**
              * @brief Inherited via IRayTracingStep. Starts the ray tracing

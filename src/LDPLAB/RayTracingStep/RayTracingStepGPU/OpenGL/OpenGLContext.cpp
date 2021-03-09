@@ -1,7 +1,9 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "OpenGLContext.hpp"
 
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 #include "../../../Utils/Assert.hpp"
 
 #include <fstream>
@@ -295,3 +297,5 @@ ldplab::rtsgpu_ogl::ShaderStorageBuffer::~ShaderStorageBuffer()
 {
     glDeleteBuffers(1, &m_glid);
 }
+
+#endif

@@ -1,6 +1,8 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "BufferControl.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 #include <mutex>
 
@@ -174,3 +176,5 @@ void ldplab::rtsgpu_ogl::BufferControl::initializeBuffers()
     m_output_buffer.output_per_ray_data = m_output_scattered_data.data();
     m_output_buffer.output_gathered_data = m_output_gathered_data.data();
 }
+
+#endif

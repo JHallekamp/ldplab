@@ -2,7 +2,7 @@
 #define WWU_LDPLAB_PARTICLE_HPP
 
 #include "../Geometry.hpp"
-#include "../Utils/UID.hpp"
+#include "../UID.hpp"
 #include "BoundingVolume.hpp"
 #include "ParticleGeometry.hpp"
 #include "ParticleMaterial.hpp"

@@ -9,7 +9,7 @@
 #include "RayParticleIntersectionTestStage.hpp"
 
 #include "../RayTracingStepOutput.hpp"
-#include "../../ThreadPool.hpp"
+#include "../../Utils/ThreadPool.hpp"
 
 #include <memory>
 #include <vector>
@@ -32,7 +32,7 @@ namespace ldplab
          *       parallel execution of the pipeline. This is likely to heavily
          *       increase the memory footprint of a Pipeline instance.
          */
-        class Pipeline : public ThreadPool::IJob
+        class Pipeline : public utils::ThreadPool::IJob
         {
         public:
             Pipeline(

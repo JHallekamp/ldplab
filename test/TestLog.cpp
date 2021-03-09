@@ -1,15 +1,15 @@
-#include <LDPLAB/LogCallback.hpp>
-#include <LDPLAB/Log.hpp>
+#include <ldplab.hpp>
+#include <LDPLAB/Utils/Log.hpp>
 #include <iostream>
 
 void printConfiguration()
 {
-    if (ldplab::Log::isLoggingEnabled())
+    if (ldplab::BuildInfo::loggingEnabled())
         std::cout << "logging is enabled" << std::endl;
     else
         std::cout << "logging is not enabled" << std::endl;
 
-    if (ldplab::Log::isDebugLoggingEnabled())
+    if (ldplab::BuildInfo::debugLoggingEnabled())
         std::cout << "debug logging is enabled" << std::endl;
     else
         std::cout << "debug logging is not enabled" << std::endl;

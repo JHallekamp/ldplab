@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "InnerParticlePropagationStage.hpp"
 
 #include "Constants.hpp"
@@ -5,7 +7,7 @@
 #include "Context.hpp"
 #include "../../../ExperimentalSetup/Particle.hpp"
 #include "../../../ExperimentalSetup/ParticleMaterial.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 #include "../../../Utils/ComputeHelper.hpp"
 #include "../../../Utils/Profiler.hpp"
 
@@ -37,7 +39,7 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::initShaders(
 
     // Compute work group size
     m_cs_inner_particle_propagation.num_work_groups = 
-        ComputeHelper::getNumWorkGroups(
+        utils::ComputeHelper::getNumWorkGroups(
             m_context->parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::linear_index_gradient_rod_particle_propagation);
 
@@ -104,3 +106,5 @@ void ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::execute(
         m_context->uid,
         rays.uid);
 }
+
+#endif

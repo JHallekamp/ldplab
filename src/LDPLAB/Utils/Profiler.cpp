@@ -3,24 +3,11 @@
 #include <fstream>
 #include <limits>
 
-void ldplab::Profiling::printReports(const std::string& file)
-{
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_PROFILING
-    Profiler::printReport(file);
-#endif // LDPLAB_BUILD_OPTION_ENABLE_PROFILING
-}
-
-void ldplab::Profiling::reset()
-{
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_PROFILING
-    Profiler::reset();
-#endif // LDPLAB_BUILD_OPTION_ENABLE_PROFILING
-}
-
 // ============================================================================
 // Implementing the profiler
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_PROFILING
-void ldplab::Profiler::addMeasurement(const std::string& key, double time_secs)
+void ldplab::utils::Profiler::addMeasurement(
+    const std::string& key, double time_secs)
 {
     Profiler& me = instance();
     Result& result = me.m_results[key];
@@ -33,7 +20,7 @@ void ldplab::Profiler::addMeasurement(const std::string& key, double time_secs)
         result.min_time = time_secs;
 }
 
-void ldplab::Profiler::printReport(const std::string& file)
+void ldplab::utils::Profiler::printReport(const std::string& file)
 {
     Profiler& me = instance();
     std::ofstream out(file);
@@ -58,7 +45,7 @@ void ldplab::Profiler::printReport(const std::string& file)
     }
 }
 
-void ldplab::Profiler::reset()
+void ldplab::utils::Profiler::reset()
 {
     Profiler& me = instance();
     for (std::map<std::string, Result>::iterator it = me.m_results.begin();
@@ -74,13 +61,13 @@ void ldplab::Profiler::reset()
     }
 }
 
-ldplab::Profiler& ldplab::Profiler::instance()
+ldplab::utils::Profiler& ldplab::utils::Profiler::instance()
 {
     static Profiler profiler;
     return profiler;
 }
 
-ldplab::Profiler::Result::Result()
+ldplab::utils::Profiler::Result::Result()
     :
     call_counter{ 0 },
     total_time{ 0 },
@@ -88,7 +75,7 @@ ldplab::Profiler::Result::Result()
     min_time{ std::numeric_limits<double>::max() }
 { }
 
-ldplab::ProfilingMeasurement::ProfilingMeasurement(std::string&& key)
+ldplab::utils::ProfilingMeasurement::ProfilingMeasurement(std::string&& key)
     :
     m_key { key },
     m_runtime{ 0 },
@@ -97,12 +84,12 @@ ldplab::ProfilingMeasurement::ProfilingMeasurement(std::string&& key)
     m_start = std::chrono::steady_clock::now();
 }
 
-ldplab::ProfilingMeasurement::~ProfilingMeasurement()
+ldplab::utils::ProfilingMeasurement::~ProfilingMeasurement()
 {
     stop();
 }
 
-void ldplab::ProfilingMeasurement::pause()
+void ldplab::utils::ProfilingMeasurement::pause()
 {
     if (m_state == State::running)
     {
@@ -113,7 +100,7 @@ void ldplab::ProfilingMeasurement::pause()
     }
 }
 
-void ldplab::ProfilingMeasurement::unpause()
+void ldplab::utils::ProfilingMeasurement::unpause()
 {
     if (m_state == State::paused)
     {
@@ -122,7 +109,7 @@ void ldplab::ProfilingMeasurement::unpause()
     }
 }
 
-void ldplab::ProfilingMeasurement::stop()
+void ldplab::utils::ProfilingMeasurement::stop()
 {
     if (m_state != State::stopped)
     {

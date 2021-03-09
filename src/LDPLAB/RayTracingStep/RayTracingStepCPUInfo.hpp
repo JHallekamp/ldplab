@@ -2,7 +2,6 @@
 #define WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 
 #include "EikonalSolver.hpp"
-#include "..\ThreadPool.hpp"
 
 #include <memory>
 
@@ -16,7 +15,6 @@ namespace ldplab
     {
         RayTracingStepCPUInfo()
             :
-            thread_pool{ nullptr },
             solver_parameters{ nullptr },
             intensity_cutoff{ 0 },
             number_rays_per_buffer{ 0 },
@@ -25,8 +23,6 @@ namespace ldplab
             number_parallel_pipelines{ 0 },
             emit_warning_on_maximum_branching_depth_discardment{ true }
         { }
-        /** @brief Pointer to the thread pool. */
-        std::shared_ptr<ThreadPool> thread_pool;
         /** @brief Parameters for the Eikonal solver. */
         std::shared_ptr<IEikonalSolver> solver_parameters;
         /**  @brief Under this cutoff intensity rays are not further traced. */

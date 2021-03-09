@@ -1,9 +1,11 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayParticleInteractionStage.hpp"
 
 #include "Constants.hpp"
 #include "Context.hpp"
 #include "Data.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 #include "../../../Utils/ComputeHelper.hpp"
 #include "../../../Utils/Profiler.hpp"
 
@@ -43,13 +45,13 @@ bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
         return false;
 
     // Set work group size
-    m_cs_interaction.num_work_groups = ComputeHelper::getNumWorkGroups(
+    m_cs_interaction.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::unpolarized_light_1d_linear_index_gradient_interaction);
-    m_cs_gather_output_pre_stage.num_work_groups = ComputeHelper::getNumWorkGroups(
+    m_cs_gather_output_pre_stage.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::gather_output_pre_stage);
-    m_cs_gather_output_post_stage.num_work_groups = ComputeHelper::getNumWorkGroups(
+    m_cs_gather_output_post_stage.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::gather_output_post_stage);
 
@@ -177,7 +179,7 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
         glUniform1ui(m_cs_gather_output_reduction_stage.uniform_source_offset,
             source_offset);
         m_cs_gather_output_reduction_stage.shader->execute(
-            ComputeHelper::getNumWorkGroups(num_threads,
+            utils::ComputeHelper::getNumWorkGroups(num_threads,
                 constant::glsl_local_group_size::gather_output_reduction_stage));
     } while (num_threads > 1);
     LDPLAB_PROFILING_STOP(gather_output_reduction_stage);
@@ -205,3 +207,5 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
         refracted_rays.uid, 
         refracted_rays.active_rays);
 }
+
+#endif

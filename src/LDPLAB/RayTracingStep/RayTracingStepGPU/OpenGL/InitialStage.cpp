@@ -1,6 +1,8 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "InitialStage.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     InitialStageBoundingSpheresHomogenousLight(
@@ -425,3 +427,5 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
 
     return false;
 }
+
+#endif

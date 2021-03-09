@@ -1,3 +1,5 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "SharedShaders.hpp"
 
 #include "Constants.hpp"
@@ -5,7 +7,7 @@
 #include "Context.hpp"
 #include "../../../ExperimentalSetup/Particle.hpp"
 #include "../../../ExperimentalSetup/ParticleMaterial.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 #include "../../../Utils/ComputeHelper.hpp"
 #include "../../../Utils/Profiler.hpp"
 
@@ -63,15 +65,15 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
 
     // Compute work group size
     m_cs_count_ray_buffer_state_post_stage.num_work_groups = 
-        ComputeHelper::getNumWorkGroups(
+        utils::ComputeHelper::getNumWorkGroups(
             m_context->parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::count_ray_buffer_state_post_stage);
     m_cs_count_ray_buffer_state_pre_stage.num_work_groups =
-        ComputeHelper::getNumWorkGroups(
+        utils::ComputeHelper::getNumWorkGroups(
             m_context->parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::count_ray_buffer_state_pre_stage);
     m_cs_reset_output_and_intersection.num_work_groups =
-        ComputeHelper::getNumWorkGroups(
+        utils::ComputeHelper::getNumWorkGroups(
             m_context->parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::reset_output_and_intersection_buffer);
 
@@ -221,7 +223,7 @@ void ldplab::rtsgpu_ogl::SharedShaders::countBufferIndexState()
             m_cs_count_ray_buffer_state_reduction_stage.uniform_source_offset,
             source_offset);
         m_cs_count_ray_buffer_state_reduction_stage.shader->execute(
-            ComputeHelper::getNumWorkGroups(num_threads,
+            utils::ComputeHelper::getNumWorkGroups(num_threads,
                 constant::glsl_local_group_size::count_ray_buffer_state_reduction_stage));
     } while (num_threads > 1);
     LDPLAB_PROFILING_STOP(update_ray_buffer_state_reduction_stage);
@@ -241,3 +243,5 @@ void ldplab::rtsgpu_ogl::SharedShaders::countBufferIndexState()
         m_cs_count_ray_buffer_state_post_stage.output_buffer);
     LDPLAB_PROFILING_STOP(update_ray_buffer_state_data_download);
 }
+
+#endif
