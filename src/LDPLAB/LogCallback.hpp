@@ -8,7 +8,7 @@
 namespace ldplab
 {
     // Prototypes
-    class Log;
+    namespace utils { class Log; }
 
     /** @brief Defines the level of severity of a log entry. */
     enum LogLevel
@@ -36,7 +36,7 @@ namespace ldplab
      */
     class ILogCallback
     {
-        friend Log;
+        friend utils::Log;
     public:
         ILogCallback();
         virtual ~ILogCallback();

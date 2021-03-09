@@ -32,7 +32,7 @@ bool ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
         return false;
 
     // Compute work group size
-    m_cs_bv_intersection.num_work_groups = ComputeHelper::getNumWorkGroups(
+    m_cs_bv_intersection.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::ray_bounding_sphere_intersection_test_brute_force);
 

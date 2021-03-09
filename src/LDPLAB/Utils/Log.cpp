@@ -5,7 +5,7 @@
 
 constexpr unsigned int MAX_LOG_ENTRY_STRING = 512;
 
-void ldplab::Log::logFatal(const char* format, ...)
+void ldplab::utils::Log::logFatal(const char* format, ...)
 {
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 
@@ -23,7 +23,7 @@ void ldplab::Log::logFatal(const char* format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 }
 
-void ldplab::Log::logError(const char* format, ...)
+void ldplab::utils::Log::logError(const char* format, ...)
 {
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 
@@ -41,7 +41,7 @@ void ldplab::Log::logError(const char* format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 }
 
-void ldplab::Log::logWarning(const char* format, ...)
+void ldplab::utils::Log::logWarning(const char* format, ...)
 {
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 
@@ -59,7 +59,7 @@ void ldplab::Log::logWarning(const char* format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 }
 
-void ldplab::Log::logInfo(const char* format, ...)
+void ldplab::utils::Log::logInfo(const char* format, ...)
 {
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 
@@ -77,7 +77,7 @@ void ldplab::Log::logInfo(const char* format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 }
 
-void ldplab::Log::logDebug(const char* format, ...)
+void ldplab::utils::Log::logDebug(const char* format, ...)
 {
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
@@ -97,7 +97,7 @@ void ldplab::Log::logDebug(const char* format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 }
 
-void ldplab::Log::logTrace(const char* format, ...)
+void ldplab::utils::Log::logTrace(const char* format, ...)
 {
 #ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING
@@ -117,13 +117,13 @@ void ldplab::Log::logTrace(const char* format, ...)
 #endif // LDPLAB_BUILD_OPTION_DISABLE_LOGGING
 }
 
-ldplab::Log::LogDispatcher& ldplab::Log::getLogDispatcher()
+ldplab::utils::Log::LogDispatcher& ldplab::utils::Log::getLogDispatcher()
 {
     static LogDispatcher log_dispatcher;
     return log_dispatcher;
 }
 
-ldplab::Log::LogDispatcher::~LogDispatcher()
+ldplab::utils::Log::LogDispatcher::~LogDispatcher()
 {
     std::lock_guard<std::mutex> guard{ m_callback_mutex };
     for (std::list<ILogCallback*>::iterator it = m_callbacks.begin();
@@ -136,7 +136,7 @@ ldplab::Log::LogDispatcher::~LogDispatcher()
     m_callbacks.clear();
 }
 
-void ldplab::Log::LogDispatcher::log(
+void ldplab::utils::Log::LogDispatcher::log(
     LogLevel log_level, const std::string& log_entry)
 {
     std::lock_guard<std::mutex> guard{ m_log_mutex };
@@ -149,13 +149,13 @@ void ldplab::Log::LogDispatcher::log(
     }
 }
 
-size_t ldplab::Log::LogDispatcher::numCallbacks()
+size_t ldplab::utils::Log::LogDispatcher::numCallbacks()
 {
     std::lock_guard<std::mutex> guard{ m_callback_mutex };
     return m_callbacks.size();
 }
 
-bool ldplab::Log::LogDispatcher::subscribeCallback(ILogCallback* callback)
+bool ldplab::utils::Log::LogDispatcher::subscribeCallback(ILogCallback* callback)
 {
     std::lock_guard<std::mutex> guard{ m_callback_mutex };
     for (std::list<ILogCallback*>::iterator it = m_callbacks.begin();
@@ -169,7 +169,7 @@ bool ldplab::Log::LogDispatcher::subscribeCallback(ILogCallback* callback)
     return true;
 }
 
-bool ldplab::Log::LogDispatcher::unsubscribeCallback(ILogCallback* callback)
+bool ldplab::utils::Log::LogDispatcher::unsubscribeCallback(ILogCallback* callback)
 {
     std::lock_guard<std::mutex> guard{ m_callback_mutex };
     for (std::list<ILogCallback*>::iterator it = m_callbacks.begin();
@@ -183,24 +183,4 @@ bool ldplab::Log::LogDispatcher::unsubscribeCallback(ILogCallback* callback)
         }
     }
     return false;
-}
-
-bool ldplab::Log::isLoggingEnabled()
-{
-#ifndef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
-    return true;
-#else
-    return false;
-#endif
-}
-
-bool ldplab::Log::isDebugLoggingEnabled()
-{
-#ifdef LDPLAB_BUILD_OPTION_DISABLE_LOGGING
-    return false;
-#elif defined(LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING)
-    return true;
-#else
-    return false;
-#endif
 }

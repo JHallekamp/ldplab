@@ -30,7 +30,7 @@ bool ldplab::rtsgpu_ogl::RodParticleIntersectionTest::initShaders()
         return false;
 
     // Compute work group size
-    m_cs_intersection.num_work_groups = ComputeHelper::getNumWorkGroups(
+    m_cs_intersection.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
         m_context->parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::rod_particle_intersection_test);
 

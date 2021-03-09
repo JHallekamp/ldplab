@@ -39,7 +39,7 @@ bool ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::initShaders(
 
     // Compute work group size
     m_cs_inner_particle_propagation.num_work_groups = 
-        ComputeHelper::getNumWorkGroups(
+        utils::ComputeHelper::getNumWorkGroups(
             m_context->parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::linear_index_gradient_rod_particle_propagation);
 
