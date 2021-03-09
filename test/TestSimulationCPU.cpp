@@ -46,14 +46,14 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 // Simulation properties
 const size_t NUM_RTS_THREADS = 4;
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 512.0;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 256.0;
 const size_t MAX_RTS_BRANCHING_DEPTH = 0;
 const double RTS_INTENSITY_CUTOFF = 0.01 * LIGHT_INTENSITY  / 
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 0.5;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 64;
+const size_t NUM_SIM_ROTATION_STEPS = 48;
 
 constexpr double const_pi() 
     { return 3.14159265358979323846264338327950288419716939937510; }
@@ -64,7 +64,6 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup,
     double kappa,
     double gradient);
 void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
-    std::shared_ptr<ldplab::ThreadPool> thread_pool,
     double kappa,
     double gradient,
     size_t branching_depth);
@@ -78,10 +77,6 @@ int main()
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
     flog.subscribe();
     clog.subscribe();
-
-    // Thread pool
-    std::shared_ptr<ldplab::ThreadPool> thread_pool =
-        std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
 
     // Run simulations
     std::vector<double> vec_gradient = { 0.0, PARTICLE_MATERIAL_GRADIENT };
@@ -102,15 +97,12 @@ int main()
                 // Run simulation
                 runSimulation(
                     experimental_setup,
-                    thread_pool,
                     vec_kappa[i],
                     vec_gradient[j],
                     vec_branching_depth[k]);
             }
         }
     }
-
-    thread_pool->terminate();
     return 0;
 }
 
@@ -186,7 +178,6 @@ void createExperimentalSetup(
 
 void runSimulation(
     const ldplab::ExperimentalSetup& experimental_setup,
-    std::shared_ptr<ldplab::ThreadPool> thread_pool,
     double kappa,
     double gradient,
     size_t branching_depth)
@@ -198,7 +189,6 @@ void runSimulation(
 
     // Create ray tracing step
     ldplab::RayTracingStepCPUInfo rtscpu_info;
-    rtscpu_info.thread_pool = thread_pool;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
     rtscpu_info.light_source_ray_density_per_unit_area =

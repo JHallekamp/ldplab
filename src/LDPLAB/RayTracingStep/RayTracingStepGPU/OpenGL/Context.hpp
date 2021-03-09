@@ -12,10 +12,10 @@
 
 #include "../../RayTracingStepOutput.hpp"
 #include "../../../Geometry.hpp"
-#include "../../../ThreadPool.hpp"
 #include "../../../ExperimentalSetup/Lightsource.hpp"
 #include "../../../ExperimentalSetup/Particle.hpp"
 #include "../../../UID.hpp"
+#include "../../../Utils/ThreadPool.hpp"
 
 namespace ldplab
 {
@@ -92,7 +92,7 @@ namespace ldplab
             /** @brief The ray tracing step cpu pipeline. */
             std::shared_ptr<Pipeline> pipeline;
             /** @brief The thread pool used by the ray tracing step. */
-            std::shared_ptr<ThreadPool> thread_pool;
+            std::shared_ptr<utils::ThreadPool> thread_pool;
             /** @brief Holds an array with particle data. */
             std::shared_ptr<IParticleData> particle_data;
             /** @brief Holds particle material data. */

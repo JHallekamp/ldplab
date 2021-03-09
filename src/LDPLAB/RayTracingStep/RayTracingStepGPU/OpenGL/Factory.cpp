@@ -221,7 +221,8 @@ bool ldplab::rtsgpu_ogl::Factory::createContext(
 {
     context = std::shared_ptr<Context>(
         new Context{ setup.particles, setup.light_sources });
-    context->thread_pool = info.thread_pool;
+    context->thread_pool = 
+        std::make_shared<utils::ThreadPool>(info.number_parallel_pipelines);
     context->parameters.intensity_cutoff = info.intensity_cutoff;
     context->parameters.medium_reflection_index = setup.medium_reflection_index;
     context->parameters.number_rays_per_buffer = info.number_rays_per_buffer;

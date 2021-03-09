@@ -3,11 +3,11 @@
 
 /** @file Includes the LDPLAB library interface. */
 
+// Build info
+#include "LDPLAB/BuildInfo.hpp"
+
 // Logging
 #include "LDPLAB/LogCallback.hpp"
-
-// Thread pool
-#include "LDPLAB/ThreadPool.hpp"
 
 // Simulation description
 #include "LDPLAB/SimulationState.hpp"
