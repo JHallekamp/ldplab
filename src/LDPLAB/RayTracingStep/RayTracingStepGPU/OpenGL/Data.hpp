@@ -8,7 +8,7 @@
 #include "../../../ExperimentalSetup/BoundingVolume.hpp"
 #include "../../../ExperimentalSetup/ParticleMaterial.hpp"
 #include "../../../Geometry.hpp"
-#include "../../../Utils/UID.hpp"
+#include "../../../UID.hpp"
 
 #include "OpenGLContext.hpp"
 
