@@ -1,6 +1,6 @@
 #include "Data.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 void ldplab::rtsgpu_ogl::RodParticleData::uploadSSBO()
 {

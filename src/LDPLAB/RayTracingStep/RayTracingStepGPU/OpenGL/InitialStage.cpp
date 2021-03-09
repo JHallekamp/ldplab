@@ -1,6 +1,6 @@
 #include "InitialStage.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     InitialStageBoundingSpheresHomogenousLight(

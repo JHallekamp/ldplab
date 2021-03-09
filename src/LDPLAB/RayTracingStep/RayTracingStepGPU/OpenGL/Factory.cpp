@@ -1,7 +1,7 @@
 #include "Factory.hpp"
 
 #include "../../../Constants.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep> 
     ldplab::rtsgpu_ogl::Factory::createRTS(

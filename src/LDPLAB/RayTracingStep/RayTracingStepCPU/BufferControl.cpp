@@ -1,6 +1,6 @@
 #include "BufferControl.hpp"
 #include "Context.hpp"
-#include "../../Log.hpp"
+#include "../../Utils/Log.hpp"
 
 ldplab::rtscpu::BufferControl::BufferControl(std::shared_ptr<Context> context)
     :

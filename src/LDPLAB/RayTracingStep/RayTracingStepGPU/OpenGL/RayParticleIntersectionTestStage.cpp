@@ -5,7 +5,7 @@
 #include "Data.hpp"
 
 #include "../../../SimulationState.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 #include "../../../Utils/Profiler.hpp"
 #include "../../../Utils/ComputeHelper.hpp"
 
