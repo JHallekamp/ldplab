@@ -115,15 +115,15 @@ void ldplab::rtscpu::EikonalSolverRK4::rk4(
     for (size_t i = 0; i < 4; ++i)
     {
         Arg x_step = x;
-        for (size_t j = 0; j < i; ++j)
+        if (i > 0)
         {
-            const double hb = h * beta[i * 4 + j];
-            x_step.w.x += k[j].w.x * hb;
-            x_step.w.y += k[j].w.y * hb;
-            x_step.w.z += k[j].w.z * hb;
-            x_step.r.x += k[j].r.x * hb;
-            x_step.r.y += k[j].r.y * hb;
-            x_step.r.z += k[j].r.z * hb;
+            const double hb = h * beta[i];
+            x_step.w.x += k[i-1].w.x * hb;
+            x_step.w.y += k[i-1].w.y * hb;
+            x_step.w.z += k[i-1].w.z * hb;
+            x_step.r.x += k[i-1].r.x * hb;
+            x_step.r.y += k[i-1].r.y * hb;
+            x_step.r.z += k[i-1].r.z * hb;
         }
         // eikonal(particle, x_step)
         k[i].w = particle->direction_times_gradient;
@@ -228,13 +228,6 @@ void ldplab::rtscpu::EikonalSolverRK45::
         {
             if (isOutsideParticle(particle, x_new.r))
             {
-                Vec3 t_new_direction = glm::normalize(x.w);
-                output.force[particle] += ray.intensity *
-                    (t_new_direction - ray.direction);
-                //output.torque[particle] += ray.intensity *
-                //    glm::cross(
-                //         - m_context->particles[particle].centre_of_mass,
-                //        (-t_new_direction + ray.direction));
                 intersected = true;
                 intersection(
                     particle,
@@ -242,12 +235,24 @@ void ldplab::rtscpu::EikonalSolverRK45::
                     x_new.r,
                     inter_point, 
                     inter_normal);
-                ray.direction = t_new_direction;
+                ray.direction = glm::normalize(x.w);
                 ray.origin = x.r;
                 return;
             }
             else
             {
+                const double nx = material->indexOfRefraction(x.r);
+                const double ny = material->indexOfRefraction(x_new.r);
+                Vec3 t_old_direction = glm::normalize(x.w);
+                Vec3 t_new_direction = glm::normalize(x_new.w);
+                const Vec3 delta_momentum = nx * t_old_direction -
+                    ny * t_new_direction;
+                const Vec3 r = x_new.r -
+                    m_context->particles[particle].centre_of_mass;
+                output.force[particle] += ray.intensity *
+                    delta_momentum;
+                output.torque[particle] += ray.intensity *
+                    glm::cross(r, delta_momentum);
                 x = x_new;
                 h = m_parameters.safety_factor * h * 
                     std::pow(m_parameters.epsilon / error, 0.2);
