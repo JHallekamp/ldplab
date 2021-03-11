@@ -11,62 +11,80 @@ constexpr double const_pi()
 
 // Folder path
 const std::string DIR_PATH = 
-    "D:\\Workspace\\Studium\\Master\\Masterarbeit\\Code\\Data\\LDPLAB\\Test\\";
+    "D:\\Workspace\\Studium\\Master\\Masterarbeit\\Code\\Data\\LDPLAB\\Volume\\";
 
+const bool SPHERICAL_PARTICLE = true;
+const double PARTICLE_VOLUME = 1;
 // Particle geometry properties (rod particle)
-const bool ROD_PARTICLE = true;
-const double ROD_SURFACE_AREA = 235.61944901923449288469825374596;
 const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 1.0;
 
-const double ROD_PARTICLE_RADIUS = 2.5;
-const double ROD_PARTICLE_HEIGHT = 4 * ROD_PARTICLE_RADIUS;
-
 // Particle material properties
-const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.46;
-const double PARTICLE_MATERIAL_NU = 0.2;
+const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
+const double PARTICLE_MATERIAL_NU = 0.15;
 
 // Light intensity properties
-const double LIGHT_INTENSITY = 0.1 / 2.99792458;
+const double LIGHT_INTENSITY = 1;
 
 // Simulation properties
-const size_t NUM_RTS_THREADS = 8;
+#ifdef _DEBUG
+    const size_t NUM_RTS_THREADS = 1;
+#else
+    const size_t NUM_RTS_THREADS = 8;
+#endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 1000000 / ROD_SURFACE_AREA;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 500000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
-const double RTS_INTENSITY_CUTOFF =  0.001 * LIGHT_INTENSITY /
+const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.05;
+const double RTS_SOLVER_STEP_SIZE = 0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 1024;
+const size_t NUM_SIM_ROTATION_STEPS = 314;
 
 std::ofstream getFileStream(ldplab::Particle& particle, std::string path, std::string type)
 {
     std::stringstream ss;
-    ldplab::RodParticleGeometry* geomerty =
-        (ldplab::RodParticleGeometry*)particle.geometry.get();
-    ss << path << type << 
-        "_nu" << PARTICLE_MATERIAL_NU << 
-        "_l" << geomerty->l <<
-        "_k" << geomerty->kappa << ".txt";
-    std::ofstream file(ss.str());
-    file << "# Parameter"<< std::endl;
-    file << "# A = " << ROD_SURFACE_AREA << std::endl;
-    file << "# l = " << geomerty->l << std::endl;
-    file << "# kappa = " << geomerty->kappa << std::endl;
-    file << "# R = " << geomerty->cylinder_radius << std::endl;
-    file << "# L = " << geomerty->cylinder_length << std::endl;
+    std::ofstream file;
+    if (particle.geometry->type() == ldplab::IParticleGeometry::Type::rod_particle)
+    {
+        ldplab::RodParticleGeometry* geomerty =
+            (ldplab::RodParticleGeometry*)particle.geometry.get();
+        ss << path << type <<
+            "_nu" << PARTICLE_MATERIAL_NU <<
+            "_l" << geomerty->l <<
+            "_k" << geomerty->kappa << ".txt";
+        file = std::ofstream{ ss.str() };
+        file << "# Parameter" << std::endl;
+        file << "# V = " << PARTICLE_VOLUME << std::endl;
+        file << "# l = " << geomerty->l << std::endl;
+        file << "# kappa = " << geomerty->kappa << std::endl;
+        file << "# R = " << geomerty->cylinder_radius << std::endl;
+        file << "# L = " << geomerty->cylinder_length << std::endl;
+    }
+    else 
+    {
+        ldplab::SphericalParticleGeometry* geomerty =
+            (ldplab::SphericalParticleGeometry*)particle.geometry.get();
+        ss << path << type <<
+            "_nu" << PARTICLE_MATERIAL_NU <<
+            "_V" << PARTICLE_VOLUME << ".txt";
+        file = std::ofstream{ ss.str() };
+        file << "# Parameter" << std::endl;
+        file << "# V = " << PARTICLE_VOLUME << std::endl;
+        file << "# R = " << geomerty->radius << std::endl;
+    }
     file << "# nu = " << PARTICLE_MATERIAL_NU << std::endl;
     file << "# I = " << LIGHT_INTENSITY << std::endl;
     if (type[0] == 'f')
-        file << "theta\tF_x\tF_y\tF_z" << std::endl;
+        file << "# theta\tF_x\tF_y\tF_z" << std::endl;
     else if (type[0] == 't')
-        file << "theta\tT_x\tT_y\tT_z" << std::endl;
+        file << "# theta\tT_x\tT_y\tT_z" << std::endl;
+
     return file;
 }
 
@@ -105,21 +123,47 @@ int main()
     // Create particle
     ldplab::Particle particle;
     double particle_world_extent;
-    if (ROD_PARTICLE)
+    double rts_step_size;
+    if (SPHERICAL_PARTICLE)
+    {
+        particle = ldplab::getSphereParticle(
+            PARTICLE_VOLUME,
+            PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
+            PARTICLE_MATERIAL_NU,
+            ldplab::Vec3(0.0, 0.0, 0.0),
+            ldplab::Vec3(0.0, 0.0, 0.0));
+        ldplab::ParticleMaterialLinearOneDirectional* material =
+            (ldplab::ParticleMaterialLinearOneDirectional*)particle.material.get();
+        ldplab::BoundingVolumeSphere* bs =
+            (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
+        particle_world_extent = bs->center.z + bs->radius;
+        if (std::abs(material->gradient) > 1e-5)
+            rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
+        else
+            rts_step_size = 0.1;
+    }
+    else
     {
         // Rod Particle
-        particle = ldplab::getRodParticle(
-            ROD_PARTICLE_RADIUS,
-            ROD_PARTICLE_HEIGHT,
+        particle = ldplab::getRodParticleConstVolume(
+            PARTICLE_VOLUME,
+            ROD_PARTICLE_L,
             ROD_PARTICLE_KAPPA,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             PARTICLE_MATERIAL_NU,
             ldplab::Vec3(0.0,0.0,0.0),
             ldplab::Vec3(0.0,0.0,0.0));
+        ldplab::ParticleMaterialLinearOneDirectional* material =
+            (ldplab::ParticleMaterialLinearOneDirectional*)particle.material.get();
         ldplab::BoundingVolumeSphere* bs = 
             (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
         particle_world_extent = bs->center.z + bs->radius;
+        if (std::abs(material->gradient) > 1e-5)
+            rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
+        else
+            rts_step_size = 0.1;
     }
+
 
     // Create light source
     const double LIGHT_GEOMETRY_PLANE_EXTENT = 10 * particle_world_extent;
@@ -158,12 +202,14 @@ int main()
     rtscpu_info.thread_pool = thread_pool;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
+    ldplab::BoundingVolumeSphere* bs =
+        (ldplab::BoundingVolumeSphere*)experimental_setup.particles[0].bounding_volume.get();
     rtscpu_info.light_source_ray_density_per_unit_area =
-        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
+        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi());
     rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4>(
-        RTS_SOLVER_STEP_SIZE);
+        rts_step_size);
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
@@ -179,7 +225,7 @@ int main()
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
-    constexpr double offset = 0;
+    constexpr double offset = 0.0;
     constexpr double lim = const_pi();
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
