@@ -190,7 +190,7 @@ bool ldplab::rtscpu::RodParticleIntersectionTest::bottomTopIntersection(
 
     const double particle_height =
         particle.origin_cap.z + particle.sphere_radius;
-    if (ray.origin.z >= particle_height) // Ray origin above the particle
+    if (ray.origin.z >= particle_height - 1e-9) // Ray origin above the particle
     {
         if (ray.direction.z >= 0)
             return false;
