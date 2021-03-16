@@ -8,13 +8,14 @@
 #include "Pipeline.hpp"
 #include "Data.hpp"
 #include "OpenGLContext.hpp"
+#include "SharedShaders.hpp"
 
 #include "../../RayTracingStepOutput.hpp"
 #include "../../../Geometry.hpp"
-#include "../../../ThreadPool.hpp"
 #include "../../../ExperimentalSetup/Lightsource.hpp"
 #include "../../../ExperimentalSetup/Particle.hpp"
-#include "../../../Utils/UID.hpp"
+#include "../../../UID.hpp"
+#include "../../../Utils/ThreadPool.hpp"
 
 namespace ldplab
 {
@@ -34,20 +35,22 @@ namespace ldplab
             Context(const std::vector<Particle>& particles,
                 const std::vector<LightSource>& light_sources)
                 :
-                uid{ }, 
+                uid{ },
                 ogl{ nullptr },
                 particles{ particles },
                 light_sources{ light_sources },
-                particle_transformations{ },
                 pipeline{ nullptr },
                 thread_pool{ nullptr },
                 particle_data{ nullptr },
+                particle_material_data{ nullptr },
                 bounding_volume_data{ nullptr },
                 particle_uid_to_index_map{ },
                 light_source_uid_to_index_map{ },
                 particle_index_to_uid_map{ },
                 light_source_index_to_uid_map{ },
-                parameters{ }
+                parameters{ },
+                flags{ },
+                shared_shaders{ std::shared_ptr<Context>(this) }
             {
                 // Create uid, index maps
                 for (size_t i = 0; i < particles.size(); ++i)
@@ -85,13 +88,15 @@ namespace ldplab
              * @details The index of a particle transformation directly
              *          corresponds to the index of the related particle.
              */
-            std::vector<ParticleTransformation> particle_transformations;
+            ParticleTransformationData particle_transformation_data;
             /** @brief The ray tracing step cpu pipeline. */
             std::shared_ptr<Pipeline> pipeline;
             /** @brief The thread pool used by the ray tracing step. */
-            std::shared_ptr<ThreadPool> thread_pool;
+            std::shared_ptr<utils::ThreadPool> thread_pool;
             /** @brief Holds an array with particle data. */
             std::shared_ptr<IParticleData> particle_data;
+            /** @brief Holds particle material data. */
+            std::shared_ptr<IParticleMaterialData> particle_material_data;
             /** @brief Holds an array with bounding volume data. */
             std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
             /** @brief Maps particle UIDs to the internaly used indices. */
@@ -102,6 +107,8 @@ namespace ldplab
             std::map<size_t, UID<Particle>> particle_index_to_uid_map;
             /** @brief Maps the internaly used light source indices to UIDs. */
             std::map<size_t, UID<LightSource>> light_source_index_to_uid_map;
+            /** @brief Instance used to executed shared shaders. */
+            SharedShaders shared_shaders;
             /** @brief Structure holding simulation parameters. */
             struct
             {
@@ -120,6 +127,8 @@ namespace ldplab
                 size_t number_rays_per_unit;
                 /** @brief Number of parallel pipeline instances. */
                 size_t number_parallel_pipelines;
+                /** @brief Base directory for shader files. */
+                std::string shader_base_directory;
             } parameters;
             /** @brief Structure holding simulation flags. */
             struct

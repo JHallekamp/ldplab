@@ -1,11 +1,16 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayParticleInteractionStage.hpp"
 
+#include "Constants.hpp"
 #include "Context.hpp"
 #include "Data.hpp"
-
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
+#include "../../../Utils/ComputeHelper.hpp"
+#include "../../../Utils/Profiler.hpp"
 
 #include <glm/glm.hpp>
+#include <sstream>
 
 ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
     UnpolirzedLight1DLinearIndexGradientInteraction(
@@ -16,6 +21,90 @@ ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "UnpolirzedLight1DLinearIndexGradientInteraction instance created",
         m_context->uid);
+}
+
+bool ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
+    initShaders()
+{
+    // Create shader
+    if (!m_context->shared_shaders.createShaderByName(
+            constant::glsl_shader_name::unpolarized_light_1d_linear_index_gradient_interaction,
+            m_cs_interaction.shader))
+        return false;
+    if (!m_context->shared_shaders.createShaderByName(
+            constant::glsl_shader_name::gather_output_pre_stage,
+            m_cs_gather_output_pre_stage.shader))
+        return false;
+    if (!m_context->shared_shaders.createShaderByName(
+        constant::glsl_shader_name::gather_output_post_stage,
+        m_cs_gather_output_post_stage.shader))
+        return false;
+    if (!m_context->shared_shaders.createShaderByName(
+        constant::glsl_shader_name::gather_output_reduction_stage,
+        m_cs_gather_output_reduction_stage.shader))
+        return false;
+
+    // Set work group size
+    m_cs_interaction.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::unpolarized_light_1d_linear_index_gradient_interaction);
+    m_cs_gather_output_pre_stage.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::gather_output_pre_stage);
+    m_cs_gather_output_post_stage.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::gather_output_post_stage);
+
+    // Update interaction shader uniforms
+    m_cs_interaction.uniform_inner_particle_rays =
+        m_cs_interaction.shader->getUniformLocation("inner_particle_rays");
+    m_cs_interaction.uniform_num_rays_per_buffer =
+        m_cs_interaction.shader->getUniformLocation("num_rays_per_buffer");
+    m_cs_interaction.uniform_parameter_intensity_cutoff =
+        m_cs_interaction.shader->getUniformLocation("parameter_intensity_cutoff");
+    m_cs_interaction.uniform_parameter_medium_reflection_index =
+        m_cs_interaction.shader->getUniformLocation("parameter_medium_reflection_index");
+    
+    m_cs_interaction.shader->use();
+    glUniform1ui(m_cs_interaction.uniform_num_rays_per_buffer,
+        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+    glUniform1d(m_cs_interaction.uniform_parameter_intensity_cutoff,
+        m_context->parameters.intensity_cutoff);
+    glUniform1d(m_cs_interaction.uniform_parameter_medium_reflection_index,
+        m_context->parameters.medium_reflection_index);
+
+    // Update gather output shader uniforms
+    m_cs_gather_output_pre_stage.uniform_num_particles =
+        m_cs_gather_output_pre_stage.shader->getUniformLocation("num_particles");
+    m_cs_gather_output_pre_stage.uniform_num_rays_per_buffer =
+        m_cs_gather_output_pre_stage.shader->getUniformLocation("num_rays_per_buffer");
+
+    m_cs_gather_output_reduction_stage.uniform_num_particles =
+        m_cs_gather_output_reduction_stage.shader->getUniformLocation("num_particles");
+    m_cs_gather_output_reduction_stage.uniform_buffer_size =
+        m_cs_gather_output_reduction_stage.shader->getUniformLocation("buffer_size");
+    m_cs_gather_output_reduction_stage.uniform_source_offset =
+        m_cs_gather_output_reduction_stage.shader->getUniformLocation("source_offset");
+
+    m_cs_gather_output_post_stage.uniform_num_particles =
+        m_cs_gather_output_post_stage.shader->getUniformLocation("num_particles");
+
+    m_cs_gather_output_pre_stage.shader->use();
+    glUniform1ui(m_cs_gather_output_pre_stage.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+    glUniform1ui(m_cs_gather_output_pre_stage.uniform_num_rays_per_buffer,
+        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+    
+    m_cs_gather_output_post_stage.shader->use();
+    glUniform1ui(m_cs_gather_output_post_stage.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+
+    m_cs_gather_output_reduction_stage.shader->use();
+    glUniform1ui(m_cs_gather_output_reduction_stage.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+
+    // Finished
+    return true;
 }
 
 void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
@@ -29,132 +118,84 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
         "on batch buffer %i",
         m_context->uid, rays.uid);
 
+    // Bind interaction shaders
+    LDPLAB_PROFILING_START(ray_particle_interaction_shader_binding);
+    m_cs_interaction.shader->use();
+    LDPLAB_PROFILING_STOP(ray_particle_interaction_shader_binding);
+
+    // Bind SSBOs
+    LDPLAB_PROFILING_START(ray_particle_interaction_ssbo_binding);
+    rays.ssbo.ray_properties->bindToIndex(0);
+    rays.ssbo.particle_index->bindToIndex(1);
+    reflected_rays.ssbo.ray_properties->bindToIndex(2);
+    reflected_rays.ssbo.particle_index->bindToIndex(3);
+    refracted_rays.ssbo.ray_properties->bindToIndex(4);
+    refracted_rays.ssbo.particle_index->bindToIndex(5);
+    intersection.ssbo.intersection_properties->bindToIndex(6);
+    ParticleMaterialLinearOneDirectionalData* pmd =
+        (ParticleMaterialLinearOneDirectionalData*)
+        m_context->particle_material_data.get();
+    pmd->ssbo.material->bindToIndex(7);
+    output.ssbo.output_per_ray->bindToIndex(8);
+    LDPLAB_PROFILING_STOP(ray_particle_interaction_ssbo_binding);
+
+    // Bind uniforms
+    LDPLAB_PROFILING_START(ray_particle_interaction_uniform_binding);
+    if (rays.inner_particle_rays)
+        glUniform1i(m_cs_interaction.uniform_inner_particle_rays, 1);
+    else
+        glUniform1i(m_cs_interaction.uniform_inner_particle_rays, 0);
+    LDPLAB_PROFILING_STOP(ray_particle_interaction_uniform_binding);
+
+    // Execute shader
+    LDPLAB_PROFILING_START(ray_particle_interaction_shader_execution);
+    m_cs_interaction.shader->execute(m_cs_interaction.num_work_groups);
+    LDPLAB_PROFILING_STOP(ray_particle_interaction_shader_execution);
+
+    // Gather output pre stage
+    LDPLAB_PROFILING_START(gather_output_pre_stage);
+    m_cs_gather_output_pre_stage.shader->use();
+    output.ssbo.output_per_ray->bindToIndex(0);
+    rays.ssbo.particle_index->bindToIndex(1);
+    output.ssbo.gather_temp->bindToIndex(2);
+    m_cs_gather_output_pre_stage.shader->execute(
+        m_cs_gather_output_pre_stage.num_work_groups);
+    LDPLAB_PROFILING_STOP(gather_output_pre_stage);
+
+    // Gather output reduction stage
+    LDPLAB_PROFILING_START(gather_output_reduction_stage);
+    m_cs_gather_output_reduction_stage.shader->use();
+    output.ssbo.gather_temp->bindToIndex(0);
+    const size_t num_particles = m_context->particles.size();
+    size_t num_threads = m_context->parameters.number_rays_per_buffer;
+    GLuint buffer_size, source_offset;
+    do
+    {
+        buffer_size = static_cast<GLuint>(num_threads * num_particles);
+        num_threads = num_threads / 2 + num_threads % 2;
+        source_offset = static_cast<GLuint>(num_threads * num_particles);
+        glUniform1ui(m_cs_gather_output_reduction_stage.uniform_buffer_size,
+            buffer_size);
+        glUniform1ui(m_cs_gather_output_reduction_stage.uniform_source_offset,
+            source_offset);
+        m_cs_gather_output_reduction_stage.shader->execute(
+            utils::ComputeHelper::getNumWorkGroups(num_threads,
+                constant::glsl_local_group_size::gather_output_reduction_stage));
+    } while (num_threads > 1);
+    LDPLAB_PROFILING_STOP(gather_output_reduction_stage);
+
+    // Gather output post stage
+    LDPLAB_PROFILING_START(gather_output_post_stage);
+    m_cs_gather_output_post_stage.shader->use();
+    output.ssbo.gather_temp->bindToIndex(0);
+    output.ssbo.output_gathered->bindToIndex(1);
+    m_cs_gather_output_post_stage.shader->execute(
+        m_cs_gather_output_post_stage.num_work_groups);
+    LDPLAB_PROFILING_STOP(gather_output_post_stage);
+
+    // Update ray buffers
     reflected_rays.inner_particle_rays = rays.inner_particle_rays;
     refracted_rays.inner_particle_rays = !rays.inner_particle_rays;
-
-    reflected_rays.active_rays = 0;
-    refracted_rays.active_rays = 0;
-
-    for (size_t i = 0; i < rays.size; i++)
-    {
-        if (rays.index_data[i] < 0)
-        {
-            reflected_rays.index_data[i] = -1;
-            refracted_rays.index_data[i] = -1;
-            continue;
-        }
-        else if (rays.index_data[i] >= m_context->particles.size())
-            continue;
-
-        const ParticleMaterialLinearOneDirectional* material =
-            (ParticleMaterialLinearOneDirectional*)m_context->
-            particles[rays.index_data[i]].material.get();
-
-        const Vec3& ray_origin = rays.ray_origin_data[i];
-        const Vec3& ray_direction = rays.ray_direction_data[i];
-        const double ray_intensity = rays.ray_intensity_data[i];
-
-        Vec3& reflected_ray_origin = reflected_rays.ray_origin_data[i];
-        Vec3& reflected_ray_direction = reflected_rays.ray_direction_data[i];
-        double& reflected_ray_intensity = reflected_rays.ray_intensity_data[i];
-        
-        Vec3& refracted_ray_origin = refracted_rays.ray_origin_data[i];
-        Vec3& refracted_ray_direction = refracted_rays.ray_direction_data[i];
-        double& refracted_ray_intensity = refracted_rays.ray_intensity_data[i];
-        
-        const Vec3& inter_point = intersection.point_data[i];
-        const Vec3& inter_normal = intersection.normal_data[i];
-
-        double nr = m_context->parameters.medium_reflection_index /
-            material->indexOfRefraction(inter_point);
-        if (rays.inner_particle_rays)
-            nr = 1.0 / nr;
-        double cos_a = -glm::dot(ray_direction, inter_normal);
-
-        if (1.0 - nr * nr * (1.0 - cos_a * cos_a) >= 0)
-        {
-            double cos_b = std::sqrt(1.0 - nr * nr * (1.0 - cos_a * cos_a));
-            double R = reflectance(cos_a, cos_b, nr);
-
-            // refracted ray
-            refracted_ray_intensity = ray_intensity * (1.0 - R);
-            if (refracted_ray_intensity >
-                m_context->parameters.intensity_cutoff)
-            {
-                refracted_rays.index_data[i] = rays.index_data[i];
-                refracted_rays.min_bounding_volume_distance_data[i] = 0.0;
-                refracted_ray_origin = inter_point;
-                refracted_ray_direction = nr * ray_direction +
-                    inter_normal * (-cos_b + nr * cos_a);
-                refracted_rays.active_rays++;
-
-                output.force_data[rays.index_data[i]] += refracted_ray_intensity *
-                    (ray_direction - refracted_ray_direction);
-                output.torque_data[rays.index_data[i]] += refracted_ray_intensity *
-                    glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
-                        (ray_direction - refracted_ray_direction));
-            }
-            else
-            {
-                refracted_rays.index_data[i] = -1;
-                Vec3 delta_direction = (nr - 1) * ray_direction + inter_normal * (cos_b - nr * cos_a);
-                output.force_data[rays.index_data[i]] += refracted_ray_intensity *
-                    delta_direction;
-                output.torque_data[rays.index_data[i]] += refracted_ray_intensity *
-                    glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
-                        delta_direction);
-            }
-            // reflected ray
-            reflected_ray_intensity = ray_intensity * R;
-            if (reflected_ray_intensity > m_context->parameters.intensity_cutoff)
-            {
-                reflected_rays.index_data[i] = rays.index_data[i];
-                reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
-                reflected_ray_origin = inter_point;
-                reflected_ray_direction =
-                    ray_direction + inter_normal * 2.0 * cos_a;
-                reflected_rays.active_rays++;
-
-                output.force_data[rays.index_data[i]] += reflected_ray_intensity *
-                    (ray_direction - reflected_ray_direction);
-                output.torque_data[rays.index_data[i]] += reflected_ray_intensity *
-                    glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
-                        (ray_direction - reflected_ray_direction));
-            }
-            else
-            {
-                reflected_rays.index_data[i] = -1;
-                Vec3 delta_direction = inter_normal * (-2.0 * cos_a);
-                output.force_data[rays.index_data[i]] += reflected_ray_intensity *
-                    delta_direction;
-                output.torque_data[rays.index_data[i]] += reflected_ray_intensity *
-                    glm::cross(
-                        m_context->particles[rays.index_data[i]].centre_of_mass,
-                        delta_direction);
-            }
-        }
-        else
-        {
-            refracted_rays.index_data[i] = -1;
-            // total reflected ray
-            reflected_rays.index_data[i] = rays.index_data[i];
-            reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
-            reflected_ray_origin = inter_point;
-            reflected_ray_direction = ray_direction + inter_normal * 2.0 * cos_a;
-            reflected_ray_intensity = ray_intensity;
-            reflected_rays.active_rays++;
-
-            output.force_data[rays.index_data[i]] += reflected_ray_intensity *
-                (ray_direction - reflected_ray_direction);
-            output.torque_data[rays.index_data[i]] += reflected_ray_intensity *
-                glm::cross(
-                    m_context->particles[rays.index_data[i]].centre_of_mass,
-                    (ray_direction - reflected_ray_direction));
-        }
-    }
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Ray particle interaction on batch "\
         "buffer %i executed, buffer %i now holds %i reflected rays, buffer "\
@@ -167,13 +208,4 @@ void ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::execut
         refracted_rays.active_rays);
 }
 
-double ldplab::rtsgpu_ogl::UnpolirzedLight1DLinearIndexGradientInteraction::
-    reflectance(
-    double cos_alpha, double cos_beta, double n_r)
-{
-    double cos2_a = cos_alpha * cos_alpha;
-    double cos2_b = cos_beta * cos_beta;
-    return (cos2_a - cos2_b) * (cos2_a - cos2_b) /
-        (((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta) *
-         ((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta));
-}
+#endif

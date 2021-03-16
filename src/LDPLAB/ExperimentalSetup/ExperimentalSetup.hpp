@@ -1,9 +1,10 @@
 #ifndef WWU_LDPLAB_EXPERIMENTAL_SETUP_HPP
 #define WWU_LDPLAB_EXPERIMENTAL_SETUP_HPP
 
-#include "../Geometry.hpp"
-#include "Particle.hpp"
 #include "Lightsource.hpp"
+#include "Particle.hpp"
+#include "../Geometry.hpp"
+
 #include "Utils/PropertyGenerator.hpp"
 #include <vector>
 
@@ -14,18 +15,14 @@ namespace ldplab
      */
     struct ExperimentalSetup
     {
-        /**
-         * @brief All particles 
-         */
+        /** @brief All particles */
         std::vector<Particle>  particles;
-        /**
-         * @brief Light sources
-         */
+        /** @brief Light sources */
         std::vector<LightSource> light_sources;
-        /**
-         * @brief Index of reflection of the medium.
-         */
+        /** @brief Index of reflection of the medium. */
         double medium_reflection_index;
+        /** @brief Unique ID of the experimental setup. */
+        UID<ExperimentalSetup> uid;
     };
 }
 

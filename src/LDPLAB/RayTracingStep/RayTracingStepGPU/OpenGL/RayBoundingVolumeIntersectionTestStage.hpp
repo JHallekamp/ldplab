@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_BOUNDING_VOLUME_INTERSECTION_TEST_STAGE_HPP
 
 #include "Data.hpp"
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
 
 #include <memory>
 
@@ -43,7 +44,9 @@ namespace ldplab
              *          set to be invalid.
              * @returns The number of rays that hit a particle bounding volume.
              */
-            virtual size_t execute(RayBuffer& buffer) = 0;
+            virtual void execute(RayBuffer& buffer) = 0;
+            /** @brief Initializes the shader data. */
+            virtual bool initShaders() = 0;
         };
 
         /** @brief Tests the intersection between rays and bounding spheres. */
@@ -53,6 +56,11 @@ namespace ldplab
         public:
             RayBoundingSphereIntersectionTestStageBruteForce(
                 std::shared_ptr<Context> context);
+            /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders() override;
             /** 
              * @brief Inherited via
              * ldplab::rtsgpu_ogl::IRayBoundingVolumeIntersectionTestStage 
@@ -62,13 +70,16 @@ namespace ldplab
              * @brief Inherited via
              * ldplab::rtsgpu_ogl::IRayBoundingVolumeIntersectionTestStage
              */
-            size_t execute(RayBuffer& buffer) override;
+            void execute(RayBuffer& buffer) override;
         private:
-            inline void transformRayFromWorldToParticleSpace(
-                Vec3& origin, Vec3& direction, size_t pidx) const;
+            struct BoundingVolumeIntersectionShader {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_num_particles;
+                GLint uniform_num_rays_per_buffer;
+                size_t num_work_groups;
+            } m_cs_bv_intersection;
         private:
             std::shared_ptr<Context> m_context;
-            std::vector<BoundingVolumeSphere>& m_bounding_spheres;
         };
     }
 }

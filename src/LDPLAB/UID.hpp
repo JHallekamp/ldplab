@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_UTILS_UID_HPP
-#define WWU_LDPLAB_UTILS_UID_HPP
+#ifndef WWU_LDPLAB_UID_HPP
+#define WWU_LDPLAB_UID_HPP
 
 #include <atomic>
 #include <cstdint>

@@ -79,7 +79,8 @@ namespace ldplab
                 Vec3& origin, Vec3& direction, size_t pidx) const;
         private:
             std::shared_ptr<Context> m_context;
-            std::vector<BoundingVolumeSphere>& m_bounding_spheres;
+            std::vector<BoundingSphereData::BoundingSphereProperties>& 
+                m_bounding_spheres;
             // Projections for each particle
             std::vector<std::vector<Projection>> m_projections_per_particle;
             size_t m_batch_creation_particle_index;

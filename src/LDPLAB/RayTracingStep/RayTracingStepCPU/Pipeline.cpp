@@ -1,8 +1,9 @@
 #include "Pipeline.hpp"
 
 #include "Context.hpp"
-#include "../../Log.hpp"
+#include "../../Utils/Log.hpp"
 #include "../../Utils/Assert.hpp"
+#include "../../Utils/Profiler.hpp"
 
 #include "Debug/Debug.hpp"
 
@@ -77,7 +78,9 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
     size_t num_batches = 0;
     do
     {
+        LDPLAB_PROFILING_START(pipeline_initial_batch_creation);
         batches_left = m_initial_stage->createBatch(initial_batch_buffer);
+        LDPLAB_PROFILING_STOP(pipeline_initial_batch_creation);
         LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i "\
             "initial rays",
             m_context->uid, 
@@ -91,7 +94,9 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id)
                 m_context->uid, job_id, num_batches, initial_batch_buffer.uid);
             ++num_batches;
 
+            LDPLAB_PROFILING_START(pipeline_process_batch);
             processBatch(initial_batch_buffer, buffer_control);
+            LDPLAB_PROFILING_STOP(pipeline_process_batch);
 
             LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i "\
                 "finished batch execution",
@@ -110,6 +115,7 @@ void ldplab::rtscpu::Pipeline::processBatch(
     if (buffer.active_rays <= 0)
         return;
 
+    LDPLAB_PROFILING_START(pipeline_buffer_setup);
     IntersectionBuffer& intersection_buffer =
         buffer_control.getIntersectionBuffer();
     OutputBuffer& output_buffer = buffer_control.getOutputBuffer();
@@ -117,54 +123,72 @@ void ldplab::rtscpu::Pipeline::processBatch(
         buffer_control.getReflectionBuffer(buffer);
     RayBuffer& transmission_buffer =
         buffer_control.getTransmissionBuffer(buffer);
-
     // Reset intersection buffer
     for (size_t i = 0; i < intersection_buffer.size; ++i)
         intersection_buffer.particle_index[i] = -1;
+    LDPLAB_PROFILING_STOP(pipeline_buffer_setup);
 
     if (buffer.inner_particle_rays)
     {
+        LDPLAB_PROFILING_START(pipeline_inner_particle_propagation);
         m_inner_particle_propagation_stage->execute(
             buffer, intersection_buffer, output_buffer);
+        LDPLAB_PROFILING_STOP(pipeline_inner_particle_propagation);
 
+        LDPLAB_PROFILING_START(pipeline_inner_particle_interaction);
         m_ray_particle_interaction_stage->execute(
             intersection_buffer,
             buffer,
             reflection_buffer,
             transmission_buffer,
             output_buffer);
+        LDPLAB_PROFILING_STOP(pipeline_inner_particle_interaction);
     }
     else
     {
         if (buffer.world_space_rays == 0)
         {
+            LDPLAB_PROFILING_START(
+                pipeline_world_space_particle_intersection_test);
             m_ray_particle_intersection_test_stage->execute(
                 buffer,
                 intersection_buffer);
+            LDPLAB_PROFILING_STOP(
+                pipeline_world_space_particle_intersection_test);
         }
 
-        if (buffer.world_space_rays > 0)
+        while (buffer.world_space_rays > 0)
         {
-            do
+            LDPLAB_PROFILING_START(
+                pipeline_world_space_bounding_volume_intersection_test);
+            const size_t intersects_bv =
+                m_ray_bounding_volume_intersection_test_stage->execute(
+                    buffer);
+            LDPLAB_PROFILING_STOP(
+                pipeline_world_space_bounding_volume_intersection_test);
+
+            if (intersects_bv > 0)
             {
-                if (m_ray_bounding_volume_intersection_test_stage->execute(
-                    buffer))
-                {
-                    m_ray_particle_intersection_test_stage->execute(
-                        buffer,
-                        intersection_buffer);
-                }
-                else if (buffer.active_rays == 0)
-                    return;
-            } while (buffer.world_space_rays > 0);
+                LDPLAB_PROFILING_START(
+                    pipeline_world_space_particle_intersection_test);
+                m_ray_particle_intersection_test_stage->execute(
+                    buffer,
+                    intersection_buffer);
+                LDPLAB_PROFILING_STOP(
+                    pipeline_world_space_particle_intersection_test);
+            }
+            else if (buffer.active_rays == 0)
+                return;
         }
 
+        LDPLAB_PROFILING_START(pipeline_world_space_particle_interaction);
         m_ray_particle_interaction_stage->execute(
             intersection_buffer,
             buffer,
             reflection_buffer,
             transmission_buffer,
             output_buffer);
+        LDPLAB_PROFILING_STOP(pipeline_world_space_particle_interaction);
     }
 
     // Check if there are still active rays left and print a warning to the log

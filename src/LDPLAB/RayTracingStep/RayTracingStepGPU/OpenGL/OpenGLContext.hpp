@@ -2,9 +2,11 @@
 #define WWU_LDPLAB_RTSGPU_OGL_OPEN_GL_CONTEXT_HPP
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 namespace ldplab
 {
@@ -34,6 +36,16 @@ namespace ldplab
             GLint getUniformLocation(const std::string& name) const;
             /** @brief Uses shader in the current OpenGL rendering state. */
             void use() const;
+            /**
+             * @brief Executes the compute shader.
+             * @param[in] work_group_size_x Workgroup size in dimension x.
+             * @param[in] work_group_size_y Workgroup size in dimension y.
+             * @param[in] work_group_size_z Workgroup size in dimension z.
+             * @note You have to call use before execute.
+             */
+            void execute(size_t work_group_size_x,
+                size_t work_group_size_y = 1,
+                size_t work_group_size_z = 1);
         private:
             ComputeShader();
         private:
@@ -112,11 +124,14 @@ namespace ldplab
         {
         public:
             OpenGLContext(std::shared_ptr<Context> context);
+            ~OpenGLContext();
             /** 
              * @brief Initializes glew, opengl and context data. 
              * @returns true if the initialization was successful.
              */
             bool init();
+            /** @brief Shuts down the opengl. */
+            void shutdown();
             /**
              * @brief Creates a compute shader program.
              * @param[in] shader_name The name of the glsl shader.
@@ -128,6 +143,16 @@ namespace ldplab
                 const std::string& shader_name,
                 const std::string& glsl_code) const;
             /**
+             * @brief Creates a compute shader program from file.
+             * @param[in] shader_name The name of the glsl shader.
+             * @param[in] path The file path to the shader code.
+             * @returns Shared pointer to the shader or nullptr if the shader
+             *          has not been created successfully.
+             */
+            std::shared_ptr<ComputeShader> createComputeShaderFromFile(
+                const std::string& shader_name,
+                const std::string& path);
+            /**
              * @brief Creates a shader storage buffer object (SSBO).
              * @param[in] buffer_size Size of the buffer in bytes.
              * @param[in] buffer_usage Specifies OpenGL usage pattern.
@@ -137,8 +162,20 @@ namespace ldplab
             std::shared_ptr<ShaderStorageBuffer> createShaderStorageBuffer(
                 size_t buffer_size,
                 GLenum buffer_usage = GL_DYNAMIC_READ);
+            /**
+             * @brief Provides a mutex that can be used to sequenzialise GPU
+             *        access.
+             * @returns Reference to said mutex.
+             */
+            inline std::mutex& getGPUMutex() { return m_gpu_mutex; }
+            /** @brief Binds the opengl context for the current thread. */
+            void bindGlContext();
+            /** @brief Unbinds the opengl context from the current thread. */
+            void unbindGlContext();
         private:
             std::shared_ptr<Context> m_context;
+            std::mutex m_gpu_mutex;
+            GLFWwindow* m_gl_offscreen_context;
         };
     }
 }

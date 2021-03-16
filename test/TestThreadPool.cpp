@@ -1,7 +1,7 @@
-#include <LDPLAB/ThreadPool.hpp>
-#include <LDPLAB/LogCallback.hpp>
+#include <ldplab.hpp>
+#include <LDPLAB/Utils/ThreadPool.hpp>
 
-class Job : public ldplab::ThreadPool::IJob
+class Job : public ldplab::utils::ThreadPool::IJob
 {
 public:
     Job(unsigned int offset)
@@ -33,8 +33,8 @@ int main()
     constexpr unsigned int num_batches = 4;
 
     // Create a thread pool with num_threads threads.
-    ldplab::ThreadPool tp0{ num_threads };
-    ldplab::ThreadPool tp1{ num_threads };
+    ldplab::utils::ThreadPool tp0{ num_threads };
+    ldplab::utils::ThreadPool tp1{ num_threads };
 
     // Executes a batch synchronously.
     unsigned int jobctr = 0;

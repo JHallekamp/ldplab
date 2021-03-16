@@ -9,7 +9,8 @@
 #include "RayParticleIntersectionTestStage.hpp"
 
 #include "../../RayTracingStepOutput.hpp"
-#include "../../../ThreadPool.hpp"
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
+#include "../../../Utils/ThreadPool.hpp"
 
 #include <memory>
 #include <vector>
@@ -32,7 +33,7 @@ namespace ldplab
          *       parallel execution of the pipeline. This is likely to heavily
          *       increase the memory footprint of a Pipeline instance.
          */
-        class Pipeline : public ThreadPool::IJob
+        class Pipeline : public utils::ThreadPool::IJob
         {
         public:
             Pipeline(
@@ -42,6 +43,11 @@ namespace ldplab
                 std::unique_ptr<IRayParticleInteractionStage> rpi,
                 std::unique_ptr<IInnerParticlePropagationStage> ipp,
                 std::shared_ptr<Context> context);
+            /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders();
             /**
              * @brief Sets up the pipeline stages.
              * @note Only called once per ray tracing step execution.

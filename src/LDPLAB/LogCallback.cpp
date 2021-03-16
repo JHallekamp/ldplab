@@ -1,5 +1,5 @@
 #include "LogCallback.hpp"
-#include "Log.hpp"
+#include "Utils/Log.hpp"
 
 #include <iostream>
 
@@ -24,7 +24,7 @@ void ldplab::ILogCallback::subscribeLog()
     std::lock_guard<std::mutex> guard{ m_mutex };
     if (m_state == State::unsubscribed)
     {
-        if (Log::getLogDispatcher().subscribeCallback(this))
+        if (utils::Log::getLogDispatcher().subscribeCallback(this))
             m_state = State::subscribed;
     }
 }
@@ -34,7 +34,7 @@ void ldplab::ILogCallback::unsubscribeLog()
     std::lock_guard<std::mutex> guard{ m_mutex };
     if (m_state == State::subscribed)
     {
-        if (Log::getLogDispatcher().unsubscribeCallback(this))
+        if (utils::Log::getLogDispatcher().unsubscribeCallback(this))
             m_state = State::unsubscribed;
     }
 }

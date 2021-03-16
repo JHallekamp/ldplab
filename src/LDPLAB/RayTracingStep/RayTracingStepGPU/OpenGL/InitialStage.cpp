@@ -1,6 +1,8 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "InitialStage.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     InitialStageBoundingSpheresHomogenousLight(
@@ -8,7 +10,7 @@ ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     :
     m_context{ context },
     m_bounding_spheres{ ((BoundingSphereData*)
-        context->bounding_volume_data.get())->sphere_data },
+        context->bounding_volume_data.get())->sphere_properties_data },
     m_batch_creation_light_index{ 0 },
     m_batch_creation_particle_index{ 0 },
     m_batch_creation_particle_initialized { false },
@@ -66,28 +68,19 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context->particles.size(); ++j)
         {
-            //BoundingVolumeSphere* bounding_sphere = (BoundingVolumeSphere*) 
-            //    m_context->particles[j].bounding_volume.get();
-            ParticleTransformation& trans = m_context->
-                particle_transformations[j];
-            //const Vec3 bounding_sphere_center_world = trans.p2w_scale_rotation *
-            //    bounding_sphere->center + trans.p2w_translation;
-            const BoundingVolumeSphere& bounding_sphere =
-                m_bounding_spheres[j];
-
             const double t =
                 glm::dot(light_direction, 
-                    plane_base - bounding_sphere.center) * division_term;
+                    plane_base - m_bounding_spheres[j].center) * division_term;
 
             if (t < 0)
                 continue;
 
-            const Vec3 wrldctr = bounding_sphere.center - t * light_direction;
+            const Vec3 wrldctr = m_bounding_spheres[j].center - t * light_direction;
             const Vec3 planectr = wrldctr - plane_base;
             const Vec2 center{ 
                 glm::dot(planectr,  m_context->light_sources[i].horizontal_direction),
                 glm::dot(planectr,  m_context->light_sources[i].vertical_direction) };
-            const double radius = bounding_sphere.radius;
+            const double radius = m_bounding_spheres[j].radius;
             if (!projLightOverlap(center, radius, m_context->light_sources[i]))
             {
                 LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Particle %i has no"\
@@ -96,7 +89,7 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
                 continue;
             }
 
-            if (t <= bounding_sphere.radius)
+            if (t <= m_bounding_spheres[j].radius)
             {
                 LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Particle "\
                     "%i bounding sphere intersects light source %i, the "\
@@ -114,7 +107,7 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
             proj.light_index = i;
             proj.center = center;
             proj.radius = radius;
-            proj.depth = glm::length(wrldctr - bounding_sphere.center);
+            proj.depth = glm::length(wrldctr - m_bounding_spheres[j].center);
 
             for (size_t k = 0; k < light_projections.size(); ++k)
             {
@@ -278,10 +271,10 @@ inline void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
         Vec3& direction, 
         size_t pidx) const
 {
-    origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
-        (origin + m_context->particle_transformations[pidx].w2p_translation);
+    origin = m_context->particle_transformation_data.w2p_rotation_scale[pidx] *
+        (origin + m_context->particle_transformation_data.w2p_translation[pidx]);
     direction = glm::normalize(
-        m_context->particle_transformations[pidx].w2p_rotation_scale *
+        m_context->particle_transformation_data.w2p_rotation_scale[pidx] *
         direction);
 }
 
@@ -301,7 +294,7 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
         return false;
 
     for (size_t i = 0; i < initial_batch_buffer.size; ++i)
-        initial_batch_buffer.index_data[i] = -1;
+        initial_batch_buffer.particle_index_data[i] = -1;
 
     for (size_t& pi = m_batch_creation_particle_index;
         pi < m_projections_per_particle.size();
@@ -346,34 +339,35 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
                     {
                         // Create ray
                         // Set ray origin
-                        initial_batch_buffer.ray_origin_data[nr] =
+                        initial_batch_buffer.ray_properties_data[nr].origin =
                             light.origin_corner
                             + m_rasterization_x * light.horizontal_direction
                             + m_rasterization_y * light.vertical_direction;
                         
                         // Set initial ray intensity
-                        initial_batch_buffer.ray_intensity_data[nr] =
+                        initial_batch_buffer.ray_properties_data[nr].intensity =
                             ((LightDistributionHomogeneous*)
                                 light.intensity_distribution.get())->intensity /
                             (m_context->parameters.number_rays_per_unit *
                             m_context->parameters.number_rays_per_unit);
                         
                         // Set initial ray direction
-                        initial_batch_buffer.ray_direction_data[nr] = 
+                        initial_batch_buffer.ray_properties_data[nr].direction =
                             light.orientation;
 
                         // Set minimum distance
-                        initial_batch_buffer.min_bounding_volume_distance_data[nr] =
+                        initial_batch_buffer.ray_properties_data[nr].
+                            min_bounding_volume_distance =
                             projection.depth;
 
                         // Set initial ray particle index
-                        initial_batch_buffer.index_data[nr] = 
+                        initial_batch_buffer.particle_index_data[nr] = 
                             static_cast<int32_t>(pi);
 
                         // Transform ray to particle space
                         transformRayFromWorldToParticleSpace(
-                            initial_batch_buffer.ray_origin_data[nr], 
-                            initial_batch_buffer.ray_direction_data[nr], 
+                            initial_batch_buffer.ray_properties_data[nr].origin,
+                            initial_batch_buffer.ray_properties_data[nr].direction,
                             pi);
 
                         // Increase number of rays
@@ -433,3 +427,5 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
 
     return false;
 }
+
+#endif

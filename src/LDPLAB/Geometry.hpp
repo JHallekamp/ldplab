@@ -9,9 +9,13 @@ namespace ldplab
     typedef glm::dvec2 Vec2;
     /** @brief Structure modeling a 3 dimensional vector. */
     typedef glm::dvec3 Vec3;
+    /** @brief Structure modeling a 4 dimensional vector. */
+    typedef glm::dvec4 Vec4;
     
     /** @brief Structure modeling a 3x3 matrix. */
     typedef glm::dmat3 Mat3;
+    /** @brief Structure modeling a 4x4 matrix. */
+    typedef glm::dmat4 Mat4;
 
     /** @brief Structure modeling light rays. */
     struct Ray

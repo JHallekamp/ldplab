@@ -1,4 +1,5 @@
 #include <ldplab.hpp>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -11,7 +12,7 @@ constexpr double const_pi()
 
 // Folder path
 const std::string DIR_PATH = 
-    "D:\\Workspace\\Studium\\Master\\Masterarbeit\\Code\\Data\\LDPLAB\\Volume\\";
+    "SimData\\";
 
 const bool SPHERICAL_PARTICLE = true;
 const double PARTICLE_VOLUME = 1;
@@ -25,6 +26,9 @@ const double PARTICLE_MATERIAL_NU = 0.15;
 
 // Light intensity properties
 const double LIGHT_INTENSITY = 1;
+
+// Reflexion index of the medium
+const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 #ifdef _DEBUG
@@ -46,46 +50,56 @@ const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
 const size_t NUM_SIM_ROTATION_STEPS = 314;
 
-std::ofstream getFileStream(ldplab::Particle& particle, std::string path, std::string type)
-{
-    std::stringstream ss;
-    std::ofstream file;
-    if (particle.geometry->type() == ldplab::IParticleGeometry::Type::rod_particle)
-    {
-        ldplab::RodParticleGeometry* geomerty =
-            (ldplab::RodParticleGeometry*)particle.geometry.get();
-        ss << path << type <<
-            "_nu" << PARTICLE_MATERIAL_NU <<
-            "_l" << geomerty->l <<
-            "_k" << geomerty->kappa << ".txt";
-        file = std::ofstream{ ss.str() };
-        file << "# Parameter" << std::endl;
-        file << "# V = " << PARTICLE_VOLUME << std::endl;
-        file << "# l = " << geomerty->l << std::endl;
-        file << "# kappa = " << geomerty->kappa << std::endl;
-        file << "# R = " << geomerty->cylinder_radius << std::endl;
-        file << "# L = " << geomerty->cylinder_length << std::endl;
-    }
-    else 
-    {
-        ldplab::SphericalParticleGeometry* geomerty =
-            (ldplab::SphericalParticleGeometry*)particle.geometry.get();
-        ss << path << type <<
-            "_nu" << PARTICLE_MATERIAL_NU <<
-            "_V" << PARTICLE_VOLUME << ".txt";
-        file = std::ofstream{ ss.str() };
-        file << "# Parameter" << std::endl;
-        file << "# V = " << PARTICLE_VOLUME << std::endl;
-        file << "# R = " << geomerty->radius << std::endl;
-    }
-    file << "# nu = " << PARTICLE_MATERIAL_NU << std::endl;
-    file << "# I = " << LIGHT_INTENSITY << std::endl;
-    if (type[0] == 'f')
-        file << "# theta\tF_x\tF_y\tF_z" << std::endl;
-    else if (type[0] == 't')
-        file << "# theta\tT_x\tT_y\tT_z" << std::endl;
+// Prototypes
+std::ofstream getFileStream(const ldplab::Particle& particle,
+    std::string path,
+    std::string type,
+    size_t branching_depth);
+void plotProgress(double progress);
+void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient);
+void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient,
+    size_t branching_depth);
 
-    return file;
+int main()
+{
+    // Prepare logging
+    ldplab::LogCallbackFileStream flog{ "test_simulation_cpu.log" };
+    ldplab::LogCallbackStdout clog{};
+    flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
+    clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
+    flog.subscribe();
+    clog.subscribe();
+
+    // Run simulations
+    std::vector<double> vec_gradient = { 0.0, 0.2 };
+    std::vector<double> vec_kappa = { 0.0, 0.3 };
+    std::vector<size_t> vec_branching_depth = { 0, 8 };
+    for (size_t i = 0; i < vec_kappa.size(); ++i)
+    {
+        for (size_t j = 0; j < vec_gradient.size(); ++j)
+        {
+            for (size_t k = 0; k < vec_branching_depth.size(); ++k)
+            {
+                // Create experimental setup
+                ldplab::ExperimentalSetup experimental_setup;
+                createExperimentalSetup(
+                    experimental_setup,
+                    vec_kappa[i],
+                    vec_gradient[j]);
+                // Run simulation
+                runSimulation(
+                    experimental_setup,
+                    vec_kappa[i],
+                    vec_gradient[j],
+                    vec_branching_depth[k]);
+            }
+        }
+    }
+    return 0;
 }
 
 void plotProgress(double progress)
@@ -110,37 +124,72 @@ void plotProgress(double progress)
         iprogress << "%" << std::endl;
 }
 
-int main()
+std::ofstream getFileStream(
+    const ldplab::Particle& particle,
+    std::string path,
+    std::string type,
+    size_t branching_depth)
 {
-    // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "test_simulation_cpu.log" };
-    ldplab::LogCallbackStdout clog{};
-    flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
-    clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
-    flog.subscribe();
-    clog.subscribe();
+    std::stringstream ss;
+    std::ofstream file;
+    if (particle.geometry->type() == ldplab::IParticleGeometry::Type::rod_particle)
+    {
+        ldplab::RodParticleGeometry* geomerty =
+            (ldplab::RodParticleGeometry*)particle.geometry.get();
+        ss << path << type <<
+            "_nu" << PARTICLE_MATERIAL_NU <<
+            "_l" << geomerty->l <<
+            "_k" << geomerty->kappa << 
+            "_bd" << branching_depth << ".txt";
+        file = std::ofstream{ ss.str() };
+        file << "# Parameter" << std::endl;
+        file << "# V = " << PARTICLE_VOLUME << std::endl;
+        file << "# l = " << geomerty->l << std::endl;
+        file << "# kappa = " << geomerty->kappa << std::endl;
+        file << "# R = " << geomerty->cylinder_radius << std::endl;
+        file << "# L = " << geomerty->cylinder_length << std::endl;
+    }
+    else
+    {
+        ldplab::SphericalParticleGeometry* geomerty =
+            (ldplab::SphericalParticleGeometry*)particle.geometry.get();
+        ss << path << type <<
+            "_nu" << PARTICLE_MATERIAL_NU <<
+            "_V" << PARTICLE_VOLUME << 
+            "_bd" << branching_depth << ".txt";
+        file = std::ofstream{ ss.str() };
+        file << "# Parameter" << std::endl;
+        file << "# V = " << PARTICLE_VOLUME << std::endl;
+        file << "# R = " << geomerty->radius << std::endl;
+    }
+    file << "# nu = " << PARTICLE_MATERIAL_NU << std::endl;
+    file << "# I = " << LIGHT_INTENSITY << std::endl;
+    if (type[0] == 'f')
+        file << "# theta\tF_x\tF_y\tF_z" << std::endl;
+    else if (type[0] == 't')
+        file << "# theta\tT_x\tT_y\tT_z" << std::endl;
+    return file;
+}
 
+void createExperimentalSetup(
+    ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient)
+{
     // Create particle
     ldplab::Particle particle;
     double particle_world_extent;
-    double rts_step_size;
     if (SPHERICAL_PARTICLE)
     {
         particle = ldplab::getSphereParticle(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-            PARTICLE_MATERIAL_NU,
+            gradient,
             ldplab::Vec3(0.0, 0.0, 0.0),
             ldplab::Vec3(0.0, 0.0, 0.0));
-        ldplab::ParticleMaterialLinearOneDirectional* material =
-            (ldplab::ParticleMaterialLinearOneDirectional*)particle.material.get();
         ldplab::BoundingVolumeSphere* bs =
             (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
         particle_world_extent = bs->center.z + bs->radius;
-        if (std::abs(material->gradient) > 1e-5)
-            rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
-        else
-            rts_step_size = 0.1;
     }
     else
     {
@@ -148,20 +197,14 @@ int main()
         particle = ldplab::getRodParticleConstVolume(
             PARTICLE_VOLUME,
             ROD_PARTICLE_L,
-            ROD_PARTICLE_KAPPA,
+            kappa,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
-            PARTICLE_MATERIAL_NU,
+            gradient,
             ldplab::Vec3(0.0,0.0,0.0),
             ldplab::Vec3(0.0,0.0,0.0));
-        ldplab::ParticleMaterialLinearOneDirectional* material =
-            (ldplab::ParticleMaterialLinearOneDirectional*)particle.material.get();
         ldplab::BoundingVolumeSphere* bs = 
             (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
         particle_world_extent = bs->center.z + bs->radius;
-        if (std::abs(material->gradient) > 1e-5)
-            rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
-        else
-            rts_step_size = 0.1;
     }
 
 
@@ -187,19 +230,31 @@ int main()
         std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
 
-    // Create experimental setup
-    ldplab::ExperimentalSetup experimental_setup;
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
-    experimental_setup.medium_reflection_index = 1.33;
+    experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
+}
 
-    // Thread pool
-    std::shared_ptr<ldplab::ThreadPool> thread_pool =
-        std::make_shared<ldplab::ThreadPool>(NUM_RTS_THREADS);
+void runSimulation(
+    const ldplab::ExperimentalSetup& experimental_setup,
+    double kappa,
+    double gradient,
+    size_t branching_depth)
+{
+    // Start timing
+    ldplab::Profiling::reset();
+    std::chrono::steady_clock::time_point start =
+        std::chrono::steady_clock::now();
 
     // Create ray tracing step
+    double rts_step_size;
+    ldplab::ParticleMaterialLinearOneDirectional* material =
+        (ldplab::ParticleMaterialLinearOneDirectional*)experimental_setup.particles[0].material.get();
+    if (std::abs(material->gradient) > 1e-5)
+        rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
+    else
+        rts_step_size = 0.1;
     ldplab::RayTracingStepCPUInfo rtscpu_info;
-    rtscpu_info.thread_pool = thread_pool;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
     ldplab::BoundingVolumeSphere* bs =
@@ -216,12 +271,12 @@ int main()
             experimental_setup, rtscpu_info);
 
     if (ray_tracing_step == nullptr)
-        return -1;
+        return;
 
     // Output file
     ldplab::RayTracingStepOutput output;
-    std::ofstream output_force = getFileStream(experimental_setup.particles[0], DIR_PATH, "force");
-    std::ofstream output_torque = getFileStream(experimental_setup.particles[0], DIR_PATH, "torque");
+    std::ofstream output_force = getFileStream(experimental_setup.particles[0], DIR_PATH, "force", branching_depth);
+    std::ofstream output_torque = getFileStream(experimental_setup.particles[0], DIR_PATH, "torque", branching_depth);
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
@@ -252,6 +307,22 @@ int main()
         plotProgress((rotation_x - offset) / (lim - offset));
     }
 
-    thread_pool->terminate();
-    return 0;
+    std::stringstream identificator;
+    identificator << "cpu_g" << static_cast<int>(gradient * 10000.0) <<
+        "_k" << static_cast<int>(kappa * 100.0) <<
+        "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
+        "_bd" << branching_depth <<
+        "_u" << rtscpu_info.light_source_ray_density_per_unit_area <<
+        "_rs" << NUM_SIM_ROTATION_STEPS;
+
+    // Stop timing
+    std::chrono::steady_clock::time_point end =
+        std::chrono::steady_clock::now();
+    const double elapsed_time = std::chrono::duration<double>(
+        end - start).count();
+    std::ofstream elapsed_time_file("cpu_simulation_time_" + identificator.str());
+    elapsed_time_file << elapsed_time << "s" << std::endl;
+
+    // Profiling
+    ldplab::Profiling::printReports("cpu_profiling_report_" + identificator.str());
 }

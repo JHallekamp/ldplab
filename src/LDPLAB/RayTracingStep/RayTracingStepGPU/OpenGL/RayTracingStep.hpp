@@ -1,8 +1,8 @@
 #ifndef WWU_LDPLAB_RTSGPU_OGL_RAY_TRACING_STEP_CPU_HPP
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_TRACING_STEP_CPU_HPP
 
-#include "Data.hpp"
 #include "..\..\IRayTracingStep.hpp"
+#include "..\..\RayTracingStepGPUOpenGLInfo.hpp"
 #include "..\..\..\Geometry.hpp"
 
 #include <memory>
@@ -10,9 +10,6 @@
 
 namespace ldplab
 {
-    // Protoype
-    class RayTracingStepFactory;
-
     namespace rtsgpu_ogl
     {
         // Prototype
@@ -24,7 +21,7 @@ namespace ldplab
          */
         class RayTracingStep : public IRayTracingStep
         {
-            friend RayTracingStepFactory;
+            friend class Factory;
         public:
             /**
              * @brief Inherited via IRayTracingStep. Starts the ray tracing
@@ -41,6 +38,8 @@ namespace ldplab
              *       do not have to call it manually.
              */
             void updateContext(const SimulationState& input);
+            /** @brief Initializes the GPU part of the ray tracing step. */
+            bool initGPU(const RayTracingStepGPUOpenGLInfo& info);
         private:
             Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);

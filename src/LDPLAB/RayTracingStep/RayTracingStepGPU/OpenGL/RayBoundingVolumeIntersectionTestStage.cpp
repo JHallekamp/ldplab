@@ -1,20 +1,55 @@
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
+
+#include "Constants.hpp"
 #include "Context.hpp"
-#include "../../../Log.hpp"
+#include "../../../Utils/Log.hpp"
+#include "../../../Utils/ComputeHelper.hpp"
+#include "../../../Utils/Profiler.hpp"
 
 #include <limits>
+#include <sstream>
 
 ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
         std::shared_ptr<Context> context)
     :
-    m_context{ context },
-    m_bounding_spheres{ ((BoundingSphereData*) 
-        context->bounding_volume_data.get())->sphere_data }
+    m_context{ context }
 {
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "RayBoundingSphereIntersectionTestStageBruteForce instance created",
         m_context->uid);
+}
+
+bool ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
+    initShaders()
+{
+    // Create shader
+    if (!m_context->shared_shaders.createShaderByName(
+            constant::glsl_shader_name::ray_bounding_sphere_intersection_test_brute_force,
+            m_cs_bv_intersection.shader))
+        return false;
+
+    // Compute work group size
+    m_cs_bv_intersection.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
+        m_context->parameters.number_rays_per_buffer,
+        constant::glsl_local_group_size::ray_bounding_sphere_intersection_test_brute_force);
+
+    // Get uniform locations
+    m_cs_bv_intersection.uniform_num_particles =
+        m_cs_bv_intersection.shader->getUniformLocation("num_particles");
+    m_cs_bv_intersection.uniform_num_rays_per_buffer =
+        m_cs_bv_intersection.shader->getUniformLocation("num_rays_per_buffer");
+
+    m_cs_bv_intersection.shader->use();
+    glUniform1ui(m_cs_bv_intersection.uniform_num_particles,
+        static_cast<GLuint>(m_context->particles.size()));
+    glUniform1ui(m_cs_bv_intersection.uniform_num_rays_per_buffer,
+        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+
+    // Done
+    return true;
 }
 
 void ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::setup()
@@ -22,104 +57,39 @@ void ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::setup
     // For the brute force method, no setup is needed
 }
 
-size_t 
+void 
     ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::execute(
         RayBuffer& buffer)
 {
-    LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Test bounding sphere intersections "\
-        "for batch buffer %i",
+    LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Test bounding sphere "\
+        "intersections for batch buffer %i",
         m_context->uid,
         buffer.uid);
 
-    size_t num_rays_exiting_scene = 0;
-    size_t num_rays_hitting_boundary_sphere = 0;
+    // Bind shaders
+    LDPLAB_PROFILING_START(bounding_volume_intersection_test_shader_binding);
+    m_cs_bv_intersection.shader->use();
+    LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_shader_binding);
 
-    const Vec3 unit = { 1, 1, 1 };
-    for (size_t i = 0; i < buffer.size; ++i)
-    {
-        if (buffer.index_data[i] < m_context->particles.size() ||
-            buffer.index_data[i] == -1)
-            continue;
+    // Bind SSBOs
+    LDPLAB_PROFILING_START(bounding_volume_intersection_test_ssbo_binding);
+    buffer.ssbo.ray_properties->bindToIndex(0);
+    buffer.ssbo.particle_index->bindToIndex(1);
+    BoundingSphereData* bsd = 
+        (BoundingSphereData*)m_context->bounding_volume_data.get();
+    bsd->ssbo.sphere_properties->bindToIndex(2);
+    m_context->particle_transformation_data.ssbo.w2p->bindToIndex(3);
+    LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_ssbo_binding);
 
-        double min_d = -1.0;
-        int32_t min_j = 0;
-
-        const Vec3& o = buffer.ray_origin_data[i];
-        for (int32_t j = 0; j < 
-            static_cast<int32_t>(m_context->particles.size()); ++j)
-        {
-            const Vec3& oc = o - 
-                m_bounding_spheres[j].center;
-            const double rr =
-                m_bounding_spheres[j].radius *
-                m_bounding_spheres[j].radius;
-
-            const double q = glm::dot(oc, oc) - rr;
-            if (q < 1e-9)
-                continue;
-
-            const double p = glm::dot(buffer.ray_direction_data[i], oc);
-            const double discriminant = p * p - q;
-            if (discriminant < 1e-9)
-                continue;
-
-            const double d_root = sqrt(discriminant);
-            const double dist = -p - d_root;
-
-            double t = buffer.min_bounding_volume_distance_data[i];
-            if (dist <= buffer.min_bounding_volume_distance_data[i])
-                continue;
-
-            if (dist < min_d || min_d < 0)
-            {
-                min_d = dist;
-                min_j = j;
-            }
-        }
-
-        if (min_d < 0)
-        {
-            // ray exits scene
-            buffer.index_data[i] = -1;
-            ++num_rays_exiting_scene;
-        }
-        else
-        {
-            // ray hits particle min_j boundary volume
-            buffer.index_data[i] = min_j;
-            buffer.min_bounding_volume_distance_data[i] = min_d;
-            transformRayFromWorldToParticleSpace(
-                buffer.ray_origin_data[i], 
-                buffer.ray_direction_data[i], 
-                min_j);
-            ++num_rays_hitting_boundary_sphere;
-        }
-    }
-
-    buffer.active_rays -= num_rays_exiting_scene;
-    buffer.world_space_rays = 0;
+    // Execute shader
+    LDPLAB_PROFILING_START(bounding_volume_intersection_test_shader_execution);
+    m_cs_bv_intersection.shader->execute(m_cs_bv_intersection.num_work_groups);
+    LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_shader_execution);
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Bounding sphere intersection "\
-        "test on batch buffer %i completed, of %i tested rays %i hit "\
-        "bounding spheres and %i rays exited the scene",
+        "test on batch buffer %i completed",
         m_context->uid,
-        buffer.uid,
-        num_rays_hitting_boundary_sphere + num_rays_exiting_scene,
-        num_rays_hitting_boundary_sphere,
-        num_rays_exiting_scene);
-
-    return num_rays_hitting_boundary_sphere;
+        buffer.uid);
 }
 
-inline void ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
-    transformRayFromWorldToParticleSpace(
-        Vec3& origin, 
-        Vec3& direction, 
-        size_t pidx) const
-{
-    origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
-        (origin + m_context->particle_transformations[pidx].w2p_translation);
-    direction = glm::normalize(
-        m_context->particle_transformations[pidx].w2p_rotation_scale *
-            direction);
-}
+#endif

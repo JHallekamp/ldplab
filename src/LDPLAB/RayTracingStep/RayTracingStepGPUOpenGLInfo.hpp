@@ -2,9 +2,9 @@
 #define WWU_LDPLAB_RAY_TRACING_STEP_GPU_OPEN_GL_INFO_HPP
 
 #include "EikonalSolver.hpp"
-#include "..\ThreadPool.hpp"
 
 #include <memory>
+#include <string>
 
 namespace ldplab
 {
@@ -16,7 +16,6 @@ namespace ldplab
     {
         RayTracingStepGPUOpenGLInfo()
             :
-            thread_pool{ nullptr },
             intensity_cutoff{ 0 },
             number_rays_per_buffer{ 0 },
             light_source_ray_density_per_unit_area{ 0 },
@@ -25,8 +24,6 @@ namespace ldplab
             solver_parameters{ nullptr },
             emit_warning_on_maximum_branching_depth_discardment{ true }
         { }
-        /** @brief Pointer to the thread pool. */
-        std::shared_ptr<ThreadPool> thread_pool;
         /** @brief Parameters for the Eikonal solver. */
         std::shared_ptr<IEikonalSolver> solver_parameters;
         /**  @brief Under this cutoff intensity rays are not further traced. */
@@ -45,6 +42,13 @@ namespace ldplab
          *        branching depth.
          */
         bool emit_warning_on_maximum_branching_depth_discardment;
+        /** 
+         * @brief Contains the path of the LDPLAB shader base directory (which
+         *        contains subdirectories for different shader languages).
+         * @note The directory path needs to include a trailing forewardslash 
+         *       ('/') at the end.
+         */
+        std::string shader_base_directory_path;
     };
 }
 

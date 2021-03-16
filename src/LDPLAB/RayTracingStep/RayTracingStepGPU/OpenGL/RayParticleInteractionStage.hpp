@@ -1,6 +1,9 @@
 #ifndef WWU_LDPLAB_RTSGPU_OGL_RAY_PARTICLE_INTERACTION_HPP
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_PARTICLE_INTERACTION_HPP
 
+#include "../../RayTracingStepGPUOpenGLInfo.hpp"
+#include "Data.hpp"
+
 #include <memory>
 
 namespace ldplab
@@ -45,6 +48,8 @@ namespace ldplab
                 RayBuffer& reflected_rays,
                 RayBuffer& refracted_rays,
                 OutputBuffer& output) = 0;
+            /** @brief Initializes the shader data. */
+            virtual bool initShaders() = 0;
         };
         /**
          * @brief Class implementing the ray particle interaction for 
@@ -60,6 +65,11 @@ namespace ldplab
         public:
             UnpolirzedLight1DLinearIndexGradientInteraction(
                 std::shared_ptr<Context> context);
+            /**
+             * @brief Initializes the shader.
+             * @returns true, if the initialization succeeds.
+             */
+            bool initShaders() override;
             /**
              * @brief Inherited via ldplab::rtsgpu_ogl::IRayParticleInteractionStage.
              * @brief Calculating resulting rays of the interaction of the 
@@ -82,17 +92,37 @@ namespace ldplab
                 RayBuffer& refracted_rays,
                 OutputBuffer& output) override;
         private:
-            /** 
-             * @brief Calculates the reflectance coefficient for unpolarized 
-             *        light.
-             * @param cos_alpha Cosine of the incidence angle.
-             * @param cos_beta Cosine of the angle of refraction
-             * @param ratio of the index of reflection
-             */
-            double reflectance(double cos_alpha, double cos_beta, double n_r);
+            /** @brief Structure holding data for the interaction shader. */
+            struct InteractionShader {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_inner_particle_rays;
+                GLint uniform_num_rays_per_buffer;
+                GLint uniform_parameter_medium_reflection_index;
+                GLint uniform_parameter_intensity_cutoff;
+                size_t num_work_groups;
+            } m_cs_interaction;
+            /** @brief Structure holding data for the gather output shader. */
+            struct GatherOutputShaderPreStage {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_num_rays_per_buffer;
+                GLint uniform_num_particles;
+                size_t num_work_groups;
+            } m_cs_gather_output_pre_stage;
+            /** @brief Structure holding data for the gather output shader. */
+            struct GatherOutputShaderPostStage {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_buffer_size;
+                GLint uniform_num_particles;
+                GLint uniform_source_offset;
+            } m_cs_gather_output_reduction_stage;
+            /** @brief Structure holding data for the gather output shader. */
+            struct GatherOutputShaderReduceStage {
+                std::shared_ptr<ComputeShader> shader;
+                GLint uniform_num_particles;
+                size_t num_work_groups;
+            } m_cs_gather_output_post_stage;
         private:
             std::shared_ptr<Context> m_context;
-        
         };
     }
 }
