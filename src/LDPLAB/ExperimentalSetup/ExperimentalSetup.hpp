@@ -4,8 +4,8 @@
 #include "Lightsource.hpp"
 #include "Particle.hpp"
 #include "../Geometry.hpp"
-#include "../UID.hpp"
 
+#include "Utils/PropertyGenerator.hpp"
 #include <vector>
 
 namespace ldplab

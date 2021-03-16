@@ -67,10 +67,10 @@ namespace ldplab
 		 *           particle.
 		 */
 		inline double indexOfRefraction(const Vec3& position) const { 
-		    //return index_of_refraction + 
-		    //	gradient * glm::dot(direction, (position - origin));
-            return index_of_refraction_minus_partial_dot +
-                glm::dot(direction_times_gradient, position);
+		    return index_of_refraction + 
+		    	gradient * glm::dot(direction, (position - origin));
+            //return index_of_refraction_minus_partial_dot +
+            //    glm::dot(direction_times_gradient, position);
         }
 		/**
 		 * @brief The index of refraction at the origin of the linear index 

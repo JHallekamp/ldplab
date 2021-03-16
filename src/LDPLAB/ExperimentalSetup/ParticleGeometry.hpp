@@ -34,27 +34,40 @@ namespace ldplab
     {
         RodParticleGeometry(double cylinder_radius,
             double cylinder_length,
-            double volume,
             double kappa)
             :
             cylinder_radius{ cylinder_radius },
             cylinder_length{ cylinder_length },
-            volume{ volume },
             kappa{ kappa },
-            l{ 0 }
+            l{ cylinder_length/2/cylinder_radius }
         {}
         /** @brief Radius of the cylinder. */
         double cylinder_radius;
         /** @brief Length of the cylinder. */
         double cylinder_length;
-        /** @brief Volume of the particle.*/
-        double volume;
         /** @brief Height of the cap in units of the cylinder radius. */
         double kappa;
         /** @brief */
         double l;
         Type type() const override 
         { return IParticleGeometry::Type::rod_particle; }
+    };
+
+    /**
+     *  @brief Geometry of an spherical particle.
+     */
+    struct SphericalParticleGeometry : public IParticleGeometry
+    {
+        SphericalParticleGeometry(double radius)
+            :
+            radius{ radius }
+        {}
+        /** @brief Radius of the sphere. */
+        double radius;
+        Type type() const override
+        {
+            return IParticleGeometry::Type::sphere;
+        }
     };
 }
 
