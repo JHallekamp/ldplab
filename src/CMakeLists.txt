@@ -97,8 +97,8 @@ add_library(ldplab STATIC BuildInfo.cpp
 
 target_include_directories(ldplab 
     PUBLIC 
-        ../../include
-        ../../external/glm
+        ../include
+        ../external/glm
 )
 
 target_link_libraries(ldplab 
