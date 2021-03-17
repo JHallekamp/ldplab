@@ -38,7 +38,6 @@ set(PRIVATE_HEADER_LIST
     RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.hpp
     RayTracingStep/RayTracingStepCPU/RayParticleIntersectionTestStage.hpp
     RayTracingStep/RayTracingStepCPU/RayTracingStep.hpp
-    RayTracingStep/RayTracingStepCPU/Debug/Debug.hpp
     RayTracingStep/RayTracingStepGPU/OpenGL/BufferControl.hpp
     RayTracingStep/RayTracingStepGPU/OpenGL/Constants.hpp
     RayTracingStep/RayTracingStepGPU/OpenGL/Context.hpp
@@ -74,7 +73,6 @@ add_library(ldplab STATIC BuildInfo.cpp
     RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.cpp
     RayTracingStep/RayTracingStepCPU/RayParticleIntersectionTestStage.cpp
     RayTracingStep/RayTracingStepCPU/RayTracingStep.cpp
-    RayTracingStep/RayTracingStepCPU/Debug/Debug.cpp
     RayTracingStep/RayTracingStepGPU/OpenGL/BufferControl.cpp
     RayTracingStep/RayTracingStepGPU/OpenGL/Data.cpp
     RayTracingStep/RayTracingStepGPU/OpenGL/Factory.cpp
