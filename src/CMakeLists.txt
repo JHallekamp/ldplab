@@ -1,0 +1,113 @@
+#file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${LDPLAB_SOURCE_DIR}/include/LDPLAB/*.hpp")
+set(HEADER_LIST
+    "${LDPLAB_SOURCE_DIR}/include/ldplab.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/BuildInfo.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Constants.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Geometry.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/LogCallback.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Profiling.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/SimulationState.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/UID.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/BoundingVolume.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/LightDirection.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/LightDistribution.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/LightPolarization.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Lightsource.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Particle.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ParticleGeometry.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ParticleMaterial.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Utils/PropertyGenerator.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/EikonalSolver.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/IRayTracingStep.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepCPUInfo.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepOutput.hpp"
+)
+
+set(PRIVATE_HEADER_LIST 
+    RayTracingStep/RayTracingStepCPU/BufferControl.hpp
+    RayTracingStep/RayTracingStepCPU/Context.hpp
+    RayTracingStep/RayTracingStepCPU/Data.hpp
+    RayTracingStep/RayTracingStepCPU/Factory.hpp
+    RayTracingStep/RayTracingStepCPU/InitialStage.hpp
+    RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.hpp
+    RayTracingStep/RayTracingStepCPU/Pipeline.hpp
+    RayTracingStep/RayTracingStepCPU/RayBoundingVolumeIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.hpp
+    RayTracingStep/RayTracingStepCPU/RayParticleIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepCPU/RayTracingStep.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/BufferControl.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Constants.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Context.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Data.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Factory.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/InitialStage.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/InnerParticlePropagationStage.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/OpenGLContext.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Pipeline.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayBoundingVolumeIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleInteractionStage.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayTracingStep.hpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/SharedShaders.hpp
+    Utils/Assert.hpp
+    Utils/ComputeHelper.hpp
+    Utils/Log.hpp
+    Utils/Profiler.hpp
+    Utils/ThreadPool.hpp
+)
+
+add_library(ldplab STATIC BuildInfo.cpp
+    LogCallback.cpp
+    Profiling.cpp
+    ExperimentalSetup/Utils/PropertyGenerator.cpp
+    RayTracingStep/RayTracingStepFactory.cpp
+    RayTracingStep/RayTracingStepCPU/BufferControl.cpp
+    RayTracingStep/RayTracingStepCPU/Factory.cpp
+    RayTracingStep/RayTracingStepCPU/InitialStage.cpp
+    RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.cpp
+    RayTracingStep/RayTracingStepCPU/Pipeline.cpp
+    RayTracingStep/RayTracingStepCPU/RayBoundingVolumeIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.cpp
+    RayTracingStep/RayTracingStepCPU/RayParticleIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepCPU/RayTracingStep.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/BufferControl.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Data.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Factory.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/InitialStage.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/InnerParticlePropagationStage.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/OpenGLContext.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/Pipeline.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayBoundingVolumeIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleInteractionStage.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/RayTracingStep.cpp
+    RayTracingStep/RayTracingStepGPU/OpenGL/SharedShaders.cpp
+    Utils/ComputeHelper.cpp
+    Utils/Log.cpp
+    Utils/Profiler.cpp
+    Utils/ThreadPool.cpp
+    ${HEADER_LIST}
+    ${PRIVATE_HEADER_LIST}
+)
+
+target_include_directories(ldplab 
+    PUBLIC 
+        ../include
+        ../external/glm
+)
+
+target_link_libraries(ldplab 
+    PRIVATE
+        glm
+)
+
+if(LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
+    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
+endif()
+target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")
+
+
+target_compile_features(ldplab PUBLIC cxx_std_17)
