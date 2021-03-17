@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_UTILS_THREAD_POOL_HPP
 #define WWU_LDPLAB_UTILS_THREAD_POOL_HPP
 
-#include "../UID.hpp"
+#include <LDPLAB/UID.hpp>
 
 #include <condition_variable>
 #include <cstdint>

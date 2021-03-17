@@ -2,8 +2,8 @@
 #define WWU_LDPLAB_RTSCPU_RAY_TRACING_STEP_CPU_HPP
 
 #include "Data.hpp"
-#include "../IRayTracingStep.hpp"
-#include "../../Geometry.hpp"
+#include <LDPLAB/RayTracingStep/IRayTracingStep.hpp>
+#include <LDPLAB/Geometry.hpp>
 
 #include <memory>
 #include <vector>

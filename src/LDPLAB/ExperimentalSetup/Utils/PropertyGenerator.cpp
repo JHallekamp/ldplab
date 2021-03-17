@@ -1,7 +1,7 @@
-#include "PropertyGenerator.hpp"
+#include <LDPLAB/ExperimentalSetup/Utils/PropertyGenerator.hpp>
 
-#include "..\..\Geometry.hpp"
-#include "..\Particle.hpp"
+#include <LDPLAB/Geometry.hpp>
+#include <LDPLAB/ExperimentalSetup/Particle.hpp>
 
 #include <cmath>
 

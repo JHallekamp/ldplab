@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "Data.hpp"
-#include "../EikonalSolver.hpp"
-#include "../../Geometry.hpp"
+#include <LDPLAB/RayTracingStep/EikonalSolver.hpp>
+#include <LDPLAB/Geometry.hpp>
 
 namespace ldplab
 {

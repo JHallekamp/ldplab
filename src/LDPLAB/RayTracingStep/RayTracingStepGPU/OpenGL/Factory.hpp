@@ -3,8 +3,8 @@
 
 #include "Context.hpp"
 #include "RayTracingStep.hpp"
-#include "../../RayTracingStepGPUOpenGLInfo.hpp"
-#include "../../../ExperimentalSetup/ExperimentalSetup.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
+#include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 
 namespace ldplab
 {

@@ -2,7 +2,7 @@
 #define WWU_LDPLAB_RTSCPU_RAY_PARTICLE_INTERSECTION_TEST_STAGE_HPP
 
 #include "Data.hpp"
-#include "../../Geometry.hpp"
+#include <LDPLAB/Geometry.hpp>
 
 #include <memory>
 #include <vector>

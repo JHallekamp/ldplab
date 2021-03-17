@@ -2,7 +2,7 @@
 #define WWU_LDPLAB_RTSGPU_OGL_SHARED_SHADERS_HPP
 
 #include "Data.hpp"
-#include "../../RayTracingStepGPUOpenGLInfo.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
 
 #include <memory>
 

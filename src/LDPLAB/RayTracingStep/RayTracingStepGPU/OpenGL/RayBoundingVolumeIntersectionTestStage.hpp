@@ -2,7 +2,7 @@
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_BOUNDING_VOLUME_INTERSECTION_TEST_STAGE_HPP
 
 #include "Data.hpp"
-#include "../../RayTracingStepGPUOpenGLInfo.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
 
 #include <memory>
 

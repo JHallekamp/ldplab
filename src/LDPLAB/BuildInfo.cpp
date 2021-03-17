@@ -1,4 +1,4 @@
-#include "BuildInfo.hpp"
+#include <LDPLAB/BuildInfo.hpp>
 
 bool ldplab::BuildInfo::loggingEnabled()
 {

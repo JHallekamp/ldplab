@@ -8,8 +8,8 @@
 #include "RayParticleInteractionStage.hpp"
 #include "RayParticleIntersectionTestStage.hpp"
 
-#include "../../RayTracingStepOutput.hpp"
-#include "../../RayTracingStepGPUOpenGLInfo.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
 #include "../../../Utils/ThreadPool.hpp"
 
 #include <memory>

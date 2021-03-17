@@ -1,4 +1,4 @@
-#include "Profiling.hpp"
+#include <LDPLAB/Profiling.hpp>
 #include "Utils/Profiler.hpp"
 
 void ldplab::Profiling::printReports(const std::string& file)

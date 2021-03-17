@@ -1,9 +1,9 @@
 #ifndef WWU_LDPLAB_RTSGPU_OGL_RAY_TRACING_STEP_CPU_HPP
 #define WWU_LDPLAB_RTSGPU_OGL_RAY_TRACING_STEP_CPU_HPP
 
-#include "..\..\IRayTracingStep.hpp"
-#include "..\..\RayTracingStepGPUOpenGLInfo.hpp"
-#include "..\..\..\Geometry.hpp"
+#include <LDPLAB/RayTracingStep/IRayTracingStep.hpp>
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
+#include <LDPLAB/Geometry.hpp>
 
 #include <memory>
 #include <vector>

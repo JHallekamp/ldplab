@@ -2,8 +2,8 @@
 
 #include "Data.hpp"
 #include "Context.hpp"
-#include "../../ExperimentalSetup/Particle.hpp"
-#include "../../ExperimentalSetup/ParticleMaterial.hpp"
+#include <LDPLAB/ExperimentalSetup/Particle.hpp>
+#include <LDPLAB/ExperimentalSetup/ParticleMaterial.hpp>
 
 #include "../../Utils/Log.hpp"
 

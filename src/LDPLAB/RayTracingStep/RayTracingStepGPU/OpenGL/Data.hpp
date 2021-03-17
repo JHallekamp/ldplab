@@ -5,10 +5,10 @@
 #include <memory>
 #include <vector>
 
-#include "../../../ExperimentalSetup/BoundingVolume.hpp"
-#include "../../../ExperimentalSetup/ParticleMaterial.hpp"
-#include "../../../Geometry.hpp"
-#include "../../../UID.hpp"
+#include <LDPLAB/ExperimentalSetup/BoundingVolume.hpp>
+#include <LDPLAB/ExperimentalSetup/ParticleMaterial.hpp>
+#include <LDPLAB/Geometry.hpp>
+#include <LDPLAB/UID.hpp>
 
 #include "OpenGLContext.hpp"
 

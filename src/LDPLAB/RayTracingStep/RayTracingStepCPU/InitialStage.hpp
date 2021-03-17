@@ -2,7 +2,7 @@
 #define WWU_LDPLAB_RTSCPU_INITIAL_STAGE_HPP
 
 #include "Data.hpp"
-#include "..\..\ExperimentalSetup\Lightsource.hpp"
+#include <LDPLAB/ExperimentalSetup/Lightsource.hpp>
 
 #include <mutex>
 #include <vector>

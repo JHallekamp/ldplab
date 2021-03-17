@@ -3,8 +3,8 @@
 
 #include "Data.hpp"
 
-#include "../../RayTracingStepGPUOpenGLInfo.hpp"
-#include "../../../Geometry.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
+#include <LDPLAB/Geometry.hpp>
 
 #include <memory>
 #include <vector>

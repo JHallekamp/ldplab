@@ -1,7 +1,9 @@
-#include "RayTracingStepFactory.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepFactory.hpp>
 
 #include "RayTracingStepCPU/Factory.hpp"
-#include "RayTracingStepGPU/OpenGL/Factory.hpp"
+#ifndef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
+    #include "RayTracingStepGPU/OpenGL/Factory.hpp"
+#endif
 #include "../Utils/Log.hpp"
 #include "../Utils/Profiler.hpp"
 

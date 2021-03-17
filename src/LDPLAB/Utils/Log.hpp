@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_UTILS_LOG_HPP
 #define WWU_LDPLAB_UTILS_LOG_HPP
 
-#include "../LogCallback.hpp"
+#include <LDPLAB/LogCallback.hpp>
 
 #include <cstdint>
 #include <mutex>

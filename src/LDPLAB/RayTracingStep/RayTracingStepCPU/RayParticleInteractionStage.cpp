@@ -5,7 +5,7 @@
 
 #include "../../Utils/Log.hpp"
 
-#include "../../../../libs/glm/glm.hpp"
+#include <glm/glm.hpp>
 
 #include "Debug/Debug.hpp"
 

@@ -1,6 +1,6 @@
 #include "Factory.hpp"
 
-#include "../../Constants.hpp"
+#include <LDPLAB/Constants.hpp>
 #include "../../Utils/Log.hpp"
 
 std::shared_ptr<ldplab::rtscpu::RayTracingStep> 

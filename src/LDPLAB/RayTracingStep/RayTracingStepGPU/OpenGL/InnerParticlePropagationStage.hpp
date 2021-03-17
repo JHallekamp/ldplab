@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "Data.hpp"
-#include "../../EikonalSolver.hpp"
-#include "../../RayTracingStepGPUOpenGLInfo.hpp"
-#include "../../../Geometry.hpp"
+#include <LDPLAB/RayTracingStep/EikonalSolver.hpp>
+#include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
+#include <LDPLAB/Geometry.hpp>
 
 namespace ldplab
 {

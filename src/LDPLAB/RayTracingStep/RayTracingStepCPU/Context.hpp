@@ -8,11 +8,11 @@
 #include "Pipeline.hpp"
 #include "Data.hpp"
 
-#include "../RayTracingStepOutput.hpp"
-#include "../../ExperimentalSetup/Lightsource.hpp"
-#include "../../ExperimentalSetup/Particle.hpp"
-#include "../../Geometry.hpp"
-#include "../../UID.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
+#include <LDPLAB/ExperimentalSetup/Lightsource.hpp>
+#include <LDPLAB/ExperimentalSetup/Particle.hpp>
+#include <LDPLAB/Geometry.hpp>
+#include <LDPLAB/UID.hpp>
 #include "../../Utils/ThreadPool.hpp"
 
 namespace ldplab

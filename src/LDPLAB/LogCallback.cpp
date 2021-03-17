@@ -1,4 +1,4 @@
-#include "LogCallback.hpp"
+#include <LDPLAB/LogCallback.hpp>
 #include "Utils/Log.hpp"
 
 #include <iostream>

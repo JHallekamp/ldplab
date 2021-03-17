@@ -10,11 +10,11 @@
 #include "OpenGLContext.hpp"
 #include "SharedShaders.hpp"
 
-#include "../../RayTracingStepOutput.hpp"
-#include "../../../Geometry.hpp"
-#include "../../../ExperimentalSetup/Lightsource.hpp"
-#include "../../../ExperimentalSetup/Particle.hpp"
-#include "../../../UID.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
+#include <LDPLAB/Geometry.hpp>
+#include <LDPLAB/ExperimentalSetup/Lightsource.hpp>
+#include <LDPLAB/ExperimentalSetup/Particle.hpp>
+#include <LDPLAB/UID.hpp>
 #include "../../../Utils/ThreadPool.hpp"
 
 namespace ldplab

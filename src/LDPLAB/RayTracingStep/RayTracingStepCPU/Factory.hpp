@@ -2,8 +2,8 @@
 #define WWU_LDPLAB_RTSCPU_FACTORY_HPP
 
 #include "RayTracingStep.hpp"
-#include "../RayTracingStepCPUInfo.hpp"
-#include "../../ExperimentalSetup/ExperimentalSetup.hpp"
+#include <LDPLAB/RayTracingStep/RayTracingStepCPUInfo.hpp>
+#include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 #include "Context.hpp"
 
 namespace ldplab
