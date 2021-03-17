@@ -7,7 +7,6 @@
 
 #include <glm/glm.hpp>
 
-#include "Debug/Debug.hpp"
 
 ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
     UnpolirzedLight1DLinearIndexGradientInteraction(

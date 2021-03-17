@@ -5,7 +5,6 @@
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"
 
-#include "Debug/Debug.hpp"
 
 ldplab::rtscpu::Pipeline::Pipeline(
     std::unique_ptr<IInitialStage> initial, 

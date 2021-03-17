@@ -8,8 +8,6 @@
 #include <chrono>
 #include <glm/ext.hpp>
 
-#include "Debug/Debug.hpp"
-
 ldplab::rtscpu::RayTracingStep::RayTracingStep(
     std::shared_ptr<Context> context)
     :
