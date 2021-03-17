@@ -1,6 +1,6 @@
 #file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${LDPLAB_SOURCE_DIR}/include/LDPLAB/*.hpp")
 set(HEADER_LIST
-    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ldplab.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/ldplab.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/BuildInfo.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Constants.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Geometry.hpp"
