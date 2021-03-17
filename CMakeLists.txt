@@ -42,9 +42,6 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-
-#find_package(OpenGL REQUIRED)
-#find_package(GLEW REQUIRED)
 add_subdirectory(external/glm)
 
 if(NOT LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
