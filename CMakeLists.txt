@@ -15,12 +15,12 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     endif()
 endif()
 
-option (LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL "Use OPENGL for Graphic card processing" OFF)
+option (LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL "Use OPENGL for Graphic card processing" ON)
 
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-    set(CMAKE_BUILD_TYPE "${default_build_type}" CACHESTRING "Choose the type of build." FORCE)
+    set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 SET(CMAKE_DEBUG_POSTFIX "d")
@@ -43,6 +43,8 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
 endif()
 
 add_subdirectory(external/glm)
+
+find_package(Threads REQUIRED)
 
 if(NOT LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
     find_package(OpenGL REQUIRED)

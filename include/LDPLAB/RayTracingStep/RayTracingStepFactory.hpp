@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_RAY_TRACING_STEP_FACTORY_HPP
 #define WWU_LDPLAB_RAY_TRACING_STEP_FACTORY_HPP
 
-#include "..\ExperimentalSetup\ExperimentalSetup.hpp"
+#include "../ExperimentalSetup/ExperimentalSetup.hpp"
 #include "IRayTracingStep.hpp"
 #include "RayTracingStepCPUInfo.hpp"
 #include "RayTracingStepGPUOpenGLInfo.hpp"

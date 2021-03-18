@@ -102,6 +102,7 @@ target_include_directories(ldplab
 target_link_libraries(ldplab 
     PRIVATE
         glm
+        Threads::Threads
 )
 
 if(LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)

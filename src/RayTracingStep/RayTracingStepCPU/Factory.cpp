@@ -514,6 +514,7 @@ bool ldplab::rtscpu::Factory::createRayParticleIntersectionTestStage(
     {
         stage = std::unique_ptr<SphericalParticleIntersectionTest>(
             new SphericalParticleIntersectionTest(context));
+        return true;
     }
     else
     {
