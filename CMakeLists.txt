@@ -9,7 +9,7 @@ project(LDPLAB
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     find_package(Doxygen)
     if(Doxygen_FOUND)
-        add_subdirectory(docs)
+        # add_subdirectory(docs)
     else()
         message(STATUS "Doxygen not found, not building docs")
     endif()

@@ -510,10 +510,11 @@ bool ldplab::rtscpu::Factory::createRayParticleIntersectionTestStage(
             new RodParticleIntersectionTest(context));
         return true;
     }
-    if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
+    else if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
     {
         stage = std::unique_ptr<SphericalParticleIntersectionTest>(
             new SphericalParticleIntersectionTest(context));
+        return true;
     }
     else
     {
