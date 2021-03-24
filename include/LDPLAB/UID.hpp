@@ -29,7 +29,7 @@ namespace ldplab
     template<class SUPERSET_TYPE>
     inline UID<SUPERSET_TYPE>::UID()
     {
-        static std::atomic_size_t uid_counter = 0;
+        static std::atomic_size_t uid_counter{0};
         m_uid = uid_counter.fetch_add(1);
     }
 
