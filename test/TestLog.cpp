@@ -1,5 +1,5 @@
 #include <ldplab.hpp>
-#include <LDPLAB/Utils/Log.hpp>
+#include "../src/Utils/Log.hpp"
 #include <iostream>
 
 void printConfiguration()
