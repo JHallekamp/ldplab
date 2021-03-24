@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "Data.hpp"
-#include <LDPLAB/RayTracingStep/EikonalSolver.hpp>
+#include <LDPLAB/RayTracingStep/EikonalSolverParameter.hpp>
 #include <LDPLAB/Geometry.hpp>
 
 namespace ldplab
@@ -95,7 +95,7 @@ namespace ldplab
              */
             EikonalSolverRK4(
                 std::shared_ptr<Context> context,
-                RK4 parameters);
+                RK4Parameter parameters);
         public:
             /**
              * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
@@ -218,7 +218,7 @@ namespace ldplab
             //    Vec3& inter_point,
             //    Vec3& inter_normal) = 0;
         private:
-            const RK4 m_parameters;
+            const RK4Parameter m_parameters;
         protected:
             std::shared_ptr<Context> m_context;
         };
@@ -242,7 +242,7 @@ namespace ldplab
              */
             EikonalSolverRK45(
                 std::shared_ptr<Context> context,
-                RK45 parameters);
+                RK45Parameter parameters);
         public:
             /**
              * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
@@ -356,7 +356,7 @@ namespace ldplab
             const double c_star[6]{ 16.0 / 135.0, 0.0, 6656.0 / 12825.0, 28561.0 / 56430.0, (-9.0) / 50.0, 2.0 / 55.0 };
             const double cerr[6]{ -0.00277778,  0.0 ,  0.02994152,  0.02919989, -0.02 , -0.03636364 };
         private:
-            const RK45 m_parameters;
+            const RK45Parameter m_parameters;
         protected:
             std::shared_ptr<Context> m_context;
         };
@@ -556,7 +556,7 @@ namespace ldplab
              */
             RK45RodParticlePropagation(
                 std::shared_ptr<Context> context,
-                RK45 parameters);
+                RK45Parameter parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.
@@ -607,7 +607,7 @@ namespace ldplab
              */
             RK4RodParticlePropagation(
                 std::shared_ptr<Context> context,
-                RK4 parameters);
+                RK4Parameter parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.
@@ -657,7 +657,7 @@ namespace ldplab
              */
             RK45SphericalParticlePropagation(
                 std::shared_ptr<Context> context,
-                RK45 parameters);
+                RK45Parameter parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.
@@ -709,7 +709,7 @@ namespace ldplab
              */
             RK4SphericalParticlePropagation(
                 std::shared_ptr<Context> context,
-                RK4 parameters);
+                RK4Parameter parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.

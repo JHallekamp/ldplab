@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 #define WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 
-#include "EikonalSolver.hpp"
+#include "EikonalSolverParameter.hpp"
 
 #include <memory>
 
@@ -24,7 +24,7 @@ namespace ldplab
             emit_warning_on_maximum_branching_depth_discardment{ true }
         { }
         /** @brief Parameters for the Eikonal solver. */
-        std::shared_ptr<IEikonalSolver> solver_parameters;
+        std::shared_ptr<IEikonalSolverParameter> solver_parameters;
         /**  @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff;
         /** @brief Number of rays per buffer. */

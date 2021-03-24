@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "Data.hpp"
-#include <LDPLAB/RayTracingStep/EikonalSolver.hpp>
+#include <LDPLAB/RayTracingStep/EikonalSolverParameter.hpp>
 #include <LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp>
 #include <LDPLAB/Geometry.hpp>
 
@@ -53,7 +53,7 @@ namespace ldplab
          * @brief Class implementing the inner particle propagation for 
          *        linear index of refraction gradient in one direction.
          * @detail The light propagation is calculated by solving the Eikonal 
-         *         equation with the Runge–Kutta–Fehlberg(45) method.
+         *         equation with the Rungeï¿½Kuttaï¿½Fehlberg(45) method.
          */
         class LinearIndexGradientRodParticlePropagation
             : public IInnerParticlePropagationStage
@@ -68,7 +68,7 @@ namespace ldplab
              */
             LinearIndexGradientRodParticlePropagation(
                 std::shared_ptr<Context> context,
-                RK45 parameters);
+                RK45Parameter parameters);
             /**
              * @brief Initializes the shader.
              * @returns true, if the initialization succeeds.
@@ -97,7 +97,7 @@ namespace ldplab
                 size_t num_work_groups;
             } m_cs_inner_particle_propagation;
         private:
-            const RK45 m_parameters;
+            const RK45Parameter m_parameters;
             std::shared_ptr<Context> m_context;
         };
     }

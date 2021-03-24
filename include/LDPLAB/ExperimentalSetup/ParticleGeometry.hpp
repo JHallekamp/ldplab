@@ -1,6 +1,8 @@
 #ifndef WWU_LDPLAB_PARTICLE_GEOMETRY_HPP
 #define WWU_LDPLAB_PARTICLE_GEOMETRY_HPP
 
+#include <vector>
+
 namespace ldplab
 {
     struct IParticleGeometry

@@ -18,7 +18,7 @@ set(HEADER_LIST
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ParticleGeometry.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ParticleMaterial.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Utils/PropertyGenerator.hpp"
-    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/EikonalSolver.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/EikonalSolverParameter.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/IRayTracingStep.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepCPUInfo.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"

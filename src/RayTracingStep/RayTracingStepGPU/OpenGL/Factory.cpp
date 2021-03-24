@@ -400,11 +400,11 @@ bool ldplab::rtsgpu_ogl::Factory::createInnerParticlePropagationStage(
 {
     if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
         m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
-        m_solver_type == IEikonalSolver::Type::rk45)
+        m_solver_type == IEikonalSolverParameter::Type::rk45)
     {
         stage = std::unique_ptr<LinearIndexGradientRodParticlePropagation>(
             new LinearIndexGradientRodParticlePropagation(
-                context, *((RK45*) info.solver_parameters.get())));
+                context, *((RK45Parameter*) info.solver_parameters.get())));
         return true;
     }
     else

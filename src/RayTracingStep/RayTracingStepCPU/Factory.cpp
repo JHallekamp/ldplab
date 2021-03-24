@@ -411,42 +411,42 @@ bool ldplab::rtscpu::Factory::createInnerParticlePropagationStage(
 {
     if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
         m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
-        m_solver_type == IEikonalSolver::Type::rk45)
+        m_solver_type == IEikonalSolverParameter::Type::rk45)
     {
         stage = std::unique_ptr <rtscpu::RK45RodParticlePropagation>(
             new rtscpu::RK45RodParticlePropagation(
                 context,
-                *((RK45*)info.solver_parameters.get())));
+                *((RK45Parameter*)info.solver_parameters.get())));
         return true;
     }
     else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
         m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
-        m_solver_type == IEikonalSolver::Type::rk4)
+        m_solver_type == IEikonalSolverParameter::Type::rk4)
     {
         stage = std::unique_ptr <rtscpu::RK4RodParticlePropagation>(
             new rtscpu::RK4RodParticlePropagation(
                 context,
-                *((RK4*)info.solver_parameters.get())));
+                *((RK4Parameter*)info.solver_parameters.get())));
         return true;
     }
     else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
         m_particle_geometry_type == IParticleGeometry::Type::sphere &&
-        m_solver_type == IEikonalSolver::Type::rk45)
+        m_solver_type == IEikonalSolverParameter::Type::rk45)
     {
         stage = std::unique_ptr <rtscpu::RK45SphericalParticlePropagation>(
             new rtscpu::RK45SphericalParticlePropagation(
                 context,
-                *((RK45*)info.solver_parameters.get())) );
+                *((RK45Parameter*)info.solver_parameters.get())) );
         return true;
     }
     else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
         m_particle_geometry_type == IParticleGeometry::Type::sphere &&
-        m_solver_type == IEikonalSolver::Type::rk4)
+        m_solver_type == IEikonalSolverParameter::Type::rk4)
     {
         stage = std::unique_ptr <rtscpu::RK4SphericalParticlePropagation>( 
             new rtscpu::RK4SphericalParticlePropagation(
                 context,
-                *((RK4*)info.solver_parameters.get())));
+                *((RK4Parameter*)info.solver_parameters.get())));
         return true;
     }
     else

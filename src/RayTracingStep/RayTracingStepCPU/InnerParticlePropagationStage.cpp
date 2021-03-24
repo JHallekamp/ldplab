@@ -11,7 +11,7 @@
 
 ldplab::rtscpu::EikonalSolverRK4::EikonalSolverRK4(
     std::shared_ptr<Context> context,
-    RK4 parameters)
+    RK4Parameter parameters)
     :
     m_context{ context },
     m_parameters{ parameters }
@@ -164,7 +164,7 @@ inline ldplab::rtscpu::EikonalSolverRK4::Arg
 ldplab::rtscpu::EikonalSolverRK45::
     EikonalSolverRK45(
         std::shared_ptr<Context> context,
-        RK45 parameters)
+        RK45Parameter parameters)
     :
     m_context{ context },
     m_parameters{parameters}
@@ -365,7 +365,7 @@ double ldplab::rtscpu::EikonalSolverRK45::Arg::absoluteMax()
 
 ldplab::rtscpu::RK45RodParticlePropagation::RK45RodParticlePropagation(
     std::shared_ptr<Context> context,
-    RK45 parameters)
+    RK45Parameter parameters)
     :
     EikonalSolverRK45(context, parameters),
     IPPRodParticle(context)
@@ -390,7 +390,7 @@ void ldplab::rtscpu::RK45RodParticlePropagation::intersection(
 
 ldplab::rtscpu::RK4RodParticlePropagation::RK4RodParticlePropagation(
     std::shared_ptr<Context> context,
-    RK4 parameters)
+    RK4Parameter parameters)
     :
     EikonalSolverRK4(context, parameters),
     IPPRodParticle(context)
@@ -422,7 +422,7 @@ void ldplab::rtscpu::RK4RodParticlePropagation::intersection(
 ldplab::rtscpu::RK4SphericalParticlePropagation::
 RK4SphericalParticlePropagation(
     std::shared_ptr<Context> context,
-    RK4 parameters)
+    RK4Parameter parameters)
     :
     EikonalSolverRK4(context, parameters),
     IPPSphereParticle(context)
@@ -449,7 +449,7 @@ intersection(
 ldplab::rtscpu::RK45SphericalParticlePropagation::
 RK45SphericalParticlePropagation(
     std::shared_ptr<Context> context,
-    RK45 parameters)
+    RK45Parameter parameters)
     :
     EikonalSolverRK45(context, parameters),
     IPPSphereParticle(context)
