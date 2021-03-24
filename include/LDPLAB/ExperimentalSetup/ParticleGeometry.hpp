@@ -5,7 +5,7 @@ namespace ldplab
 {
     struct IParticleGeometry
     {
-        enum class Type { sphere, rod_particle };
+        enum class Type { sphere, rod_particle, triangle_mesh };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IParticleGeometry.
@@ -20,6 +20,7 @@ namespace ldplab
             {
             case Type::sphere: return "sphere";
             case Type::rod_particle: return "rod_particle";
+            case Type::triangle_mesh: return "triangle_mesh";
             default: return "unknown_type";
             }
         }
@@ -69,6 +70,24 @@ namespace ldplab
             return IParticleGeometry::Type::sphere;
         }
     };
+
+    /**
+     * @brief Geometry of an mash based particle. 
+     */
+    struct TriangleMeshParticaleGeometry : public IParticleGeometry     
+    {
+        TriangleMeshParticaleGeometry(std::vector<Triangle> mesh)
+            :
+            mesh{ mesh }
+        {}
+        /** @brief Triangular mesh defining the particle */
+        std::vector<Triangle> mesh;
+        Type type() const override
+        {
+            return IParticleGeometry::Type::triangle_mesh;
+        }
+    };
+    
 }
 
 #endif

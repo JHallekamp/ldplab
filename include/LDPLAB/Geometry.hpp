@@ -25,7 +25,19 @@ namespace ldplab
         double intensity;
     };
 
-    /** @brief Defines the order of orieantation around each axis. */
+    /**
+     * @brief Structure modling a Triangle in three dimensional space.
+     *        The corner points are given in counter clockwise order and hence 
+     *        given a orientation in space.
+     */
+    struct Triangle
+    {
+        Vec3 a;
+        Vec3 b;
+        Vec3 c;
+    };
+    
+    /** @brief Defines the order of orientation around each axis. */
     enum class RotationOrder
     {
         /** @brief Rotates first around x, then y and finally z. */
