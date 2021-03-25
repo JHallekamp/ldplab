@@ -11,7 +11,7 @@ ldplab::rtscpu::TriangleList::TriangleList(
 {
 }
 
-bool ldplab::rtscpu::TriangleList::
+double ldplab::rtscpu::TriangleList::
     Intersection(
         const Ray ray,
         Vec3& intersection_point,
@@ -31,14 +31,14 @@ bool ldplab::rtscpu::TriangleList::
         }
     }
     if(!intersected)
-        return false;
+        return -1.0;
     intersection_point = ray.origin + ray.direction * min_distance;
     const Vec3 edge1 = m_mesh[mesh_index].b - m_mesh[mesh_index].a;
     const Vec3 edge2 = m_mesh[mesh_index].c - m_mesh[mesh_index].a;
     intersection_normal = glm::normalize(glm::cross(edge1,edge2));
     if(glm::dot(ray.direction,intersection_normal)>0)
         intersection_normal *= -1.0;
-    return true;
+    return min_distance;
 }
 
 double ldplab::rtscpu::TriangleList::

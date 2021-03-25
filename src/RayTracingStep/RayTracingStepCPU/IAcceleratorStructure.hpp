@@ -19,7 +19,7 @@ namespace ldplab
             /**
              * @brief  
              */
-            virtual bool Intersection(
+            virtual double Intersection(
                 const Ray ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) = 0;
@@ -30,7 +30,7 @@ namespace ldplab
         {
         public:
             TriangleList(std::vector<Triangle> mesh);
-            bool Intersection(
+            double Intersection(
                 const Ray ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;

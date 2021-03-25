@@ -453,10 +453,10 @@ void ldplab::rtscpu::MeshParticleIntersectionTest::execute(
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
         
-        if (!data->particle_data[i].geometry->Intersection(
+        if (data->particle_data[i].geometry->Intersection(
                 ray,
                 inter_point,
-                inter_normal))
+                inter_normal) >= 0)
         {
             // Transformation to world space
             ParticleTransformation& trans = m_context->
