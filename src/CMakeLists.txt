@@ -40,6 +40,7 @@ set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
     RayTracingStep/RayTracingStepCPU/Context.hpp
     RayTracingStep/RayTracingStepCPU/Data.hpp
     RayTracingStep/RayTracingStepCPU/Factory.hpp
+    RayTracingStep/RayTracingStepCPU/IAcceleratorStructure.hpp
     RayTracingStep/RayTracingStepCPU/InitialStage.hpp
     RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.hpp
     RayTracingStep/RayTracingStepCPU/Pipeline.hpp
@@ -91,6 +92,7 @@ set(SOURCE_RAY_TRACING_STEP
 set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
 	RayTracingStep/RayTracingStepCPU/BufferControl.cpp
     RayTracingStep/RayTracingStepCPU/Factory.cpp
+    RayTracingStep/RayTracingStepCPU/IAcceleratorStructure.cpp
     RayTracingStep/RayTracingStepCPU/InitialStage.cpp
     RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.cpp
     RayTracingStep/RayTracingStepCPU/Pipeline.cpp

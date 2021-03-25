@@ -90,13 +90,13 @@ namespace ldplab
             std::shared_ptr<IParticleData> particle_data;
             /** @brief Holds an array with bounding volume data. */
             std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
-            /** @brief Maps particle UIDs to the internaly used indices. */
+            /** @brief Maps particle UIDs to the internally used indices. */
             std::map<UID<Particle>, size_t> particle_uid_to_index_map;
-            /** @brief Maps light source UIDs to the internaly used indices. */
+            /** @brief Maps light source UIDs to the internally used indices. */
             std::map<UID<LightSource>, size_t> light_source_uid_to_index_map;
-            /** @brief Maps the internaly used particle indices to UIDs. */
+            /** @brief Maps the internally used particle indices to UIDs. */
             std::map<size_t, UID<Particle>> particle_index_to_uid_map;
-            /** @brief Maps the internaly used light source indices to UIDs. */
+            /** @brief Maps the internally used light source indices to UIDs. */
             std::map<size_t, UID<LightSource>> light_source_index_to_uid_map;
             /** @brief Structure holding simulation parameters. */
             struct
@@ -121,7 +121,7 @@ namespace ldplab
             struct
             {
                 /** 
-                 * @brief Determines whether a warning is emited when active
+                 * @brief Determines whether a warning is emitted when active
                  *        rays are not further traced because they would exceed
                  *        the maximum branching depth.
                  */

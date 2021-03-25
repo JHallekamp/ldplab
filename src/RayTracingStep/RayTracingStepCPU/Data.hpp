@@ -9,6 +9,8 @@
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
 
+#include "IAcceleratorStructure.hpp"
+
 namespace ldplab
 {
     namespace rtscpu
@@ -125,7 +127,13 @@ namespace ldplab
             Vec3 origin_cap;
             Vec3 origin_indentation;
         };
-
+        /**
+         * @brief Structrue modles the geometries of mesh based particles. 
+         */
+        struct MeshParticle
+        {
+            std::shared_ptr<IAcceleratorStructure> geometry;
+        };
         /**
          * @brief Interface for structure containing the particle data rehashed
          *        to be used during ray tracing.
@@ -134,7 +142,7 @@ namespace ldplab
         {
             virtual ~IParticleData() { }
             /** @brief The type of the particles. */
-            enum class Type { rod_particles };
+            enum class Type { rod_particles, mesh_particle };
             /** @brief Returns the type of the particles. */
             virtual Type type() const = 0;
         };
@@ -145,6 +153,13 @@ namespace ldplab
             Type type() const override { return Type::rod_particles; }
             /** @brief Contains the rod particles. */
             std::vector<RodParticle> particle_data;
+        };
+
+        /** @brief Contains mesh particle data. */
+        struct MeshParticleData : public IParticleData
+        {
+            Type type() const override { return Type::mesh_particle; }
+            std::vector<MeshParticle> particle_data;
         };
 
         /** 
