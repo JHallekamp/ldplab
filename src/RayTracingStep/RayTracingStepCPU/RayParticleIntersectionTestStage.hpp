@@ -22,7 +22,7 @@ namespace ldplab
         struct Context;
         /**
          * @brief Ray particle intersection test stage interface.
-         * @detail The ray particle intersection test stage calculates the 
+         * @details The ray particle intersection test stage calculates the 
          *         intersection point of the ray with the particle and its 
          *         corresponding normal. Ray missing the particle are sorted 
          *         out to a new buffer.
@@ -249,6 +249,55 @@ namespace ldplab
         private:
             std::shared_ptr<Context> m_context;
         };
+
+        /**
+         * @brief Class implementing the ray particle intersection test for
+         *        triangular mesh based particle.
+         */
+        class MeshParticleIntersectionTest :
+            public IRayParticleIntersectionTestStage
+        {
+            MeshParticleIntersectionTest(
+                std::shared_ptr<Context> context);
+            /**
+             * @brief Inherited via ldplab::rtscpu::IRayParticleIntersectionTestStage.
+             * @details Start calculating the intersection points of the rays
+             *          with a particle. Missed ray are sorted out in a
+             *          secondary Ray buffer. Rays need to be in the particle
+             *          coordinate system.
+             * @param[in] state Pointer to the state of the simulation.
+             * @param[in] particle Index of the particle.
+             * @param[in, out] rays RayBuffer holding rays that hit the
+             *                 particle bounding box. Rays that miss the
+             *                 particle will be transformed back to world space.
+             * @param[out] intersection IntersectionBuffer holding information
+             *                          about the intersection points.
+             */
+            void execute(
+                RayBuffer& rays,
+                IntersectionBuffer& intersection) override;
+        private:
+            /**
+             * @brief Testing for a intersection of a single ray with a
+             *        particle.
+             * @param[in] particle Specifies the particle geometry.
+             * @param[in] ray Specifies the ray.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          outside of the particle.
+             */
+            bool intersectionTest(
+                const SphericalParticleGeometry* geometry,
+                const Ray& ray,
+                Vec3& inter_point,
+                Vec3& inter_normal);
+        private:
+            std::shared_ptr<Context> m_context;
+        };
+
     }
 }
 
