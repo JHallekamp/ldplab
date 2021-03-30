@@ -10,6 +10,7 @@ namespace ldplab
         /** @brief Contains static methods for various intersection tests. */
         class IntersectionTest
         {
+        public:
             /** @brief No instances of this class allowed. */
             IntersectionTest() = delete;
             /** 
