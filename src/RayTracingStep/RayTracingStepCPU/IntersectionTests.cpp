@@ -7,7 +7,7 @@ inline bool ldplab::rtscpu::IntersectionTest::rayTriangle(
     Vec3& intersection_normal, 
     double& dist)
 {
-    const double EPSILON = 1e-10;
+    constexpr double EPSILON = 1e-10;
     const Vec3 edge1 = triangle.b - triangle.a;
     const Vec3 edge2 = triangle.c - triangle.a;
     const Vec3 h = glm::cross(ray.direction, edge2);
@@ -47,7 +47,7 @@ inline bool ldplab::rtscpu::IntersectionTest::lineTriangle(
     Vec3& intersection_normal, 
     double& dist)
 {
-    const double EPSILON = 1e-10;
+    constexpr double EPSILON = 1e-10;
     const Vec3 line_direction = glm::normalize(line_end - line_start);
     const Vec3 edge1 = triangle.b - triangle.a;
     const Vec3 edge2 = triangle.c - triangle.a;
@@ -87,6 +87,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphere(
     double& min_dist, 
     double& max_dist)
 {
+    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -94,7 +95,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphere(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < 1e-9)
+    if (discriminant < EPSILON)
         return false;
 
     min_dist = -p - std::sqrt(discriminant);
@@ -113,6 +114,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphere(
     Vec3& max_intersection_normal, 
     double& max_dist)
 {
+    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -120,7 +122,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphere(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < 1e-9)
+    if (discriminant < EPSILON)
         return false;
     
     // Calculate intersections
@@ -143,6 +145,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMin(
     Vec3& intersection_normal, 
     double& dist)
 {
+    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -150,7 +153,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMin(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < 1e-9)
+    if (discriminant < EPSILON)
         return false;
 
     // Calculate intersections
@@ -169,6 +172,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
     Vec3& intersection_normal, 
     double& dist)
 {
+    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -176,7 +180,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < 1e-9)
+    if (discriminant < EPSILON)
         return false;
 
     // Calculate intersections

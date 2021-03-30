@@ -35,7 +35,24 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& dist);
-            /** @todo documentation */
+            /**
+             * @brief Computes the intersection between a line segment and a
+             *        triangle.
+             * @param[in] line_start Starting point of the line segment.
+             * @param[in] line_end Ending point of the line segment.
+             * @param[in] triangle Triangle for which the test is executed.
+             * @param[out] intersection_point If line and triangle intersect,
+             *                                intersection_point will contain
+             *                                the point of intersection.
+             * @param[out] intersection_normal If line and triangle intersect,
+             *                                 intersection_normal will contain
+             *                                 the triangle normal at the point
+             *                                 of intersection (facing to the 
+             *                                 side of the line origin).
+             * @param[out] dist If the line and triangle intersect, dist will 
+             *                  contain the distance from the line origin to
+             *                  the intersection point.
+             */
             static inline bool lineTriangle(
                 const Vec3& line_start,
                 const Vec3& line_end,
@@ -43,14 +60,54 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& dist);
-            /** @todo documentation */
+            /**
+             * @brief Computes the intersection between a ray and a sphere.
+             * @param[in] ray Ray for which the intersection test is executed.
+             * @param[in] sphere_center The center of the sphere.
+             * @param[in] sphere_radius The radius of the sphere.
+             * @param[out] min_dist As a ray and sphere can have at most two
+             *                      intersection points, min_dist contains the
+             *                      minimal distance from both distances to
+             *                      these points. Note that this can also be
+             *                      a negative value, if the ray origin lies
+             *                      within the sphere.
+             * @param[out] max_dist As a ray and sphere can have at most two
+             *                      intersection points, max_dist contains the
+             *                      maximal distance of each.
+             */
             static inline bool raySphere(
                 const Ray& ray,
                 const Vec3& sphere_center,
                 const double sphere_radius,
                 double& min_dist,
                 double& max_dist);
-            /** @todo documentation */
+            /**
+              * @brief Computes the intersection between a ray and a sphere.
+              * @param[in] ray Ray for which the intersection test is executed.
+              * @param[in] sphere_center The center of the sphere.
+              * @param[in] sphere_radius The radius of the sphere.
+              * @param[out] min_intersection_point Minimal intersection point
+              *                                    of each possible points of
+              *                                    intersection.
+              * @param[out] min_intersection_normal The sphere surface normal
+              *                                     at the minimal intersection
+              *                                     point.
+              * @param[out] min_dist As a ray and sphere can have at most two
+              *                      intersection points, min_dist contains the
+              *                      minimal distance from both distances to
+              *                      these points. Note that this can also be
+              *                      a negative value, if the ray origin lies
+              *                      within the sphere.
+              * @param[out] max_intersection_point Maximal intersection point
+              *                                    of each possible points of
+              *                                    intersection.
+              * @param[out] max_intersection_normal The sphere surface normal
+              *                                     at the maximal intersection
+              *                                     point.
+              * @param[out] max_dist As a ray and sphere can have at most two
+              *                      intersection points, max_dist contains the
+              *                      maximal distance of each.
+              */
             static inline bool raySphere(
                 const Ray& ray,
                 const Vec3& sphere_center,
@@ -61,7 +118,24 @@ namespace ldplab
                 Vec3& max_intersection_point,
                 Vec3& max_intersection_normal,
                 double& max_dist);
-            /** @todo documentation */
+            /**
+              * @brief Computes the minimal intersection between a ray and a 
+              *        sphere.
+              * @param[in] ray Ray for which the intersection test is executed.
+              * @param[in] sphere_center The center of the sphere.
+              * @param[in] sphere_radius The radius of the sphere.
+              * @param[out] intersection_point Minimal intersection point
+              *                                of each possible points of
+              *                                intersection.
+              * @param[out] intersection_normal The sphere surface normal at
+              *                                 the minimal intersection point.
+              * @param[out] dist As a ray and sphere can have at most two
+              *                  intersection points, dist contains the
+              *                  maximal distance from both distances to
+              *                  these points. Note that this can also be
+              *                  a negative value, if the ray origin lies
+              *                  within the sphere.
+              */
             static inline bool raySphereOnlyMin(
                 const Ray& ray,
                 const Vec3& sphere_center,
@@ -69,7 +143,24 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& dist);
-            /** @todo documentation */
+            /**
+              * @brief Computes the maximal intersection between a ray and a
+              *        sphere.
+              * @param[in] ray Ray for which the intersection test is executed.
+              * @param[in] sphere_center The center of the sphere.
+              * @param[in] sphere_radius The radius of the sphere.
+              * @param[out] intersection_point Maximal intersection point of
+              *                                each possible points of
+              *                                intersection.
+              * @param[out] intersection_normal The sphere surface normal at
+              *                                 the maximal intersection point.
+              * @param[out] dist As a ray and sphere can have at most two
+              *                  intersection points, dist contains the
+              *                  maximal distance from both distances to
+              *                  these points. Note that this can also be
+              *                  a negative value, if the ray origin lies
+              *                  within the sphere.
+              */
             static inline bool raySphereOnlyMax(
                 const Ray& ray,
                 const Vec3& sphere_center,
