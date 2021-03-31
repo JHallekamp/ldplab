@@ -28,6 +28,7 @@ namespace ldplab
              * @param[out] dist If ray and triangle intersect, dist will 
              *                  contain the distance from the ray origin to the
              *                  intersection point.
+             * @returns true, if the ray intersects the triangle.
              */
             static inline bool rayTriangle(
                 const Ray& ray,
@@ -52,6 +53,7 @@ namespace ldplab
              * @param[out] dist If the line and triangle intersect, dist will 
              *                  contain the distance from the line origin to
              *                  the intersection point.
+             * @returns true, if the line segment intersects the triangle.
              */
             static inline bool lineTriangle(
                 const Vec3& line_start,
@@ -74,6 +76,7 @@ namespace ldplab
              * @param[out] max_dist As a ray and sphere can have at most two
              *                      intersection points, max_dist contains the
              *                      maximal distance of each.
+             * @returns true, if the ray intersects the sphere.
              */
             static inline bool raySphere(
                 const Ray& ray,
@@ -107,6 +110,7 @@ namespace ldplab
               * @param[out] max_dist As a ray and sphere can have at most two
               *                      intersection points, max_dist contains the
               *                      maximal distance of each.
+              * @returns true, if the ray intersects the sphere.
               */
             static inline bool raySphere(
                 const Ray& ray,
@@ -135,6 +139,7 @@ namespace ldplab
               *                  these points. Note that this can also be
               *                  a negative value, if the ray origin lies
               *                  within the sphere.
+              * @returns true, if the ray intersects the sphere.
               */
             static inline bool raySphereOnlyMin(
                 const Ray& ray,
@@ -160,6 +165,7 @@ namespace ldplab
               *                  these points. Note that this can also be
               *                  a negative value, if the ray origin lies
               *                  within the sphere.
+              * @returns true, if the ray intersects the sphere.
               */
             static inline bool raySphereOnlyMax(
                 const Ray& ray,
@@ -168,6 +174,31 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& dist);
+            /**
+             * @brief Computes if a triangle and a axis aligned bounding box
+             *        intersect.
+             * @param[in] triangle The triangle for that the test is executed.
+             * @param[in] aabb The axis aligned bounding box for which the test
+             *                 is executed.
+             * @returns true, if the triangle intersects the axis aligned 
+             *          bounding box.
+             */
+            static inline bool triangleAABB(
+                const Triangle& triangle,
+                const AABB& aabb);
+            /** @todo documentation */
+            static inline bool rayAABB(
+                const Ray& ray,
+                const AABB& aabb,
+                double& min_dist,
+                double& max_dist);
+            /** @todo documentation */
+            static inline bool lineAABB(
+                const Vec3& line_start,
+                const Vec3& line_end,
+                const AABB& aabb,
+                double& min_dist,
+                double& max_dist);
         };
     }
 }

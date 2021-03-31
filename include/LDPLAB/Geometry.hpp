@@ -36,6 +36,13 @@ namespace ldplab
         Vec3 b;
         Vec3 c;
     };
+
+    /** @brief Structure modeling an axis aligned bounding box. */
+    struct AABB
+    {
+        Vec3 center;
+        Vec3 extents;
+    };
     
     /** @brief Defines the order of orientation around each axis. */
     enum class RotationOrder

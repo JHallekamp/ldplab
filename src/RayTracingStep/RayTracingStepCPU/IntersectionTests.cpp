@@ -190,3 +190,167 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
         glm::normalize(intersection_point - sphere_center);
     return true;
 }
+
+inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
+    const Triangle& triangle,
+    const AABB& aabb)
+{
+    // Based on the work of Tomas Akenine-Möller
+    // "Fast3DTriangle-BoxOverlapTesting", March 2001
+
+    const Vec3 v0 = triangle.a - aabb.center;
+    const Vec3 v1 = triangle.b - aabb.center;
+    const Vec3 v2 = triangle.c - aabb.center;
+
+    // ========================================================================
+    // Test for triangle aabb intersection
+    double min, max;
+
+    // X-Direction
+    min = std::fmin(v0.x, std::fmin(v1.x, v2.x));
+    max = std::fmax(v0.x, std::fmax(v1.x, v2.x));
+    if (min > aabb.extents.x || max < -aabb.extents.x)
+        return false;
+
+    // Y-Direction
+    min = std::fmin(v0.y, std::fmin(v1.y, v2.y));
+    max = std::fmax(v0.y, std::fmax(v1.y, v2.y));
+    if (min > aabb.extents.y || max < -aabb.extents.y)
+        return false;
+
+    // Z-Direction
+    min = std::fmin(v0.z, std::fmin(v1.z, v2.z));
+    max = std::fmax(v0.z, std::fmax(v1.z, v2.z));
+    if (min > aabb.extents.z || max < -aabb.extents.z)
+        return false;
+
+    // ========================================================================
+    // 9 Tests
+    const Vec3 e0 = v1 - v0;
+    const Vec3 e1 = v2 - v1;
+    const Vec3 e2 = v0 - v2;
+
+    Vec3 abs;
+    double rad;
+
+    // BUILD ABS
+    abs.x = std::abs(e0.x);
+    abs.y = std::abs(e0.y);
+    abs.z = std::abs(e0.z);
+
+    // AXISTEST_X01
+    min = e0.z * v0.y - e0.y * v0.z;
+    max = e0.z * v2.y - e0.y * v2.z;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.z * aabb.extents.y + abs.y * aabb.extents.z;
+    if (min > rad || max < -rad) return false;
+
+    // AXISTEST_Y02
+    min = -e0.z * v0.x + e0.x * v0.z;
+    max = -e0.z * v2.x + e0.x * v2.z;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.z * aabb.extents.x + abs.x * aabb.extents.z;
+    if (min > rad || max < -rad) return false;
+
+    // AXISTEST_Z12
+    min = e0.y * v1.x - e0.x * v1.y;
+    max = e0.y * v2.x - e0.x * v2.y;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.y * aabb.extents.x + abs.x * aabb.extents.y;
+    if (min > rad || max < -rad) return false;
+
+    // BUILD ABS
+    abs.x = std::abs(e1.x);
+    abs.y = std::abs(e1.y);
+    abs.z = std::abs(e1.z);
+
+    // AXISTEST_X01
+    min = e1.z * v0.y - e1.y * v0.z;
+    max = e1.z * v2.y - e1.y * v2.z;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.z * aabb.extents.y + abs.y * aabb.extents.z;
+    if (min > rad || max < -rad) return false;
+
+    // AXISTEST_Y02
+    min = -e1.z * v0.x + e1.x * v0.z;
+    max = -e1.z * v2.x + e1.x * v2.z;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.z * aabb.extents.x + abs.x * aabb.extents.z;
+    if (min > rad || max < -rad) return false;
+
+    // AXISTEST_Z0
+    min = e1.y * v0.x - e1.x * v0.y;				   
+    max = e1.y * v1.x - e1.x * v1.y;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.y * aabb.extents.x + abs.x * aabb.extents.y;
+    if (min > rad || max < -rad) return false;
+
+    // BUILD ABS
+    abs.x = std::abs(e2.x);
+    abs.y = std::abs(e2.y);
+    abs.z = std::abs(e2.z);
+
+    // AXISTEST_X2
+    min = e2.z * v0.y - e2.y * v0.z;
+    max = e2.z * v1.y - e2.y * v1.z;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.z * aabb.extents.y + abs.y * aabb.extents.z;
+    if (min > rad || max < -rad) return false;
+
+    // AXISTEST_Y1
+    min = -e2.z * v0.x + e2.x * v0.z;
+    max = -e2.z * v1.x + e2.x * v1.z;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.z * aabb.extents.x + abs.x * aabb.extents.z;
+    if (min > rad || max < -rad) return false;
+
+    // AXISTEST_Z12
+    min = e2.y * v1.x - e2.x * v1.y;
+    max = e2.y * v2.x - e2.x * v2.y;
+    if (min > max) std::swap<double>(min, max);
+    rad = abs.y * aabb.extents.x + abs.x * aabb.extents.y;
+    if (min > rad || max < -rad) return false;
+
+    // ========================================================================
+    // Test if aabb does intersect triangle plane
+    Vec3 vmin, vmax;
+    vmin.x = -aabb.extents.x - v0.x;
+    vmax.x = aabb.extents.x - v0.x;
+    vmin.y = -aabb.extents.y - v0.y;
+    vmax.y = aabb.extents.y - v0.y;
+    vmin.z = -aabb.extents.z - v0.z;
+    vmax.z = aabb.extents.z - v0.z;
+    if (vmin.x > vmax.x) std::swap<double>(vmin.x, vmax.x);
+    if (vmin.y > vmax.y) std::swap<double>(vmin.y, vmax.y);
+    if (vmin.z > vmax.z) std::swap<double>(vmin.z, vmax.z);
+
+    const Vec3 normal = glm::cross(e0, e1);
+    if (glm::dot(normal, vmin) > 0.0)
+        return false; // aabb does not overlap => seperation axis found
+    else if (glm::dot(normal, vmax) >= 0.0)
+        return true; // aabb does overlap => no seperation axis found
+    else
+        return false; // aabb does not overlap => seperation axis found
+    
+    // No seperation axis found => Triangle and AABB intersect
+    //return true;
+}
+
+inline bool ldplab::rtscpu::IntersectionTest::rayAABB(
+    const Ray& ray, 
+    const AABB& aabb, 
+    double& min_dist, 
+    double& max_dist)
+{
+    return false;
+}
+
+inline bool ldplab::rtscpu::IntersectionTest::lineAABB(
+    const Vec3& line_start, 
+    const Vec3& line_end, 
+    const AABB& aabb, 
+    double& min_dist, 
+    double& max_dist)
+{
+    return false;
+}
