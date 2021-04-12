@@ -8,7 +8,7 @@ namespace ldplab
      */
     struct IAcceleratorStructureParameter
     {
-        enum class Type { brut_force };
+        enum class Type { brute_force };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IAcceleratorStructureParameter.
@@ -21,12 +21,18 @@ namespace ldplab
         {
             switch (type())
             {
-            case Type::brut_force: return "brut_force";
+            case Type::brute_force: return "brute_force";
             default: return "unknown_type";
             }
         }
     };
 
-
+    /** @brief Brute force approaches do not take any special parameter. */
+    struct AcceleratorStructureBruteForceParameter : 
+        public IAcceleratorStructureParameter
+    {
+        /** @brief Returns Type::brute_force */
+        Type type() const override { return Type::brute_force; }
+    };
 }
 #endif

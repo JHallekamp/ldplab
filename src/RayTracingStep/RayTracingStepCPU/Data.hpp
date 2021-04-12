@@ -9,7 +9,7 @@
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
 
-#include "IAcceleratorStructure.hpp"
+#include "ParticleAcceleratorStructures.hpp"
 
 namespace ldplab
 {
@@ -132,7 +132,7 @@ namespace ldplab
          */
         struct MeshParticle
         {
-            std::shared_ptr<IAcceleratorStructure> geometry;
+            std::shared_ptr<IParticleAcceleratorStructure> geometry;
         };
         /**
          * @brief Interface for structure containing the particle data rehashed
