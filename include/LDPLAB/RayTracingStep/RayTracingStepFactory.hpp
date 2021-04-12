@@ -33,24 +33,6 @@ namespace ldplab
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info);
         /**
-         * @brief Creates a ray tracing step and provides pointers to the 
-         *        context and individual stages to debug them individually.
-         * @param[in] setup The setup of the experiment.
-         * @param[in] info Contains the information needed to create the stage.
-         * @param[out] debug Stores the pointer to context and ray tracing
-         *                   pipeline stages.
-         * @returns Pointer to the ray tracing step instance.
-         * @note This does NOT create a pipeline and therefore executing the
-         *       ray tracing step will fail with a null pointer exception. You
-         *       will have to do the pipeline work (e.g. updating particle data
-         *       or ray buffer management) on your own.
-         */
-        static std::shared_ptr<IRayTracingStep>
-            createRayTracingStepCPUDebug(
-                const ExperimentalSetup& setup,
-                const RayTracingStepCPUInfo& info,
-                RayTracingStepCPUDebugInfo& debug);
-        /**
          * @brief Creates a ray tracing step that utilizes the GPU.
          * @param[in] setup The setup of the experiment.
          * @param[in] info Contains the information needed to create the stage.

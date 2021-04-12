@@ -20,7 +20,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep>
     }
 
     // Create context
-    std::shared_ptr<Context> context;
+    std::unique_ptr<Context> context;
     if (!factory.createContext(setup, info, context))
     {
         LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create "\
@@ -37,7 +37,7 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep>
     if (!factory.createPipelineStages(
         setup,
         info,
-        context,
+        *context,
         initial,
         ipp,
         rbvit,
@@ -54,67 +54,9 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStep>
         std::move(rpit),
         std::move(rpi),
         std::move(ipp),
-        context);
+        *context);
 
-    return std::shared_ptr<RayTracingStep>(new RayTracingStep(context));
-}
-
-std::shared_ptr<ldplab::rtscpu::RayTracingStep> 
-    ldplab::rtscpu::Factory::createRTSDebug(
-        const ExperimentalSetup& setup, 
-        const RayTracingStepCPUInfo& info, 
-        RayTracingStepCPUDebugInfo& debug_info)
-{
-    // Create the factory instance
-    Factory factory;
-
-    // Validate setup
-    if (!factory.validateSetup(setup, info))
-    {
-        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create "\
-            "rtscpu::RayTracingStep instance, invalid experimental setup");
-        return nullptr;
-    }
-
-    // Create context
-    std::shared_ptr<Context> context;
-    if (!factory.createContext(setup, info, context))
-    {
-        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create "\
-            "rtscpu::RayTracingStep instance, context creation failed");
-        return nullptr;
-    }
-
-    // Create pipeline
-    std::unique_ptr<IInitialStage> initial;
-    std::unique_ptr<IInnerParticlePropagationStage> ipp;
-    std::unique_ptr<IRayBoundingVolumeIntersectionTestStage> rbvit;
-    std::unique_ptr<IRayParticleInteractionStage> rpi;
-    std::unique_ptr<IRayParticleIntersectionTestStage> rpit;
-    if (!factory.createPipelineStages(
-        setup,
-        info,
-        context,
-        initial,
-        ipp,
-        rbvit,
-        rpi,
-        rpit))
-    {
-        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create "\
-            "rtscpu::RayTracingStep instance, pipeline stage creation failed");
-        return nullptr;
-    }
-
-    // Add debug
-    debug_info.context = context;
-    debug_info.initial_stage = std::move(initial);
-    debug_info.inner_particle_propagation = std::move(ipp);
-    debug_info.ray_bounding_volume_intersection_test = std::move(rbvit);
-    debug_info.ray_particle_interaction = std::move(rpi);
-    debug_info.ray_particle_intersection_test = std::move(rpit);
-
-    return std::shared_ptr<RayTracingStep>(new RayTracingStep(context));
+    return std::shared_ptr<RayTracingStep>(new RayTracingStep(std::move(context)));
 }
 
 bool ldplab::rtscpu::Factory::validateSetup(
@@ -261,9 +203,9 @@ bool ldplab::rtscpu::Factory::validateTypeHomogeneity(
 bool ldplab::rtscpu::Factory::createContext(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context>& context)
+    std::unique_ptr<Context>& context)
 {
-    context = std::shared_ptr<Context>(
+    context = std::unique_ptr<Context>(
         new Context{ setup.particles, setup.light_sources });
     context->thread_pool = 
         std::make_shared<utils::ThreadPool>(info.number_parallel_pipelines);
@@ -283,11 +225,11 @@ bool ldplab::rtscpu::Factory::createContext(
 bool ldplab::rtscpu::Factory::createDataInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepCPUInfo& info, 
-    std::shared_ptr<Context> context)
+    std::unique_ptr<Context>& context)
 {
     bool no_error = true;
     if (m_bounding_volume_type == IBoundingVolume::Type::sphere)
-        createBoundingSphereDataInstances(setup, info, context);
+        createBoundingSphereDataInstances(setup, info, *context);
     else
     {
         LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create bounding volume "\
@@ -295,7 +237,7 @@ bool ldplab::rtscpu::Factory::createDataInstances(
         no_error = false;
     }
     if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
-        createRodParticleDataInstances(setup, info, context);
+        createRodParticleDataInstances(setup, info, *context);
     else if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
     {
     }
@@ -311,24 +253,24 @@ bool ldplab::rtscpu::Factory::createDataInstances(
 void ldplab::rtscpu::Factory::createBoundingSphereDataInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepCPUInfo& info, 
-    std::shared_ptr<Context> context)
+    Context& context)
 {
-    context->bounding_volume_data =
+    context.bounding_volume_data =
         std::shared_ptr<rtscpu::IBoundingVolumeData>(
             new rtscpu::BoundingSphereData());
-    ((rtscpu::BoundingSphereData*)context->bounding_volume_data.get())->
-        sphere_data.resize(context->particles.size(),
+    ((rtscpu::BoundingSphereData*)context.bounding_volume_data.get())->
+        sphere_data.resize(context.particles.size(),
             BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
 }
 
 void ldplab::rtscpu::Factory::createRodParticleDataInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepCPUInfo& info, 
-    std::shared_ptr<Context> context)
+    Context& context)
 {
     std::shared_ptr<RodParticleData> particle_data = 
         std::make_shared<RodParticleData>();
-    context->particle_data = particle_data;
+    context.particle_data = particle_data;
     RodParticle t;
     double h;
     double sphere_radius;
@@ -361,7 +303,7 @@ void ldplab::rtscpu::Factory::createRodParticleDataInstances(
 bool ldplab::rtscpu::Factory::createPipelineStages(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IInitialStage>& initial, 
     std::unique_ptr<IInnerParticlePropagationStage>& ipp, 
     std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& rbvi, 
@@ -385,7 +327,7 @@ bool ldplab::rtscpu::Factory::createPipelineStages(
 bool ldplab::rtscpu::Factory::createInitialStage(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IInitialStage>& stage)
 {
     if (m_bounding_volume_type == IBoundingVolume::Type::sphere &&
@@ -406,7 +348,7 @@ bool ldplab::rtscpu::Factory::createInitialStage(
 bool ldplab::rtscpu::Factory::createInnerParticlePropagationStage(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IInnerParticlePropagationStage>& stage)
 {
     if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
@@ -460,7 +402,7 @@ bool ldplab::rtscpu::Factory::createInnerParticlePropagationStage(
 bool ldplab::rtscpu::Factory::createRayBoundingVolumeIntersectionTestStage(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& stage)
 {
     if (m_bounding_volume_type == IBoundingVolume::Type::sphere)
@@ -480,7 +422,7 @@ bool ldplab::rtscpu::Factory::createRayBoundingVolumeIntersectionTestStage(
 bool ldplab::rtscpu::Factory::createRayParticleInteractionStage(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context> context,
+    Context& context,
     std::unique_ptr<IRayParticleInteractionStage>& stage)
 {
     if (m_light_polarization_type == ILightPolarisation::Type::unpolarized &&
@@ -501,7 +443,7 @@ bool ldplab::rtscpu::Factory::createRayParticleInteractionStage(
 bool ldplab::rtscpu::Factory::createRayParticleIntersectionTestStage(
     const ExperimentalSetup& setup,
     const RayTracingStepCPUInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IRayParticleIntersectionTestStage>& stage)
 {
     if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
