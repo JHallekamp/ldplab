@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_UTILS_COMPUTE_HELPER_HPP
 #define WWU_LDPLAB_UTILS_COMPUTE_HELPER_HPP
 
-#include <cstdint>
+#include <stddef.h>
 
 namespace ldplab
 {

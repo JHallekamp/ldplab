@@ -382,7 +382,7 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                     else
                         m_rasterization_x -= m_rasterization_step_size;
 
-                    if (abs(m_rasterization_x - projection.center.x) >
+                    if (std::abs(m_rasterization_x - projection.center.x) >
                         projection.radius)
                     {
                         if (m_rasterization_right)

@@ -4,7 +4,7 @@
 #include <LDPLAB/UID.hpp>
 
 #include <condition_variable>
-#include <cstdint>
+#include <stddef.h>
 #include <list>
 #include <memory>
 #include <mutex>

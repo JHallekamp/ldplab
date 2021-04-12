@@ -2,7 +2,7 @@
 #define WWU_LDPLAB_UID_HPP
 
 #include <atomic>
-#include <cstdint>
+#include <stddef.h>
 
 namespace ldplab
 {

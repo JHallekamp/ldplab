@@ -1,7 +1,7 @@
 #ifndef WWU_LDPLAB_PROPERTY_GENERATOR_HPP
 #define WWU_LDPLAB_PROPERTY_GENERATOR_HPP
 
-#include "..\..\Geometry.hpp"
+#include <LDPLAB/Geometry.hpp>
 
 namespace ldplab
 {

@@ -81,7 +81,7 @@ namespace ldplab
         * @brief Class implementing the inner particle propagation for
         *        linear index of refraction gradient in one direction.
         * @detail The light propagation is calculated by solving the Eikonal
-        *         equation with the Runge–Kutta method.
+        *         equation with the Rungeï¿½Kutta method.
         */
         class EikonalSolverRK4 : public IInnerParticlePropagationStage, IInnerParticlePropagationParticle
         {
@@ -227,7 +227,7 @@ namespace ldplab
         * @brief Class implementing the inner particle propagation for
         *        linear index of refraction gradient in one direction.
         * @detail The light propagation is calculated by solving the Eikonal
-        *         equation with the Runge–Kutta–Fehlberg(45) method.
+        *         equation with the Rungeï¿½Kuttaï¿½Fehlberg(45) method.
         */
         class EikonalSolverRK45 : public IInnerParticlePropagationStage, 
             IInnerParticlePropagationParticle
@@ -541,7 +541,7 @@ namespace ldplab
          * @brief Class implementing the inner particle propagation for 
          *        linear index of refraction gradient in one direction.
          * @detail The light propagation is calculated by solving the Eikonal 
-         *         equation with the Runge–Kutta–Fehlberg(45) method.
+         *         equation with the Rungeï¿½Kuttaï¿½Fehlberg(45) method.
          */
         class RK45RodParticlePropagation
             : public EikonalSolverRK45, IPPRodParticle
@@ -592,7 +592,7 @@ namespace ldplab
         * @brief Class implementing the inner particle propagation for
         *        linear index of refraction gradient in one direction.
         * @detail The light propagation is calculated by solving the Eikonal
-        *         equation with the Runge–Kutta method.
+        *         equation with the Rungeï¿½Kutta method.
         */
         class RK4RodParticlePropagation
             : public EikonalSolverRK4, IPPRodParticle
@@ -642,7 +642,7 @@ namespace ldplab
         /**
          * @brief Class implementing the eikonal solver for spherical particle.
          * @detail The light propagation is calculated by solving the Eikonal
-         *         equation with the Runge–Kutta–Fehlberg(45) method.
+         *         equation with the Rungeï¿½Kuttaï¿½Fehlberg(45) method.
          */
         class RK45SphericalParticlePropagation :
             public EikonalSolverRK45, IPPSphereParticle
@@ -694,7 +694,7 @@ namespace ldplab
         /**
          * @brief Class implementing the eikonal solver for spherical particle.
          * @detail The light propagation is calculated by solving the Eikonal
-         *         equation with the Runge–Kutta method.
+         *         equation with the Rungeï¿½Kutta method.
          */
         class RK4SphericalParticlePropagation :
             public EikonalSolverRK4, IPPSphereParticle
