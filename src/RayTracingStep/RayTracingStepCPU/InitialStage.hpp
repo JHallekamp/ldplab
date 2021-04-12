@@ -50,7 +50,7 @@ namespace ldplab
         {
         public:
             InitialStageBoundingSpheresHomogenousLight(
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Inherited via ldplab::rtscpu::IInitialStage. */
             void setup() override;
             /** @brief Inherited via ldplab::rtscpu::IInitialStage. */
@@ -78,7 +78,7 @@ namespace ldplab
             inline void transformRayFromWorldToParticleSpace(
                 Ray& ray, size_t pidx) const;
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             // Projections for each particle
             std::vector<std::vector<Projection>> m_projections_per_particle;
             size_t m_batch_creation_particle_index;

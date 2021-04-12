@@ -1,21 +1,23 @@
-cmake_minimum_required (VERSION 3.15)
+cmake_minimum_required (VERSION 3.7)
 
 project(LDPLAB
     VERSION 0.1
-    DESCRIPTION "Light driven particle simulation library"
     LANGUAGES CXX
 )
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    find_package(Doxygen)
-    if(Doxygen_FOUND)
-        # add_subdirectory(docs)
-    else()
-        message(STATUS "Doxygen not found, not building docs")
+option (ENABEL_DOCS "Create documentation with Doxygen" OFF)
+option (LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL "Use OPENGL for Graphic card processing" OFF)
+
+if(ENABEL_DOCS)
+    if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+        find_package(Doxygen)
+        if(Doxygen_FOUND)
+            add_subdirectory(docs)
+        else()
+            message(STATUS "Doxygen not found, not building docs")
+        endif()
     endif()
 endif()
-
-option (LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL "Use OPENGL for Graphic card processing" OFF)
 
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -42,11 +44,10 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-add_subdirectory(external/glm)
-
 if(NOT LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
     find_package(OpenGL REQUIRED)
     find_package(GLEW REQUIRED)
 endif()
 
+add_subdirectory(external/glm)
 add_subdirectory(src)

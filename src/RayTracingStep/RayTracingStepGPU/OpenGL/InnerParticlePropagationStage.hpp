@@ -67,7 +67,7 @@ namespace ldplab
              *                   Runge-Kutta-Fehlberg method.
              */
             LinearIndexGradientRodParticlePropagation(
-                std::shared_ptr<Context> context,
+                Context& context,
                 RK45 parameters);
             /**
              * @brief Initializes the shader.
@@ -98,7 +98,7 @@ namespace ldplab
             } m_cs_inner_particle_propagation;
         private:
             const RK45 m_parameters;
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
     }
 }

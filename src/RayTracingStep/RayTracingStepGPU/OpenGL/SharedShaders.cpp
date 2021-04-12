@@ -16,7 +16,7 @@
 #include <sstream>
 
 ldplab::rtsgpu_ogl::SharedShaders::SharedShaders(
-    std::shared_ptr<Context> ctx)
+    Context& ctx)
     :
     m_context{ ctx },
     m_cs_count_ray_buffer_state_post_stage{ },
@@ -29,8 +29,8 @@ ldplab::rtsgpu_ogl::SharedShaders::SharedShaders(
 bool ldplab::rtsgpu_ogl::SharedShaders::createShaderByName(
     const char* name, std::shared_ptr<ComputeShader>& shader)
 {
-    shader = m_context->ogl->createComputeShaderFromFile(name,
-        m_context->parameters.shader_base_directory + 
+    shader = m_context.ogl->createComputeShaderFromFile(name,
+        m_context.parameters.shader_base_directory + 
             constant::glsl_shader_subdirectory +
             name + 
             constant::glsl_shader_extension);
@@ -55,10 +55,10 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
 
     // Create SSBOs
     m_cs_count_ray_buffer_state_post_stage.ssbo_output =
-        m_context->ogl->createShaderStorageBuffer(sizeof(int32_t) * 2, GL_STREAM_READ);
+        m_context.ogl->createShaderStorageBuffer(sizeof(int32_t) * 2, GL_STREAM_READ);
     m_cs_count_ray_buffer_state_pre_stage.ssbo_temp =
-        m_context->ogl->createShaderStorageBuffer(sizeof(int32_t) * 2 *
-            m_context->parameters.number_rays_per_buffer);
+        m_context.ogl->createShaderStorageBuffer(sizeof(int32_t) * 2 *
+            m_context.parameters.number_rays_per_buffer);
     if (m_cs_count_ray_buffer_state_post_stage.ssbo_output == nullptr ||
         m_cs_count_ray_buffer_state_pre_stage.ssbo_temp == nullptr)
         return false;
@@ -66,15 +66,15 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
     // Compute work group size
     m_cs_count_ray_buffer_state_post_stage.num_work_groups = 
         utils::ComputeHelper::getNumWorkGroups(
-            m_context->parameters.number_rays_per_buffer,
+            m_context.parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::count_ray_buffer_state_post_stage);
     m_cs_count_ray_buffer_state_pre_stage.num_work_groups =
         utils::ComputeHelper::getNumWorkGroups(
-            m_context->parameters.number_rays_per_buffer,
+            m_context.parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::count_ray_buffer_state_pre_stage);
     m_cs_reset_output_and_intersection.num_work_groups =
         utils::ComputeHelper::getNumWorkGroups(
-            m_context->parameters.number_rays_per_buffer,
+            m_context.parameters.number_rays_per_buffer,
             constant::glsl_local_group_size::reset_output_and_intersection_buffer);
 
     // Get uniform locations
@@ -100,7 +100,7 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
 
     m_cs_count_ray_buffer_state_pre_stage.shader->use();
     glUniform1ui(m_cs_count_ray_buffer_state_pre_stage.uniform_num_rays_per_buffer,
-        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+        static_cast<GLuint>(m_context.parameters.number_rays_per_buffer));
 
     // Get uniform locations
     m_cs_reset_output_and_intersection.uniform_num_rays_per_buffer =
@@ -108,7 +108,7 @@ bool ldplab::rtsgpu_ogl::SharedShaders::initShaders()
 
     m_cs_reset_output_and_intersection.shader->use();
     glUniform1ui(m_cs_reset_output_and_intersection.uniform_num_rays_per_buffer,
-        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+        static_cast<GLuint>(m_context.parameters.number_rays_per_buffer));
 
     // Done
     return true;
@@ -209,7 +209,7 @@ void ldplab::rtsgpu_ogl::SharedShaders::countBufferIndexState()
     LDPLAB_PROFILING_START(update_ray_buffer_state_reduction_stage);
     m_cs_count_ray_buffer_state_reduction_stage.shader->use();
     m_cs_count_ray_buffer_state_pre_stage.ssbo_temp->bindToIndex(0);
-    size_t num_threads = m_context->parameters.number_rays_per_buffer;
+    size_t num_threads = m_context.parameters.number_rays_per_buffer;
     GLuint buffer_size, source_offset;
     do
     {
