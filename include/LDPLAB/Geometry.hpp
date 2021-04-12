@@ -40,8 +40,8 @@ namespace ldplab
     /** @brief Structure modeling an axis aligned bounding box. */
     struct AABB
     {
-        Vec3 center;
-        Vec3 extents;
+        Vec3 min;
+        Vec3 max;
     };
     
     /** @brief Defines the order of orientation around each axis. */

@@ -199,6 +199,14 @@ namespace ldplab
                 const AABB& aabb,
                 double& min_dist,
                 double& max_dist);
+            /** @todo documentation */
+            static inline bool lineSlab(
+                double line_start,
+                double line_end,
+                double slab_min,
+                double slab_max,
+                double& min_dist,
+                double& max_dist);
         };
     }
 }

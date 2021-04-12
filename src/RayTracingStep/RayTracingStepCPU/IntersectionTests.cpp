@@ -195,12 +195,15 @@ inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     const Triangle& triangle,
     const AABB& aabb)
 {
+    const Vec3 aabb_extent = aabb.max - aabb.min;
+    const Vec3 aabb_center = aabb.min + aabb_extent;
+
     // Based on the work of Tomas Akenine-Möller
     // "Fast3DTriangle-BoxOverlapTesting", March 2001
 
-    const Vec3 v0 = triangle.a - aabb.center;
-    const Vec3 v1 = triangle.b - aabb.center;
-    const Vec3 v2 = triangle.c - aabb.center;
+    const Vec3 v0 = triangle.a - aabb_center;
+    const Vec3 v1 = triangle.b - aabb_center;
+    const Vec3 v2 = triangle.c - aabb_center;
 
     // ========================================================================
     // Test for triangle aabb intersection
@@ -209,19 +212,19 @@ inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     // X-Direction
     min = std::fmin(v0.x, std::fmin(v1.x, v2.x));
     max = std::fmax(v0.x, std::fmax(v1.x, v2.x));
-    if (min > aabb.extents.x || max < -aabb.extents.x)
+    if (min > aabb_extent.x || max < -aabb_extent.x)
         return false;
 
     // Y-Direction
     min = std::fmin(v0.y, std::fmin(v1.y, v2.y));
     max = std::fmax(v0.y, std::fmax(v1.y, v2.y));
-    if (min > aabb.extents.y || max < -aabb.extents.y)
+    if (min > aabb_extent.y || max < -aabb_extent.y)
         return false;
 
     // Z-Direction
     min = std::fmin(v0.z, std::fmin(v1.z, v2.z));
     max = std::fmax(v0.z, std::fmax(v1.z, v2.z));
-    if (min > aabb.extents.z || max < -aabb.extents.z)
+    if (min > aabb_extent.z || max < -aabb_extent.z)
         return false;
 
     // ========================================================================
@@ -242,21 +245,21 @@ inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     min = e0.z * v0.y - e0.y * v0.z;
     max = e0.z * v2.y - e0.y * v2.z;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.z * aabb.extents.y + abs.y * aabb.extents.z;
+    rad = abs.z * aabb_extent.y + abs.y * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Y02
     min = -e0.z * v0.x + e0.x * v0.z;
     max = -e0.z * v2.x + e0.x * v2.z;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.z * aabb.extents.x + abs.x * aabb.extents.z;
+    rad = abs.z * aabb_extent.x + abs.x * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Z12
     min = e0.y * v1.x - e0.x * v1.y;
     max = e0.y * v2.x - e0.x * v2.y;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.y * aabb.extents.x + abs.x * aabb.extents.y;
+    rad = abs.y * aabb_extent.x + abs.x * aabb_extent.y;
     if (min > rad || max < -rad) return false;
 
     // BUILD ABS
@@ -268,21 +271,21 @@ inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     min = e1.z * v0.y - e1.y * v0.z;
     max = e1.z * v2.y - e1.y * v2.z;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.z * aabb.extents.y + abs.y * aabb.extents.z;
+    rad = abs.z * aabb_extent.y + abs.y * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Y02
     min = -e1.z * v0.x + e1.x * v0.z;
     max = -e1.z * v2.x + e1.x * v2.z;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.z * aabb.extents.x + abs.x * aabb.extents.z;
+    rad = abs.z * aabb_extent.x + abs.x * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Z0
     min = e1.y * v0.x - e1.x * v0.y;				   
     max = e1.y * v1.x - e1.x * v1.y;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.y * aabb.extents.x + abs.x * aabb.extents.y;
+    rad = abs.y * aabb_extent.x + abs.x * aabb_extent.y;
     if (min > rad || max < -rad) return false;
 
     // BUILD ABS
@@ -294,32 +297,32 @@ inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     min = e2.z * v0.y - e2.y * v0.z;
     max = e2.z * v1.y - e2.y * v1.z;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.z * aabb.extents.y + abs.y * aabb.extents.z;
+    rad = abs.z * aabb_extent.y + abs.y * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Y1
     min = -e2.z * v0.x + e2.x * v0.z;
     max = -e2.z * v1.x + e2.x * v1.z;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.z * aabb.extents.x + abs.x * aabb.extents.z;
+    rad = abs.z * aabb_extent.x + abs.x * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Z12
     min = e2.y * v1.x - e2.x * v1.y;
     max = e2.y * v2.x - e2.x * v2.y;
     if (min > max) std::swap<double>(min, max);
-    rad = abs.y * aabb.extents.x + abs.x * aabb.extents.y;
+    rad = abs.y * aabb_extent.x + abs.x * aabb_extent.y;
     if (min > rad || max < -rad) return false;
 
     // ========================================================================
     // Test if aabb does intersect triangle plane
     Vec3 vmin, vmax;
-    vmin.x = -aabb.extents.x - v0.x;
-    vmax.x = aabb.extents.x - v0.x;
-    vmin.y = -aabb.extents.y - v0.y;
-    vmax.y = aabb.extents.y - v0.y;
-    vmin.z = -aabb.extents.z - v0.z;
-    vmax.z = aabb.extents.z - v0.z;
+    vmin.x = -aabb_extent.x - v0.x;
+    vmax.x = aabb_extent.x - v0.x;
+    vmin.y = -aabb_extent.y - v0.y;
+    vmax.y = aabb_extent.y - v0.y;
+    vmin.z = -aabb_extent.z - v0.z;
+    vmax.z = aabb_extent.z - v0.z;
     if (vmin.x > vmax.x) std::swap<double>(vmin.x, vmax.x);
     if (vmin.y > vmax.y) std::swap<double>(vmin.y, vmax.y);
     if (vmin.z > vmax.z) std::swap<double>(vmin.z, vmax.z);
@@ -342,7 +345,45 @@ inline bool ldplab::rtscpu::IntersectionTest::rayAABB(
     double& min_dist, 
     double& max_dist)
 {
-    return false;
+    /*
+    min_dist = (aabb.min.x - ray.origin.x) / ray.direction.x;
+    max_dist = (aabb.max.x - ray.origin.x) / ray.direction.x;
+
+    if (min_dist > max_dist)
+        std::swap<double>(min_dist, max_dist);
+
+    double tymin = (aabb.min.y - ray.origin.y) / ray.direction.y;
+    double tymax = (aabb.max.y - ray.origin.y) / ray.direction.y;
+
+    if (tymin > tymax)
+        std::swap<double>(tymin, tymax);
+
+    if ((min_dist > tymax) || (tymin > max_dist))
+        return false;
+
+    if (tymin > min_dist)
+        min_dist = tymin;
+
+    if (tymax < max_dist)
+        max_dist = tymax;
+
+    double tzmin = (aabb.min.z - ray.origin.z) / ray.direction.z;
+    double tzmax = (aabb.max.z - ray.origin.z) / ray.direction.z;
+
+    if (tzmin > tzmax)
+        std::swap<double>(tzmin, tzmax);
+
+    if ((min_dist > tzmax) || (tzmin > max_dist))
+        return false;
+
+    if (tzmin > min_dist)
+        min_dist = tzmin;
+
+    if (tzmax < max_dist)
+        max_dist = tzmax;
+    
+    return true;
+    */
 }
 
 inline bool ldplab::rtscpu::IntersectionTest::lineAABB(
@@ -352,5 +393,37 @@ inline bool ldplab::rtscpu::IntersectionTest::lineAABB(
     double& min_dist, 
     double& max_dist)
 {
+    return false;
+}
+
+inline bool ldplab::rtscpu::IntersectionTest::lineSlab(
+    double line_start, 
+    double line_end, 
+    double slab_min, 
+    double slab_max, 
+    double& min_dist, 
+    double& max_dist)
+{
+    /*
+    constexpr double EPSILON = 1e-10;
+
+    double line_length = line_end - line_start;
+    if (line_length < EPSILON)
+    {
+        if (line_start < slab_min || line_start > slab_max)
+            return false;
+        else
+            return true;
+    }
+
+    double dim_min = (slab_min - line_start) / line_length;
+    double dim_max = (slab_max - line_start) / line_length;
+
+    if (dim_max < dim_min)
+        std::swap<double>(dim_max, dim_min);
+
+    if (dim_max < min_dist)
+        return false;
+    */
     return false;
 }
