@@ -817,3 +817,26 @@ void ldplab::rtscpu::IPPSphereParticle::intersection(
     inter_point = t_ray.origin + distance * t_ray.direction;
     inter_normal = -glm::normalize(inter_point);
 }
+
+ldplab::rtscpu::IPPMeshParticle::IPPMeshParticle(
+    std::shared_ptr<Context> context)
+    :
+    m_context{context}
+{
+}
+
+void ldplab::rtscpu::IPPMeshParticle::intersection(
+    const size_t particle, 
+    const Vec3& origin_in, 
+    const Vec3& origin_out, 
+    Vec3& inter_point, 
+    Vec3& inter_normal)
+{
+    Ray t_ray{ origin_out, glm::normalize(origin_in - origin_out), -1 };
+    
+    MeshParticleData* data = (MeshParticleData*) m_context->particle_data.get();
+    data->particle_data[particle].geometry->Intersection(
+                t_ray,
+                inter_point,
+                inter_normal);
+}

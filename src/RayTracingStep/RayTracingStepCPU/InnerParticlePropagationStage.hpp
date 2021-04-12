@@ -537,6 +537,42 @@ namespace ldplab
             std::shared_ptr<Context> m_context;
         };
 
+        class IPPMeshParticle : public IInnerParticlePropagationParticle
+        {
+        protected:
+            IPPMeshParticle(std::shared_ptr<Context> context);
+            /**
+             * @brief Check if the position is outside of the particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] r Position to check.
+             * @retuns true if the position is outside the particle, false if
+             *         the position is inside.
+             */
+            bool isOutsideParticle(const size_t particle, const Vec3& r) override;
+            /**
+             * @brief Calculating the intersection of the ray and the particle.
+             * @warning It is necessary that the ray origin is inside the
+             *          particle.
+             * @param[in] particle Index of the particle.
+             * @param[in] ray_origin_in Last ray position inside the particle.
+             * @param[in] ray_origin_out First ray position outside the particle.
+             * @param[out] inter_point Resulting intersection point with
+             *                         the particle surface.
+             * @param[out] inter_normal Resulting normal of the particle
+             *                          surface at the intersection
+             *                          point. The normal is pointing
+             *                          inside the particle.
+             */
+            void intersection(
+                const size_t particle,
+                const Vec3& origin_in,
+                const Vec3& origin_out,
+                Vec3& inter_point,
+                Vec3& inter_normal) override;
+        private:
+            std::shared_ptr<Context> m_context;
+        };
+        
         /**
          * @brief Class implementing the inner particle propagation for 
          *        linear index of refraction gradient in one direction.
