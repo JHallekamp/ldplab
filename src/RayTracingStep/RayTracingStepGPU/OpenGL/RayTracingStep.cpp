@@ -38,9 +38,9 @@ ldplab::rtsgpu_ogl::ParticleTransformationData::Transformation
 }
 
 ldplab::rtsgpu_ogl::RayTracingStep::RayTracingStep(
-    std::shared_ptr<Context> context)
+    std::unique_ptr<Context> context)
     :
-    m_context{ context }
+    m_context{ std::move(context) }
 {
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "RayTracingStep instance created",

@@ -49,7 +49,7 @@ namespace ldplab
         private:
             ComputeShader();
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             /** @brief OpenGL ID of the shader program. */
             GLuint m_glid;
             /** @brief The name of the shader program. */
@@ -123,7 +123,7 @@ namespace ldplab
         class OpenGLContext
         {
         public:
-            OpenGLContext(std::shared_ptr<Context> context);
+            OpenGLContext(Context& context);
             ~OpenGLContext();
             /** 
              * @brief Initializes glew, opengl and context data. 
@@ -173,7 +173,7 @@ namespace ldplab
             /** @brief Unbinds the opengl context from the current thread. */
             void unbindGlContext();
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             std::mutex m_gpu_mutex;
             GLFWwindow* m_gl_offscreen_context;
         };
