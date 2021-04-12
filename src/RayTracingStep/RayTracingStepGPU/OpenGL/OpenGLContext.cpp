@@ -46,13 +46,13 @@ GLint ldplab::rtsgpu_ogl::ComputeShader::getUniformLocation(
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Shader %s does not "\
             "have a uniform buffer %s",
-            m_context->uid, m_name.c_str(), name.c_str());
+            m_context.uid, m_name.c_str(), name.c_str());
     }
     else
     {
         LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Shader %s provides "\
             "uniform buffer %s at location %i",
-            m_context->uid, m_name.c_str(), name.c_str(), uniform_location);
+            m_context.uid, m_name.c_str(), name.c_str(), uniform_location);
     }
     return uniform_location;
 }
@@ -61,17 +61,17 @@ void ldplab::rtsgpu_ogl::ComputeShader::use() const
 {
     glUseProgram(m_glid);
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Now uses compute shader %s",
-        m_context->uid, m_name.c_str());
+        m_context.uid, m_name.c_str());
 }
 
 ldplab::rtsgpu_ogl::OpenGLContext::OpenGLContext(
-    std::shared_ptr<Context> context)
+    Context& context)
     :
     m_context{ context },
     m_gl_offscreen_context{ nullptr }
 { 
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: OpenGLContext instance "\
-        "created", m_context->uid);
+        "created", m_context.uid);
 }
 
 ldplab::rtsgpu_ogl::OpenGLContext::~OpenGLContext()
@@ -85,7 +85,7 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::init()
     if (!glfwInit())
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to initialize "\
-            "GLFW", m_context->uid);
+            "GLFW", m_context.uid);
         return false;
     }
 
@@ -94,11 +94,11 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::init()
     if (!m_gl_offscreen_context)
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to create GLFW "\
-            "offscreen window", m_context->uid);
+            "offscreen window", m_context.uid);
         return false;
     }
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) Context %i: GLFW initialzed",
-        m_context->uid);
+        m_context.uid);
 
     // Init Glew
     bindGlContext();
@@ -107,16 +107,16 @@ bool ldplab::rtsgpu_ogl::OpenGLContext::init()
     if (err_code != GLEW_OK)
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Failed to initialize "\
-            "GLEW: %s", m_context->uid, glewGetErrorString(err_code));
+            "GLEW: %s", m_context.uid, glewGetErrorString(err_code));
         return false;
     }
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) Context %i: GLEW initialzed, uses "\
-        "GLEW %s", m_context->uid, glewGetString(GLEW_VERSION));
+        "GLEW %s", m_context.uid, glewGetString(GLEW_VERSION));
     unbindGlContext();
 
     // Done
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: OpenGLContext initalized "\
-        "successful", m_context->uid);
+        "successful", m_context.uid);
     return true;
 }
 
@@ -132,7 +132,7 @@ ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
     const std::string& glsl_code) const
 {
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Begins %s compute shader "\
-        "compilation", m_context->uid, shader_name.c_str());
+        "compilation", m_context.uid, shader_name.c_str());
 
     std::shared_ptr<ComputeShader> shader{ nullptr };
 
@@ -156,7 +156,7 @@ ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
             compute_shader, info_log_length, NULL, error_log.data());
         std::string log = "RTSGPU (OpenGL) context %i: Failed to compile "\
             "%s compute shader, " + std::string(error_log.data());
-        LDPLAB_LOG_ERROR(log.c_str(), m_context->uid, shader_name.c_str());
+        LDPLAB_LOG_ERROR(log.c_str(), m_context.uid, shader_name.c_str());
         return shader;
     }
 
@@ -175,7 +175,7 @@ ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
         glGetProgramInfoLog(program, info_log_length, NULL, error_log.data());
         std::string log = "RTSGPU (OpenGL) context %i: Failed to link "\
             "%s compute shader program, " + std::string(error_log.data());
-        LDPLAB_LOG_ERROR(log.c_str(), m_context->uid, shader_name.c_str());
+        LDPLAB_LOG_ERROR(log.c_str(), m_context.uid, shader_name.c_str());
     }
     else
     {
@@ -186,7 +186,7 @@ ldplab::rtsgpu_ogl::OpenGLContext::createComputeShader(
         shader->m_name = shader_name;
         LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Finished %s compute "\
             "shader compilation successfully", 
-            m_context->uid, shader_name.c_str());
+            m_context.uid, shader_name.c_str());
     }
 
     // Clean up and return
@@ -204,7 +204,7 @@ std::shared_ptr<ldplab::rtsgpu_ogl::ComputeShader>
     if (!file)
     {
         LDPLAB_LOG_ERROR("RTSGPU (OpenGL) context %i: Unable to open shader "\
-            "source file \"%s\"", m_context->uid, path.c_str());
+            "source file \"%s\"", m_context.uid, path.c_str());
         return nullptr;
     }
     std::stringstream code;

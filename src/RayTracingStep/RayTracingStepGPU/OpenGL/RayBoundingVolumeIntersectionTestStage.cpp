@@ -13,27 +13,27 @@
 
 ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
-        std::shared_ptr<Context> context)
+        Context& context)
     :
     m_context{ context }
 {
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "RayBoundingSphereIntersectionTestStageBruteForce instance created",
-        m_context->uid);
+        m_context.uid);
 }
 
 bool ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
     initShaders()
 {
     // Create shader
-    if (!m_context->shared_shaders.createShaderByName(
+    if (!m_context.shared_shaders.createShaderByName(
             constant::glsl_shader_name::ray_bounding_sphere_intersection_test_brute_force,
             m_cs_bv_intersection.shader))
         return false;
 
     // Compute work group size
     m_cs_bv_intersection.num_work_groups = utils::ComputeHelper::getNumWorkGroups(
-        m_context->parameters.number_rays_per_buffer,
+        m_context.parameters.number_rays_per_buffer,
         constant::glsl_local_group_size::ray_bounding_sphere_intersection_test_brute_force);
 
     // Get uniform locations
@@ -44,9 +44,9 @@ bool ldplab::rtsgpu_ogl::RayBoundingSphereIntersectionTestStageBruteForce::
 
     m_cs_bv_intersection.shader->use();
     glUniform1ui(m_cs_bv_intersection.uniform_num_particles,
-        static_cast<GLuint>(m_context->particles.size()));
+        static_cast<GLuint>(m_context.particles.size()));
     glUniform1ui(m_cs_bv_intersection.uniform_num_rays_per_buffer,
-        static_cast<GLuint>(m_context->parameters.number_rays_per_buffer));
+        static_cast<GLuint>(m_context.parameters.number_rays_per_buffer));
 
     // Done
     return true;
@@ -63,7 +63,7 @@ void
 {
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Test bounding sphere "\
         "intersections for batch buffer %i",
-        m_context->uid,
+        m_context.uid,
         buffer.uid);
 
     // Bind shaders
@@ -76,9 +76,9 @@ void
     buffer.ssbo.ray_properties->bindToIndex(0);
     buffer.ssbo.particle_index->bindToIndex(1);
     BoundingSphereData* bsd = 
-        (BoundingSphereData*)m_context->bounding_volume_data.get();
+        (BoundingSphereData*)m_context.bounding_volume_data.get();
     bsd->ssbo.sphere_properties->bindToIndex(2);
-    m_context->particle_transformation_data.ssbo.w2p->bindToIndex(3);
+    m_context.particle_transformation_data.ssbo.w2p->bindToIndex(3);
     LDPLAB_PROFILING_STOP(bounding_volume_intersection_test_ssbo_binding);
 
     // Execute shader
@@ -88,7 +88,7 @@ void
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Bounding sphere intersection "\
         "test on batch buffer %i completed",
-        m_context->uid,
+        m_context.uid,
         buffer.uid);
 }
 

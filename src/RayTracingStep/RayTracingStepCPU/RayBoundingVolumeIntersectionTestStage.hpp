@@ -52,7 +52,7 @@ namespace ldplab
         {
         public:
             RayBoundingSphereIntersectionTestStageBruteForce(
-                std::shared_ptr<Context> context);
+                Context& context);
             /** 
              * @brief Inherited via
              * ldplab::rtscpu::IRayBoundingVolumeIntersectionTestStage 
@@ -67,7 +67,7 @@ namespace ldplab
             inline void transformRayFromWorldToParticleSpace(
                 Ray& ray, size_t pidx) const;
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             std::vector<BoundingVolumeSphere>& m_bounding_spheres;
         };
     }

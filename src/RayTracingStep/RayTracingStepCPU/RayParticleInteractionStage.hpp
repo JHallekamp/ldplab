@@ -59,7 +59,7 @@ namespace ldplab
         {
         public:
             UnpolirzedLight1DLinearIndexGradientInteraction(
-                std::shared_ptr<Context> context);
+                Context& context);
             /**
              * @brief Inherited via ldplab::rtscpu::IRayParticleInteractionStage.
              * @brief Calculating resulting rays of the interaction of the 
@@ -91,7 +91,7 @@ namespace ldplab
              */
             double reflectance(double cos_alpha, double cos_beta, double n_r);
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         
         };
     }

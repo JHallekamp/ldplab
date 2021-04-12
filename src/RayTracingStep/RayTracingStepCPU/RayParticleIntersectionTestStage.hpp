@@ -57,7 +57,7 @@ namespace ldplab
         {
         public:
             RodParticleIntersectionTest(
-                std::shared_ptr<Context> context);
+                Context& context);
             /**
              * @brief Inherited via ldplab::rtscpu::IRayParticleIntersectionTestStage.  
              * @detail Start calculating the intersection points of the rays 
@@ -197,7 +197,7 @@ namespace ldplab
                 Vec3& inter_point,
                 Vec3& inter_normal);
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             std::vector<RodParticle>& m_rod_particles;
         };
 
@@ -210,7 +210,7 @@ namespace ldplab
         {
         public:
             SphericalParticleIntersectionTest(
-                std::shared_ptr<Context> context);
+                Context& context);
             /**
              * @brief Inherited via ldplab::rtscpu::IRayParticleIntersectionTestStage.
              * @detail Start calculating the intersection points of the rays
@@ -247,7 +247,7 @@ namespace ldplab
                 Vec3& inter_point,
                 Vec3& inter_normal);
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
     }
 }

@@ -41,7 +41,7 @@ namespace ldplab
                 std::unique_ptr<IRayParticleIntersectionTestStage> rpit,
                 std::unique_ptr<IRayParticleInteractionStage> rpi,
                 std::unique_ptr<IInnerParticlePropagationStage> ipp,
-                std::shared_ptr<Context> context);
+                Context& context);
             /**
              * @brief Sets up the pipeline stages.
              * @note Only called once per ray tracing step execution.
@@ -69,7 +69,7 @@ namespace ldplab
                 m_ray_particle_interaction_stage;
             std::unique_ptr<IInnerParticlePropagationStage>
                 m_inner_particle_propagation_stage;
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             std::vector<BufferControl>
                 m_buffer_controls;
         };

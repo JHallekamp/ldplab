@@ -183,9 +183,9 @@ namespace ldplab
         struct RodParticleData : public IParticleData
         {
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         public:
-            RodParticleData(std::shared_ptr<Context> context)
+            RodParticleData(Context& context)
                 :
                 m_context{ context }
             { }
@@ -230,10 +230,10 @@ namespace ldplab
             public IParticleMaterialData
         {
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         public:
             ParticleMaterialLinearOneDirectionalData(
-                std::shared_ptr<Context> context)
+                Context& context)
                 :
                 m_context{ context }
             { }

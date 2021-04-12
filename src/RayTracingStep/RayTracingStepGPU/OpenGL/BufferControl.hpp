@@ -30,7 +30,7 @@ namespace ldplab
         class BufferControl
         {
         public:
-            BufferControl(std::shared_ptr<Context> context);
+            BufferControl(Context& context);
             /** @brief Initializes shader buffer objects. */
             void initSSBO();
             /** 
@@ -77,7 +77,7 @@ namespace ldplab
         private:
             void initializeBuffers();
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             // Raw data
             std::vector<RayBuffer::RayProperties> m_ray_properties_data;
             std::vector<int32_t> m_ray_particle_index_data;
