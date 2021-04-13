@@ -167,6 +167,3 @@ if(LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
 endif()
 target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")
-
-
-target_compile_features(ldplab PUBLIC cxx_std_17)
