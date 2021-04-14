@@ -8,6 +8,8 @@
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/ExperimentalSetup/ParticleGeometry.hpp>
 
+#include "../../Utils/Array.hpp"
+
 namespace ldplab
 {
     namespace rtscpu
@@ -114,32 +116,54 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
         private:
+            /** @brief Saves the data of an octree node. */
+            struct OctreeNode
+            {
+                OctreeNode();
+                /** @brief The bounding box describing the nodes borders */
+                AABB aabb;
+                /** @brief Number of divisions. */
+                size_t num_children;
+                /**
+                 * @brief Child indices, also triangle array indices on leaf
+                 *        nodes;
+                 */
+                size_t children[8];
+            };
+        private:
             /** @brief Constructs the octree. */
             void construct(
                 const std::vector<Triangle>& mesh,
                 size_t octree_depth);
+            /** @brief Intersection test recursive. */
+            bool intersectRecursive(
+                const OctreeNode& node,
+                const size_t depth,
+                const Ray& ray,
+                Vec3& intersection_point,
+                Vec3& intersection_normal);
+            bool intersectBase(
+                const utils::Array<Triangle>& triangles,
+                const Ray& ray,
+                Vec3& intersection_point,
+                Vec3& intersection_normal);
+            bool intersectSegmentRecursive(
+                const OctreeNode& node,
+                const size_t depth,
+                const Vec3& segment_origin,
+                const Vec3& segment_end,
+                Vec3& intersection_point,
+                Vec3& intersection_normal);
+            bool intersectSegmentBase(
+                const utils::Array<Triangle>& triangles,
+                const Vec3& segment_origin,
+                const Vec3& segment_end,
+                Vec3& intersection_point,
+                Vec3& intersection_normal);
         private:
-            /** @brief Saves the data of an octree node. */
-            struct OctreeNode
-            {
-                /** @brief The bounding box describing the nodes borders */
-                AABB aabb;
-                /** 
-                 * @brief Saves the index to the vector contianing the children
-                 *        of the node.
-                 * @details Depending on the depth of the node, which has to be
-                 *          tracked by the querying algorithm, this index can
-                 *          either be in the vector of OctreeNode vectors or in
-                 *          the vector of Triangle vectors. If the node is 
-                 *          empty, the index is set to invalid.
-                 */
-                size_t children_vector_index;
-            };
-        private:
-            AABB m_octree_aabb;
-            size_t m_root_node_vector_index;
-            std::vector<std::vector<OctreeNode>> m_node_vectors;
-            std::vector<std::vector<Triangle>> m_triangle_vectors;
+            size_t m_octree_depth;
+            std::vector<OctreeNode> m_nodes;
+            std::vector<utils::Array<Triangle>> m_triangle_arrays;
         };
     }
 }

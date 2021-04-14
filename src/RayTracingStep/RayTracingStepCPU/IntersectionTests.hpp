@@ -17,14 +17,6 @@ namespace ldplab
              * @brief Computes the intersection between a ray and a triangle.
              * @param[in] ray Ray for which the test is executed.
              * @param[in] triangle Triangle for which the test is executed.
-             * @param[out] intersection_point If ray and triangle intersect,
-             *                                intersection_point will contain
-             *                                the point of intersection.
-             * @param[out] intersection_normal If ray and triangle intersect,
-             *                                 intersection_normal will contain
-             *                                 the triangle normal at the point
-             *                                 of intersection (facing to the 
-             *                                 side of the ray origin).
              * @param[out] dist If ray and triangle intersect, dist will 
              *                  contain the distance from the ray origin to the
              *                  intersection point.
@@ -33,8 +25,6 @@ namespace ldplab
             static inline bool rayTriangle(
                 const Ray& ray,
                 const Triangle& triangle,
-                Vec3& intersection_point,
-                Vec3& intersection_normal,
                 double& dist);
             /**
              * @brief Computes the intersection between a line segment and a
@@ -42,14 +32,6 @@ namespace ldplab
              * @param[in] line_start Starting point of the line segment.
              * @param[in] line_end Ending point of the line segment.
              * @param[in] triangle Triangle for which the test is executed.
-             * @param[out] intersection_point If line and triangle intersect,
-             *                                intersection_point will contain
-             *                                the point of intersection.
-             * @param[out] intersection_normal If line and triangle intersect,
-             *                                 intersection_normal will contain
-             *                                 the triangle normal at the point
-             *                                 of intersection (facing to the 
-             *                                 side of the line origin).
              * @param[out] dist If the line and triangle intersect, dist will 
              *                  contain the distance from the line origin to
              *                  the intersection point.
@@ -59,8 +41,6 @@ namespace ldplab
                 const Vec3& line_start,
                 const Vec3& line_end,
                 const Triangle& triangle,
-                Vec3& intersection_point,
-                Vec3& intersection_normal,
                 double& dist);
             /**
              * @brief Computes the intersection between a ray and a sphere.
@@ -197,14 +177,6 @@ namespace ldplab
                 const Vec3& line_start,
                 const Vec3& line_end,
                 const AABB& aabb,
-                double& min_dist,
-                double& max_dist);
-            /** @todo documentation */
-            static inline bool lineSlab(
-                double line_start,
-                double line_end,
-                double slab_min,
-                double slab_max,
                 double& min_dist,
                 double& max_dist);
         };
