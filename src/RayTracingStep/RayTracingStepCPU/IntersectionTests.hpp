@@ -22,7 +22,7 @@ namespace ldplab
              *                  intersection point.
              * @returns true, if the ray intersects the triangle.
              */
-            static inline bool rayTriangle(
+            static bool rayTriangle(
                 const Ray& ray,
                 const Triangle& triangle,
                 double& dist);
@@ -37,7 +37,7 @@ namespace ldplab
              *                  the intersection point.
              * @returns true, if the line segment intersects the triangle.
              */
-            static inline bool lineTriangle(
+            static bool lineTriangle(
                 const Vec3& line_start,
                 const Vec3& line_end,
                 const Triangle& triangle,
@@ -58,7 +58,7 @@ namespace ldplab
              *                      maximal distance of each.
              * @returns true, if the ray intersects the sphere.
              */
-            static inline bool raySphere(
+            static bool raySphere(
                 const Ray& ray,
                 const Vec3& sphere_center,
                 const double sphere_radius,
@@ -92,7 +92,7 @@ namespace ldplab
               *                      maximal distance of each.
               * @returns true, if the ray intersects the sphere.
               */
-            static inline bool raySphere(
+            static bool raySphere(
                 const Ray& ray,
                 const Vec3& sphere_center,
                 const double sphere_radius,
@@ -121,7 +121,7 @@ namespace ldplab
               *                  within the sphere.
               * @returns true, if the ray intersects the sphere.
               */
-            static inline bool raySphereOnlyMin(
+            static bool raySphereOnlyMin(
                 const Ray& ray,
                 const Vec3& sphere_center,
                 const double sphere_radius,
@@ -147,7 +147,7 @@ namespace ldplab
               *                  within the sphere.
               * @returns true, if the ray intersects the sphere.
               */
-            static inline bool raySphereOnlyMax(
+            static bool raySphereOnlyMax(
                 const Ray& ray,
                 const Vec3& sphere_center,
                 const double sphere_radius,
@@ -163,17 +163,17 @@ namespace ldplab
              * @returns true, if the triangle intersects the axis aligned 
              *          bounding box.
              */
-            static inline bool triangleAABB(
+            static bool triangleAABB(
                 const Triangle& triangle,
                 const AABB& aabb);
             /** @todo documentation */
-            static inline bool rayAABB(
+            static bool rayAABB(
                 const Ray& ray,
                 const AABB& aabb,
                 double& min_dist,
                 double& max_dist);
             /** @todo documentation */
-            static inline bool lineAABB(
+            static bool lineAABB(
                 const Vec3& line_start,
                 const Vec3& line_end,
                 const AABB& aabb,

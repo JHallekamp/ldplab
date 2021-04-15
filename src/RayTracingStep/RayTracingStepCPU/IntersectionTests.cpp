@@ -1,6 +1,6 @@
 #include "IntersectionTests.hpp"
 
-inline bool ldplab::rtscpu::IntersectionTest::rayTriangle(
+bool ldplab::rtscpu::IntersectionTest::rayTriangle(
     const Ray& ray, 
     const Triangle& triangle, 
     double& dist)
@@ -33,7 +33,7 @@ inline bool ldplab::rtscpu::IntersectionTest::rayTriangle(
         return false;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::lineTriangle(
+bool ldplab::rtscpu::IntersectionTest::lineTriangle(
     const Vec3& line_start, 
     const Vec3& line_end, 
     const Triangle& triangle, 
@@ -68,7 +68,7 @@ inline bool ldplab::rtscpu::IntersectionTest::lineTriangle(
         return false;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::raySphere(
+bool ldplab::rtscpu::IntersectionTest::raySphere(
     const Ray& ray, 
     const Vec3& sphere_center, 
     const double sphere_radius, 
@@ -91,7 +91,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphere(
     return true;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::raySphere(
+bool ldplab::rtscpu::IntersectionTest::raySphere(
     const Ray& ray, 
     const Vec3& sphere_center, 
     const double sphere_radius, 
@@ -125,7 +125,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphere(
     return true;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMin(
+bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMin(
     const Ray& ray, 
     const Vec3& sphere_center, 
     const double sphere_radius, 
@@ -152,7 +152,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMin(
     return true;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
+bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
     const Ray& ray, 
     const Vec3& sphere_center, 
     const double sphere_radius, 
@@ -179,7 +179,7 @@ inline bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
     return true;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
+bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     const Triangle& triangle,
     const AABB& aabb)
 {
@@ -327,7 +327,7 @@ inline bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     //return true;
 }
 
-inline bool rayAABBClipLine(
+bool rayAABBClipLine(
     size_t dim,
     const ldplab::AABB& aabb,
     const ldplab::Vec3& origin,
@@ -358,7 +358,7 @@ inline bool rayAABBClipLine(
     return true;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::rayAABB(
+bool ldplab::rtscpu::IntersectionTest::rayAABB(
     const Ray& ray, 
     const AABB& aabb, 
     double& min_dist, 
@@ -379,7 +379,7 @@ inline bool ldplab::rtscpu::IntersectionTest::rayAABB(
     return true;
 }
 
-inline bool ldplab::rtscpu::IntersectionTest::lineAABB(
+bool ldplab::rtscpu::IntersectionTest::lineAABB(
     const Vec3& line_start, 
     const Vec3& line_end, 
     const AABB& aabb, 

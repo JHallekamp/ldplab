@@ -90,6 +90,16 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersects(
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
+    double min, max;
+    if (IntersectionTest::rayAABB(ray, m_nodes[0].aabb, min, max))
+    {
+        return intersectRecursive(
+            m_nodes[0], 
+            0, 
+            ray, 
+            intersection_point, 
+            intersection_normal);
+    }
     return false;
 }
 
@@ -99,6 +109,18 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectsLineSegment(
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
+    double min, max;
+    if (IntersectionTest::lineAABB(
+        segment_origin, segment_end, m_nodes[0].aabb, min, max))
+    {
+        return intersectSegmentRecursive(
+            m_nodes[0], 
+            0, 
+            segment_origin, 
+            segment_end, 
+            intersection_point, 
+            intersection_normal);
+    }
     return false;
 }
 
