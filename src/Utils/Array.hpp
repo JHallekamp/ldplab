@@ -62,7 +62,7 @@ namespace ldplab
         {
             if (obj.size())
             {
-                alloc(obj.size);
+                alloc(obj.size());
                 std::memcpy(m_data, obj.m_data, sizeof(T) * m_size);
             }
         }
