@@ -131,10 +131,36 @@ namespace ldplab
                 size_t children[8];
             };
         private:
+            /** @brief Helper methods. */
+            inline size_t pow8(
+                size_t exp) const noexcept;
+            inline size_t mapIndexP2C(
+                size_t parent_idx,
+                size_t child_no) const noexcept;
+            inline size_t mapIndexC2P(
+                size_t child_idx) const noexcept;
+            inline size_t mapIndexGetChildNo(
+                size_t child_idx) const noexcept;
             /** @brief Constructs the octree. */
             void construct(
                 const std::vector<Triangle>& mesh,
                 size_t octree_depth);
+            AABB constructOctreeAABB(
+                const std::vector<Triangle>& mesh);
+            void constructConstructionLayers(
+                const AABB& octree_aabb,
+                std::vector<std::vector<OctreeNode>>& layers);
+            bool constructSortTrianglesRecursive(
+                const Triangle& triangle,
+                size_t current_layer,
+                size_t current_node,
+                std::vector<std::vector<OctreeNode>>& layers,
+                std::vector<std::vector<Triangle>>& triangle_storage);
+            size_t constructMakePersistentRecursive(
+                const size_t current_layer,
+                const size_t current_node,
+                const std::vector<std::vector<OctreeNode>>& layers,
+                const std::vector<std::vector<Triangle>>& triangle_storage);
             /** @brief Intersection test recursive. */
             bool intersectRecursive(
                 const OctreeNode& node,

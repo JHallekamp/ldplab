@@ -124,177 +124,232 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectsLineSegment(
     return false;
 }
 
+size_t ldplab::rtscpu::ParticleMeshOctree::pow8(size_t exp) const noexcept
+{
+    constexpr size_t base_bit = 1;
+    constexpr size_t log2_8 = 3; // = log_2(8)
+    return base_bit << (exp * log2_8);
+}
+
+size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexP2C(
+    size_t parent_idx,
+    size_t child_no) const noexcept
+{
+    return parent_idx * 8 + child_no;
+}
+
+inline size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexC2P(
+    size_t child_idx) const noexcept
+{
+    // child_idx == parent_idx * 8 + child_no
+    // => parent_index == (child_idx - child_no) / 8
+    // Because
+    // (i) child_no < 8 
+    // and
+    // (ii) child_no == 0 <=> child_idx % 8 == 0
+    // the integer operation child_idx / 8 is sufficient
+    return child_idx / 8;
+}
+
+inline size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexGetChildNo(
+    size_t child_idx) const noexcept
+{
+    // child_idx == parent_idx * 8 + child_no
+    // => child_no == child_idx - parent_idx * 8
+    // <=> child_no == child_idx - floor(child_idx / 8) * 8
+    // => child_no == child_idx % 8
+    return child_idx % 8;
+}
+
 void ldplab::rtscpu::ParticleMeshOctree::construct(
     const std::vector<Triangle>& mesh, 
     size_t octree_depth)
 {
-    if (octree_depth == 0)
+    // Check for empty mesh
+    if (mesh.size() == 0)
+    {
+        m_nodes.emplace_back();
+        m_nodes[0].aabb = AABB{ Vec3(0), Vec3(0) };
+        m_nodes[0].num_children = 0;
+        m_octree_depth = 0;
         return;
-    m_octree_depth = 0;
+    }
 
-    // Create root node
-    m_nodes.emplace_back();
-    OctreeNode root_node = m_nodes.back();
+    // Construct temporary octree layers
+    m_octree_depth = octree_depth;    
+    const AABB octree_aabb = constructOctreeAABB(mesh);
+    
+    std::vector<std::vector<OctreeNode>> layers;
+    constructConstructionLayers(octree_aabb, layers);
 
-    // Get octree AABB min and max
-    root_node.aabb.min = Vec3(
+    // Create temporary triangle storage
+    std::vector<std::vector<Triangle>> triangle_storage(layers.back().size());
+    for (size_t i = 0; i < layers.back().size(); ++i)
+        layers.back()[i].children[0] = i;
+
+    // Sort in triangles
+    for (size_t i = 0; i < mesh.size(); ++i)
+        constructSortTrianglesRecursive(mesh[i], 0, 0, layers, triangle_storage);
+
+    // Move valuable information from temporary to octree storage and adjust
+    // indices accordingly
+    constructMakePersistentRecursive(0, 0, layers, triangle_storage);
+}
+
+ldplab::AABB ldplab::rtscpu::ParticleMeshOctree::constructOctreeAABB(
+    const std::vector<Triangle>& mesh)
+{
+    AABB octree_aabb;
+    octree_aabb.min = Vec3(
         std::numeric_limits<double>::max(),
         std::numeric_limits<double>::max(),
         std::numeric_limits<double>::max());
-    root_node.aabb.max = Vec3(
-        std::numeric_limits<double>::min(),
-        std::numeric_limits<double>::min(),
-        std::numeric_limits<double>::min());
+    octree_aabb.max = Vec3(
+        std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::lowest());
 
     for (size_t i = 0; i < mesh.size(); ++i)
     {
-        root_node.aabb.min.x = std::min(root_node.aabb.min.x,
+        octree_aabb.min.x = std::min(octree_aabb.min.x,
             std::min(mesh[i].a.x, std::min(mesh[i].b.x, mesh[i].c.x)));
-        root_node.aabb.max.x = std::min(root_node.aabb.max.x,
-            std::min(mesh[i].a.x, std::min(mesh[i].b.x, mesh[i].c.x)));
+        octree_aabb.max.x = std::max(octree_aabb.max.x,
+            std::max(mesh[i].a.x, std::max(mesh[i].b.x, mesh[i].c.x)));
 
-        root_node.aabb.min.y = std::min(root_node.aabb.min.y,
+        octree_aabb.min.y = std::min(octree_aabb.min.y,
             std::min(mesh[i].a.y, std::min(mesh[i].b.y, mesh[i].c.y)));
-        root_node.aabb.max.y = std::min(root_node.aabb.max.y,
-            std::min(mesh[i].a.y, std::min(mesh[i].b.y, mesh[i].c.y)));
+        octree_aabb.max.y = std::max(octree_aabb.max.y,
+            std::max(mesh[i].a.y, std::max(mesh[i].b.y, mesh[i].c.y)));
 
-        root_node.aabb.min.z = std::min(root_node.aabb.min.z,
+        octree_aabb.min.z = std::min(octree_aabb.min.z,
             std::min(mesh[i].a.z, std::min(mesh[i].b.z, mesh[i].c.z)));
-        root_node.aabb.max.z = std::min(root_node.aabb.max.z,
-            std::min(mesh[i].a.z, std::min(mesh[i].b.z, mesh[i].c.z)));
+        octree_aabb.max.z = std::max(octree_aabb.max.z,
+            std::max(mesh[i].a.z, std::max(mesh[i].b.z, mesh[i].c.z)));
     }
 
-    // Start creating the base nodes
-    std::vector<std::vector<OctreeNode>> layers;
-    layers.emplace_back();
-    std::vector<OctreeNode>& leaf_nodes = layers.back();
+    return octree_aabb;
+}
 
-    size_t num_branches = static_cast<size_t>(1) << octree_depth;
-    const double side_length_x = (root_node.aabb.max.x - root_node.aabb.min.x) /
-        static_cast<double>(num_branches);
-    const double side_length_y = (root_node.aabb.max.y - root_node.aabb.min.y) /
-        static_cast<double>(num_branches);
-    const double side_length_z = (root_node.aabb.max.z - root_node.aabb.min.z) /
-        static_cast<double>(num_branches);
-    const size_t invalid_index = std::numeric_limits<size_t>::max();
-    for (size_t x = 0; x < num_branches; ++x)
+void ldplab::rtscpu::ParticleMeshOctree::constructConstructionLayers(
+    const AABB& octree_aabb,
+    std::vector<std::vector<OctreeNode>>& layers)
+{
+    layers.resize(m_octree_depth + 1);
+    for (size_t i = 0; i <= m_octree_depth; ++i)
     {
-        for (size_t y = 0; y < num_branches; ++y)
+        const size_t num_layer_nodes = pow8(i);
+        layers[i].resize(num_layer_nodes);
+        if (i == 0)
         {
-            for (size_t z = 0; z < num_branches; ++z)
-            {
-                std::vector<Triangle> triangles;
-                leaf_nodes.emplace_back();
-                OctreeNode& node = leaf_nodes.back();
-                node.aabb.min.x = static_cast<double>(x) * side_length_x;
-                node.aabb.min.y = static_cast<double>(y) * side_length_y;
-                node.aabb.min.z = static_cast<double>(z) * side_length_z;
-                node.aabb.max.x = static_cast<double>(x + 1) * side_length_x;
-                node.aabb.max.y = static_cast<double>(y + 1) * side_length_y;
-                node.aabb.max.z = static_cast<double>(z + 1) * side_length_z;
-                for (size_t i = 0; i < mesh.size(); ++i)
-                {
-                    if (IntersectionTest::triangleAABB(mesh[i], node.aabb))
-                        triangles.push_back(mesh[i]);
-                }
-                if (triangles.size() > 0)
-                {
-                    node.num_children = 1;
-                    node.children[0] = m_triangle_arrays.size();
-                    m_triangle_arrays.emplace_back(triangles);
-                }
-            }
-        }
-    }
-
-    // Create octree structure
-    size_t sz_d, sz_d2;;
-    for (size_t i = m_octree_depth; i > 0; --i)
-    {
-        sz_d2 = num_branches * num_branches;
-        sz_d = num_branches;
-        num_branches = 1 << (i - 1);
-        layers.emplace_back();
-        std::vector<OctreeNode>& prev_layer = layers[layers.size() - 2];
-        std::vector<OctreeNode>& cur_layer = layers[layers.size() - 1];
-        for (size_t x = 0; x < num_branches; ++x)
-        {
-            for (size_t y = 0; y < num_branches; ++y)
-            {
-                for (size_t z = 0; z < num_branches; ++z)
-                {
-                    cur_layer.emplace_back();
-                    OctreeNode& cur_node = cur_layer.back();
-                    for (size_t t = 0; t < 8; ++t)
-                    {
-                        size_t idx =
-                            ((t & 1) ? x * 2 + 1 : x * 2) * sz_d2 +
-                            ((t & 2) ? y * 2 + 1 : y * 2) * sz_d +
-                            ((t & 4) ? z * 2 + 1 : z * 2);
-                        if (prev_layer[idx].num_children)
-                            cur_node.children[cur_node.num_children++] = idx;
-                        cur_node.aabb.min.x = std::fmin(cur_node.aabb.min.x, prev_layer[idx].aabb.min.x);
-                        cur_node.aabb.min.y = std::fmin(cur_node.aabb.min.y, prev_layer[idx].aabb.min.y);
-                        cur_node.aabb.min.z = std::fmin(cur_node.aabb.min.z, prev_layer[idx].aabb.min.z);
-                        cur_node.aabb.max.x = std::fmax(cur_node.aabb.min.x, prev_layer[idx].aabb.min.x);
-                        cur_node.aabb.max.y = std::fmax(cur_node.aabb.min.y, prev_layer[idx].aabb.min.y);
-                        cur_node.aabb.max.z = std::fmax(cur_node.aabb.min.z, prev_layer[idx].aabb.min.z);
-                    }
-                }
-            }
-        }
-    }
-
-    // Add temp nodes that hold information to the tree.
-    struct TempStackFrame
-    {
-        TempStackFrame(
-            OctreeNode& node, 
-            std::vector<OctreeNode>& child_layer,
-            size_t depth)
-            :
-            node { node },
-            child_layer{ child_layer },
-            depth{ depth },
-            child { 0 }
-        { }
-        OctreeNode& node;
-        std::vector<OctreeNode>& child_layer;
-        size_t depth;
-        size_t child;
-    };
-    std::vector<TempStackFrame> temp_stack;
-
-    m_nodes.push_back(layers.back().back());
-    temp_stack.emplace_back(m_nodes.back(), layers[layers.size() - 2], 1);
-    size_t cur_stack_frame = 0;
-    while (cur_stack_frame != invalid_index)
-    {
-        TempStackFrame& sf = temp_stack[cur_stack_frame];
-        if (sf.child < sf.node.num_children)
-        {
-            OctreeNode& t_node = sf.child_layer[sf.node.children[sf.child]];
-            sf.node.children[sf.child++] = m_nodes.size();
-            m_nodes.push_back(t_node);
-
-            if (sf.depth < m_octree_depth)
-            {
-                temp_stack.emplace_back(
-                    m_nodes.back(), 
-                    layers[layers.size() - 1 - sf.depth], 
-                    sf.depth + 1);
-                ++cur_stack_frame;
-            }
+            // Construct root node
+            layers[0][0].aabb = octree_aabb;
         }
         else
         {
-            temp_stack.pop_back();
-            if (cur_stack_frame == 0)
-                cur_stack_frame = invalid_index;
-            else
-                --cur_stack_frame;
+            // Construct layer nodes
+            for (size_t j = 0; j < num_layer_nodes; ++j)
+            {
+                OctreeNode& parent = layers[i - 1][mapIndexC2P(j)];
+                // Set index in parents child array
+                const size_t child_no = mapIndexGetChildNo(j);
+                parent.children[child_no] = j;
+                // Set AABB
+                const Vec3 half_size = (parent.aabb.max - parent.aabb.min) * 0.5;
+                const double b0 = (child_no & 1) ? 1.0 : 0.0;
+                const double b1 = (child_no & 2) ? 1.0 : 0.0;
+                const double b2 = (child_no & 4) ? 1.0 : 0.0;
+                layers[i][j].aabb.min = Vec3(
+                    parent.aabb.min.x + b0 * half_size.x,
+                    parent.aabb.min.y + b1 * half_size.y, 
+                    parent.aabb.min.z + b2 * half_size.z);
+                layers[i][j].aabb.max = layers[i][j].aabb.min + half_size;
+            }
         }
     }
+}
+
+bool ldplab::rtscpu::ParticleMeshOctree::constructSortTrianglesRecursive(
+    const Triangle& triangle, 
+    size_t current_layer, 
+    size_t current_node, 
+    std::vector<std::vector<OctreeNode>>& layers, 
+    std::vector<std::vector<Triangle>>& triangle_storage)
+{
+    if (current_layer == m_octree_depth)
+    {
+        // Recursion base!
+        OctreeNode& node = layers[current_layer][current_node];
+        if (IntersectionTest::triangleAABB(triangle, node.aabb))
+        {
+            triangle_storage[node.children[0]].push_back(triangle);
+            ++node.num_children;
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        // Recursion!
+        OctreeNode& node = layers[current_layer][current_node];
+        if (!IntersectionTest::triangleAABB(triangle, node.aabb))
+            return false;
+        // Call recursive for children
+        bool children_intersect = false;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            if (constructSortTrianglesRecursive(
+                triangle,
+                current_layer + 1,
+                node.children[i],
+                layers,
+                triangle_storage))
+            {
+                children_intersect = true;
+            }
+        }
+        if (children_intersect)
+            ++node.num_children;
+        return children_intersect;
+    }
+}
+
+size_t ldplab::rtscpu::ParticleMeshOctree::constructMakePersistentRecursive(
+    const size_t current_layer, 
+    const size_t current_node, 
+    const std::vector<std::vector<OctreeNode>>& layers, 
+    const std::vector<std::vector<Triangle>>& triangle_storage)
+{
+    const OctreeNode& layer_node = layers[current_layer][current_node];
+    const size_t node_idx = m_nodes.size();
+    m_nodes.push_back(layer_node);
+    if (current_layer == m_octree_depth)
+    {
+        if (layer_node.num_children)
+        {
+            m_nodes[node_idx].num_children = 1;
+            m_nodes[node_idx].children[0] = m_triangle_arrays.size();
+            m_triangle_arrays.emplace_back(
+                triangle_storage[layer_node.children[0]]);
+        }
+    }
+    else
+    {
+        size_t num_children = 0;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            if (layers[current_layer + 1][layer_node.children[i]].num_children)
+            {
+                m_nodes[node_idx].children[num_children++] =
+                    constructMakePersistentRecursive(
+                        current_layer + 1,
+                        layer_node.children[i],
+                        layers,
+                        triangle_storage);
+            }
+        }
+        m_nodes[node_idx].num_children = num_children;
+    }
+    return node_idx;
 }
 
 bool ldplab::rtscpu::ParticleMeshOctree::intersectRecursive(
@@ -306,6 +361,8 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectRecursive(
 {
     if (depth == m_octree_depth)
     {
+        if (node.num_children == 0)
+            return false;
         return intersectBase(
             m_triangle_arrays[node.children[0]],
             ray,
@@ -402,6 +459,8 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectSegmentRecursive(
 {
     if (depth == m_octree_depth)
     {
+        if (node.num_children == 0)
+            return false;
         return intersectSegmentBase(
             m_triangle_arrays[node.children[0]],
             segment_origin,

@@ -24,7 +24,7 @@ bool ldplab::rtscpu::IntersectionTest::rayTriangle(
         return false;
     // Calculate distance to intersection point
     double t = f * glm::dot(edge2, q);
-    if (t > EPSILON)
+    if (t >= 0)
     {
         dist = t;
         return true;
@@ -327,55 +327,98 @@ bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     //return true;
 }
 
-bool rayAABBClipLine(
-    size_t dim,
-    const ldplab::AABB& aabb,
-    const ldplab::Vec3& origin,
-    const ldplab::Vec3& dir,
-    double& t_low,
-    double& t_high)
-{
-    constexpr double EPSILON = 1e-10;
-    double t_dim_low, t_dim_high;
-    if (abs(dir[dim]) < EPSILON)
-    {
-        t_dim_low = -std::numeric_limits<double>::infinity();
-        t_dim_high = std::numeric_limits<double>::infinity();
-    }
-    else
-    {
-        t_dim_low = (aabb.min[dim] - origin[dim]) / dir[dim];
-        t_dim_high = (aabb.max[dim] - origin[dim]) / dir[dim];
-        if (t_dim_low > t_dim_high)
-            std::swap<double>(t_dim_low, t_dim_high);
-    }
-    if (t_low > t_dim_high)
-        return false;
-    if (t_dim_low > t_high)
-        return false;
-    t_low = std::fmax(t_low, t_dim_low);
-    t_high = std::fmin(t_high, t_dim_high);
-    return true;
-}
-
 bool ldplab::rtscpu::IntersectionTest::rayAABB(
     const Ray& ray, 
     const AABB& aabb, 
     double& min_dist, 
     double& max_dist)
 {
-    min_dist = -std::numeric_limits<double>::infinity();
-    max_dist = std::numeric_limits<double>::infinity();
+    constexpr double EPSILON = 1e-10;
 
-    if (!rayAABBClipLine(0, aabb, ray.origin, ray.direction, min_dist, max_dist))
-        return false;
-    if (!rayAABBClipLine(1, aabb, ray.origin, ray.direction, min_dist, max_dist))
-        return false;
-    if (!rayAABBClipLine(2, aabb, ray.origin, ray.direction, min_dist, max_dist))
+    double tmin = aabb.min.x - ray.origin.x;
+    double tmax = aabb.max.x - ray.origin.x;
+    if (abs(ray.direction.x) < EPSILON)
+    {
+        if ((tmin < 0 && ray.direction.x < 0) || (tmin >= 0 && ray.direction.x >= 0))
+            tmin = std::numeric_limits<double>::infinity();
+        else
+            tmin = -std::numeric_limits<double>::infinity();
+        if ((tmax < 0 && ray.direction.x < 0) || (tmax >= 0 && ray.direction.x >= 0))
+            tmax = std::numeric_limits<double>::infinity();
+        else
+            tmax = -std::numeric_limits<double>::infinity();
+    }
+    else
+    {
+        tmin /= ray.direction.x;
+        tmax /= ray.direction.x;
+    }
+
+    if (tmin > tmax) 
+        std::swap(tmin, tmax);
+
+    double tymin = aabb.min.y - ray.origin.y;
+    double tymax = aabb.max.y - ray.origin.y;
+    if (abs(ray.direction.y) < EPSILON)
+    {
+        if ((tymin < 0 && ray.direction.y < 0) || (tymin >= 0 && ray.direction.y >= 0))
+            tymin = std::numeric_limits<double>::infinity();
+        else
+            tymin = -std::numeric_limits<double>::infinity();
+        if ((tymax < 0 && ray.direction.y < 0) || (tymax >= 0 && ray.direction.y >= 0))
+            tymax = std::numeric_limits<double>::infinity();
+        else
+            tymax = -std::numeric_limits<double>::infinity();
+    }
+    else
+    {
+        tymin /= ray.direction.y;
+        tymax /= ray.direction.y;
+    }
+
+    if (tymin > tymax) 
+        std::swap(tymin, tymax);
+
+    if ((tmin > tymax) || (tymin > tmax))
         return false;
 
-    if (max_dist < 0.0)
+    if (tymin > tmin)
+        tmin = tymin;
+
+    if (tymax < tmax)
+        tmax = tymax;
+
+    double tzmin = aabb.min.z - ray.origin.z;
+    double tzmax = aabb.max.z - ray.origin.z;
+    if (abs(ray.direction.z) < EPSILON)
+    {
+        if ((tzmin < 0 && ray.direction.z < 0) || (tzmin >= 0 && ray.direction.z >= 0))
+            tzmin = std::numeric_limits<double>::infinity();
+        else
+            tzmin = -std::numeric_limits<double>::infinity();
+        if ((tzmax < 0 && ray.direction.z < 0) || (tzmax >= 0 && ray.direction.z >= 0))
+            tzmax = std::numeric_limits<double>::infinity();
+        else
+            tzmax = -std::numeric_limits<double>::infinity();
+    }
+    else
+    {
+        tzmin /= ray.direction.z;
+        tzmax /= ray.direction.z;
+    }
+
+    if (tzmin > tzmax) 
+        std::swap(tzmin, tzmax);
+
+    if ((tmin > tzmax) || (tzmin > tmax))
         return false;
+
+    if (tzmin > tmin)
+        tmin = tzmin;
+
+    if (tzmax < tmax)
+        tmax = tzmax;
+
     return true;
 }
 
@@ -386,18 +429,10 @@ bool ldplab::rtscpu::IntersectionTest::lineAABB(
     double& min_dist, 
     double& max_dist)
 {
-    min_dist = -std::numeric_limits<double>::infinity();
-    max_dist = std::numeric_limits<double>::infinity();
-
-    const Vec3 direction = line_end - line_start;
-    if (!rayAABBClipLine(0, aabb, line_start, direction, min_dist, max_dist))
+    const Ray ray{ line_start, line_end - line_start, 0.0 };
+    if (!rayAABB(ray, aabb, min_dist, max_dist))
         return false;
-    if (!rayAABBClipLine(1, aabb, line_start, direction, min_dist, max_dist))
-        return false;
-    if (!rayAABBClipLine(2, aabb, line_start, direction, min_dist, max_dist))
-        return false;
-
-    if (max_dist < 0.0 || min_dist > 1.0)
+    if (min_dist > 1.0 || max_dist < 0.0)
         return false;
     return true;
 }
