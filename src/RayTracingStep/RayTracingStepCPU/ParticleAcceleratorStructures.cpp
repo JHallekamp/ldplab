@@ -1,6 +1,5 @@
 #include "ParticleAcceleratorStructures.hpp"
 
-#include "Context.hpp"
 #include "IntersectionTests.hpp"
 
 #include <array>

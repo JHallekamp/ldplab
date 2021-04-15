@@ -62,10 +62,6 @@ inline bool ldplab::rtscpu::IntersectionTest::lineTriangle(
     if (t > EPSILON && t <= glm::length(line_end - line_start))
     {
         dist = t;
-        intersection_point = line_start + line_direction * t;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
-        if (glm::dot(intersection_normal, line_direction) > 0)
-            intersection_normal = -intersection_normal;
         return true;
     }
     else
