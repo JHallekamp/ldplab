@@ -183,6 +183,40 @@ bool ldplab::rtscpu::IntersectionTest::triangleAABB(
     const Triangle& triangle,
     const AABB& aabb)
 {
+    // Based on AABB triangle intersection test by Thomas Akenine-Möller
+    // See below copyright notice
+
+    /********************************************************/
+    /* AABB-triangle overlap test code                      */
+    /* by Tomas Akenine-Möller                              */
+    /* Function: int triBoxOverlap(float boxcenter[3],      */
+    /*          float boxhalfsize[3],float triverts[3][3]); */
+    /* History:                                             */
+    /*   2001-03-05: released the code in its first version */
+    /*   2001-06-18: changed the order of the tests, faster */
+    /*                                                      */
+    /* Acknowledgement: Many thanks to Pierre Terdiman for  */
+    /* suggestions and discussions on how to optimize code. */
+    /* Thanks to David Hunt for finding a ">="-bug!         */
+    /********************************************************/
+    
+    /*
+    Copyright 2020 Tomas Akenine-Möller
+    
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+    documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+    to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+    
+    The above copyright notice and this permission notice shall be included in all copies or substantial
+    portions of the Software.
+    
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+    WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+    OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
+    OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    */
+
     const Vec3 aabb_extent = aabb.max - aabb.min;
     const Vec3 aabb_center = aabb.min + aabb_extent;
 
@@ -304,18 +338,22 @@ bool ldplab::rtscpu::IntersectionTest::triangleAABB(
 
     // ========================================================================
     // Test if aabb does intersect triangle plane
-    Vec3 vmin, vmax;
-    vmin.x = -aabb_extent.x - v0.x;
-    vmax.x = aabb_extent.x - v0.x;
-    vmin.y = -aabb_extent.y - v0.y;
-    vmax.y = aabb_extent.y - v0.y;
-    vmin.z = -aabb_extent.z - v0.z;
-    vmax.z = aabb_extent.z - v0.z;
-    if (vmin.x > vmax.x) std::swap<double>(vmin.x, vmax.x);
-    if (vmin.y > vmax.y) std::swap<double>(vmin.y, vmax.y);
-    if (vmin.z > vmax.z) std::swap<double>(vmin.z, vmax.z);
-
     const Vec3 normal = glm::cross(e0, e1);
+    Vec3 vmin, vmax;
+    for (size_t d = 0; d < 3; ++d)
+    {
+        if (normal[d] >= 0.0)
+        {
+            vmin[d] = -aabb_extent[d] - v0[d];
+            vmax[d] = aabb_extent[d] - v0[d];
+        }
+        else
+        {
+            vmin[d] = aabb_extent[d] - v0[d];
+            vmax[d] = -aabb_extent[d] - v0[d];
+        }
+    }
+    
     if (glm::dot(normal, vmin) > 0.0)
         return false; // aabb does not overlap => seperation axis found
     else if (glm::dot(normal, vmax) >= 0.0)
@@ -414,10 +452,14 @@ bool ldplab::rtscpu::IntersectionTest::rayAABB(
         return false;
 
     if (tzmin > tmin)
-        tmin = tzmin;
+        min_dist = tzmin;
+    else
+        min_dist = tmin;
 
     if (tzmax < tmax)
-        tmax = tzmax;
+        max_dist = tzmax;
+    else
+        max_dist = tmin;
 
     return true;
 }
