@@ -43,7 +43,7 @@ void ldplab::utils::ThreadPool::BatchHandle::runJob(bool& remove_batch_from_queu
         job_id + 1, 
         m_batch_size);
     
-    m_job->execute(job_id);
+    m_job->execute(job_id, m_batch_size);
     
     LDPLAB_LOG_TRACE("LDPLAB thread pool batch %i: Thread %s finished job execution "\
         "%i (%i of %i)",
