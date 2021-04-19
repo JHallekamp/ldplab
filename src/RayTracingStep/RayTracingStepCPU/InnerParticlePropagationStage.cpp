@@ -832,11 +832,4 @@ void ldplab::rtscpu::IPPMeshParticle::intersection(
     Vec3& inter_point, 
     Vec3& inter_normal)
 {
-    Ray t_ray{ origin_out, glm::normalize(origin_in - origin_out), -1 };
-    
-    MeshParticleData* data = (MeshParticleData*) m_context->particle_data.get();
-    data->particle_data[particle].geometry->Intersection(
-                t_ray,
-                inter_point,
-                inter_normal);
 }

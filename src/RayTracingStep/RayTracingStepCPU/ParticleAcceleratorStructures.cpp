@@ -90,8 +90,8 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersects(
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
-    double min, max;
-    if (IntersectionTest::rayAABB(ray, m_nodes[0].aabb, min, max))
+    double min;
+    if (IntersectionTest::rayAABB(ray, m_nodes[0].aabb, min))
     {
         return intersectRecursive(
             m_nodes[0], 
@@ -111,7 +111,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectsLineSegment(
 {
     double min, max;
     if (IntersectionTest::lineAABB(
-        segment_origin, segment_end, m_nodes[0].aabb, min, max))
+        segment_origin, segment_end, m_nodes[0].aabb, min))
     {
         return intersectSegmentRecursive(
             m_nodes[0], 
@@ -339,14 +339,15 @@ size_t ldplab::rtscpu::ParticleMeshOctree::constructMakePersistentRecursive(
         {
             if (layers[current_layer + 1][layer_node.children[i]].num_children)
             {
-                m_nodes[node_idx].children[num_children++] =
-                    constructMakePersistentRecursive(
-                        current_layer + 1,
-                        layer_node.children[i],
-                        layers,
-                        triangle_storage);
+                size_t child_idx = constructMakePersistentRecursive(
+                    current_layer + 1,
+                    layer_node.children[i],
+                    layers,
+                    triangle_storage);
+                m_nodes[node_idx].children[num_children++] = child_idx;
             }
         }
+
         m_nodes[node_idx].num_children = num_children;
     }
     return node_idx;
@@ -372,19 +373,14 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectRecursive(
     else
     {
         std::array<std::pair<size_t, double>, 8> nodes;
-        double min, max;
+        double dist;
         size_t intersections = 0;
         // Check for intersections with the subdivisions
         for (size_t i = 0; i < node.num_children; ++i)
         {
             const size_t c = node.children[i];
-            if (IntersectionTest::rayAABB(ray, m_nodes[c].aabb, min, max))
-            {
-                if (min >= 0.0)
-                    nodes[intersections++] = std::pair<size_t, double>(c, min);
-                else
-                    nodes[intersections++] = std::pair<size_t, double>(c, max);
-            }   
+            if (IntersectionTest::rayAABB(ray, m_nodes[c].aabb, dist))
+                nodes[intersections++] = std::pair<size_t, double>(c, dist);
         }
         // Sort based on distance of intersection
         for (size_t j = 0; j < intersections; ++j)
@@ -471,19 +467,16 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectSegmentRecursive(
     else
     {
         std::array<std::pair<size_t, double>, 8> nodes;
-        double min, max;
+        double dist;
         size_t intersections = 0;
         // Check for intersections with the subdivisions
         for (size_t i = 0; i < node.num_children; ++i)
         {
             const size_t c = node.children[i];
             if (IntersectionTest::lineAABB(
-                segment_origin, segment_end, m_nodes[c].aabb, min, max))
+                segment_origin, segment_end, m_nodes[c].aabb, dist))
             {
-                if (min >= 0.0)
-                    nodes[intersections++] = std::pair<size_t, double>(c, min);
-                else
-                    nodes[intersections++] = std::pair<size_t, double>(c, max);
+                nodes[intersections++] = std::pair<size_t, double>(c, dist);
             }
         }
         // Sort based on distance of intersection

@@ -59,7 +59,7 @@ namespace ldplab
              */
             void finalizeOutput(RayTracingStepOutput& output);
             /** @brief Inherited via IJob */
-            void execute(size_t job_id) override;
+            void execute(size_t job_id, size_t batch_size) override;
         private:
             void processBatch(
                 RayBuffer& buffer,

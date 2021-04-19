@@ -170,15 +170,13 @@ namespace ldplab
             static bool rayAABB(
                 const Ray& ray,
                 const AABB& aabb,
-                double& min_dist,
-                double& max_dist);
+                double& min_dist);
             /** @todo documentation */
             static bool lineAABB(
                 const Vec3& line_start,
                 const Vec3& line_end,
                 const AABB& aabb,
-                double& min_dist,
-                double& max_dist);
+                double& min_dist);
         };
     }
 }

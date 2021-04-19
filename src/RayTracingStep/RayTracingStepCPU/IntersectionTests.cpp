@@ -1,5 +1,7 @@
 #include "IntersectionTests.hpp"
 
+#include <array>
+
 bool ldplab::rtscpu::IntersectionTest::rayTriangle(
     const Ray& ray, 
     const Triangle& triangle, 
@@ -24,7 +26,7 @@ bool ldplab::rtscpu::IntersectionTest::rayTriangle(
         return false;
     // Calculate distance to intersection point
     double t = f * glm::dot(edge2, q);
-    if (t >= 0)
+    if (t >= EPSILON)
     {
         dist = t;
         return true;
@@ -368,99 +370,80 @@ bool ldplab::rtscpu::IntersectionTest::triangleAABB(
 bool ldplab::rtscpu::IntersectionTest::rayAABB(
     const Ray& ray, 
     const AABB& aabb, 
-    double& min_dist, 
-    double& max_dist)
+    double& min_dist)
 {
+    // Based on original code by Andrew Woo
+    // from "Graphics Gems", Academic Press, 1990
     constexpr double EPSILON = 1e-10;
+    constexpr size_t NUMDIM = 3;
+    constexpr char RIGHT = 0;
+    constexpr char LEFT = 1;
+    constexpr char MIDDLE = 2;
 
-    double tmin = aabb.min.x - ray.origin.x;
-    double tmax = aabb.max.x - ray.origin.x;
-    if (abs(ray.direction.x) < EPSILON)
-    {
-        if ((tmin < 0 && ray.direction.x < 0) || (tmin >= 0 && ray.direction.x >= 0))
-            tmin = std::numeric_limits<double>::infinity();
-        else
-            tmin = -std::numeric_limits<double>::infinity();
-        if ((tmax < 0 && ray.direction.x < 0) || (tmax >= 0 && ray.direction.x >= 0))
-            tmax = std::numeric_limits<double>::infinity();
-        else
-            tmax = -std::numeric_limits<double>::infinity();
-    }
-    else
-    {
-        tmin /= ray.direction.x;
-        tmax /= ray.direction.x;
-    }
+    bool inside = true;
+    std::array<char, NUMDIM> quadrant;
+    Vec3 candidate_plane;
 
-    if (tmin > tmax) 
-        std::swap(tmin, tmax);
-
-    double tymin = aabb.min.y - ray.origin.y;
-    double tymax = aabb.max.y - ray.origin.y;
-    if (abs(ray.direction.y) < EPSILON)
+    // Find candidate planes
+    for (size_t i = 0; i < NUMDIM; ++i)
     {
-        if ((tymin < 0 && ray.direction.y < 0) || (tymin >= 0 && ray.direction.y >= 0))
-            tymin = std::numeric_limits<double>::infinity();
+        if (ray.origin[i] < aabb.min[i])
+        {
+            quadrant[i] = LEFT;
+            candidate_plane[i] = aabb.min[i];
+            inside = false;
+        }
+        else if (ray.origin[i] > aabb.max[i])
+        {
+            quadrant[i] = RIGHT;
+            candidate_plane[i] = aabb.max[i];
+            inside = false;
+        }
         else
-            tymin = -std::numeric_limits<double>::infinity();
-        if ((tymax < 0 && ray.direction.y < 0) || (tymax >= 0 && ray.direction.y >= 0))
-            tymax = std::numeric_limits<double>::infinity();
-        else
-            tymax = -std::numeric_limits<double>::infinity();
-    }
-    else
-    {
-        tymin /= ray.direction.y;
-        tymax /= ray.direction.y;
+            quadrant[i] = MIDDLE;
     }
 
-    if (tymin > tymax) 
-        std::swap(tymin, tymax);
+    // Ray origin inside the AABB
+    if (inside)
+    {
+        min_dist = 0.0;
+        return true;
+    }
 
-    if ((tmin > tymax) || (tymin > tmax))
+    // Calculate T distances to candidate planes
+    Vec3 t_max;
+    for (size_t i = 0; i < NUMDIM; ++i)
+    {
+        if (quadrant[i] != MIDDLE && abs(ray.direction[i]) > EPSILON)
+            t_max[i] = (candidate_plane[i] - ray.origin[i]) / ray.direction[i];
+        else
+            t_max[i] = -1.0;
+    }
+
+    // Get largest of the maxs for final choice of intersection
+    min_dist = t_max[0];
+    size_t which_plane = 0;
+    for (size_t i = 1; i < NUMDIM; ++i)
+    {
+        if (min_dist < t_max[i])
+        {
+            which_plane = i;
+            min_dist = t_max[i];
+        }
+    }
+
+    // Check final candiate actually inside box
+    if (min_dist < 0.0)
         return false;
-
-    if (tymin > tmin)
-        tmin = tymin;
-
-    if (tymax < tmax)
-        tmax = tymax;
-
-    double tzmin = aabb.min.z - ray.origin.z;
-    double tzmax = aabb.max.z - ray.origin.z;
-    if (abs(ray.direction.z) < EPSILON)
+    for (size_t i = 0; i < NUMDIM; ++i)
     {
-        if ((tzmin < 0 && ray.direction.z < 0) || (tzmin >= 0 && ray.direction.z >= 0))
-            tzmin = std::numeric_limits<double>::infinity();
-        else
-            tzmin = -std::numeric_limits<double>::infinity();
-        if ((tzmax < 0 && ray.direction.z < 0) || (tzmax >= 0 && ray.direction.z >= 0))
-            tzmax = std::numeric_limits<double>::infinity();
-        else
-            tzmax = -std::numeric_limits<double>::infinity();
+        if (which_plane != i)
+        {
+            double coord = ray.origin[i] + min_dist * ray.direction[i];
+            if (coord < aabb.min[i] || coord > aabb.max[i])
+                return false;
+        }
     }
-    else
-    {
-        tzmin /= ray.direction.z;
-        tzmax /= ray.direction.z;
-    }
-
-    if (tzmin > tzmax) 
-        std::swap(tzmin, tzmax);
-
-    if ((tmin > tzmax) || (tzmin > tmax))
-        return false;
-
-    if (tzmin > tmin)
-        min_dist = tzmin;
-    else
-        min_dist = tmin;
-
-    if (tzmax < tmax)
-        max_dist = tzmax;
-    else
-        max_dist = tmin;
-
     return true;
 }
 
@@ -468,13 +451,12 @@ bool ldplab::rtscpu::IntersectionTest::lineAABB(
     const Vec3& line_start, 
     const Vec3& line_end, 
     const AABB& aabb, 
-    double& min_dist, 
-    double& max_dist)
+    double& min_dist)
 {
     const Ray ray{ line_start, line_end - line_start, 0.0 };
-    if (!rayAABB(ray, aabb, min_dist, max_dist))
+    if (!rayAABB(ray, aabb, min_dist))
         return false;
-    if (min_dist > 1.0 || max_dist < 0.0)
+    if (min_dist > 1.0)
         return false;
     return true;
 }
