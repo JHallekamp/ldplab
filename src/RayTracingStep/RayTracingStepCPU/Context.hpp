@@ -126,6 +126,11 @@ namespace ldplab
                  *        the maximum branching depth.
                  */
                 bool emit_warning_on_maximum_branching_depth_discardment;
+                /**
+                 * @brief Determines if the finial particle force and torque is
+                 *        returned in particle coordinate system.
+                 */
+                bool return_force_in_particle_coordinate_system;
             } flags;
         };
     }

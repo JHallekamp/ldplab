@@ -219,6 +219,8 @@ bool ldplab::rtscpu::Factory::createContext(
     context->parameters.number_parallel_pipelines = info.number_parallel_pipelines;
     context->flags.emit_warning_on_maximum_branching_depth_discardment =
         info.emit_warning_on_maximum_branching_depth_discardment;
+    context->flags.return_force_in_particle_coordinate_system =
+        info.return_force_in_particle_coordinate_system;
     return createDataInstances(setup, info, context);
 }
 
