@@ -10,7 +10,7 @@
 #include <cmath>
 
 ldplab::rtscpu::EikonalSolverRK4::EikonalSolverRK4(
-    std::shared_ptr<Context> context,
+    Context& context,
     RK4Parameter parameters)
     :
     m_context{ context },
@@ -18,7 +18,7 @@ ldplab::rtscpu::EikonalSolverRK4::EikonalSolverRK4(
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "EikonalSolverRK4 instance created",
-        m_context->uid);
+        m_context.uid);
 }
 
 void ldplab::rtscpu::EikonalSolverRK4::execute(
@@ -28,12 +28,12 @@ void ldplab::rtscpu::EikonalSolverRK4::execute(
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute inner particle ray propagation "\
         "on batch buffer %i",
-        m_context->uid, rays.uid);
+        m_context.uid, rays.uid);
 
     for (size_t i = 0; i < rays.size; i++)
     {
         if (rays.index_data[i] < 0 ||
-            rays.index_data[i] >= m_context->particles.size())
+            rays.index_data[i] >= m_context.particles.size())
             continue;
 
         rayPropagation(
@@ -46,7 +46,7 @@ void ldplab::rtscpu::EikonalSolverRK4::execute(
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Inner particle ray propagation on "\
         "buffer %i completed",
-        m_context->uid,
+        m_context.uid,
         rays.uid);
 }
 
@@ -59,7 +59,7 @@ void ldplab::rtscpu::EikonalSolverRK4::
         OutputBuffer& output)
 {
     ParticleMaterialLinearOneDirectional* material =
-        (ParticleMaterialLinearOneDirectional*)m_context->particles[particle]
+        (ParticleMaterialLinearOneDirectional*)m_context.particles[particle]
         .material.get();
 
     bool intersected = false;
@@ -92,7 +92,7 @@ void ldplab::rtscpu::EikonalSolverRK4::
             const Vec3 delta_momentum = nx * t_old_direction -
                 ny * t_new_direction;
             const Vec3 r = x_new.r -
-                m_context->particles[particle].centre_of_mass;
+                m_context.particles[particle].centre_of_mass;
             output.force[particle] += ray.intensity *
                 delta_momentum;
             output.torque[particle] += ray.intensity *
@@ -163,15 +163,15 @@ inline ldplab::rtscpu::EikonalSolverRK4::Arg
 
 ldplab::rtscpu::EikonalSolverRK45::
     EikonalSolverRK45(
-        std::shared_ptr<Context> context,
-        RK45Parameter parameters)
+        Context& context,
+        RK4Parameter parameters)
     :
     m_context{ context },
     m_parameters{parameters}
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "EikonalSolverRK45 instance created",
-        m_context->uid);
+        context.uid);
 }
 
 void ldplab::rtscpu::EikonalSolverRK45::execute(
@@ -181,12 +181,12 @@ void ldplab::rtscpu::EikonalSolverRK45::execute(
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute inner particle ray propagation "\
         "on batch buffer %i",
-        m_context->uid, rays.uid);
+        m_context.uid, rays.uid);
 
     for (size_t i = 0; i < rays.size; i++)
     {
         if (rays.index_data[i] < 0 ||
-            rays.index_data[i] >= m_context->particles.size())
+            rays.index_data[i] >= m_context.particles.size())
             continue;
 
         rayPropagation(
@@ -199,7 +199,7 @@ void ldplab::rtscpu::EikonalSolverRK45::execute(
 
     LDPLAB_LOG_TRACE("RTSCPU context %i: Inner particle ray propagation on "\
         "buffer %i completed",
-        m_context->uid,
+        m_context.uid,
         rays.uid);
 }
 
@@ -212,7 +212,7 @@ void ldplab::rtscpu::EikonalSolverRK45::
         OutputBuffer& output)
 {
     ParticleMaterialLinearOneDirectional* material =
-        (ParticleMaterialLinearOneDirectional*) m_context->particles[particle]
+        (ParticleMaterialLinearOneDirectional*) m_context.particles[particle]
         .material.get();
 
     bool intersected = false;
@@ -248,7 +248,7 @@ void ldplab::rtscpu::EikonalSolverRK45::
                 const Vec3 delta_momentum = nx * t_old_direction -
                     ny * t_new_direction;
                 const Vec3 r = x_new.r -
-                    m_context->particles[particle].centre_of_mass;
+                    m_context.particles[particle].centre_of_mass;
                 output.force[particle] += ray.intensity *
                     delta_momentum;
                 output.torque[particle] += ray.intensity *
@@ -263,7 +263,7 @@ void ldplab::rtscpu::EikonalSolverRK45::
             h = m_parameters.safety_factor * h * 
                 std::pow(m_parameters.epsilon / error, 0.25);
             LDPLAB_LOG_TRACE("RTSCPU context %i: RK45 Step discarded with"\
-                " error = %f, new step size = %f", m_context->uid, error, h);
+                " error = %f, new step size = %f", m_context.uid, error, h);
         }
     }
 }
@@ -364,8 +364,8 @@ double ldplab::rtscpu::EikonalSolverRK45::Arg::absoluteMax()
 }
 
 ldplab::rtscpu::RK45RodParticlePropagation::RK45RodParticlePropagation(
-    std::shared_ptr<Context> context,
-    RK45Parameter parameters)
+    Context& context,
+    RK4Parameter parameters)
     :
     EikonalSolverRK45(context, parameters),
     IPPRodParticle(context)
@@ -389,8 +389,8 @@ void ldplab::rtscpu::RK45RodParticlePropagation::intersection(
 }
 
 ldplab::rtscpu::RK4RodParticlePropagation::RK4RodParticlePropagation(
-    std::shared_ptr<Context> context,
-    RK4Parameter parameters)
+    Context& context,
+    RK4 parameters)
     :
     EikonalSolverRK4(context, parameters),
     IPPRodParticle(context)
@@ -421,8 +421,8 @@ void ldplab::rtscpu::RK4RodParticlePropagation::intersection(
 
 ldplab::rtscpu::RK4SphericalParticlePropagation::
 RK4SphericalParticlePropagation(
-    std::shared_ptr<Context> context,
-    RK4Parameter parameters)
+    Context& context,
+    RK4 parameters)
     :
     EikonalSolverRK4(context, parameters),
     IPPSphereParticle(context)
@@ -448,8 +448,8 @@ intersection(
 
 ldplab::rtscpu::RK45SphericalParticlePropagation::
 RK45SphericalParticlePropagation(
-    std::shared_ptr<Context> context,
-    RK45Parameter parameters)
+    Context& context,
+    RK4Parameter parameters)
     :
     EikonalSolverRK45(context, parameters),
     IPPSphereParticle(context)
@@ -474,10 +474,10 @@ intersection(
 }
 
 
-ldplab::rtscpu::IPPRodParticle::IPPRodParticle(std::shared_ptr<Context> context)
+ldplab::rtscpu::IPPRodParticle::IPPRodParticle(Context& context)
     :
     m_rod_particles{ ((RodParticleData*)
-        context->particle_data.get())->particle_data }
+        context.particle_data.get())->particle_data }
 {
 }
 
@@ -782,7 +782,7 @@ bool ldplab::rtscpu::IPPRodParticle::indentationIntersection(
 
 
 ldplab::rtscpu::IPPSphereParticle::IPPSphereParticle(
-    std::shared_ptr<Context> context)
+    Context& context)
     :
     m_context{context}
 {
@@ -791,7 +791,7 @@ ldplab::rtscpu::IPPSphereParticle::IPPSphereParticle(
 bool ldplab::rtscpu::IPPSphereParticle::isOutsideParticle(const size_t particle, const Vec3& r)
 {
     const SphericalParticleGeometry* geometry = (SphericalParticleGeometry*)
-        m_context->particles[particle].geometry.get();
+        m_context.particles[particle].geometry.get();
     if (r.x * r.x + r.y * r.y + r.z * r.z >
         geometry->radius * geometry->radius)
         return true;
@@ -806,7 +806,7 @@ void ldplab::rtscpu::IPPSphereParticle::intersection(
     Vec3& inter_normal)
 {
     const SphericalParticleGeometry* geometry = (SphericalParticleGeometry*)
-        m_context->particles[particle].geometry.get();
+        m_context.particles[particle].geometry.get();
 
     Ray t_ray{ origin_out, glm::normalize(origin_in - origin_out), -1 };
     const double p = glm::dot(t_ray.direction, t_ray.origin);

@@ -6,15 +6,15 @@
 
 ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     RayBoundingSphereIntersectionTestStageBruteForce(
-        std::shared_ptr<Context> context)
+        Context& context)
     :
     m_context{ context },
     m_bounding_spheres{ ((BoundingSphereData*) 
-        context->bounding_volume_data.get())->sphere_data }
+        context.bounding_volume_data.get())->sphere_data }
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "RayBoundingSphereIntersectionTestStageBruteForce instance created",
-        m_context->uid);
+        m_context.uid);
 }
 
 void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::setup()
@@ -28,7 +28,7 @@ size_t
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Test bounding sphere intersections "\
         "for batch buffer %i",
-        m_context->uid,
+        m_context.uid,
         buffer.uid);
 
     size_t num_rays_exiting_scene = 0;
@@ -37,7 +37,7 @@ size_t
     const Vec3 unit = { 1, 1, 1 };
     for (size_t i = 0; i < buffer.size; ++i)
     {
-        if (buffer.index_data[i] < m_context->particles.size() ||
+        if (buffer.index_data[i] < m_context.particles.size() ||
             buffer.index_data[i] == -1)
             continue;
 
@@ -46,7 +46,7 @@ size_t
 
         const Vec3& o = buffer.ray_data[i].origin;
         for (int32_t j = 0; j < 
-            static_cast<int32_t>(m_context->particles.size()); ++j)
+            static_cast<int32_t>(m_context.particles.size()); ++j)
         {
             const Vec3& oc = o -  m_bounding_spheres[j].center;
             const double rr = m_bounding_spheres[j].radius *
@@ -98,7 +98,7 @@ size_t
     LDPLAB_LOG_TRACE("RTSCPU context %i: Bounding sphere intersection "\
         "test on batch buffer %i completed, of %i tested rays %i hit "\
         "bounding spheres and %i rays exited the scene",
-        m_context->uid,
+        m_context.uid,
         buffer.uid,
         num_rays_hitting_boundary_sphere + num_rays_exiting_scene,
         num_rays_hitting_boundary_sphere,
@@ -110,10 +110,10 @@ size_t
 inline void ldplab::rtscpu::RayBoundingSphereIntersectionTestStageBruteForce::
     transformRayFromWorldToParticleSpace(Ray& ray, size_t pidx) const
 {
-    ray.origin = m_context->particle_transformations[pidx].w2p_rotation_scale *
+    ray.origin = m_context.particle_transformations[pidx].w2p_rotation_scale *
         (ray.origin + 
-            m_context->particle_transformations[pidx].w2p_translation);
+            m_context.particle_transformations[pidx].w2p_translation);
     ray.direction = glm::normalize(
-        m_context->particle_transformations[pidx].w2p_rotation_scale *
+        m_context.particle_transformations[pidx].w2p_rotation_scale *
             ray.direction);
 }

@@ -6,7 +6,7 @@
 
 ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
     InitialStageBoundingSpheresHomogenousLight(
-        std::shared_ptr<Context> context)
+        Context& context)
     :
     m_context{ context },
     m_bounding_spheres{ ((BoundingSphereData*)
@@ -22,15 +22,15 @@ ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
 {
     LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: "\
         "InitialStageBoundingSpheresHomogenousLight instance created",
-        m_context->uid);
+        m_context.uid);
     //LDPLAB_LOG_INFO("RTSGPU (OpenGL) context %i: Created initial stage for bounding"\
-    //    " spheres and homogenous light sources", m_context->uid);
+    //    " spheres and homogenous light sources", m_context.uid);
 }
 
 void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
 {
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Project particles on light sources",
-        m_context->uid);
+        m_context.uid);
 
     struct ProjectionPerLight
     {
@@ -57,16 +57,16 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
     // Projections per light source
     std::vector<std::vector<ProjectionPerLight>> projection_per_light_source;
 
-    for (size_t i = 0; i < m_context->light_sources.size(); ++i)
+    for (size_t i = 0; i < m_context.light_sources.size(); ++i)
     {
-        const Vec3 plane_base = m_context->light_sources[i].origin_corner;
-        const Vec3 light_direction = m_context->light_sources[i].orientation;
+        const Vec3 plane_base = m_context.light_sources[i].origin_corner;
+        const Vec3 light_direction = m_context.light_sources[i].orientation;
 
         const double division_term = 
             1.0 / -glm::dot(light_direction, light_direction);
 
         std::vector<ProjectionPerLight> light_projections;
-        for (size_t j = 0; j < m_context->particles.size(); ++j)
+        for (size_t j = 0; j < m_context.particles.size(); ++j)
         {
             const double t =
                 glm::dot(light_direction, 
@@ -78,14 +78,14 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
             const Vec3 wrldctr = m_bounding_spheres[j].center - t * light_direction;
             const Vec3 planectr = wrldctr - plane_base;
             const Vec2 center{ 
-                glm::dot(planectr,  m_context->light_sources[i].horizontal_direction),
-                glm::dot(planectr,  m_context->light_sources[i].vertical_direction) };
+                glm::dot(planectr,  m_context.light_sources[i].horizontal_direction),
+                glm::dot(planectr,  m_context.light_sources[i].vertical_direction) };
             const double radius = m_bounding_spheres[j].radius;
-            if (!projLightOverlap(center, radius, m_context->light_sources[i]))
+            if (!projLightOverlap(center, radius, m_context.light_sources[i]))
             {
                 LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Particle %i has no"\
                     " projection onto light source %i",
-                    m_context->uid, j, i);
+                    m_context.uid, j, i);
                 continue;
             }
 
@@ -94,13 +94,13 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
                 LDPLAB_LOG_WARNING("RTSGPU (OpenGL) context %i: Particle "\
                     "%i bounding sphere intersects light source %i, the "\
                     "particle projection is discarded",
-                    m_context->uid, j, i);
+                    m_context.uid, j, i);
                 continue;
             }
 
             LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Particle %i is projected"\
                 " onto light source %i",
-                m_context->uid, j, i);
+                m_context.uid, j, i);
 
             ProjectionPerLight proj;
             proj.particle_index = j;
@@ -128,7 +128,7 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
     }
 
     // Sort projections of each light source into projections per particle
-    m_projections_per_particle.resize(m_context->particles.size());
+    m_projections_per_particle.resize(m_context.particles.size());
     for (size_t i = 0; i < m_projections_per_particle.size(); ++i)
         m_projections_per_particle[i].clear();
 
@@ -176,10 +176,10 @@ void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::setup()
     m_batch_creation_light_index = 0;
     m_batch_creation_particle_initialized = false;
     m_rasterization_step_size = 
-        1.0 / static_cast<double>(m_context->parameters.number_rays_per_unit);
+        1.0 / static_cast<double>(m_context.parameters.number_rays_per_unit);
 
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Particle projections created",
-        m_context->uid);
+        m_context.uid);
 }
 
 bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::projLightOverlap(
@@ -271,10 +271,10 @@ inline void ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::
         Vec3& direction, 
         size_t pidx) const
 {
-    origin = m_context->particle_transformation_data.w2p_rotation_scale[pidx] *
-        (origin + m_context->particle_transformation_data.w2p_translation[pidx]);
+    origin = m_context.particle_transformation_data.w2p_rotation_scale[pidx] *
+        (origin + m_context.particle_transformation_data.w2p_translation[pidx]);
     direction = glm::normalize(
-        m_context->particle_transformation_data.w2p_rotation_scale[pidx] *
+        m_context.particle_transformation_data.w2p_rotation_scale[pidx] *
         direction);
 }
 
@@ -285,7 +285,7 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
 
     LDPLAB_LOG_TRACE("RTSGPU (OpenGL) context %i: Create initial batch rays for"\
         " batch buffer %i",
-        m_context->uid,
+        m_context.uid,
         initial_batch_buffer.uid);
 
     initial_batch_buffer.active_rays = 0;
@@ -307,7 +307,7 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
             const Projection& projection =
                 m_projections_per_particle[pi][li];
             const LightSource& light =
-                m_context->light_sources[projection.light_index];
+                m_context.light_sources[projection.light_index];
 
             if (!m_batch_creation_particle_initialized)
             {
@@ -348,8 +348,8 @@ bool ldplab::rtsgpu_ogl::InitialStageBoundingSpheresHomogenousLight::createBatch
                         initial_batch_buffer.ray_properties_data[nr].intensity =
                             ((LightDistributionHomogeneous*)
                                 light.intensity_distribution.get())->intensity /
-                            (m_context->parameters.number_rays_per_unit *
-                            m_context->parameters.number_rays_per_unit);
+                            (m_context.parameters.number_rays_per_unit *
+                            m_context.parameters.number_rays_per_unit);
                         
                         // Set initial ray direction
                         initial_batch_buffer.ray_properties_data[nr].direction =

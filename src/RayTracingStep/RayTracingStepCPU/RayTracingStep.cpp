@@ -9,9 +9,9 @@
 #include <glm/ext.hpp>
 
 ldplab::rtscpu::RayTracingStep::RayTracingStep(
-    std::shared_ptr<Context> context)
+    std::unique_ptr<Context> context)
     :
-    m_context{ context }
+    m_context{ std::move(context) }
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "RayTracingStep instance created",

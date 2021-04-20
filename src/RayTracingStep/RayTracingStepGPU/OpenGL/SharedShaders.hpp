@@ -19,7 +19,7 @@ namespace ldplab
         class SharedShaders
         {
         public:
-            SharedShaders(std::shared_ptr<Context> ctx);
+            SharedShaders(Context& ctx);
             /** @brief Compiles a shader by name. */
             bool createShaderByName(const char* name,
                 std::shared_ptr<ComputeShader>& shader);
@@ -90,7 +90,7 @@ namespace ldplab
                 size_t num_work_groups;
             } m_cs_reset_output_and_intersection;
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
     }
 }

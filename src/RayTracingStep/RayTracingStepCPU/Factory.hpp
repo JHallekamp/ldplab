@@ -17,11 +17,6 @@ namespace ldplab
             static std::shared_ptr<RayTracingStep> createRTS(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info);
-            /** @brief Creates the ray tracing step instance in debug mode. */
-            static std::shared_ptr<RayTracingStep> createRTSDebug(
-                const ExperimentalSetup& setup,
-                const RayTracingStepCPUInfo& info,
-                RayTracingStepCPUDebugInfo& debug_info);
         private:
             // Saves the types within the setup and info
             ILightDirection::Type m_light_direction_type;
@@ -30,7 +25,7 @@ namespace ldplab
             IBoundingVolume::Type m_bounding_volume_type;
             IParticleGeometry::Type m_particle_geometry_type;
             IParticleMaterial::Type m_particle_material_type;
-            IEikonalSolverParameter::Type m_solver_type;
+            IEikonalSolver::Type m_solver_type;
         private:
             /** @brief Factory is used by factory functions. */
             Factory() { }
@@ -65,27 +60,27 @@ namespace ldplab
             bool createContext(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context>& context);
+                std::unique_ptr<Context>& context);
             /** @brief Creates data structrue instances. */
             bool createDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context);
+                std::unique_ptr<Context>& context);
             /** @brief Creates bounding spheres data instances. */
             void createBoundingSphereDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Creates rod particle data instances. */
             void createRodParticleDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Creates the stages of the ray tracing pipeline. */
             bool createPipelineStages(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IInitialStage>& initial,
                 std::unique_ptr<IInnerParticlePropagationStage>& ipp,
                 std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& rbvi,
@@ -99,7 +94,7 @@ namespace ldplab
             bool createInitialStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IInitialStage>& stage);
             /**
              * @brief Creates a inner particle propagation stage if support for
@@ -109,7 +104,7 @@ namespace ldplab
             bool createInnerParticlePropagationStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IInnerParticlePropagationStage>& stage);
             /**
              * @brief Creates a ray bounding volume intersection test stage if
@@ -119,7 +114,7 @@ namespace ldplab
             bool createRayBoundingVolumeIntersectionTestStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& stage);
             /**
              * @brief Creates a ray particle interaction stage if support for
@@ -129,7 +124,7 @@ namespace ldplab
             bool createRayParticleInteractionStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IRayParticleInteractionStage>& stage);
             /**
              * @brief Creates a ray particle intersection test stage if support
@@ -139,7 +134,7 @@ namespace ldplab
             bool createRayParticleIntersectionTestStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IRayParticleIntersectionTestStage>& stage);
         };
     }

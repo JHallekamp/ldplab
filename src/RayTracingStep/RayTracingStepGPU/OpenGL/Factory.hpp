@@ -65,27 +65,27 @@ namespace ldplab
             bool createDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Creates bounding spheres data instances. */
             void createBoundingSphereDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Creates rod particle data instances. */
             void createRodParticleDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Creates linear unpolarized one directional material. */
             void createParticleMaterialLinearOneDirectionalInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context);
+                Context& context);
             /** @brief Creates the stages of the ray tracing pipeline. */
             bool createPipelineStages(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IInitialStage>& initial,
                 std::unique_ptr<IInnerParticlePropagationStage>& ipp,
                 std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& rbvi,
@@ -99,7 +99,7 @@ namespace ldplab
             bool createInitialStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IInitialStage>& stage);
             /**
              * @brief Creates a inner particle propagation stage if support for
@@ -109,7 +109,7 @@ namespace ldplab
             bool createInnerParticlePropagationStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IInnerParticlePropagationStage>& stage);
             /**
              * @brief Creates a ray bounding volume intersection test stage if
@@ -119,7 +119,7 @@ namespace ldplab
             bool createRayBoundingVolumeIntersectionTestStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& stage);
             /**
              * @brief Creates a ray particle interaction stage if support for
@@ -129,7 +129,7 @@ namespace ldplab
             bool createRayParticleInteractionStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IRayParticleInteractionStage>& stage);
             /**
              * @brief Creates a ray particle intersection test stage if support
@@ -139,7 +139,7 @@ namespace ldplab
             bool createRayParticleIntersectionTestStage(
                 const ExperimentalSetup& setup,
                 const RayTracingStepGPUOpenGLInfo& info,
-                std::shared_ptr<Context> context,
+                Context& context,
                 std::unique_ptr<IRayParticleIntersectionTestStage>& stage);
         };
     }

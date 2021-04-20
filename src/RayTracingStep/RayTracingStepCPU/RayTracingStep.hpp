@@ -45,9 +45,9 @@ namespace ldplab
             /**
             * @brief Constructor
             */
-            RayTracingStep(std::shared_ptr<Context> context);
+            RayTracingStep(std::unique_ptr<Context> context);
         private:
-            std::shared_ptr<Context> m_context;
+            std::unique_ptr<Context> m_context;
         };
     }
 }

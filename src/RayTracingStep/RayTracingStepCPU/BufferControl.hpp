@@ -29,7 +29,7 @@ namespace ldplab
         class BufferControl
         {
         public:
-            BufferControl(std::shared_ptr<Context> context);
+            BufferControl(Context& context);
             /** 
              * @brief Provides the initial batch buffer (depth 0).
              * @returns The root buffer of the buffer tree.
@@ -74,7 +74,7 @@ namespace ldplab
         private:
             void initializeBuffers();
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
             std::vector<RayBuffer> m_buffers;
             std::vector<Ray> m_ray_data;
             std::vector<int32_t> m_index_data;

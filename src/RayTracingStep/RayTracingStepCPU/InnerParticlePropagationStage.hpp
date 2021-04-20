@@ -94,8 +94,8 @@ namespace ldplab
              *                   Runge-Kutta method.
              */
             EikonalSolverRK4(
-                std::shared_ptr<Context> context,
-                RK4Parameter parameters);
+                Context& context,
+                RK4 parameters);
         public:
             /**
              * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
@@ -220,7 +220,7 @@ namespace ldplab
         private:
             const RK4Parameter m_parameters;
         protected:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
 
         /**
@@ -241,7 +241,7 @@ namespace ldplab
              *                   Runge-Kutta-Fehlberg method.
              */
             EikonalSolverRK45(
-                std::shared_ptr<Context> context,
+                Context& context,
                 RK45Parameter parameters);
         public:
             /**
@@ -358,13 +358,13 @@ namespace ldplab
         private:
             const RK45Parameter m_parameters;
         protected:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
 
         class IPPRodParticle : public IInnerParticlePropagationParticle
         {
         protected:
-            IPPRodParticle(std::shared_ptr<Context> context);
+            IPPRodParticle(Context& context);
             /**
              * @brief Check if the position is outside of the particle.
              * @param[in] particle Index of the particle.
@@ -504,7 +504,7 @@ namespace ldplab
         class IPPSphereParticle : public IInnerParticlePropagationParticle
         {
         protected:
-            IPPSphereParticle(std::shared_ptr<Context> context);
+            IPPSphereParticle(Context& context);
             /**
              * @brief Check if the position is outside of the particle.
              * @param[in] particle Index of the particle.
@@ -534,7 +534,7 @@ namespace ldplab
                 Vec3& inter_point,
                 Vec3& inter_normal) override;
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
 
         class IPPMeshParticle : public IInnerParticlePropagationParticle
@@ -591,7 +591,7 @@ namespace ldplab
              *                   Runge-Kutta-Fehlberg method.
              */
             RK45RodParticlePropagation(
-                std::shared_ptr<Context> context,
+                Context& context,
                 RK45Parameter parameters);
         private:
             /**
@@ -642,8 +642,8 @@ namespace ldplab
              *                   Runge-Kutta method.
              */
             RK4RodParticlePropagation(
-                std::shared_ptr<Context> context,
-                RK4Parameter parameters);
+                Context& context,
+                RK4 parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.
@@ -692,7 +692,7 @@ namespace ldplab
              *                   Runge-Kutta-Fehlberg method.
              */
             RK45SphericalParticlePropagation(
-                std::shared_ptr<Context> context,
+                Context& context,
                 RK45Parameter parameters);
         private:
             /**
@@ -744,8 +744,8 @@ namespace ldplab
              *                   Runge-Kutta method.
              */
             RK4SphericalParticlePropagation(
-                std::shared_ptr<Context> context,
-                RK4Parameter parameters);
+                Context& context,
+                RK4 parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.

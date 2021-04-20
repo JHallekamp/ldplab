@@ -62,7 +62,7 @@ namespace ldplab
         {
         public:
             RodParticleIntersectionTest(
-                std::shared_ptr<Context> context);
+                Context& context);
             /**
              * @brief Initializes the shader.
              * @returns true, if the initialization succeeds.
@@ -93,7 +93,7 @@ namespace ldplab
                 size_t num_work_groups;
             } m_cs_intersection;
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
     }
 }

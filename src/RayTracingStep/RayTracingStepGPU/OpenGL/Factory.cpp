@@ -22,7 +22,7 @@ std::shared_ptr<ldplab::rtsgpu_ogl::RayTracingStep>
     }
 
     // Create context
-    std::shared_ptr<Context> context;
+    Context& context;
     if (!factory.createContext(setup, info, context))
     {
         LDPLAB_LOG_ERROR("RTSGPU factory (OpenGL): Failed to create "\
@@ -245,7 +245,7 @@ bool ldplab::rtsgpu_ogl::Factory::createContext(
 bool ldplab::rtsgpu_ogl::Factory::createDataInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context)
+    Context& context)
 {
     bool no_error = true;
     if (m_bounding_volume_type == IBoundingVolume::Type::sphere)
@@ -280,7 +280,7 @@ bool ldplab::rtsgpu_ogl::Factory::createDataInstances(
 void ldplab::rtsgpu_ogl::Factory::createBoundingSphereDataInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context)
+    Context& context)
 {
     std::shared_ptr<BoundingSphereData> bv_data = 
         std::make_shared<BoundingSphereData>();
@@ -292,7 +292,7 @@ void ldplab::rtsgpu_ogl::Factory::createBoundingSphereDataInstances(
 void ldplab::rtsgpu_ogl::Factory::createRodParticleDataInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context)
+    Context& context)
 {
     std::shared_ptr<RodParticleData> particle_data = 
         std::make_shared<RodParticleData>(context);
@@ -329,7 +329,7 @@ void ldplab::rtsgpu_ogl::Factory::createRodParticleDataInstances(
 void ldplab::rtsgpu_ogl::Factory::createParticleMaterialLinearOneDirectionalInstances(
     const ExperimentalSetup& setup, 
     const RayTracingStepGPUOpenGLInfo& info, 
-    std::shared_ptr<Context> context)
+    Context& context)
 {
     std::shared_ptr<ParticleMaterialLinearOneDirectionalData> pm_data =
         std::make_shared<ParticleMaterialLinearOneDirectionalData>(context);
@@ -350,7 +350,7 @@ void ldplab::rtsgpu_ogl::Factory::createParticleMaterialLinearOneDirectionalInst
 bool ldplab::rtsgpu_ogl::Factory::createPipelineStages(
     const ExperimentalSetup& setup,
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IInitialStage>& initial, 
     std::unique_ptr<IInnerParticlePropagationStage>& ipp, 
     std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& rbvi, 
@@ -374,7 +374,7 @@ bool ldplab::rtsgpu_ogl::Factory::createPipelineStages(
 bool ldplab::rtsgpu_ogl::Factory::createInitialStage(
     const ExperimentalSetup& setup,
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IInitialStage>& stage)
 {
     if (m_bounding_volume_type == IBoundingVolume::Type::sphere &&
@@ -395,7 +395,7 @@ bool ldplab::rtsgpu_ogl::Factory::createInitialStage(
 bool ldplab::rtsgpu_ogl::Factory::createInnerParticlePropagationStage(
     const ExperimentalSetup& setup,
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IInnerParticlePropagationStage>& stage)
 {
     if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
@@ -418,7 +418,7 @@ bool ldplab::rtsgpu_ogl::Factory::createInnerParticlePropagationStage(
 bool ldplab::rtsgpu_ogl::Factory::createRayBoundingVolumeIntersectionTestStage(
     const ExperimentalSetup& setup,
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>& stage)
 {
     if (m_bounding_volume_type == IBoundingVolume::Type::sphere)
@@ -438,7 +438,7 @@ bool ldplab::rtsgpu_ogl::Factory::createRayBoundingVolumeIntersectionTestStage(
 bool ldplab::rtsgpu_ogl::Factory::createRayParticleInteractionStage(
     const ExperimentalSetup& setup,
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context,
+    Context& context,
     std::unique_ptr<IRayParticleInteractionStage>& stage)
 {
     if (m_light_polarization_type == ILightPolarisation::Type::unpolarized &&
@@ -459,7 +459,7 @@ bool ldplab::rtsgpu_ogl::Factory::createRayParticleInteractionStage(
 bool ldplab::rtsgpu_ogl::Factory::createRayParticleIntersectionTestStage(
     const ExperimentalSetup& setup,
     const RayTracingStepGPUOpenGLInfo& info,
-    std::shared_ptr<Context> context, 
+    Context& context, 
     std::unique_ptr<IRayParticleIntersectionTestStage>& stage)
 {
     if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
