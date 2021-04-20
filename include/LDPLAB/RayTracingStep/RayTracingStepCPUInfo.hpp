@@ -21,7 +21,8 @@ namespace ldplab
             light_source_ray_density_per_unit_area{ 0 },
             maximum_branching_depth{ 0 },
             number_parallel_pipelines{ 0 },
-            emit_warning_on_maximum_branching_depth_discardment{ true }
+            emit_warning_on_maximum_branching_depth_discardment{ true },
+            return_force_in_particle_coordinate_system{ false }
         { }
         /** @brief Parameters for the Eikonal solver. */
         std::shared_ptr<IEikonalSolver> solver_parameters;
@@ -36,11 +37,16 @@ namespace ldplab
         /** @brief Number of parallel pipeline instances. */
         size_t number_parallel_pipelines;
         /**
-         * @brief Determines whether a warning is emited when active rays are
+         * @brief Determines whether a warning is emitted when active rays are
          *        not further traced because they would exceed the maximum 
          *        branching depth.
          */
         bool emit_warning_on_maximum_branching_depth_discardment;
+        /**
+         * @brief Determines if the finial particle force and torque is
+         *        returned in particle coordinate system.
+         */
+        bool return_force_in_particle_coordinate_system;
     };
 }
 
