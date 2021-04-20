@@ -257,8 +257,9 @@ namespace ldplab
         class MeshParticleIntersectionTest :
             public IRayParticleIntersectionTestStage
         {
+        public:
             MeshParticleIntersectionTest(
-                std::shared_ptr<Context> context);
+                Context& context);
             /**
              * @brief Inherited via ldplab::rtscpu::IRayParticleIntersectionTestStage.
              * @details Start calculating the intersection points of the rays
@@ -295,7 +296,7 @@ namespace ldplab
                 Vec3& inter_point,
                 Vec3& inter_normal);
         private:
-            std::shared_ptr<Context> m_context;
+            Context& m_context;
         };
 
     }

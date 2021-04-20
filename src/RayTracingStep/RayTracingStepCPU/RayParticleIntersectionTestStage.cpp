@@ -424,12 +424,10 @@ bool ldplab::rtscpu::SphericalParticleIntersectionTest::intersectionTest(
 }
 
 ldplab::rtscpu::MeshParticleIntersectionTest::MeshParticleIntersectionTest(
-    std::shared_ptr<Context> context)
+    Context& context)
     :
     m_context{ context }
-{
-
-}
+{ }
 
 void ldplab::rtscpu::MeshParticleIntersectionTest::execute(
     RayBuffer& rays, 
@@ -437,29 +435,29 @@ void ldplab::rtscpu::MeshParticleIntersectionTest::execute(
 {
     LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle intersection"\
         " test on batch buffer %i",
-        m_context->uid, rays.uid);
+        m_context.uid, rays.uid);
     size_t num_hit_rays = 0;
     size_t num_missed_rays = 0;
 
     for (size_t i = 0; i < rays.size; i++)
     {
         if (rays.index_data[i] < 0 ||
-            rays.index_data[i] >= m_context->particles.size() ||
+            rays.index_data[i] >= m_context.particles.size() ||
             rays.index_data[i] == intersection.particle_index[i])
             continue;
 
-        MeshParticleData* data = (MeshParticleData*) m_context->particle_data.get();
+        MeshParticleData* data = (MeshParticleData*) m_context.particle_data.get();
         Ray& ray = rays.ray_data[i];
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
         
-        if (data->particle_data[i].geometry->Intersection(
+        if (data->particle_data[i].geometry->intersects(
                 ray,
                 inter_point,
                 inter_normal) >= 0)
         {
             // Transformation to world space
-            ParticleTransformation& trans = m_context->
+            ParticleTransformation& trans = m_context.
                 particle_transformations[rays.index_data[i]];
             ray.origin = trans.p2w_scale_rotation * ray.origin +
                 trans.p2w_translation;
@@ -467,7 +465,7 @@ void ldplab::rtscpu::MeshParticleIntersectionTest::execute(
                 glm::normalize(trans.p2w_scale_rotation * ray.direction);
             // Ray missed particle
             rays.index_data[i] =
-                static_cast<int32_t>(m_context->particles.size());
+                static_cast<int32_t>(m_context.particles.size());
             num_missed_rays++;
         }
         else
@@ -482,7 +480,7 @@ void ldplab::rtscpu::MeshParticleIntersectionTest::execute(
     LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle intersection test on "\
         "batch buffer %i completed, of %i tested rays %i rays hit particles "\
         "and %i rays missed",
-        m_context->uid,
+        m_context.uid,
         rays.uid,
         num_hit_rays + num_missed_rays,
         num_hit_rays,

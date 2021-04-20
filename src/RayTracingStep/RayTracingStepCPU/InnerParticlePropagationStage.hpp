@@ -95,7 +95,7 @@ namespace ldplab
              */
             EikonalSolverRK4(
                 Context& context,
-                RK4 parameters);
+                RK4Parameter parameters);
         public:
             /**
              * @brief Inherited via ldplab::rtscpu::IInnerParticlePropagationStage.
@@ -643,7 +643,7 @@ namespace ldplab
              */
             RK4RodParticlePropagation(
                 Context& context,
-                RK4 parameters);
+                RK4Parameter parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.
@@ -745,7 +745,7 @@ namespace ldplab
              */
             RK4SphericalParticlePropagation(
                 Context& context,
-                RK4 parameters);
+                RK4Parameter parameters);
         private:
             /**
              * @brief Check if the position is outside of the particle.

@@ -243,6 +243,8 @@ bool ldplab::rtscpu::Factory::createDataInstances(
     else if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
     {
     }
+    else if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
+        createMeshDataInstances(setup, info, *context);
     else
     {
         LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create rod particle "\
@@ -266,11 +268,11 @@ void ldplab::rtscpu::Factory::createBoundingSphereDataInstances(
 }
 
 void ldplab::rtscpu::Factory::createRodParticleDataInstances(
-    const ExperimentalSetup& setup, 
-    const RayTracingStepCPUInfo& info, 
+    const ExperimentalSetup& setup,
+    const RayTracingStepCPUInfo& info,
     Context& context)
 {
-    std::shared_ptr<RodParticleData> particle_data = 
+    std::shared_ptr<RodParticleData> particle_data =
         std::make_shared<RodParticleData>();
     context.particle_data = particle_data;
     RodParticle t;
@@ -298,6 +300,37 @@ void ldplab::rtscpu::Factory::createRodParticleDataInstances(
         t.origin_cap = Vec3(0.0, 0.0, geometry->cylinder_length + h - sphere_radius);
         t.origin_indentation = Vec3(0.0, 0.0, h - sphere_radius);
         t.sphere_radius = sphere_radius;
+        particle_data->particle_data.push_back(t);
+    }
+}
+
+void ldplab::rtscpu::Factory::createMeshDataInstances(
+    const ExperimentalSetup& setup, 
+    const RayTracingStepCPUInfo& info, 
+    Context& context)
+{
+    std::shared_ptr<MeshParticleData> particle_data =
+        std::make_shared<MeshParticleData>();
+    MeshParticle t;
+    for (size_t i = 0; i < setup.particles.size(); ++i)
+    {
+        const Particle& particle = setup.particles[i];
+        TriangleMeshParticaleGeometry* geometry =
+            (TriangleMeshParticaleGeometry*)particle.geometry.get();
+        if (info.accelerator_structure_parameters->type() ==
+            IAcceleratorStructureParameter::Type::brute_force)
+        {
+            t.geometry = std::make_shared<ParticleMeshList>(geometry->mesh);
+        }
+        else if (info.accelerator_structure_parameters->type() ==
+            IAcceleratorStructureParameter::Type::octree)
+        {
+            const size_t octree_depth = ((AcceleratorStructureOctreeParameter*)
+                info.accelerator_structure_parameters.get())->octree_depth;
+            t.geometry = std::make_shared<ParticleMeshOctree>(
+                geometry->mesh,
+                octree_depth);
+        }
         particle_data->particle_data.push_back(t);
     }
 }
@@ -458,6 +491,12 @@ bool ldplab::rtscpu::Factory::createRayParticleIntersectionTestStage(
     {
         stage = std::unique_ptr<SphericalParticleIntersectionTest>(
             new SphericalParticleIntersectionTest(context));
+        return true;
+    }
+    else if (m_particle_geometry_type == IParticleGeometry::Type::triangle_mesh)
+    {
+        stage = std::unique_ptr<MeshParticleIntersectionTest>(
+            new MeshParticleIntersectionTest(context));
         return true;
     }
     else

@@ -160,14 +160,12 @@ inline ldplab::rtscpu::EikonalSolverRK4::Arg
         x.w / particle->indexOfRefraction(x.r) };
 }
 
-
-ldplab::rtscpu::EikonalSolverRK45::
-    EikonalSolverRK45(
-        Context& context,
-        RK4Parameter parameters)
+ldplab::rtscpu::EikonalSolverRK45::EikonalSolverRK45(
+    Context& context, 
+    RK45Parameter parameters)
     :
     m_context{ context },
-    m_parameters{parameters}
+    m_parameters{ parameters }
 {
     LDPLAB_LOG_INFO("RTSCPU context %i: "\
         "EikonalSolverRK45 instance created",
@@ -365,7 +363,7 @@ double ldplab::rtscpu::EikonalSolverRK45::Arg::absoluteMax()
 
 ldplab::rtscpu::RK45RodParticlePropagation::RK45RodParticlePropagation(
     Context& context,
-    RK4Parameter parameters)
+    RK45Parameter parameters)
     :
     EikonalSolverRK45(context, parameters),
     IPPRodParticle(context)
@@ -390,7 +388,7 @@ void ldplab::rtscpu::RK45RodParticlePropagation::intersection(
 
 ldplab::rtscpu::RK4RodParticlePropagation::RK4RodParticlePropagation(
     Context& context,
-    RK4 parameters)
+    RK4Parameter parameters)
     :
     EikonalSolverRK4(context, parameters),
     IPPRodParticle(context)
@@ -422,7 +420,7 @@ void ldplab::rtscpu::RK4RodParticlePropagation::intersection(
 ldplab::rtscpu::RK4SphericalParticlePropagation::
 RK4SphericalParticlePropagation(
     Context& context,
-    RK4 parameters)
+    RK4Parameter parameters)
     :
     EikonalSolverRK4(context, parameters),
     IPPSphereParticle(context)
@@ -449,7 +447,7 @@ intersection(
 ldplab::rtscpu::RK45SphericalParticlePropagation::
 RK45SphericalParticlePropagation(
     Context& context,
-    RK4Parameter parameters)
+    RK45Parameter parameters)
     :
     EikonalSolverRK45(context, parameters),
     IPPSphereParticle(context)

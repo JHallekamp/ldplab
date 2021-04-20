@@ -8,7 +8,7 @@ namespace ldplab
      */
     struct IAcceleratorStructureParameter
     {
-        enum class Type { brute_force };
+        enum class Type { brute_force, octree };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IAcceleratorStructureParameter.
@@ -22,6 +22,7 @@ namespace ldplab
             switch (type())
             {
             case Type::brute_force: return "brute_force";
+            case Type::octree: return "octree";
             default: return "unknown_type";
             }
         }
@@ -33,6 +34,16 @@ namespace ldplab
     {
         /** @brief Returns Type::brute_force */
         Type type() const override { return Type::brute_force; }
+    };
+
+    /** @brief Store mesh in an octree to accerlerate intersection tests. */
+    struct AcceleratorStructureOctreeParameter :
+        public IAcceleratorStructureParameter
+    {
+        /** @brief Returns Type::octree */
+        Type type() const override { return Type::octree; }
+        /** @brief The depth used for the mesh octrees. */
+        size_t octree_depth;
     };
 }
 #endif

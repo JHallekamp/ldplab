@@ -25,7 +25,7 @@ namespace ldplab
             IBoundingVolume::Type m_bounding_volume_type;
             IParticleGeometry::Type m_particle_geometry_type;
             IParticleMaterial::Type m_particle_material_type;
-            IEikonalSolver::Type m_solver_type;
+            IEikonalSolverParameter::Type m_solver_type;
         private:
             /** @brief Factory is used by factory functions. */
             Factory() { }
@@ -73,6 +73,11 @@ namespace ldplab
                 Context& context);
             /** @brief Creates rod particle data instances. */
             void createRodParticleDataInstances(
+                const ExperimentalSetup& setup,
+                const RayTracingStepCPUInfo& info,
+                Context& context);
+            /** @brief Creates mesh data instances. */
+            void createMeshDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
                 Context& context);
