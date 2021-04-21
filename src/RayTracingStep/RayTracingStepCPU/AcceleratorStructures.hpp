@@ -7,7 +7,9 @@
 
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/ExperimentalSetup/ParticleGeometry.hpp>
+#include <LDPLAB/RayTracingStep/AcceleratorStructureParameter.hpp>
 
+#include "GenericGeometry.hpp"
 #include "../../Utils/Array.hpp"
 
 namespace ldplab
@@ -15,60 +17,45 @@ namespace ldplab
     namespace rtscpu
     {
         /** 
-         * @brief Abstract baseclass for accelerator structures containing 
-         *        particle data.
-         * @details Particle accelerator structures are used to compute
-         *          intersections with a specific particles.
+         * @brief Interface for accelerator structures.
+         * @tparam InData Type of the data that is given to the accelerator
+         *                structure to construct it.
          */
-        class IParticleAcceleratorStructure
+        template <typename InData>
+        class IAcceleratorStructre : public IGenericGeometry
         {
         public:
+            virtual ~IAcceleratorStructre() { }
             /**
-             * @brief Tests an intersection between a ray and the particle and
-             *        computes the intersection point and the surface normal at
-             *        that point.
-             * @param[in] ray The ray for which the intersection test is 
-             *                computed.
-             * @param[out] intersection_point If ray intersects the particle,
-             *                                then intersection_point will 
-             *                                contain the point in particle
-             *                                space at which the given 
-             *                                intersection occurs.
-             * @param[out] intersection_normal If ray intersects the particle,
-             *                                 then intersection_normal will
-             *                                 contain the particle surface
-             *                                 normal at the point of
-             *                                 intersection.
-             * @returns true, if ray does intersect the particle.
+             * @brief Constructs the accelerator structure.
+             * @param[in] data The data used to construct the accelerator 
+             *                 structure.
+             * @param[in] parameter The accelerator structure parameters.
+             * @returns true, if the construction was successful.
              */
-            virtual bool intersects(
-                const Ray& ray,
-                Vec3& intersection_point,
-                Vec3& intersection_normal) = 0;
-            /**
-             * @brief Tests an intersection between a line segment and the
-             *        particle and computes the intersection point and surface
-             *        normal at that point.
-             * @param[in] segment_origin The origin point of the line segment.
-             * @param[in] segment_end The end point of the line segment.
-             * @param[out] intersection_point If the line segment intersects 
-             *                                the particle, then 
-             *                                intersection_point will contain
-             *                                the point in particle space at 
-             *                                which the given intersection 
-             *                                occurs.
-             * @param[out] intersection_normal If the line segment intersects 
-             *                                 the particle, then 
-             *                                 intersection_normal will contain
-             *                                 the particle surface normal at 
-             *                                 the point of intersection.
-             * @returns true, if the line segment does intersect the particle.
-             */
-            virtual bool intersectsLineSegment(
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
-                Vec3& intersection_point,
-                Vec3& intersection_normal) = 0;
+            virtual bool construct(
+                const InData& data, 
+                const IAcceleratorStructureParameter* parameter) = 0;
+        };
+
+        /** 
+         * @brief Accelerator structure interface for structures managing 
+         *        triangle meshes.
+         */
+        class ITriangleMeshAcceleratorStructure :
+            public IAcceleratorStructre<std::vector<Triangle>>
+        {
+        public:
+            virtual ~ITriangleMeshAcceleratorStructure() { }
+            /** Inherited via IAcceleratorStructre */
+            bool construct(
+                const std::vector<Triangle>& data,
+                const IAcceleratorStructureParameter* parameter) override
+            { return constructInternal(data, parameter); }
+        protected:
+            virtual bool constructInternal(
+                const std::vector<Triangle>& mesh,
+                const IAcceleratorStructureParameter* parameter) = 0;
         };
 
         /**
@@ -76,21 +63,26 @@ namespace ldplab
          * @details An intersection lookup consists of traversing the whole
          *          list and checking each triangle individually.
          */
-        class ParticleMeshList : public IParticleAcceleratorStructure
+        class TriangleMeshGeometryList : 
+            public ITriangleMeshAcceleratorStructure
         {
         public:
-            ParticleMeshList(const std::vector<Triangle>& mesh);
-            /** @brief Inherited via IParticleAcceleratorStructure */
+            /** @brief Inherited via IGenericGeometry */
             bool intersects(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
-            /** @brief Inherited via IParticleAcceleratorStructure */
+            /** @brief Inherited via IGenericGeometry */
             bool intersectsLineSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
+        protected:
+            /** @brief Inherited via ITriangleMeshAcceleratorStructure */
+            bool constructInternal(
+                const std::vector<Triangle>& mesh,
+                const IAcceleratorStructureParameter* parameter) override;
         private:
             std::vector<Triangle> m_mesh;
         };
@@ -98,23 +90,26 @@ namespace ldplab
         /**
          * @brief Stores the particle mesh triangles in an octree structure.
          */
-        class ParticleMeshOctree : public IParticleAcceleratorStructure
+        class TriangleMeshGeometryOctree : 
+            public ITriangleMeshAcceleratorStructure
         {
         public:
-            ParticleMeshOctree(
-                const std::vector<Triangle>& mesh,
-                size_t octree_depth);
-            /** @brief Inherited via IParticleAcceleratorStructure */
+            /** @brief Inherited via IGenericGeometry */
             bool intersects(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
-            /** @brief Inherited via IParticleAcceleratorStructure */
+            /** @brief Inherited via IGenericGeometry */
             bool intersectsLineSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
+        protected:
+            /** @brief Inherited via ITriangleMeshAcceleratorStructure */
+            bool constructInternal(
+                const std::vector<Triangle>& mesh,
+                const IAcceleratorStructureParameter* parameter) override;
         private:
             /** @brief Saves the data of an octree node. */
             struct OctreeNode

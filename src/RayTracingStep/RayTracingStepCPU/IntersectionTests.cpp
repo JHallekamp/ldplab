@@ -124,6 +124,10 @@ bool ldplab::rtscpu::IntersectionTest::raySphere(
     max_intersection_point = ray.origin + max_dist * ray.direction;
     max_intersection_normal =
         glm::normalize(max_intersection_point - sphere_center);
+    if (glm::dot(min_intersection_normal, ray.direction) > 0)
+        min_intersection_normal = -min_intersection_normal;
+    if (glm::dot(max_intersection_normal, ray.direction) > 0)
+        max_intersection_normal = -max_intersection_normal;
     return true;
 }
 
@@ -151,6 +155,8 @@ bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMin(
     intersection_point = ray.origin + dist * ray.direction;
     intersection_normal =
         glm::normalize(intersection_point - sphere_center);
+    if (glm::dot(intersection_normal, ray.direction) > 0)
+        intersection_normal = -intersection_normal;
     return true;
 }
 
@@ -178,6 +184,8 @@ bool ldplab::rtscpu::IntersectionTest::raySphereOnlyMax(
     intersection_point = ray.origin + dist * ray.direction;
     intersection_normal =
         glm::normalize(intersection_point - sphere_center);
+    if (glm::dot(intersection_normal, ray.direction) > 0)
+        intersection_normal = -intersection_normal;
     return true;
 }
 
