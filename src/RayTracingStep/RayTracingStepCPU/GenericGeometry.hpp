@@ -40,7 +40,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersects(
+            virtual bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) = 0;
@@ -67,7 +67,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersectsLineSegment(
+            virtual bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
@@ -81,12 +81,12 @@ namespace ldplab
             /** @brief Constructs the rod particle geometry. */
             RodGeometry(const RodParticleGeometry* geometry);
             /** @brief Inherited via IGenericGeometry */
-            bool intersects(
+            bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
             /** @brief Inherited via IGenericGeometry */
-            bool intersectsLineSegment(
+            bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
@@ -146,12 +146,12 @@ namespace ldplab
             /** @brief Constructs the sphere particle geometry. */
             SphericalGeometry(const SphericalParticleGeometry* geometry);
             /** @brief Inherited via IGenericGeometry */
-            bool intersects(
+            bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal) override;
             /** @brief Inherited via IGenericGeometry */
-            bool intersectsLineSegment(
+            bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,

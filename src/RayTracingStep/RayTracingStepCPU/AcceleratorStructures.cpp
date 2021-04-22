@@ -6,7 +6,7 @@
 #include <limits>
 #include <utility>
 
-bool ldplab::rtscpu::TriangleMeshGeometryList::intersects(
+bool ldplab::rtscpu::TriangleMeshGeometryList::intersectRay(
     const Ray& ray,
     Vec3& intersection_point,
     Vec3& intersection_normal)
@@ -15,7 +15,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersects(
     double min_dist = std::numeric_limits<double>::max(), t_dist;
     for (size_t i = 0; i < m_mesh.size(); ++i)
     {
-        if (IntersectionTest::rayTriangle(ray, m_mesh[i], t_dist))
+        if (IntersectionTest::intersectRayTriangle(ray, m_mesh[i], t_dist))
         {
             if (t_dist < min_dist)
             {
@@ -37,7 +37,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersects(
     return false;
 }
 
-bool ldplab::rtscpu::TriangleMeshGeometryList::intersectsLineSegment(
+bool ldplab::rtscpu::TriangleMeshGeometryList::intersectSegment(
     const Vec3& segment_origin, 
     const Vec3& segment_end, 
     Vec3& intersection_point, 
@@ -47,7 +47,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersectsLineSegment(
     double min_dist = std::numeric_limits<double>::max(), t_dist;
     for (size_t i = 0; i < m_mesh.size(); ++i)
     {
-        if (IntersectionTest::lineTriangle(
+        if (IntersectionTest::intersectSegmentTriangle(
             segment_origin, segment_end, m_mesh[i], t_dist))
         {
             if (t_dist < min_dist)
@@ -79,13 +79,13 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::constructInternal(
     return true;
 }
 
-bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersects(
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
     double min;
-    if (IntersectionTest::rayAABB(ray, m_nodes[0].aabb, min))
+    if (IntersectionTest::overlapRayAABB(ray, m_nodes[0].aabb, min))
     {
         return intersectRecursive(
             m_nodes[0], 
@@ -97,14 +97,14 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersects(
     return false;
 }
 
-bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectsLineSegment(
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegment(
     const Vec3& segment_origin, 
     const Vec3& segment_end,
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
     double min, max;
-    if (IntersectionTest::lineAABB(
+    if (IntersectionTest::overlapSegmentAABB(
         segment_origin, segment_end, m_nodes[0].aabb, min))
     {
         return intersectSegmentRecursive(
@@ -283,7 +283,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::constructSortTrianglesRecursive
     {
         // Recursion base!
         OctreeNode& node = layers[current_layer][current_node];
-        if (IntersectionTest::triangleAABB(triangle, node.aabb))
+        if (IntersectionTest::overlapTriangleAABB(triangle, node.aabb))
         {
             triangle_storage[node.children[0]].push_back(triangle);
             ++node.num_children;
@@ -295,7 +295,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::constructSortTrianglesRecursive
     {
         // Recursion!
         OctreeNode& node = layers[current_layer][current_node];
-        if (!IntersectionTest::triangleAABB(triangle, node.aabb))
+        if (!IntersectionTest::overlapTriangleAABB(triangle, node.aabb))
             return false;
         // Call recursive for children
         bool children_intersect = false;
@@ -383,7 +383,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRecursive(
         for (size_t i = 0; i < node.num_children; ++i)
         {
             const size_t c = node.children[i];
-            if (IntersectionTest::rayAABB(ray, m_nodes[c].aabb, dist))
+            if (IntersectionTest::overlapRayAABB(ray, m_nodes[c].aabb, dist))
                 nodes[intersections++] = std::pair<size_t, double>(c, dist);
         }
         // Sort based on distance of intersection
@@ -427,7 +427,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectBase(
     double min_dist = std::numeric_limits<double>::max(), t_dist;
     for (size_t i = 0; i < triangles.size(); ++i)
     {
-        if (IntersectionTest::rayTriangle(ray, triangles[i], t_dist))
+        if (IntersectionTest::intersectRayTriangle(ray, triangles[i], t_dist))
         {
             if (t_dist < min_dist)
             {
@@ -477,7 +477,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegmentRecursive(
         for (size_t i = 0; i < node.num_children; ++i)
         {
             const size_t c = node.children[i];
-            if (IntersectionTest::lineAABB(
+            if (IntersectionTest::overlapSegmentAABB(
                 segment_origin, segment_end, m_nodes[c].aabb, dist))
             {
                 nodes[intersections++] = std::pair<size_t, double>(c, dist);
@@ -526,7 +526,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegmentBase(
     double min_dist = std::numeric_limits<double>::max(), t_dist;
     for (size_t i = 0; i < triangles.size(); ++i)
     {
-        if (IntersectionTest::lineTriangle(
+        if (IntersectionTest::intersectSegmentTriangle(
             segment_origin, segment_end, triangles[i], t_dist))
         {
             if (t_dist < min_dist)
