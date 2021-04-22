@@ -60,7 +60,8 @@ bool ldplab::rtscpu::RodGeometry::intersectsLineSegment(
     Vec3& intersection_normal)
 {
     double min, max;
-    const Ray ray{ segment_origin, segment_end - segment_origin, -1 };
+    const Vec3 seg = segment_end - segment_origin;
+    const Ray ray{ segment_origin, glm::normalize(seg), -1 };
     if (cylinderIntersection(ray, min, max))
     {
         // Ray intersects the cylinder or lies within it.
@@ -72,7 +73,7 @@ bool ldplab::rtscpu::RodGeometry::intersectsLineSegment(
                 intersection_point,
                 intersection_normal,
                 max);
-            if (isec && max <= 1.0)
+            if (isec && max <= glm::length(seg))
                 return true;
         }
         else // Ray origin inside the infinite cylinder
@@ -82,7 +83,7 @@ bool ldplab::rtscpu::RodGeometry::intersectsLineSegment(
                 intersection_point,
                 intersection_normal,
                 max);
-            if (isec && max <= 1.0)
+            if (isec && max <= glm::length(seg))
                 return true;
         }
     }
@@ -132,6 +133,13 @@ bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
     {
         if (ray.direction.z <= 0)
             return false;
+        else if (m_sphere_radius <= 0)
+            return intersectTopBottomPlane(
+                ray,
+                0,
+                intersection_point,
+                intersection_normal,
+                isec_dist);
         else
             return IntersectionTest::raySphereOnlyMax(
                 ray,
@@ -147,6 +155,13 @@ bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
     {
         if (ray.direction.z >= 0)
             return false;
+        else if (m_sphere_radius <= 0)
+            return intersectTopBottomPlane(
+                ray,
+                m_origin_cap.z,
+                intersection_point,
+                intersection_normal,
+                isec_dist);
         else
             return IntersectionTest::raySphereOnlyMin(
                 ray,
@@ -199,23 +214,39 @@ bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
     }
     else if (ray.direction.z <= 0)
     {
-        return IntersectionTest::raySphereOnlyMin(
-            ray,
-            m_origin_indentation,
-            m_sphere_radius,
-            intersection_point,
-            intersection_normal,
-            isec_dist);
+        if (m_sphere_radius <= 0)
+            return intersectTopBottomPlane(
+                ray,
+                0,
+                intersection_point,
+                intersection_normal,
+                isec_dist);
+        else
+            return IntersectionTest::raySphereOnlyMin(
+                ray,
+                m_origin_indentation,
+                m_sphere_radius,
+                intersection_point,
+                intersection_normal,
+                isec_dist);
     }
     else
     {
-        return IntersectionTest::raySphereOnlyMax(
-            ray,
-            m_origin_cap,
-            m_sphere_radius,
-            intersection_point,
-            intersection_normal,
-            isec_dist);
+        if (m_sphere_radius <= 0)
+            return intersectTopBottomPlane(
+                ray,
+                m_origin_cap.z,
+                intersection_point,
+                intersection_normal,
+                isec_dist);
+        else
+            return IntersectionTest::raySphereOnlyMax(
+                ray,
+                m_origin_cap,
+                m_sphere_radius,
+                intersection_point,
+                intersection_normal,
+                isec_dist);
     }
 
     return false;
@@ -262,6 +293,32 @@ bool ldplab::rtscpu::RodGeometry::intersectOutsideCylinder(
     return false;
 }
 
+bool ldplab::rtscpu::RodGeometry::intersectTopBottomPlane(
+    const Ray& ray,
+    double z,
+    Vec3& intersection_point,
+    Vec3& intersection_normal,
+    double& isec_dist)
+{
+    if (ray.direction.z == 0)
+        return false;
+    else
+    {
+        isec_dist = (z - ray.origin.z) / ray.direction.z;
+        if (isec_dist < 0)
+            return false;
+        intersection_point = ray.origin + isec_dist * ray.direction;
+        const double isec_x2 = intersection_point.x * intersection_point.x;
+        const double isec_y2 = intersection_point.y * intersection_point.y;
+        if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
+            return false;
+    }
+    intersection_normal = Vec3(0, 0, 1);
+    if (glm::dot(intersection_normal, ray.direction) > 0)
+        intersection_normal = -intersection_normal;
+    return true;
+}
+
 ldplab::rtscpu::SphericalGeometry::SphericalGeometry(
     const SphericalParticleGeometry* geometry)
     :
@@ -292,12 +349,13 @@ bool ldplab::rtscpu::SphericalGeometry::intersectsLineSegment(
     Vec3& intersection_normal)
 {
     double min, max;
-    const Ray ray{ segment_origin, segment_end - segment_origin, -1.0 };
+    const glm::vec3 seg = segment_end - segment_origin;
+    const Ray ray{ segment_origin, glm::normalize(seg), -1.0 };
     if (!IntersectionTest::raySphere(ray, Vec3(0, 0, 0), m_radius, min, max))
         return false;
     if (min < 0)
         min = max;
-    if (min > 1.0)
+    if (min > glm::length(seg))
         return false;
     intersection_point = ray.origin + min * ray.direction;
     intersection_normal = glm::normalize(intersection_point);

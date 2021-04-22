@@ -461,10 +461,10 @@ bool ldplab::rtscpu::IntersectionTest::lineAABB(
     const AABB& aabb, 
     double& min_dist)
 {
-    const Ray ray{ line_start, line_end - line_start, 0.0 };
+    const Ray ray{ line_start, glm::normalize(line_end - line_start), 0.0 };
     if (!rayAABB(ray, aabb, min_dist))
         return false;
-    if (min_dist > 1.0)
+    if (min_dist > glm::length(line_end - line_start))
         return false;
     return true;
 }

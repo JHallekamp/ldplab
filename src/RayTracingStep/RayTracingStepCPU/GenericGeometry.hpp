@@ -124,6 +124,13 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& isec_dist);
+            /** @brief Intersection with xy plane, if kappa is to small. */
+            bool intersectTopBottomPlane(
+                const Ray& ray,
+                double z,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                double& isec_dist);
         private:
             double m_cylinder_radius;
             double m_cylinder_length;
