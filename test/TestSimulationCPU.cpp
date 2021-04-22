@@ -15,14 +15,14 @@ const std::string DIR_PATH =
     "SimData\\";
 
 const bool SPHERICAL_PARTICLE = true;
-const double PARTICLE_VOLUME = 1;
+const double PARTICLE_VOLUME = 6000000;
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 1.0;
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
-const double PARTICLE_MATERIAL_NU = 0.15;
+const double PARTICLE_MATERIAL_NU = 0.2;
 
 // Light intensity properties
 const double LIGHT_INTENSITY = 1;
@@ -176,12 +176,13 @@ void createExperimentalSetup(
     double kappa,
     double gradient)
 {
+    gradient = PARTICLE_MATERIAL_NU;
     // Create particle
     ldplab::Particle particle;
     double particle_world_extent;
     if (SPHERICAL_PARTICLE)
     {
-        particle = ldplab::getSphereParticle(
+        particle = ldplab::getSphereParticleByVolume(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             gradient,
@@ -253,7 +254,7 @@ void runSimulation(
     if (std::abs(material->gradient) > 1e-5)
         rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
     else
-        rts_step_size = 0.1;
+        rts_step_size = RTS_SOLVER_STEP_SIZE * std::pow(PARTICLE_VOLUME,1.0/3.0);
     ldplab::RayTracingStepCPUInfo rtscpu_info;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
