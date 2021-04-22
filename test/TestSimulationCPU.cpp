@@ -14,7 +14,7 @@ constexpr double const_pi()
 const std::string DIR_PATH = 
     "SimData\\";
 
-const bool SPHERICAL_PARTICLE = true;
+const bool SPHERICAL_PARTICLE = false;
 const double PARTICLE_VOLUME = 1;
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
@@ -263,7 +263,7 @@ void runSimulation(
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi());
     rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4>(
+    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
         rts_step_size);
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =

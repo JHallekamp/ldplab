@@ -224,7 +224,7 @@ bool ldplab::rtscpu::Factory::createDataInstances(
             "data instances, unsupported bounding volume type");
         no_error = false;
     }
-    if (createParticleGenericGeometryInstances(setup, info, *context))
+    if (!createParticleGenericGeometryInstances(setup, info, *context))
     {
         LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create generic particle "\
             "geometry data instances");
@@ -274,6 +274,7 @@ bool ldplab::rtscpu::Factory::createParticleGenericGeometryInstances(
             return false;
         }
     }
+    return true;
 }
 
 bool ldplab::rtscpu::Factory::constructTriangleMeshAcceleratorStructure(
@@ -384,43 +385,19 @@ bool ldplab::rtscpu::Factory::createInnerParticlePropagationStage(
     std::unique_ptr<IInnerParticlePropagationStage>& stage)
 {
     if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
         m_solver_type == IEikonalSolverParameter::Type::rk45)
     {
-        stage = std::unique_ptr <rtscpu::RK45RodParticlePropagation>(
-            new rtscpu::RK45RodParticlePropagation(
-                context,
-                *((RK45Parameter*)info.solver_parameters.get())));
+        stage = std::make_unique<rtscpu::EikonalSolverRK45LinearIndexGradient>(
+            context,
+            *((RK45Parameter*)info.solver_parameters.get()));
         return true;
     }
     else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
         m_solver_type == IEikonalSolverParameter::Type::rk4)
     {
-        stage = std::unique_ptr <rtscpu::RK4RodParticlePropagation>(
-            new rtscpu::RK4RodParticlePropagation(
-                context,
-                *((RK4Parameter*)info.solver_parameters.get())));
-        return true;
-    }
-    else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::sphere &&
-        m_solver_type == IEikonalSolverParameter::Type::rk45)
-    {
-        stage = std::unique_ptr <rtscpu::RK45SphericalParticlePropagation>(
-            new rtscpu::RK45SphericalParticlePropagation(
-                context,
-                *((RK45Parameter*)info.solver_parameters.get())) );
-        return true;
-    }
-    else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::sphere &&
-        m_solver_type == IEikonalSolverParameter::Type::rk4)
-    {
-        stage = std::unique_ptr <rtscpu::RK4SphericalParticlePropagation>( 
-            new rtscpu::RK4SphericalParticlePropagation(
-                context,
-                *((RK4Parameter*)info.solver_parameters.get())));
+        stage = std::make_unique<rtscpu::EikonalSolverRK4LinearIndexGradient>(
+            context,
+            *((RK4Parameter*)info.solver_parameters.get()));
         return true;
     }
     else

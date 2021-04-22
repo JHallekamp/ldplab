@@ -9,7 +9,7 @@
 
 #include <cmath>
 
-ldplab::rtscpu::EikonalSolverRK4::EikonalSolverRK4(
+ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::EikonalSolverRK4LinearIndexGradient(
     Context& context,
     RK4Parameter parameters)
     :
@@ -21,7 +21,7 @@ ldplab::rtscpu::EikonalSolverRK4::EikonalSolverRK4(
         m_context.uid);
 }
 
-void ldplab::rtscpu::EikonalSolverRK4::execute(
+void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::execute(
     RayBuffer& rays,
     IntersectionBuffer& intersection,
     OutputBuffer& output)
@@ -50,7 +50,7 @@ void ldplab::rtscpu::EikonalSolverRK4::execute(
         rays.uid);
 }
 
-void ldplab::rtscpu::EikonalSolverRK4::
+void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
     rayPropagation(
         const size_t particle,
         Ray& ray,
@@ -70,15 +70,13 @@ void ldplab::rtscpu::EikonalSolverRK4::
     while (!intersected)
     {
         rk4(material, x, m_parameters.step_size, x_new);
-        if (isOutsideParticle(particle, x_new.r))
+        if (m_context.particle_data->geometries[particle]->intersectsLineSegment(
+            x.r,
+            x_new.r,
+            inter_point,
+            inter_normal))
         {
             intersected = true;
-            intersection(
-                particle,
-                x.r,
-                x_new.r,
-                inter_point,
-                inter_normal);
             ray.direction = glm::normalize(x.w);
             ray.origin = x.r;
             return;
@@ -102,7 +100,7 @@ void ldplab::rtscpu::EikonalSolverRK4::
     }
 }
 
-void ldplab::rtscpu::EikonalSolverRK4::rk4(
+void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::rk4(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
     const double h,
@@ -147,8 +145,8 @@ void ldplab::rtscpu::EikonalSolverRK4::rk4(
     x_new += x;
 }
 
-inline ldplab::rtscpu::EikonalSolverRK4::Arg
-    ldplab::rtscpu::EikonalSolverRK4::eikonal(
+inline ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::Arg
+    ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::eikonal(
         const ParticleMaterialLinearOneDirectional* particle,
         const Arg& x) const
 {
@@ -160,7 +158,7 @@ inline ldplab::rtscpu::EikonalSolverRK4::Arg
         x.w / particle->indexOfRefraction(x.r) };
 }
 
-ldplab::rtscpu::EikonalSolverRK45::EikonalSolverRK45(
+ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::EikonalSolverRK45LinearIndexGradient(
     Context& context, 
     RK45Parameter parameters)
     :
@@ -172,7 +170,7 @@ ldplab::rtscpu::EikonalSolverRK45::EikonalSolverRK45(
         context.uid);
 }
 
-void ldplab::rtscpu::EikonalSolverRK45::execute(
+void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::execute(
     RayBuffer& rays,
     IntersectionBuffer& intersection,
     OutputBuffer& output)
@@ -201,7 +199,7 @@ void ldplab::rtscpu::EikonalSolverRK45::execute(
         rays.uid);
 }
 
-void ldplab::rtscpu::EikonalSolverRK45::
+void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
     rayPropagation(
         const size_t particle, 
         Ray& ray, 
@@ -224,15 +222,13 @@ void ldplab::rtscpu::EikonalSolverRK45::
         double error = rk45(material, x, h, x_new);
         if (error <= m_parameters.epsilon)
         {
-            if (isOutsideParticle(particle, x_new.r))
+            if (m_context.particle_data->geometries[particle]->intersectsLineSegment(
+                x.r,
+                x_new.r,
+                inter_point,
+                inter_normal))
             {
                 intersected = true;
-                intersection(
-                    particle,
-                    x.r,
-                    x_new.r,
-                    inter_point, 
-                    inter_normal);
                 ray.direction = glm::normalize(x.w);
                 ray.origin = x.r;
                 return;
@@ -266,7 +262,7 @@ void ldplab::rtscpu::EikonalSolverRK45::
     }
 }
 
-double ldplab::rtscpu::EikonalSolverRK45::rk45(
+double ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::rk45(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
     const double h,
@@ -332,8 +328,8 @@ double ldplab::rtscpu::EikonalSolverRK45::rk45(
     //Arg errorfield = (k[0] * cerr[0] + k[1] * cerr[1] + k[2] * cerr[2] + k[3] * cerr[3] + k[4] * cerr[4] + k[5] * cerr[5]) * h;
 }
 
-inline ldplab::rtscpu::EikonalSolverRK45::Arg 
-    ldplab::rtscpu::EikonalSolverRK45::eikonal(
+inline ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::Arg 
+    ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::eikonal(
         const ParticleMaterialLinearOneDirectional* particle,
         const Arg& x ) const
 {
@@ -345,7 +341,7 @@ inline ldplab::rtscpu::EikonalSolverRK45::Arg
         x.w / particle->indexOfRefraction(x.r) };
 }
 
-double ldplab::rtscpu::EikonalSolverRK45::Arg::absoluteMax()
+double ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::Arg::absoluteMax()
 {
     double max = std::abs(w.x);
     if (max < std::abs(w.y))
@@ -359,475 +355,4 @@ double ldplab::rtscpu::EikonalSolverRK45::Arg::absoluteMax()
     if (max < std::abs(r.z))
         max = std::abs(r.z);
     return max;
-}
-
-ldplab::rtscpu::RK45RodParticlePropagation::RK45RodParticlePropagation(
-    Context& context,
-    RK45Parameter parameters)
-    :
-    EikonalSolverRK45(context, parameters),
-    IPPRodParticle(context)
-{
-}
-
-bool ldplab::rtscpu::RK45RodParticlePropagation::
-isOutsideParticle(const size_t particle, const Vec3& r)
-{
-    return IPPRodParticle::isOutsideParticle(particle, r);
-}
-
-void ldplab::rtscpu::RK45RodParticlePropagation::intersection(
-    const size_t particle,
-    const Vec3& ray_in,
-    const Vec3& ray_out,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    IPPRodParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
-}
-
-ldplab::rtscpu::RK4RodParticlePropagation::RK4RodParticlePropagation(
-    Context& context,
-    RK4Parameter parameters)
-    :
-    EikonalSolverRK4(context, parameters),
-    IPPRodParticle(context)
-{
-}
-
-bool ldplab::rtscpu::RK4RodParticlePropagation::isOutsideParticle(
-    const size_t particle, 
-    const Vec3& r)
-{
-    return IPPRodParticle::isOutsideParticle(particle, r);
-}
-
-void ldplab::rtscpu::RK4RodParticlePropagation::intersection(
-    const size_t particle,
-    const Vec3& ray_in,
-    const Vec3& ray_out,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    IPPRodParticle::intersection(
-        particle,
-        ray_in,
-        ray_out,
-        inter_point,
-        inter_normal);
-}
-
-ldplab::rtscpu::RK4SphericalParticlePropagation::
-RK4SphericalParticlePropagation(
-    Context& context,
-    RK4Parameter parameters)
-    :
-    EikonalSolverRK4(context, parameters),
-    IPPSphereParticle(context)
-{
-}
-
-bool ldplab::rtscpu::RK4SphericalParticlePropagation::
-    isOutsideParticle(const size_t particle, const Vec3& r)
-{
-    return IPPSphereParticle::isOutsideParticle(particle, r);
-}
-
-void ldplab::rtscpu::RK4SphericalParticlePropagation::
-intersection(
-    const size_t particle,
-    const Vec3& ray_in,
-    const Vec3& ray_out,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    IPPSphereParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
-}
-
-ldplab::rtscpu::RK45SphericalParticlePropagation::
-RK45SphericalParticlePropagation(
-    Context& context,
-    RK45Parameter parameters)
-    :
-    EikonalSolverRK45(context, parameters),
-    IPPSphereParticle(context)
-{
-}
-
-bool ldplab::rtscpu::RK45SphericalParticlePropagation::
-isOutsideParticle(const size_t particle, const Vec3& r)
-{
-    return IPPSphereParticle::isOutsideParticle(particle, r);
-}
-
-void ldplab::rtscpu::RK45SphericalParticlePropagation::
-intersection(
-    const size_t particle,
-    const Vec3& ray_in,
-    const Vec3& ray_out,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    IPPSphereParticle::intersection(particle, ray_in, ray_out, inter_point, inter_normal);
-}
-
-
-ldplab::rtscpu::IPPRodParticle::IPPRodParticle(Context& context)
-    :
-    m_rod_particles{ ((RodParticleData*)
-        context.particle_data.get())->particle_data }
-{
-}
-
-bool ldplab::rtscpu::IPPRodParticle::isOutsideParticle(
-    const size_t particle, const Vec3& r)
-{
-    const RodParticle& geometry = m_rod_particles[particle];
-    if (r.x * r.x + r.y * r.y >
-        geometry.cylinder_radius * geometry.cylinder_radius)
-        return true;
-
-    if (r.z <= geometry.origin_cap.z + geometry.sphere_radius && r.z >= 0)
-    {
-        if (r.z > geometry.cylinder_length)
-        {
-            double norm_r2 = r.x * r.x + r.y * r.y;
-            double radius2 = geometry.sphere_radius * geometry.sphere_radius -
-                std::pow(r.z - geometry.origin_cap.z, 2.0);
-            if (norm_r2 > radius2)
-                return true;
-            else
-                return false;
-        }
-        else if (r.z < geometry.origin_indentation.z + geometry.sphere_radius)
-        {
-            double norm_r2 = r.x * r.x + r.y * r.y;
-            double radius2 = geometry.sphere_radius * geometry.sphere_radius -
-                std::pow(r.z - geometry.origin_indentation.z, 2.0);
-            if (norm_r2 < radius2)
-                return true;
-            else
-                return false;
-        }
-        else
-            return false;
-    }
-    else
-        return true;
-}
-
-void ldplab::rtscpu::IPPRodParticle::intersection(
-    const size_t particle, 
-    const Vec3& origin_in, 
-    const Vec3& origin_out, 
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    const RodParticle& geometry = m_rod_particles[particle];
-    const Ray ray{origin_out, glm::normalize(origin_in-origin_out) };
-
-    double intersec_first = 0;
-    double intersec_second = 0;
-    // Check cylinder intersection
-    if (cylinderIntersection(
-        geometry,
-        ray,
-        intersec_first,
-        intersec_second))
-    {
-        if (intersec_first >= 0) // Ray origin outside infinite cylinder
-        {
-            inter_point = ray.origin + intersec_first * ray.direction;
-            if (inter_point.z >= 0 &&
-                inter_point.z <= geometry.cylinder_length)
-            {
-                inter_normal = { -inter_point.x, -inter_point.y, 0 };
-                inter_normal = glm::normalize(inter_normal);
-                return;
-            }
-            else if (inter_point.z < 0) // First intersection under the cylinder
-            {
-                indentationIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-                return;
-            }
-            else // First intersection over the cylinder
-            {
-                capIntersection(
-                    geometry,
-                    ray,
-                    inter_point,
-                    inter_normal);
-                return;
-            }
-        }
-        else if (intersec_second > 0) // Ray origin inside infinite cylinder
-        {
-            bottomTopIntersection(
-                geometry,
-                ray,
-                inter_point,
-                inter_normal);
-            return;
-        }
-    }
-    // Check for ray inside the infinite cylinder with orthogonal direction
-    else
-    {
-        double distance =
-            ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y;
-        if (distance <= geometry.cylinder_radius *
-            geometry.cylinder_radius)
-        {
-            bottomTopIntersection(
-                geometry,
-                ray,
-                inter_point,
-                inter_normal);
-            return;
-        }
-    }
-}
-
-
-bool ldplab::rtscpu::IPPRodParticle::cylinderIntersection(
-    const RodParticle& geometry,
-    const Ray& ray,
-    double& distance_min,
-    double& distance_max)
-{
-    double p =
-        (ray.origin.x * ray.direction.x + ray.origin.y * ray.direction.y) /
-        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
-    double q = ((ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) -
-        geometry.cylinder_radius * geometry.cylinder_radius) /
-        (ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y);
-
-    double discriminant = p * p - q;
-    if (discriminant < 0.0)
-        return false;
-    distance_min = -p - std::sqrt(discriminant);
-    distance_max = -p + std::sqrt(discriminant);
-    return true;
-}
-
-bool ldplab::rtscpu::IPPRodParticle::bottomTopIntersection(
-    const RodParticle& particle,
-    const Ray& ray,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    if (ray.origin.z <= 0) // Ray origin below the particle
-    {
-        if (ray.direction.z <= 0)
-            return false;
-        else
-            return indentationIntersection(
-                particle,
-                ray,
-                inter_point,
-                inter_normal);
-    }
-
-    const double particle_height =
-        particle.origin_cap.z + particle.sphere_radius;
-    if (ray.origin.z >= particle_height) // Ray origin above the particle
-    {
-        if (ray.direction.z >= 0)
-            return false;
-        else
-            return capIntersection(
-                particle,
-                ray,
-                inter_point,
-                inter_normal);
-    }
-
-    const double dist =
-        glm::length(particle.origin_indentation - ray.origin);
-    if (dist <= particle.sphere_radius + 1e-9)
-        return indentationIntersection(
-            particle,
-            ray,
-            inter_point,
-            inter_normal);
-    else
-        return capIntersection(
-            particle,
-            ray,
-            inter_point,
-            inter_normal);
-}
-
-bool ldplab::rtscpu::IPPRodParticle::sphereIntersection(
-    const Vec3& origin,
-    const double& radius,
-    const Ray& ray,
-    double& distance_min,
-    double& distance_max)
-{
-    const Vec3 o_minus_c = ray.origin - origin;
-
-    const double p = glm::dot(ray.direction, o_minus_c);
-    const double q = glm::dot(o_minus_c, o_minus_c) - (radius * radius);
-
-    const double discriminant = (p * p) - q;
-    if (discriminant < 1e-9)
-        return false;
-
-    distance_min = -p - std::sqrt(discriminant);
-    distance_max = -p + std::sqrt(discriminant);
-    return true;
-}
-
-bool ldplab::rtscpu::IPPRodParticle::capIntersection(
-    const RodParticle& geometry,
-    const Ray& ray,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
-    {
-        // Kappa is too small (or 0) and therefore assume the shape as perfect
-        // cylinder.
-        if (ray.direction.z == 0)
-            return false;
-        const double t = (geometry.cylinder_length - ray.origin.z) /
-            ray.direction.z;
-        if (t < 0)
-            return false;
-        inter_point = ray.origin + t * ray.direction;
-        if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
-            geometry.cylinder_radius * geometry.cylinder_radius)
-            return false;
-        inter_normal = Vec3(0, 0, -1);
-
-        return true;
-    }
-
-    double intersec_first = 0;
-    double intersec_second = 0;
-
-    if (sphereIntersection(
-        geometry.origin_cap,
-        geometry.sphere_radius,
-        ray,
-        intersec_first,
-        intersec_second))
-    {
-        if (intersec_first < 0)
-            return false;
-        inter_point = ray.origin + intersec_first *
-            ray.direction;
-        if (inter_point.z > geometry.cylinder_length &&
-            inter_point.z <= geometry.origin_cap.z + geometry.sphere_radius)
-        {
-            inter_normal = glm::normalize(geometry.origin_cap - inter_point);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool ldplab::rtscpu::IPPRodParticle::indentationIntersection(
-    const RodParticle& geometry,
-    const Ray& ray,
-    Vec3& inter_point,
-    Vec3& inter_normal)
-{
-    if (geometry.origin_indentation.z + geometry.sphere_radius < 1e-3)
-    {
-        // Kappa is too small (or 0) and therefore assume the shape as perfect
-        // cylinder.
-        if (ray.direction.z == 0)
-            return false;
-        const double t = -ray.origin.z / ray.direction.z;
-        if (t < 0)
-            return false;
-        inter_point = ray.origin + t * ray.direction;
-        if (inter_point.x * inter_point.x + inter_point.y * inter_point.y >
-            geometry.cylinder_radius * geometry.cylinder_radius)
-            return false;
-        inter_normal = Vec3(0, 0, 1);
-        return true;
-    }
-    double intersec_first = 0;
-    double intersec_second = 0;
-
-    if (sphereIntersection(
-        geometry.origin_indentation,
-        geometry.sphere_radius,
-        ray,
-        intersec_first,
-        intersec_second))
-    {
-        inter_point = ray.origin + intersec_second * ray.direction;
-
-        if (inter_point.z > 0 &&
-            inter_point.z <= geometry.origin_indentation.z +
-            geometry.sphere_radius)
-        {
-            inter_normal = glm::normalize(
-                inter_point - geometry.origin_indentation);
-            return true;
-        }
-    }
-    return false;
-}
-
-
-ldplab::rtscpu::IPPSphereParticle::IPPSphereParticle(
-    Context& context)
-    :
-    m_context{context}
-{
-}
-
-bool ldplab::rtscpu::IPPSphereParticle::isOutsideParticle(const size_t particle, const Vec3& r)
-{
-    const SphericalParticleGeometry* geometry = (SphericalParticleGeometry*)
-        m_context.particles[particle].geometry.get();
-    if (r.x * r.x + r.y * r.y + r.z * r.z >
-        geometry->radius * geometry->radius)
-        return true;
-    return false;
-}
-
-void ldplab::rtscpu::IPPSphereParticle::intersection(
-    const size_t particle, 
-    const Vec3& origin_in, 
-    const Vec3& origin_out, 
-    Vec3& inter_point, 
-    Vec3& inter_normal)
-{
-    const SphericalParticleGeometry* geometry = (SphericalParticleGeometry*)
-        m_context.particles[particle].geometry.get();
-
-    Ray t_ray{ origin_out, glm::normalize(origin_in - origin_out), -1 };
-    const double p = glm::dot(t_ray.direction, t_ray.origin);
-    const double q = glm::dot(t_ray.origin, t_ray.origin) -
-        (geometry->radius * geometry->radius);
-    const double discriminant = (p * p) - q;
-    const double distance = -p - std::sqrt(discriminant);
-    inter_point = t_ray.origin + distance * t_ray.direction;
-    inter_normal = -glm::normalize(inter_point);
-}
-
-ldplab::rtscpu::IPPMeshParticle::IPPMeshParticle(
-    std::shared_ptr<Context> context)
-    :
-    m_context{context}
-{
-}
-
-void ldplab::rtscpu::IPPMeshParticle::intersection(
-    const size_t particle, 
-    const Vec3& origin_in, 
-    const Vec3& origin_out, 
-    Vec3& inter_point, 
-    Vec3& inter_normal)
-{
 }

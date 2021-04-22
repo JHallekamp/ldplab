@@ -311,7 +311,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::constructSortTrianglesRecursive
                 children_intersect = true;
             }
         }
-        if (children_intersect);
+        if (children_intersect)
             ++node.num_children;
         return children_intersect;
     }
