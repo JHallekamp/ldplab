@@ -70,7 +70,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
     while (!intersected)
     {
         rk4(material, x, m_parameters.step_size, x_new);
-        if (m_context.particle_data->geometries[particle]->intersectsLineSegment(
+        if (m_context.particle_data->geometries[particle]->intersectSegment(
             x.r,
             x_new.r,
             inter_point,
@@ -222,7 +222,7 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
         double error = rk45(material, x, h, x_new);
         if (error <= m_parameters.epsilon)
         {
-            if (m_context.particle_data->geometries[particle]->intersectsLineSegment(
+            if (m_context.particle_data->geometries[particle]->intersectSegment(
                 x.r,
                 x_new.r,
                 inter_point,

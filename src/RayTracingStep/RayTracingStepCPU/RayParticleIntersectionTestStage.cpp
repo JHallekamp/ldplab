@@ -38,7 +38,7 @@ void ldplab::rtscpu::RayParticleGenericGeometryIntersectionTest::execute(
         Vec3& inter_point = intersection.point[i];
         Vec3& inter_normal = intersection.normal[i];
 
-        if (m_context.particle_data->geometries[rays.index_data[i]]->intersects(
+        if (m_context.particle_data->geometries[rays.index_data[i]]->intersectRay(
             ray,
             inter_point,
             inter_normal))

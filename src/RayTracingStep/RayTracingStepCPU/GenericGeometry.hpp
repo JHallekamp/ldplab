@@ -107,7 +107,7 @@ namespace ldplab
              *                      dist_max equals infinity.
              * @returns true, if the ray intersects the infinite cylinder.
              */
-            bool cylinderIntersection(
+            bool overlapCylinder(
                 const Ray& ray,
                 double& dist_min,
                 double& dist_max);

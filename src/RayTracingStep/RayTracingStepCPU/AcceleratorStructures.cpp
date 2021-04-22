@@ -59,7 +59,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersectSegment(
     }
     if (min_index < m_mesh.size())
     {
-        const Vec3 dir = segment_end - segment_origin;
+        const Vec3 dir = glm::normalize(segment_end - segment_origin);
         intersection_point = segment_origin + dir * min_dist;
         const Vec3 edge1 = m_mesh[min_index].b - m_mesh[min_index].a;
         const Vec3 edge2 = m_mesh[min_index].c - m_mesh[min_index].a;
@@ -103,7 +103,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegment(
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
-    double min, max;
+    double min;
     if (IntersectionTest::overlapSegmentAABB(
         segment_origin, segment_end, m_nodes[0].aabb, min))
     {
@@ -538,7 +538,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegmentBase(
     }
     if (min_index < triangles.size())
     {
-        const Vec3 dir = segment_end - segment_origin;
+        const Vec3 dir = glm::normalize(segment_end - segment_origin);
         intersection_point = segment_origin + dir * min_dist;
         const Vec3 edge1 = triangles[min_index].b - triangles[min_index].a;
         const Vec3 edge2 = triangles[min_index].c - triangles[min_index].a;

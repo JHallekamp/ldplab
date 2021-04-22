@@ -34,6 +34,9 @@ namespace ldplab
              *                  contain the distance from the ray origin to the
              *                  intersection point.
              * @returns true, if the ray intersects the triangle.
+             * @note If the ray origin is situated within an epsilon region 
+             *       (ldplab::constant::intersection_tests::epsilon) on the 
+             *       triangle plane, the ray will not intersect.
              */
             static bool intersectRayTriangle(
                 const Ray& ray,
@@ -49,6 +52,11 @@ namespace ldplab
              *                  contain the distance from the line origin to
              *                  the intersection point.
              * @returns true, if the line segment intersects the triangle.
+             * @note If the segment origin is situated within an epsilon region 
+             *       (ldplab::constant::intersection_tests::epsilon) on the 
+             *       triangle plane, the segment will not intersect. 
+             *       If the segment end, however, is situaded within said 
+             *       epsilon region, the segment will intersect.
              */
             static bool intersectSegmentTriangle(
                 const Vec3& segment_start,
@@ -70,6 +78,11 @@ namespace ldplab
              *                      intersection points, max_dist contains the
              *                      maximal distance of each.
              * @returns true, if the ray intersects the sphere.
+             * @note If the ray origin is situated within an epsilon region 
+             *       (ldplab::constant::intersection_tests::epsilon) and the
+             *       ray direction points outward of the sphere (and therefore
+             *       no second intersection with the sphere hull occurs), the
+             *       ray will not be regarded as intersecting the sphere.
              */
             static bool intersectRaySphere(
                 const Ray& ray,
@@ -95,6 +108,11 @@ namespace ldplab
               *                  a negative value, if the ray origin lies
               *                  within the sphere.
               * @returns true, if the ray intersects the sphere.
+              * @note If the ray origin is situated within an epsilon region 
+              *       (ldplab::constant::intersection_tests::epsilon) and the
+              *       ray direction points outward of the sphere (and therefore
+              *       no second intersection with the sphere hull occurs), the
+              *       ray will not be regarded as intersecting the sphere.
               */
             static bool intersectRaySphereMin(
                 const Ray& ray,
@@ -121,6 +139,11 @@ namespace ldplab
               *                  a negative value, if the ray origin lies
               *                  within the sphere.
               * @returns true, if the ray intersects the sphere.
+              * @note If the ray origin is situated within an epsilon region 
+              *       (ldplab::constant::intersection_tests::epsilon) and the
+              *       ray direction points outward of the sphere (and therefore
+              *       no second intersection with the sphere hull occurs), the
+              *       ray will not be regarded as intersecting the sphere.
               */
             static bool intersectRaySphereMax(
                 const Ray& ray,

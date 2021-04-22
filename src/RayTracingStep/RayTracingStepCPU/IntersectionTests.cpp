@@ -1,19 +1,20 @@
 #include "IntersectionTests.hpp"
 
 #include <array>
+#include <LDPLAB/Constants.hpp>
 
 bool ldplab::rtscpu::IntersectionTest::intersectRayTriangle(
     const Ray& ray, 
     const Triangle& triangle, 
     double& dist)
 {
-    constexpr double EPSILON = 1e-10;
     const Vec3 edge1 = triangle.b - triangle.a;
     const Vec3 edge2 = triangle.c - triangle.a;
     const Vec3 h = glm::cross(ray.direction, edge2);
     const double a = glm::dot(edge1, h);
     // Check parallelisim
-    if (a > -EPSILON && a < EPSILON)
+    if (a > -constant::intersection_tests::epsilon && 
+        a < constant::intersection_tests::epsilon)
         return false;
     const double f = 1.0 / a;
     const Vec3 s = ray.origin - triangle.a;
@@ -26,13 +27,10 @@ bool ldplab::rtscpu::IntersectionTest::intersectRayTriangle(
         return false;
     // Calculate distance to intersection point
     double t = f * glm::dot(edge2, q);
-    if (t >= EPSILON)
-    {
-        dist = t;
-        return true;
-    }
-    else
+    if (t < constant::intersection_tests::epsilon)
         return false;
+    dist = t;
+    return true;
 }
 
 bool ldplab::rtscpu::IntersectionTest::intersectSegmentTriangle(
@@ -41,14 +39,14 @@ bool ldplab::rtscpu::IntersectionTest::intersectSegmentTriangle(
     const Triangle& triangle, 
     double& dist)
 {
-    constexpr double EPSILON = 1e-10;
-    const Vec3 line_direction = glm::normalize(segment_end - segment_start);
+    const Vec3 seg = segment_end - segment_start;
     const Vec3 edge1 = triangle.b - triangle.a;
     const Vec3 edge2 = triangle.c - triangle.a;
-    const Vec3 h = glm::cross(line_direction, edge2);
+    const Vec3 h = glm::cross(glm::normalize(seg), edge2);
     const double a = glm::dot(edge1, h);
     // Check parallelisim
-    if (a > -EPSILON && a < EPSILON)
+    if (a > -constant::intersection_tests::epsilon && 
+        a < constant::intersection_tests::epsilon)
         return false;
     const double f = 1.0 / a;
     const Vec3 s = segment_start - triangle.a;
@@ -61,13 +59,11 @@ bool ldplab::rtscpu::IntersectionTest::intersectSegmentTriangle(
         return false;
     // Calculate distance to intersection point
     double t = f * glm::dot(edge2, q);
-    if (t > EPSILON && t <= glm::length(segment_end - segment_start))
-    {
-        dist = t;
-        return true;
-    }
-    else
+    if (t < constant::intersection_tests::epsilon ||
+        t + constant::intersection_tests::epsilon > glm::length(seg))
         return false;
+    dist = t;
+    return true;
 }
 
 bool ldplab::rtscpu::IntersectionTest::intersectRaySphere(
@@ -77,7 +73,6 @@ bool ldplab::rtscpu::IntersectionTest::intersectRaySphere(
     double& min_dist, 
     double& max_dist)
 {
-    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -85,12 +80,12 @@ bool ldplab::rtscpu::IntersectionTest::intersectRaySphere(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < EPSILON)
+    if (discriminant < constant::intersection_tests::epsilon)
         return false;
 
     min_dist = -p - std::sqrt(discriminant);
     max_dist = -p + std::sqrt(discriminant);
-    return true;
+    return max_dist >= constant::intersection_tests::epsilon;
 }
 
 bool ldplab::rtscpu::IntersectionTest::intersectRaySphereMin(
@@ -101,7 +96,6 @@ bool ldplab::rtscpu::IntersectionTest::intersectRaySphereMin(
     Vec3& intersection_normal, 
     double& dist)
 {
-    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -109,11 +103,14 @@ bool ldplab::rtscpu::IntersectionTest::intersectRaySphereMin(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < EPSILON)
+    if (discriminant < constant::intersection_tests::epsilon)
         return false;
 
     // Calculate intersections
     dist = -p - std::sqrt(discriminant);
+    const double max_dist = -p + std::sqrt(discriminant);
+    if (max_dist < constant::intersection_tests::epsilon)
+        return false;
     intersection_point = ray.origin + dist * ray.direction;
     intersection_normal =
         glm::normalize(intersection_point - sphere_center);
@@ -130,7 +127,6 @@ bool ldplab::rtscpu::IntersectionTest::intersectRaySphereMax(
     Vec3& intersection_normal, 
     double& dist)
 {
-    constexpr double EPSILON = 1e-10;
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
     const double p = glm::dot(ray.direction, o_minus_c);
@@ -138,11 +134,13 @@ bool ldplab::rtscpu::IntersectionTest::intersectRaySphereMax(
         (sphere_radius * sphere_radius);
 
     const double discriminant = (p * p) - q;
-    if (discriminant < EPSILON)
+    if (discriminant < constant::intersection_tests::epsilon)
         return false;
 
     // Calculate intersections
     dist = -p + std::sqrt(discriminant);
+    if (dist < constant::intersection_tests::epsilon)
+        return false;
     intersection_point = ray.origin + dist * ray.direction;
     intersection_normal =
         glm::normalize(intersection_point - sphere_center);
@@ -344,7 +342,6 @@ bool ldplab::rtscpu::IntersectionTest::overlapRayAABB(
 {
     // Based on original code by Andrew Woo
     // from "Graphics Gems", Academic Press, 1990
-    constexpr double EPSILON = 1e-10;
     constexpr size_t NUMDIM = 3;
     constexpr char RIGHT = 0;
     constexpr char LEFT = 1;
@@ -384,7 +381,8 @@ bool ldplab::rtscpu::IntersectionTest::overlapRayAABB(
     Vec3 t_max;
     for (size_t i = 0; i < NUMDIM; ++i)
     {
-        if (quadrant[i] != MIDDLE && abs(ray.direction[i]) > EPSILON)
+        if (quadrant[i] != MIDDLE && abs(ray.direction[i]) > 
+                constant::intersection_tests::epsilon)
             t_max[i] = (candidate_plane[i] - ray.origin[i]) / ray.direction[i];
         else
             t_max[i] = -1.0;
