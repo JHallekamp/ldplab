@@ -114,6 +114,7 @@ namespace ldplab
             /** @brief Test inside the cylinder. */
             bool intersectInsideCylinder(
                 const Ray& ray,
+                double max_dist,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& isec_dist);
@@ -121,6 +122,20 @@ namespace ldplab
             bool intersectOutsideCylinder(
                 const Ray& ray,
                 double min_dist,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                double& isec_dist);
+            /** @brief Intersection with rod particle cap. */
+            bool intersectCap(
+                const Ray& ray,
+                bool inside_cylinder,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                double& isec_dist);
+            /** @brief Intersection with rod particle indent. */
+            bool intersectIndent(
+                const Ray& ray,
+                bool inside_cylinder,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& isec_dist);

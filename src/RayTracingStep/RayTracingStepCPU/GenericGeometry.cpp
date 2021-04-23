@@ -28,8 +28,8 @@ bool ldplab::rtscpu::RodGeometry::intersectRay(
     Vec3& intersection_point,
     Vec3& intersection_normal)
 {
-    double min, max;
-    if (overlapCylinder(ray, min, max))
+    double min, t;
+    if (overlapCylinder(ray, min, t))
     {
         // Ray intersects the cylinder or lies within it.
         if (min >= 0) // Ray origin outside of infinite cylinder.
@@ -39,15 +39,16 @@ bool ldplab::rtscpu::RodGeometry::intersectRay(
                 min,
                 intersection_point, 
                 intersection_normal,
-                max);
+                t);
         }
         else // Ray origin inside the infinite cylinder
         {
             return intersectInsideCylinder(
                 ray,
+                t,
                 intersection_point,
                 intersection_normal,
-                max);
+                t);
         }
     }
     return false;
@@ -66,7 +67,7 @@ bool ldplab::rtscpu::RodGeometry::intersectSegment(
     {
         const double seg_length = glm::length(seg);
         // Ray intersects the cylinder or lies within it.
-        if (min >= 0) // Ray origin outside of infinite cylinder.
+        if (min > constant::intersection_tests::epsilon) // Ray origin outside of infinite cylinder.
         {
             if (min + constant::intersection_tests::epsilon > seg_length)
                 return false;
@@ -83,6 +84,7 @@ bool ldplab::rtscpu::RodGeometry::intersectSegment(
         {
             bool isec = intersectInsideCylinder(
                 ray,
+                t,
                 intersection_point,
                 intersection_normal,
                 t);
@@ -105,7 +107,7 @@ bool ldplab::rtscpu::RodGeometry::overlapCylinder(
     {
         dist_min = -std::numeric_limits<double>::infinity();
         dist_max = std::numeric_limits<double>::infinity();
-        return (ray.origin.x * ray.origin.x + ray.origin.y + ray.origin.y <
+        return (ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y <
             m_cylinder_radius * m_cylinder_radius);
     }
 
@@ -126,128 +128,55 @@ bool ldplab::rtscpu::RodGeometry::overlapCylinder(
 
 bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
     const Ray& ray, 
+    double max_dist,
     Vec3& intersection_point, 
     Vec3& intersection_normal,
     double& isec_dist)
 {
-    if (ray.origin.z <= 0) // Ray origin below particle
-    {
-        if (ray.direction.z <= 0)
-            return false;
-        else if (m_sphere_radius <= 0)
-            return intersectTopBottomPlane(
-                ray,
-                0,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-        else
-            return IntersectionTest::intersectRaySphereMax(
-                ray,
-                m_origin_indentation,
-                m_sphere_radius,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-    }
-    
-    const double particle_height = m_origin_cap.z + m_sphere_radius;
-    if (ray.origin.z >= particle_height) // Ray above the particle
-    {
-        if (ray.direction.z >= 0)
-            return false;
-        else if (m_sphere_radius <= 0)
-            return intersectTopBottomPlane(
-                ray,
-                m_origin_cap.z,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-        else
-            return IntersectionTest::intersectRaySphereMin(
-                ray,
-                m_origin_cap,
-                m_sphere_radius,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-    }
+    // Parallel to cylinder
+    Vec3 t_point, t_normal;
+    double t;
+    bool cap_intersection = false, indent_intersection = false;
 
-    // Ray somewhere in the minimal enclosing cylinder.
-    const double cap_dist = glm::length(m_origin_cap - ray.origin);
-    if (cap_dist < m_sphere_radius && ray.direction.z >= 0)
-    {
-        return IntersectionTest::intersectRaySphereMax(
-            ray,
-            m_origin_cap,
-            m_sphere_radius,
-            intersection_point,
-            intersection_normal,
-            isec_dist);
-    }
-    else if (ray.origin.z >= m_origin_cap.z);
-    {
-        if (ray.direction.z > 0)
-            return false;
-        else
-            return IntersectionTest::intersectRaySphereMin(
-                ray,
-                m_origin_cap,
-                m_sphere_radius,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-    }
+    cap_intersection = intersectCap(
+        ray, true, intersection_point, intersection_normal, isec_dist);
+    indent_intersection = intersectIndent(
+        ray, true, t_point, t_normal, t);
 
-    const double indent_dist = glm::length(m_origin_indentation - ray.origin);
-    if (indent_dist < m_sphere_radius)
+    if (indent_intersection && cap_intersection)
     {
-        if (ray.direction.z < 0)
+        if (t < isec_dist)
+        {
+            intersection_point = t_point;
+            intersection_normal = t_normal;
+            isec_dist = t;
+        }
+        return true;
+    }
+    else if (indent_intersection)
+    {
+        intersection_point = t_point;
+        intersection_normal = t_normal;
+        isec_dist = t;
+        return true;
+    }
+    else if (cap_intersection)
+        return true;
+
+    // Check if parallel to cylinder
+    if (max_dist < std::numeric_limits<double>::infinity())
+    {
+        // Not parallel to cylinder
+        intersection_point = ray.origin + max_dist * ray.direction;
+        if (intersection_point.z < 0 ||
+            intersection_point.z > m_cylinder_length)
             return false;
-        else
-            return IntersectionTest::intersectRaySphereMax(
-                ray,
-                m_origin_indentation,
-                m_sphere_radius,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-    }
-    else if (ray.direction.z <= 0)
-    {
-        if (m_sphere_radius <= 0)
-            return intersectTopBottomPlane(
-                ray,
-                0,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-        else
-            return IntersectionTest::intersectRaySphereMin(
-                ray,
-                m_origin_indentation,
-                m_sphere_radius,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-    }
-    else
-    {
-        if (m_sphere_radius <= 0)
-            return intersectTopBottomPlane(
-                ray,
-                m_origin_cap.z,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
-        else
-            return IntersectionTest::intersectRaySphereMax(
-                ray,
-                m_origin_cap,
-                m_sphere_radius,
-                intersection_point,
-                intersection_normal,
-                isec_dist);
+        intersection_normal = glm::normalize(Vec3(
+            -intersection_point.x,
+            -intersection_point.y,
+            0));
+        isec_dist = max_dist;
+        return true;
     }
 
     return false;
@@ -273,24 +202,142 @@ bool ldplab::rtscpu::RodGeometry::intersectOutsideCylinder(
     }
     else if (intersection_point.z < 0) // First intersection under the cylinder
     {
-        return IntersectionTest::intersectRaySphereMax(
-            ray, 
-            m_origin_indentation,
-            m_sphere_radius,
+        return intersectIndent(
+            ray,
+            false,
             intersection_point,
             intersection_normal,
             isec_dist);
     }
     else
     {
-        return IntersectionTest::intersectRaySphereMin(
+        return intersectCap(
             ray,
-            m_origin_cap,
-            m_sphere_radius,
+            false,
             intersection_point,
             intersection_normal,
             isec_dist);
     }
+    return false;
+}
+
+bool ldplab::rtscpu::RodGeometry::intersectCap(
+    const Ray& ray, 
+    bool inside_cylinder,
+    Vec3& intersection_point, 
+    Vec3& intersection_normal, 
+    double& isec_dist)
+{
+    // Kappa too small, we have a cylinder
+    if (m_sphere_radius <= 0)
+    {
+        if (ray.direction.z == 0)
+            return false;
+        else
+        {
+            isec_dist = (m_origin_cap.z - ray.origin.z) / ray.direction.z;
+            if (isec_dist < constant::intersection_tests::epsilon)
+                return false;
+            intersection_point = ray.origin + isec_dist * ray.direction;
+            const double isec_x2 = intersection_point.x * intersection_point.x;
+            const double isec_y2 = intersection_point.y * intersection_point.y;
+            if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
+                return false;
+        }
+        intersection_normal = Vec3(0, 0, 1);
+        if (glm::dot(intersection_normal, ray.direction) > 0)
+            intersection_normal = -intersection_normal;
+        return true;
+    }
+
+    // We have a sphere
+    double min, max;
+    if (IntersectionTest::intersectRaySphere(
+        ray,
+        m_origin_cap,
+        m_sphere_radius,
+        min,
+        max))
+    {
+        if (min <= 0)
+            isec_dist = max;
+        else if (inside_cylinder && ray.origin.z < m_origin_cap.z)
+            isec_dist = max;
+        else
+            isec_dist = min;
+        intersection_point = ray.origin + isec_dist * ray.direction;
+        if (intersection_point.z < m_origin_cap.z)
+            return false;
+        const double isec_x2 = intersection_point.x * intersection_point.x;
+        const double isec_y2 = intersection_point.y * intersection_point.y;
+        if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
+            return false;
+        intersection_normal = glm::normalize(intersection_point - m_origin_cap);
+        if (glm::dot(intersection_normal, ray.direction) > 0)
+            intersection_normal = -intersection_normal;
+        return true;
+    }
+
+    return false;
+}
+
+bool ldplab::rtscpu::RodGeometry::intersectIndent(
+    const Ray& ray, 
+    bool inside_cylinder,
+    Vec3& intersection_point, 
+    Vec3& intersection_normal, 
+    double& isec_dist)
+{
+    // Kappa too small, we have a cylinder
+    if (m_sphere_radius <= 0)
+    {
+        if (ray.direction.z == 0)
+            return false;
+        else
+        {
+            isec_dist = -ray.origin.z / ray.direction.z;
+            if (isec_dist < constant::intersection_tests::epsilon)
+                return false;
+            intersection_point = ray.origin + isec_dist * ray.direction;
+            const double isec_x2 = intersection_point.x * intersection_point.x;
+            const double isec_y2 = intersection_point.y * intersection_point.y;
+            if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
+                return false;
+        }
+        intersection_normal = Vec3(0, 0, 1);
+        if (glm::dot(intersection_normal, ray.direction) > 0)
+            intersection_normal = -intersection_normal;
+        return true;
+    }
+
+    // We have a sphere
+    double min, max;
+    if (IntersectionTest::intersectRaySphere(
+        ray,
+        m_origin_indentation,
+        m_sphere_radius,
+        min,
+        max))
+    {
+        if (min <= 0)
+            isec_dist = max;
+        else if (inside_cylinder && ray.origin.z > 0)
+            isec_dist = min;
+        else
+            isec_dist = max;
+        intersection_point = ray.origin + isec_dist * ray.direction;
+        if (intersection_point.z < 0)
+            return false;
+        const double isec_x2 = intersection_point.x * intersection_point.x;
+        const double isec_y2 = intersection_point.y * intersection_point.y;
+        if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
+            return false;
+        intersection_normal = glm::normalize(intersection_point - m_origin_cap);
+        if (glm::dot(intersection_normal, ray.direction) > 0)
+            intersection_normal = -intersection_normal;
+        return true;
+    }
+
     return false;
 }
 

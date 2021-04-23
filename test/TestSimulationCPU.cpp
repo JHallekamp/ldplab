@@ -44,6 +44,7 @@ const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
 
 // RK4
 const double RTS_SOLVER_STEP_SIZE = 0.005;
+const double RTS_SOLVER_STEP_SIZE_SMALL_GRADIENT = 0.5; //0.1;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -77,7 +78,7 @@ int main()
     // Run simulations
     std::vector<double> vec_gradient = { 0.0, 0.2 };
     std::vector<double> vec_kappa = { 0.0, 0.3 };
-    std::vector<size_t> vec_branching_depth = { 0, 8 };
+    std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_gradient.size(); ++j)
@@ -253,7 +254,7 @@ void runSimulation(
     if (std::abs(material->gradient) > 1e-5)
         rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
     else
-        rts_step_size = 0.1;
+        rts_step_size = RTS_SOLVER_STEP_SIZE_SMALL_GRADIENT;
     ldplab::RayTracingStepCPUInfo rtscpu_info;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
@@ -261,7 +262,7 @@ void runSimulation(
         (ldplab::BoundingVolumeSphere*)experimental_setup.particles[0].bounding_volume.get();
     rtscpu_info.light_source_ray_density_per_unit_area =
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi());
-    rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
+    rtscpu_info.maximum_branching_depth = branching_depth;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
         rts_step_size);
@@ -288,7 +289,7 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     
-    for (double rotation_x = offset;
+    for (double rotation_x = offset + step_size;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
