@@ -40,13 +40,13 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersectRay(
+            bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal) = 0;
+                Vec3& intersection_normal);
             /**
              * @brief Tests an intersection between a line segment and the
-             *        geometry hull. Computes the intersection point and 
+             *        geometry hull. Computes the intersection point and
              *        surface normal at such an intersection.
              * @param[in] segment_origin The origin point of the line segment.
              * @param[in] segment_end The end point of the line segment.
@@ -67,11 +67,72 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersectSegment(
+            bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
-                Vec3& intersection_normal) = 0;
+                Vec3& intersection_normal);
+            /**
+             * @brief Tests an intersection between a line segment and the
+             *        geometry hull. Computes the intersection point and 
+             *        surface normal at such an intersection.
+             * @param[in] segment_origin The origin point of the line segment.
+             * @param[in] segment_end The end point of the line segment.
+             * @param[out] intersection_point If the line segment intersects
+             *                                the geometry, then
+             *                                intersection_point will contain
+             *                                the point at which the given
+             *                                intersection occurs.
+             * @param[out] intersection_normal If the line segment intersects
+             *                                 the geometry, then
+             *                                 intersection_normal will contain
+             *                                 the geometry surface normal at
+             *                                 the point of intersection.
+             * @param[out] ray_intersects Notifies if the ray with origin in
+             *                            segment_origin going into the 
+             *                            direction of segment_end would have
+             *                            intersected the particle hull, even 
+             *                            if the segment does not.
+             * @returns true, if the line segment does intersect the geometry
+             *          and is not fully inside or outside of it.
+             * @note All vectors, be it in- or output (including those in the
+             *       given ray) are assumed to be given in the same coordinate
+             *       system as the underlying geometry. The caller has to make
+             *       sure that this assumption is never violated.
+             */
+            bool intersectSegment(
+                const Vec3& segment_origin,
+                const Vec3& segment_end,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                bool& ray_intersects);
+        protected:
+            /**
+             * @brief Tests an intersection between a ray and the geometry and
+             *        computes the intersection point and the surface normal at
+             *        that point.
+             * @param[in] ray The ray for which the intersection test is
+             *                computed.
+             * @param[out] intersection_point If ray intersects the geometry,
+             *                                then intersection_point will
+             *                                contain the point.
+             * @param[out] intersection_normal If ray intersects the geometry,
+             *                                 then intersection_normal will
+             *                                 contain the geometry surface
+             *                                 normal at the point of
+             *                                 intersection.
+             * @param[out] dist The distance to the intersection point.
+             * @returns true, if ray does intersect the particle.
+             * @note All vectors, be it in- or output (including those in the
+             *       given ray) are assumed to be given in the same coordinate
+             *       system as the underlying geometry. The caller has to make
+             *       sure that this assumption is never violated.
+             */
+            virtual bool intersectRay(
+                const Ray& ray,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                double& dist) = 0;
         };
 
         /** @brief Geometry implementation for rod particles. */
@@ -80,17 +141,13 @@ namespace ldplab
         public:
             /** @brief Constructs the rod particle geometry. */
             RodGeometry(const RodParticleGeometry* geometry);
+        protected:
             /** @brief Inherited via IGenericGeometry */
             bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal) override;
-            /** @brief Inherited via IGenericGeometry */
-            bool intersectSegment(
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
-                Vec3& intersection_point,
-                Vec3& intersection_normal) override;
+                Vec3& intersection_normal,
+                double& dist) override;
         private:
             /** 
              * @brief Checks against the infinite cylinder.
@@ -160,17 +217,13 @@ namespace ldplab
         public:
             /** @brief Constructs the sphere particle geometry. */
             SphericalGeometry(const SphericalParticleGeometry* geometry);
+        protected:
             /** @brief Inherited via IGenericGeometry */
             bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal) override;
-            /** @brief Inherited via IGenericGeometry */
-            bool intersectSegment(
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
-                Vec3& intersection_point,
-                Vec3& intersection_normal) override;
+                Vec3& intersection_normal,
+                double& dist) override;
         private:
             double m_radius;
         };

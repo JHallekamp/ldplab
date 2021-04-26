@@ -66,19 +66,13 @@ namespace ldplab
         class TriangleMeshGeometryList : 
             public ITriangleMeshAcceleratorStructure
         {
-        public:
+        protected:
             /** @brief Inherited via IGenericGeometry */
             bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal) override;
-            /** @brief Inherited via IGenericGeometry */
-            bool intersectSegment(
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
-                Vec3& intersection_point,
-                Vec3& intersection_normal) override;
-        protected:
+                Vec3& intersection_normal,
+                double& dist) override;
             /** @brief Inherited via ITriangleMeshAcceleratorStructure */
             bool constructInternal(
                 const std::vector<Triangle>& mesh,
@@ -93,19 +87,13 @@ namespace ldplab
         class TriangleMeshGeometryOctree : 
             public ITriangleMeshAcceleratorStructure
         {
-        public:
+        protected:
             /** @brief Inherited via IGenericGeometry */
             bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal) override;
-            /** @brief Inherited via IGenericGeometry */
-            bool intersectSegment(
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
-                Vec3& intersection_point,
-                Vec3& intersection_normal) override;
-        protected:
+                Vec3& intersection_normal,
+                double& dist) override;
             /** @brief Inherited via ITriangleMeshAcceleratorStructure */
             bool constructInternal(
                 const std::vector<Triangle>& mesh,
@@ -166,19 +154,6 @@ namespace ldplab
             bool intersectBase(
                 const utils::Array<Triangle>& triangles,
                 const Ray& ray,
-                Vec3& intersection_point,
-                Vec3& intersection_normal);
-            bool intersectSegmentRecursive(
-                const OctreeNode& node,
-                const size_t depth,
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
-                Vec3& intersection_point,
-                Vec3& intersection_normal);
-            bool intersectSegmentBase(
-                const utils::Array<Triangle>& triangles,
-                const Vec3& segment_origin,
-                const Vec3& segment_end,
                 Vec3& intersection_point,
                 Vec3& intersection_normal);
         private:

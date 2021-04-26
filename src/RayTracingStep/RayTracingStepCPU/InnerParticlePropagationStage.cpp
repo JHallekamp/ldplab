@@ -63,6 +63,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
         .material.get();
 
     bool intersected = false;
+    bool is_inside = false;
     Arg x{
         ray.direction * material->indexOfRefraction(ray.origin),
         ray.origin };
@@ -70,23 +71,25 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
     while (!intersected)
     {
         rk4(material, x, m_parameters.step_size, x_new);
-        if (m_context.particle_data->geometries[particle]->intersectSegment(
+        intersected = m_context.particle_data->geometries[particle]->intersectSegment(
             x.r,
             x_new.r,
             inter_point,
-            inter_normal))
+            inter_normal,
+            is_inside);
+        if (intersected || !is_inside)
         {
-            intersected = true;
+            if (!intersected)
+                inter_point = x.r;
             ray.direction = glm::normalize(x.w);
-            ray.origin = x.r;
             return;
         }
         else
         {
             const double nx = material->indexOfRefraction(x.r);
             const double ny = material->indexOfRefraction(x_new.r);
-            Vec3 t_old_direction = glm::normalize(x.w);
-            Vec3 t_new_direction = glm::normalize(x_new.w);
+            const Vec3 t_old_direction = glm::normalize(x.w);
+            const Vec3 t_new_direction = glm::normalize(x_new.w);
             const Vec3 delta_momentum = nx * t_old_direction -
                 ny * t_new_direction;
             const Vec3 r = x_new.r -

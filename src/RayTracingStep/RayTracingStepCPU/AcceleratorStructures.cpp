@@ -9,62 +9,30 @@
 bool ldplab::rtscpu::TriangleMeshGeometryList::intersectRay(
     const Ray& ray,
     Vec3& intersection_point,
-    Vec3& intersection_normal)
+    Vec3& intersection_normal,
+    double& dist)
 {
     size_t min_index = m_mesh.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
+    double t_dist;
+    dist = std::numeric_limits<double>::max();
     for (size_t i = 0; i < m_mesh.size(); ++i)
     {
         if (IntersectionTest::intersectRayTriangle(ray, m_mesh[i], t_dist))
         {
-            if (t_dist < min_dist)
+            if (t_dist < dist)
             {
                 min_index = i;
-                min_dist = t_dist;
+                dist = t_dist;
             }
         }
     }
     if (min_index < m_mesh.size())
     {
-        intersection_point = ray.origin + ray.direction * min_dist;
+        intersection_point = ray.origin + dist * ray.direction;
         const Vec3 edge1 = m_mesh[min_index].b - m_mesh[min_index].a;
         const Vec3 edge2 = m_mesh[min_index].c - m_mesh[min_index].a;
         intersection_normal = glm::normalize(glm::cross(edge1, edge2));
         if (glm::dot(intersection_normal, ray.direction) > 0)
-            intersection_normal = -intersection_normal;
-        return true;
-    }
-    return false;
-}
-
-bool ldplab::rtscpu::TriangleMeshGeometryList::intersectSegment(
-    const Vec3& segment_origin, 
-    const Vec3& segment_end, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    size_t min_index = m_mesh.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
-    for (size_t i = 0; i < m_mesh.size(); ++i)
-    {
-        if (IntersectionTest::intersectSegmentTriangle(
-            segment_origin, segment_end, m_mesh[i], t_dist))
-        {
-            if (t_dist < min_dist)
-            {
-                min_index = i;
-                min_dist = t_dist;
-            }
-        }
-    }
-    if (min_index < m_mesh.size())
-    {
-        const Vec3 dir = glm::normalize(segment_end - segment_origin);
-        intersection_point = segment_origin + dir * min_dist;
-        const Vec3 edge1 = m_mesh[min_index].b - m_mesh[min_index].a;
-        const Vec3 edge2 = m_mesh[min_index].c - m_mesh[min_index].a;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
-        if (glm::dot(intersection_normal, dir) > 0)
             intersection_normal = -intersection_normal;
         return true;
     }
@@ -82,36 +50,15 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::constructInternal(
 bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
-    Vec3& intersection_normal)
+    Vec3& intersection_normal,
+    double& dist)
 {
-    double min;
-    if (IntersectionTest::overlapRayAABB(ray, m_nodes[0].aabb, min))
+    if (IntersectionTest::overlapRayAABB(ray, m_nodes[0].aabb, dist))
     {
         return intersectRecursive(
             m_nodes[0], 
             0, 
             ray, 
-            intersection_point, 
-            intersection_normal);
-    }
-    return false;
-}
-
-bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegment(
-    const Vec3& segment_origin, 
-    const Vec3& segment_end,
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    double min;
-    if (IntersectionTest::overlapSegmentAABB(
-        segment_origin, segment_end, m_nodes[0].aabb, min))
-    {
-        return intersectSegmentRecursive(
-            m_nodes[0], 
-            0, 
-            segment_origin, 
-            segment_end, 
             intersection_point, 
             intersection_normal);
     }
@@ -443,107 +390,6 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectBase(
         const Vec3 edge2 = triangles[min_index].c - triangles[min_index].a;
         intersection_normal = glm::normalize(glm::cross(edge1, edge2));
         if (glm::dot(intersection_normal, ray.direction) > 0)
-            intersection_normal = -intersection_normal;
-        return true;
-    }
-    return false;
-}
-
-bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegmentRecursive(
-    const OctreeNode& node, 
-    const size_t depth, 
-    const Vec3& segment_origin, 
-    const Vec3& segment_end, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    if (depth == m_octree_depth)
-    {
-        if (node.num_children == 0)
-            return false;
-        return intersectSegmentBase(
-            m_triangle_arrays[node.children[0]],
-            segment_origin,
-            segment_end,
-            intersection_point,
-            intersection_normal);
-    }
-    else
-    {
-        std::array<std::pair<size_t, double>, 8> nodes;
-        double dist;
-        size_t intersections = 0;
-        // Check for intersections with the subdivisions
-        for (size_t i = 0; i < node.num_children; ++i)
-        {
-            const size_t c = node.children[i];
-            if (IntersectionTest::overlapSegmentAABB(
-                segment_origin, segment_end, m_nodes[c].aabb, dist))
-            {
-                nodes[intersections++] = std::pair<size_t, double>(c, dist);
-            }
-        }
-        // Sort based on distance of intersection
-        for (size_t j = 0; j < intersections; ++j)
-        {
-            size_t insert_at = 0;
-            for (size_t k = 0; k < j; ++k)
-            {
-                if (nodes[k].second <= nodes[j].second)
-                    ++insert_at;
-                else
-                    break;
-            }
-            for (size_t k = j; k > insert_at; --k)
-                std::swap(nodes[k], nodes[k - 1]);
-        }
-        // Recursive calls
-        for (size_t j = 0; j < intersections; ++j)
-        {
-            if (intersectSegmentRecursive(
-                m_nodes[nodes[j].first],
-                depth + 1,
-                segment_origin,
-                segment_end,
-                intersection_point,
-                intersection_normal))
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectSegmentBase(
-    const utils::Array<Triangle>& triangles, 
-    const Vec3& segment_origin, 
-    const Vec3& segment_end, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    size_t min_index = triangles.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
-    for (size_t i = 0; i < triangles.size(); ++i)
-    {
-        if (IntersectionTest::intersectSegmentTriangle(
-            segment_origin, segment_end, triangles[i], t_dist))
-        {
-            if (t_dist < min_dist)
-            {
-                min_index = i;
-                min_dist = t_dist;
-            }
-        }
-    }
-    if (min_index < triangles.size())
-    {
-        const Vec3 dir = glm::normalize(segment_end - segment_origin);
-        intersection_point = segment_origin + dir * min_dist;
-        const Vec3 edge1 = triangles[min_index].b - triangles[min_index].a;
-        const Vec3 edge2 = triangles[min_index].c - triangles[min_index].a;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
-        if (glm::dot(intersection_normal, dir) > 0)
             intersection_normal = -intersection_normal;
         return true;
     }
