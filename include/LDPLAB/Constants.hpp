@@ -21,7 +21,7 @@ namespace ldplab
         namespace intersection_tests
         {
             /** @brief Defines an epsilon region for intersection tests. */
-            constexpr double epsilon = 1e-10;
+            constexpr double epsilon = 1e-9;
         }
     }
 }

@@ -14,7 +14,7 @@ constexpr double const_pi()
 const std::string DIR_PATH = 
     "SimData\\";
 
-const bool SPHERICAL_PARTICLE = false;
+const bool SPHERICAL_PARTICLE = true;
 const double PARTICLE_VOLUME = 1;
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
@@ -49,7 +49,7 @@ const double RTS_SOLVER_STEP_SIZE_SMALL_GRADIENT = 0.5; //0.1;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 62; //314;
+const size_t NUM_SIM_ROTATION_STEPS = 314;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,
@@ -78,13 +78,13 @@ int main()
 
     // Run simulations
     std::vector<double> vec_nu = { 0.0, 0.15 };
-    std::vector<double> vec_kappa = { 0.0, 0.3 };
+    std::vector<double> vec_kappa = { /*0.0,*/ 0.3 };
     std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
-    for (size_t i = 0; i + 1 < vec_kappa.size(); ++i)
+    for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
-        for (size_t j = 1; j < vec_nu.size(); ++j)
+        for (size_t j = 0; j < vec_nu.size(); ++j)
         {
-            for (size_t k = 1; k < vec_branching_depth.size(); ++k)
+            for (size_t k = 0; k < vec_branching_depth.size(); ++k)
             {
                 // Create experimental setup
                 ldplab::ExperimentalSetup experimental_setup;
@@ -283,7 +283,7 @@ void runSimulation(
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
-    constexpr double offset = 2.00856;
+    constexpr double offset = 0;
     constexpr double lim = const_pi();
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
