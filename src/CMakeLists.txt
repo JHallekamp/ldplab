@@ -37,14 +37,15 @@ set(HEADER_LDPLAB_RAY_TRACING_STEP
 )
 
 set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
+	RayTracingStep/RayTracingStepCPU/AcceleratorStructures.hpp
 	RayTracingStep/RayTracingStepCPU/BufferControl.hpp
     RayTracingStep/RayTracingStepCPU/Context.hpp
     RayTracingStep/RayTracingStepCPU/Data.hpp
     RayTracingStep/RayTracingStepCPU/Factory.hpp
+    RayTracingStep/RayTracingStepCPU/GenericGeometry.hpp
     RayTracingStep/RayTracingStepCPU/InitialStage.hpp
     RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.hpp
 	RayTracingStep/RayTracingStepCPU/IntersectionTests.hpp
-	RayTracingStep/RayTracingStepCPU/ParticleAcceleratorStructures.hpp
     RayTracingStep/RayTracingStepCPU/Pipeline.hpp
     RayTracingStep/RayTracingStepCPU/RayBoundingVolumeIntersectionTestStage.hpp
     RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.hpp
@@ -92,12 +93,13 @@ set(SOURCE_RAY_TRACING_STEP
 )
 
 set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
+	RayTracingStep/RayTracingStepCPU/AcceleratorStructures.cpp
 	RayTracingStep/RayTracingStepCPU/BufferControl.cpp
     RayTracingStep/RayTracingStepCPU/Factory.cpp
+    RayTracingStep/RayTracingStepCPU/GenericGeometry.cpp
     RayTracingStep/RayTracingStepCPU/InitialStage.cpp
     RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.cpp
 	RayTracingStep/RayTracingStepCPU/IntersectionTests.cpp
-	RayTracingStep/RayTracingStepCPU/ParticleAcceleratorStructures.cpp
     RayTracingStep/RayTracingStepCPU/Pipeline.cpp
     RayTracingStep/RayTracingStepCPU/RayBoundingVolumeIntersectionTestStage.cpp
     RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.cpp

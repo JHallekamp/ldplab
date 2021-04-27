@@ -1,4 +1,4 @@
-#include "ParticleAcceleratorStructures.hpp"
+#include "AcceleratorStructures.hpp"
 
 #include "IntersectionTests.hpp"
 
@@ -6,34 +6,29 @@
 #include <limits>
 #include <utility>
 
-ldplab::rtscpu::ParticleMeshList::ParticleMeshList(
-    const std::vector<Triangle>& mesh)
-    :
-    m_mesh{ mesh }
-{
-}
-
-bool ldplab::rtscpu::ParticleMeshList::intersects(
+bool ldplab::rtscpu::TriangleMeshGeometryList::intersectRay(
     const Ray& ray,
     Vec3& intersection_point,
-    Vec3& intersection_normal)
+    Vec3& intersection_normal,
+    double& dist)
 {
     size_t min_index = m_mesh.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
+    double t_dist;
+    dist = std::numeric_limits<double>::max();
     for (size_t i = 0; i < m_mesh.size(); ++i)
     {
-        if (IntersectionTest::rayTriangle(ray, m_mesh[i], t_dist))
+        if (IntersectionTest::intersectRayTriangle(ray, m_mesh[i], t_dist))
         {
-            if (t_dist < min_dist)
+            if (t_dist < dist)
             {
                 min_index = i;
-                min_dist = t_dist;
+                dist = t_dist;
             }
         }
     }
     if (min_index < m_mesh.size())
     {
-        intersection_point = ray.origin + ray.direction * min_dist;
+        intersection_point = ray.origin + dist * ray.direction;
         const Vec3 edge1 = m_mesh[min_index].b - m_mesh[min_index].a;
         const Vec3 edge2 = m_mesh[min_index].c - m_mesh[min_index].a;
         intersection_normal = glm::normalize(glm::cross(edge1, edge2));
@@ -44,54 +39,21 @@ bool ldplab::rtscpu::ParticleMeshList::intersects(
     return false;
 }
 
-bool ldplab::rtscpu::ParticleMeshList::intersectsLineSegment(
-    const Vec3& segment_origin, 
-    const Vec3& segment_end, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    size_t min_index = m_mesh.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
-    for (size_t i = 0; i < m_mesh.size(); ++i)
-    {
-        if (IntersectionTest::lineTriangle(
-            segment_origin, segment_end, m_mesh[i], t_dist))
-        {
-            if (t_dist < min_dist)
-            {
-                min_index = i;
-                min_dist = t_dist;
-            }
-        }
-    }
-    if (min_index < m_mesh.size())
-    {
-        const Vec3 dir = segment_end - segment_origin;
-        intersection_point = segment_origin + dir * min_dist;
-        const Vec3 edge1 = m_mesh[min_index].b - m_mesh[min_index].a;
-        const Vec3 edge2 = m_mesh[min_index].c - m_mesh[min_index].a;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
-        if (glm::dot(intersection_normal, dir) > 0)
-            intersection_normal = -intersection_normal;
-        return true;
-    }
-    return false;
-}
-
-ldplab::rtscpu::ParticleMeshOctree::ParticleMeshOctree(
+bool ldplab::rtscpu::TriangleMeshGeometryList::constructInternal(
     const std::vector<Triangle>& mesh, 
-    size_t octree_depth)
+    const IAcceleratorStructureParameter* parameter)
 {
-    construct(mesh, octree_depth);
+    m_mesh = std::vector<Triangle>(mesh);
+    return true;
 }
 
-bool ldplab::rtscpu::ParticleMeshOctree::intersects(
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
-    Vec3& intersection_normal)
+    Vec3& intersection_normal,
+    double& dist)
 {
-    double min;
-    if (IntersectionTest::rayAABB(ray, m_nodes[0].aabb, min))
+    if (IntersectionTest::overlapRayAABB(ray, m_nodes[0].aabb, dist))
     {
         return intersectRecursive(
             m_nodes[0], 
@@ -103,42 +65,31 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersects(
     return false;
 }
 
-bool ldplab::rtscpu::ParticleMeshOctree::intersectsLineSegment(
-    const Vec3& segment_origin, 
-    const Vec3& segment_end,
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::constructInternal(
+    const std::vector<Triangle>& mesh, 
+    const IAcceleratorStructureParameter* parameter)
 {
-    double min, max;
-    if (IntersectionTest::lineAABB(
-        segment_origin, segment_end, m_nodes[0].aabb, min))
-    {
-        return intersectSegmentRecursive(
-            m_nodes[0], 
-            0, 
-            segment_origin, 
-            segment_end, 
-            intersection_point, 
-            intersection_normal);
-    }
-    return false;
+    construct(
+        mesh,
+        ((AcceleratorStructureOctreeParameter*)parameter)->octree_depth);
+    return true;
 }
 
-size_t ldplab::rtscpu::ParticleMeshOctree::pow8(size_t exp) const noexcept
+size_t ldplab::rtscpu::TriangleMeshGeometryOctree::pow8(size_t exp) const noexcept
 {
     constexpr size_t base_bit = 1;
     constexpr size_t log2_8 = 3; // = log_2(8)
     return base_bit << (exp * log2_8);
 }
 
-size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexP2C(
+size_t ldplab::rtscpu::TriangleMeshGeometryOctree::mapIndexP2C(
     size_t parent_idx,
     size_t child_no) const noexcept
 {
     return parent_idx * 8 + child_no;
 }
 
-inline size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexC2P(
+inline size_t ldplab::rtscpu::TriangleMeshGeometryOctree::mapIndexC2P(
     size_t child_idx) const noexcept
 {
     // child_idx == parent_idx * 8 + child_no
@@ -151,7 +102,7 @@ inline size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexC2P(
     return child_idx / 8;
 }
 
-inline size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexGetChildNo(
+inline size_t ldplab::rtscpu::TriangleMeshGeometryOctree::mapIndexGetChildNo(
     size_t child_idx) const noexcept
 {
     // child_idx == parent_idx * 8 + child_no
@@ -161,7 +112,7 @@ inline size_t ldplab::rtscpu::ParticleMeshOctree::mapIndexGetChildNo(
     return child_idx % 8;
 }
 
-void ldplab::rtscpu::ParticleMeshOctree::construct(
+void ldplab::rtscpu::TriangleMeshGeometryOctree::construct(
     const std::vector<Triangle>& mesh, 
     size_t octree_depth)
 {
@@ -196,7 +147,7 @@ void ldplab::rtscpu::ParticleMeshOctree::construct(
     constructMakePersistentRecursive(0, 0, layers, triangle_storage);
 }
 
-ldplab::AABB ldplab::rtscpu::ParticleMeshOctree::constructOctreeAABB(
+ldplab::AABB ldplab::rtscpu::TriangleMeshGeometryOctree::constructOctreeAABB(
     const std::vector<Triangle>& mesh)
 {
     AABB octree_aabb;
@@ -230,7 +181,7 @@ ldplab::AABB ldplab::rtscpu::ParticleMeshOctree::constructOctreeAABB(
     return octree_aabb;
 }
 
-void ldplab::rtscpu::ParticleMeshOctree::constructConstructionLayers(
+void ldplab::rtscpu::TriangleMeshGeometryOctree::constructConstructionLayers(
     const AABB& octree_aabb,
     std::vector<std::vector<OctreeNode>>& layers)
 {
@@ -268,7 +219,7 @@ void ldplab::rtscpu::ParticleMeshOctree::constructConstructionLayers(
     }
 }
 
-bool ldplab::rtscpu::ParticleMeshOctree::constructSortTrianglesRecursive(
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::constructSortTrianglesRecursive(
     const Triangle& triangle, 
     size_t current_layer, 
     size_t current_node, 
@@ -279,7 +230,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::constructSortTrianglesRecursive(
     {
         // Recursion base!
         OctreeNode& node = layers[current_layer][current_node];
-        if (IntersectionTest::triangleAABB(triangle, node.aabb))
+        if (IntersectionTest::overlapTriangleAABB(triangle, node.aabb))
         {
             triangle_storage[node.children[0]].push_back(triangle);
             ++node.num_children;
@@ -291,7 +242,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::constructSortTrianglesRecursive(
     {
         // Recursion!
         OctreeNode& node = layers[current_layer][current_node];
-        if (!IntersectionTest::triangleAABB(triangle, node.aabb))
+        if (!IntersectionTest::overlapTriangleAABB(triangle, node.aabb))
             return false;
         // Call recursive for children
         bool children_intersect = false;
@@ -307,13 +258,13 @@ bool ldplab::rtscpu::ParticleMeshOctree::constructSortTrianglesRecursive(
                 children_intersect = true;
             }
         }
-        if (children_intersect);
+        if (children_intersect)
             ++node.num_children;
         return children_intersect;
     }
 }
 
-size_t ldplab::rtscpu::ParticleMeshOctree::constructMakePersistentRecursive(
+size_t ldplab::rtscpu::TriangleMeshGeometryOctree::constructMakePersistentRecursive(
     const size_t current_layer, 
     const size_t current_node, 
     const std::vector<std::vector<OctreeNode>>& layers, 
@@ -353,7 +304,7 @@ size_t ldplab::rtscpu::ParticleMeshOctree::constructMakePersistentRecursive(
     return node_idx;
 }
 
-bool ldplab::rtscpu::ParticleMeshOctree::intersectRecursive(
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRecursive(
     const OctreeNode& node, 
     const size_t depth,
     const Ray& ray, 
@@ -379,7 +330,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectRecursive(
         for (size_t i = 0; i < node.num_children; ++i)
         {
             const size_t c = node.children[i];
-            if (IntersectionTest::rayAABB(ray, m_nodes[c].aabb, dist))
+            if (IntersectionTest::overlapRayAABB(ray, m_nodes[c].aabb, dist))
                 nodes[intersections++] = std::pair<size_t, double>(c, dist);
         }
         // Sort based on distance of intersection
@@ -413,7 +364,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectRecursive(
     return false;
 }
 
-bool ldplab::rtscpu::ParticleMeshOctree::intersectBase(
+bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectBase(
     const utils::Array<Triangle>& triangles, 
     const Ray& ray,
     Vec3& intersection_point, 
@@ -423,7 +374,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectBase(
     double min_dist = std::numeric_limits<double>::max(), t_dist;
     for (size_t i = 0; i < triangles.size(); ++i)
     {
-        if (IntersectionTest::rayTriangle(ray, triangles[i], t_dist))
+        if (IntersectionTest::intersectRayTriangle(ray, triangles[i], t_dist))
         {
             if (t_dist < min_dist)
             {
@@ -445,108 +396,7 @@ bool ldplab::rtscpu::ParticleMeshOctree::intersectBase(
     return false;
 }
 
-bool ldplab::rtscpu::ParticleMeshOctree::intersectSegmentRecursive(
-    const OctreeNode& node, 
-    const size_t depth, 
-    const Vec3& segment_origin, 
-    const Vec3& segment_end, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    if (depth == m_octree_depth)
-    {
-        if (node.num_children == 0)
-            return false;
-        return intersectSegmentBase(
-            m_triangle_arrays[node.children[0]],
-            segment_origin,
-            segment_end,
-            intersection_point,
-            intersection_normal);
-    }
-    else
-    {
-        std::array<std::pair<size_t, double>, 8> nodes;
-        double dist;
-        size_t intersections = 0;
-        // Check for intersections with the subdivisions
-        for (size_t i = 0; i < node.num_children; ++i)
-        {
-            const size_t c = node.children[i];
-            if (IntersectionTest::lineAABB(
-                segment_origin, segment_end, m_nodes[c].aabb, dist))
-            {
-                nodes[intersections++] = std::pair<size_t, double>(c, dist);
-            }
-        }
-        // Sort based on distance of intersection
-        for (size_t j = 0; j < intersections; ++j)
-        {
-            size_t insert_at = 0;
-            for (size_t k = 0; k < j; ++k)
-            {
-                if (nodes[k].second <= nodes[j].second)
-                    ++insert_at;
-                else
-                    break;
-            }
-            for (size_t k = j; k > insert_at; --k)
-                std::swap(nodes[k], nodes[k - 1]);
-        }
-        // Recursive calls
-        for (size_t j = 0; j < intersections; ++j)
-        {
-            if (intersectSegmentRecursive(
-                m_nodes[nodes[j].first],
-                depth + 1,
-                segment_origin,
-                segment_end,
-                intersection_point,
-                intersection_normal))
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool ldplab::rtscpu::ParticleMeshOctree::intersectSegmentBase(
-    const utils::Array<Triangle>& triangles, 
-    const Vec3& segment_origin, 
-    const Vec3& segment_end, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal)
-{
-    size_t min_index = triangles.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
-    for (size_t i = 0; i < triangles.size(); ++i)
-    {
-        if (IntersectionTest::lineTriangle(
-            segment_origin, segment_end, triangles[i], t_dist))
-        {
-            if (t_dist < min_dist)
-            {
-                min_index = i;
-                min_dist = t_dist;
-            }
-        }
-    }
-    if (min_index < triangles.size())
-    {
-        const Vec3 dir = segment_end - segment_origin;
-        intersection_point = segment_origin + dir * min_dist;
-        const Vec3 edge1 = triangles[min_index].b - triangles[min_index].a;
-        const Vec3 edge2 = triangles[min_index].c - triangles[min_index].a;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
-        if (glm::dot(intersection_normal, dir) > 0)
-            intersection_normal = -intersection_normal;
-        return true;
-    }
-    return false;
-}
-
-ldplab::rtscpu::ParticleMeshOctree::OctreeNode::OctreeNode()
+ldplab::rtscpu::TriangleMeshGeometryOctree::OctreeNode::OctreeNode()
     :
     num_children{ 0 },
     children{ 0 }

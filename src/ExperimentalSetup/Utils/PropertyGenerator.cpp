@@ -139,7 +139,7 @@ ldplab::Particle ldplab::getRodParticle(
     return particle;
 }
 
-ldplab::Particle ldplab::getSphereParticle(
+ldplab::Particle ldplab::getSphereParticleByVolume(
     const double V,
     const double np,
     const double nu,
@@ -168,4 +168,30 @@ ldplab::Particle ldplab::getSphereParticle(
     return particle;
 }
 
+ldplab::Particle ldplab::getSphereParticleByRadius(
+    const double R,
+    const double np,
+    const double nu,
+    const Vec3 position,
+    const Vec3 orientation)
+{
+    const double delta_n = nu / (2 * R);
 
+    ldplab::Particle particle;
+    particle.position = position;
+    particle.orientation = orientation;
+    particle.geometry =
+        std::make_shared<ldplab::SphericalParticleGeometry>(R);
+    particle.bounding_volume =
+        std::make_shared<ldplab::BoundingVolumeSphere>(
+            Vec3(0, 0, 0),
+            R + R * 1e-4);
+    particle.material =
+        std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
+            np,
+            delta_n,
+            Vec3(0, 0, 0),
+            Vec3(0, 0, 1));
+    particle.centre_of_mass = Vec3(0, 0, 0);
+    return particle;
+}

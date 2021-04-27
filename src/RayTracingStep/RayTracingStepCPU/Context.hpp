@@ -87,7 +87,7 @@ namespace ldplab
             /** @brief The thread pool used by the ray tracing step. */
             std::shared_ptr<utils::ThreadPool> thread_pool;
             /** @brief Holds an array with particle data. */
-            std::shared_ptr<IParticleData> particle_data;
+            std::shared_ptr<ParticleData> particle_data;
             /** @brief Holds an array with bounding volume data. */
             std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
             /** @brief Maps particle UIDs to the internally used indices. */

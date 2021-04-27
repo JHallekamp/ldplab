@@ -15,14 +15,14 @@ const std::string DIR_PATH =
     "SimData\\";
 
 const bool SPHERICAL_PARTICLE = true;
-const double PARTICLE_VOLUME = 1;
+const double PARTICLE_VOLUME = 6000000;
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 1.0;
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
-const double PARTICLE_MATERIAL_NU = 0.15;
+const double PARTICLE_MATERIAL_NU = 0.2;
 
 // Light intensity properties
 const double LIGHT_INTENSITY = 1;
@@ -52,6 +52,7 @@ const size_t NUM_SIM_ROTATION_STEPS = 314;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,
+    double nu,
     std::string path,
     std::string type,
     size_t branching_depth);
@@ -61,7 +62,7 @@ void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup,
     double gradient);
 void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
     double kappa,
-    double gradient,
+    double nu,
     size_t branching_depth);
 
 int main()
@@ -75,12 +76,12 @@ int main()
     clog.subscribe();
 
     // Run simulations
-    std::vector<double> vec_gradient = { 0.0, 0.2 };
+    std::vector<double> vec_nu = { 0.0, 0.15 };
     std::vector<double> vec_kappa = { 0.0, 0.3 };
-    std::vector<size_t> vec_branching_depth = { 0, 8 };
+    std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
-        for (size_t j = 0; j < vec_gradient.size(); ++j)
+        for (size_t j = 0; j < vec_nu.size(); ++j)
         {
             for (size_t k = 0; k < vec_branching_depth.size(); ++k)
             {
@@ -89,12 +90,12 @@ int main()
                 createExperimentalSetup(
                     experimental_setup,
                     vec_kappa[i],
-                    vec_gradient[j]);
+                    vec_nu[j]);
                 // Run simulation
                 runSimulation(
                     experimental_setup,
                     vec_kappa[i],
-                    vec_gradient[j],
+                    vec_nu[j],
                     vec_branching_depth[k]);
             }
         }
@@ -126,6 +127,7 @@ void plotProgress(double progress)
 
 std::ofstream getFileStream(
     const ldplab::Particle& particle,
+    double nu,
     std::string path,
     std::string type,
     size_t branching_depth)
@@ -135,9 +137,9 @@ std::ofstream getFileStream(
     if (particle.geometry->type() == ldplab::IParticleGeometry::Type::rod_particle)
     {
         ldplab::RodParticleGeometry* geomerty =
-            (ldplab::RodParticleGeometry*)particle.geometry.get();
+            (ldplab::RodParticleGeometry*)particle.geometry.get();        
         ss << path << type <<
-            "_nu" << PARTICLE_MATERIAL_NU <<
+            "_nu" << nu <<
             "_l" << geomerty->l <<
             "_k" << geomerty->kappa << 
             "_bd" << branching_depth << ".txt";
@@ -154,7 +156,7 @@ std::ofstream getFileStream(
         ldplab::SphericalParticleGeometry* geomerty =
             (ldplab::SphericalParticleGeometry*)particle.geometry.get();
         ss << path << type <<
-            "_nu" << PARTICLE_MATERIAL_NU <<
+            "_nu" << nu <<
             "_V" << PARTICLE_VOLUME << 
             "_bd" << branching_depth << ".txt";
         file = std::ofstream{ ss.str() };
@@ -162,7 +164,7 @@ std::ofstream getFileStream(
         file << "# V = " << PARTICLE_VOLUME << std::endl;
         file << "# R = " << geomerty->radius << std::endl;
     }
-    file << "# nu = " << PARTICLE_MATERIAL_NU << std::endl;
+    file << "# nu = " << nu << std::endl;
     file << "# I = " << LIGHT_INTENSITY << std::endl;
     if (type[0] == 'f')
         file << "# theta\tF_x\tF_y\tF_z" << std::endl;
@@ -176,12 +178,13 @@ void createExperimentalSetup(
     double kappa,
     double gradient)
 {
+    gradient = PARTICLE_MATERIAL_NU;
     // Create particle
     ldplab::Particle particle;
     double particle_world_extent;
     if (SPHERICAL_PARTICLE)
     {
-        particle = ldplab::getSphereParticle(
+        particle = ldplab::getSphereParticleByVolume(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             gradient,
@@ -238,7 +241,7 @@ void createExperimentalSetup(
 void runSimulation(
     const ldplab::ExperimentalSetup& experimental_setup,
     double kappa,
-    double gradient,
+    double nu,
     size_t branching_depth)
 {
     // Start timing
@@ -253,7 +256,7 @@ void runSimulation(
     if (std::abs(material->gradient) > 1e-5)
         rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
     else
-        rts_step_size = 0.1;
+        rts_step_size = RTS_SOLVER_STEP_SIZE * std::pow(PARTICLE_VOLUME,1.0/3.0);
     ldplab::RayTracingStepCPUInfo rtscpu_info;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
@@ -261,9 +264,9 @@ void runSimulation(
         (ldplab::BoundingVolumeSphere*)experimental_setup.particles[0].bounding_volume.get();
     rtscpu_info.light_source_ray_density_per_unit_area =
         NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi());
-    rtscpu_info.maximum_branching_depth = MAX_RTS_BRANCHING_DEPTH;
+    rtscpu_info.maximum_branching_depth = branching_depth;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4>(
+    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
         rts_step_size);
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
@@ -275,12 +278,12 @@ void runSimulation(
 
     // Output file
     ldplab::RayTracingStepOutput output;
-    std::ofstream output_force = getFileStream(experimental_setup.particles[0], DIR_PATH, "force", branching_depth);
-    std::ofstream output_torque = getFileStream(experimental_setup.particles[0], DIR_PATH, "torque", branching_depth);
+    std::ofstream output_force = getFileStream(experimental_setup.particles[0], nu, DIR_PATH, "force", branching_depth);
+    std::ofstream output_torque = getFileStream(experimental_setup.particles[0], nu, DIR_PATH, "torque", branching_depth);
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
-    constexpr double offset = 0.0;
+    constexpr double offset = 0;
     constexpr double lim = const_pi();
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
@@ -288,7 +291,7 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     
-    for (double rotation_x = offset;
+    for (double rotation_x = offset + step_size;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
@@ -308,7 +311,7 @@ void runSimulation(
     }
 
     std::stringstream identificator;
-    identificator << "cpu_g" << static_cast<int>(gradient * 10000.0) <<
+    identificator << "cpu_nu" << static_cast<int>(nu * 10000.0) <<
         "_k" << static_cast<int>(kappa * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
         "_bd" << branching_depth <<

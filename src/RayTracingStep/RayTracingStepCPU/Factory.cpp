@@ -100,7 +100,6 @@ void ldplab::rtscpu::Factory::setTypes(
     m_light_distribution_type = setup.light_sources[0].intensity_distribution->type();
     m_light_polarization_type = setup.light_sources[0].polarisation->type();
     m_bounding_volume_type = setup.particles[0].bounding_volume->type();
-    m_particle_geometry_type = setup.particles[0].geometry->type();
     m_particle_material_type = setup.particles[0].material->type();
     m_solver_type = info.solver_parameters->type();
     LDPLAB_LOG_INFO("RTSCPU factory: Light direction type is %s",
@@ -111,8 +110,6 @@ void ldplab::rtscpu::Factory::setTypes(
         setup.light_sources[0].polarisation->typeString());
     LDPLAB_LOG_INFO("RTSCPU factory: Particle bounding volume type is %s",
         setup.particles[0].bounding_volume->typeString());
-    LDPLAB_LOG_INFO("RTSCPU factory: Particle geometry type is %s",
-        setup.particles[0].geometry->typeString());
     LDPLAB_LOG_INFO("RTSCPU factory: Particle material type is %s",
         setup.particles[0].material->typeString());
     LDPLAB_LOG_INFO("RTSCPU factory: Eikonal solver type is %s",
@@ -174,17 +171,6 @@ bool ldplab::rtscpu::Factory::validateTypeHomogeneity(
                 setup.particles[i].bounding_volume->typeString(),
                 setup.particles[0].bounding_volume->typeString());
         }
-        if (setup.particles[i].geometry->type() !=
-            m_particle_geometry_type)
-        {
-            only_homogenous_types = false;
-            LDPLAB_LOG_ERROR("RTSCPU factory: Found inconsistent particle "\
-                "geometry type in particle %i, type was %s but "\
-                "expected %s",
-                setup.particles[i].uid,
-                setup.particles[i].geometry->typeString(),
-                setup.particles[0].geometry->typeString());
-        }
         if (setup.particles[i].material->type() !=
             m_particle_material_type)
         {
@@ -238,20 +224,100 @@ bool ldplab::rtscpu::Factory::createDataInstances(
             "data instances, unsupported bounding volume type");
         no_error = false;
     }
-    if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
-        createRodParticleDataInstances(setup, info, *context);
-    else if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
+    if (!createParticleGenericGeometryInstances(setup, info, *context))
     {
-    }
-    else if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
-        createMeshDataInstances(setup, info, *context);
-    else
-    {
-        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create rod particle "\
-            "data instances, unsupported particle geometry type");
+        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create generic particle "\
+            "geometry data instances");
         no_error = false;
     }
     return no_error;
+}
+
+bool ldplab::rtscpu::Factory::createParticleGenericGeometryInstances(
+    const ExperimentalSetup& setup, 
+    const RayTracingStepCPUInfo& info, 
+    Context& context)
+{
+    context.particle_data = std::make_shared<ParticleData>();
+    std::vector<std::shared_ptr<IGenericGeometry>>& geometries =
+        context.particle_data->geometries;
+    for (size_t i = 0; i < setup.particles.size(); ++i)
+    {
+        IParticleGeometry* particle_geometry = setup.particles[i].geometry.get();
+        if (particle_geometry->type() == IParticleGeometry::Type::rod_particle)
+        {
+            geometries.emplace_back(new RodGeometry(
+                (RodParticleGeometry*) particle_geometry));
+        }
+        else if (particle_geometry->type() == IParticleGeometry::Type::sphere)
+        {
+            geometries.emplace_back(new SphericalGeometry(
+                (SphericalParticleGeometry*) particle_geometry));
+        }
+        else if (particle_geometry->type() == IParticleGeometry::Type::triangle_mesh)
+        {
+            std::shared_ptr<IGenericGeometry> geometry;
+            if (!constructTriangleMeshAcceleratorStructure(
+                (TriangleMeshParticleGeometry*)particle_geometry,
+                info,
+                geometry))
+                return false;
+            geometries.emplace_back(std::move(geometry));
+        }
+        else
+        {
+            LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create generic "\
+                "geometry instance for particle %i, particle geometry type "\
+                "%s unknown", 
+                setup.particles[0].uid,
+                particle_geometry->typeString());
+            return false;
+        }
+    }
+    return true;
+}
+
+bool ldplab::rtscpu::Factory::constructTriangleMeshAcceleratorStructure(
+    const TriangleMeshParticleGeometry* particle_geometry, 
+    const RayTracingStepCPUInfo& info, 
+    std::shared_ptr<IGenericGeometry>& output)
+{
+    if (info.accelerator_structure_parameters == nullptr)
+    {
+        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create particle "\
+            "geometry accelerator structure, no accelerator "\
+            "paramters given");
+        return false;
+    }
+    else if (info.accelerator_structure_parameters->type() ==
+        IAcceleratorStructureParameter::Type::brute_force)
+    {
+        std::shared_ptr<TriangleMeshGeometryList> list =
+            std::make_shared<TriangleMeshGeometryList>();
+        if (!list->construct(particle_geometry->mesh,
+            info.accelerator_structure_parameters.get()))
+            return false;
+        output = std::move(list);
+    }
+    else if (info.accelerator_structure_parameters->type() ==
+        IAcceleratorStructureParameter::Type::octree)
+    {
+        std::shared_ptr<TriangleMeshGeometryList> octree =
+            std::make_shared<TriangleMeshGeometryList>();
+        if (!octree->construct(particle_geometry->mesh,
+            info.accelerator_structure_parameters.get()))
+            return false;
+        output = std::move(octree);
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create particle "\
+            "geometry accelerator structure, accelerator structure "\
+            "type %s unknown",
+            info.accelerator_structure_parameters->typeString());
+        return false;
+    }
+    return true;
 }
 
 void ldplab::rtscpu::Factory::createBoundingSphereDataInstances(
@@ -265,74 +331,6 @@ void ldplab::rtscpu::Factory::createBoundingSphereDataInstances(
     ((rtscpu::BoundingSphereData*)context.bounding_volume_data.get())->
         sphere_data.resize(context.particles.size(),
             BoundingVolumeSphere(Vec3{ 0, 0, 0 }, 0));
-}
-
-void ldplab::rtscpu::Factory::createRodParticleDataInstances(
-    const ExperimentalSetup& setup,
-    const RayTracingStepCPUInfo& info,
-    Context& context)
-{
-    std::shared_ptr<RodParticleData> particle_data =
-        std::make_shared<RodParticleData>();
-    context.particle_data = particle_data;
-    RodParticle t;
-    double h;
-    double sphere_radius;
-    for (size_t i = 0; i < setup.particles.size(); ++i)
-    {
-        const Particle& particle = setup.particles[i];
-        RodParticleGeometry* geometry =
-            (RodParticleGeometry*)particle.geometry.get();
-        if (geometry->kappa <= constant::rod_particle::min_kappa_threshold)
-        {
-            h = 0;
-            sphere_radius = 0;
-        }
-        else
-        {
-            h = geometry->kappa * geometry->cylinder_radius;
-            sphere_radius =
-                (h + geometry->cylinder_radius *
-                    geometry->cylinder_radius / h) / 2.0;
-        }
-        t.cylinder_length = geometry->cylinder_length;
-        t.cylinder_radius = geometry->cylinder_radius;
-        t.origin_cap = Vec3(0.0, 0.0, geometry->cylinder_length + h - sphere_radius);
-        t.origin_indentation = Vec3(0.0, 0.0, h - sphere_radius);
-        t.sphere_radius = sphere_radius;
-        particle_data->particle_data.push_back(t);
-    }
-}
-
-void ldplab::rtscpu::Factory::createMeshDataInstances(
-    const ExperimentalSetup& setup, 
-    const RayTracingStepCPUInfo& info, 
-    Context& context)
-{
-    std::shared_ptr<MeshParticleData> particle_data =
-        std::make_shared<MeshParticleData>();
-    MeshParticle t;
-    for (size_t i = 0; i < setup.particles.size(); ++i)
-    {
-        const Particle& particle = setup.particles[i];
-        TriangleMeshParticaleGeometry* geometry =
-            (TriangleMeshParticaleGeometry*)particle.geometry.get();
-        if (info.accelerator_structure_parameters->type() ==
-            IAcceleratorStructureParameter::Type::brute_force)
-        {
-            t.geometry = std::make_shared<ParticleMeshList>(geometry->mesh);
-        }
-        else if (info.accelerator_structure_parameters->type() ==
-            IAcceleratorStructureParameter::Type::octree)
-        {
-            const size_t octree_depth = ((AcceleratorStructureOctreeParameter*)
-                info.accelerator_structure_parameters.get())->octree_depth;
-            t.geometry = std::make_shared<ParticleMeshOctree>(
-                geometry->mesh,
-                octree_depth);
-        }
-        particle_data->particle_data.push_back(t);
-    }
 }
 
 bool ldplab::rtscpu::Factory::createPipelineStages(
@@ -387,43 +385,19 @@ bool ldplab::rtscpu::Factory::createInnerParticlePropagationStage(
     std::unique_ptr<IInnerParticlePropagationStage>& stage)
 {
     if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
         m_solver_type == IEikonalSolverParameter::Type::rk45)
     {
-        stage = std::unique_ptr <rtscpu::RK45RodParticlePropagation>(
-            new rtscpu::RK45RodParticlePropagation(
-                context,
-                *((RK45Parameter*)info.solver_parameters.get())));
+        stage = std::make_unique<rtscpu::EikonalSolverRK45LinearIndexGradient>(
+            context,
+            *((RK45Parameter*)info.solver_parameters.get()));
         return true;
     }
     else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::rod_particle &&
         m_solver_type == IEikonalSolverParameter::Type::rk4)
     {
-        stage = std::unique_ptr <rtscpu::RK4RodParticlePropagation>(
-            new rtscpu::RK4RodParticlePropagation(
-                context,
-                *((RK4Parameter*)info.solver_parameters.get())));
-        return true;
-    }
-    else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::sphere &&
-        m_solver_type == IEikonalSolverParameter::Type::rk45)
-    {
-        stage = std::unique_ptr <rtscpu::RK45SphericalParticlePropagation>(
-            new rtscpu::RK45SphericalParticlePropagation(
-                context,
-                *((RK45Parameter*)info.solver_parameters.get())) );
-        return true;
-    }
-    else if (m_particle_material_type == IParticleMaterial::Type::linear_one_directional &&
-        m_particle_geometry_type == IParticleGeometry::Type::sphere &&
-        m_solver_type == IEikonalSolverParameter::Type::rk4)
-    {
-        stage = std::unique_ptr <rtscpu::RK4SphericalParticlePropagation>( 
-            new rtscpu::RK4SphericalParticlePropagation(
-                context,
-                *((RK4Parameter*)info.solver_parameters.get())));
+        stage = std::make_unique<rtscpu::EikonalSolverRK4LinearIndexGradient>(
+            context,
+            *((RK4Parameter*)info.solver_parameters.get()));
         return true;
     }
     else
@@ -481,28 +455,30 @@ bool ldplab::rtscpu::Factory::createRayParticleIntersectionTestStage(
     Context& context, 
     std::unique_ptr<IRayParticleIntersectionTestStage>& stage)
 {
-    if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
-    {
-        stage = std::unique_ptr<RodParticleIntersectionTest>(
-            new RodParticleIntersectionTest(context));
-        return true;
-    }
-    else if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
-    {
-        stage = std::unique_ptr<SphericalParticleIntersectionTest>(
-            new SphericalParticleIntersectionTest(context));
-        return true;
-    }
-    else if (m_particle_geometry_type == IParticleGeometry::Type::triangle_mesh)
-    {
-        stage = std::unique_ptr<MeshParticleIntersectionTest>(
-            new MeshParticleIntersectionTest(context));
-        return true;
-    }
-    else
-    {
-        LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create ray particle "\
-            "intersection test stage, unsupported type combination");
-        return false;
-    }
+    stage = std::make_unique<RayParticleGenericGeometryIntersectionTest>(context);
+    return true;
+    //if (m_particle_geometry_type == IParticleGeometry::Type::rod_particle)
+    //{
+    //    stage = std::unique_ptr<RodParticleIntersectionTest>(
+    //        new RodParticleIntersectionTest(context));
+    //    return true;
+    //}
+    //else if (m_particle_geometry_type == IParticleGeometry::Type::sphere)
+    //{
+    //    stage = std::unique_ptr<SphericalParticleIntersectionTest>(
+    //        new SphericalParticleIntersectionTest(context));
+    //    return true;
+    //}
+    //else if (m_particle_geometry_type == IParticleGeometry::Type::triangle_mesh)
+    //{
+    //    stage = std::unique_ptr<MeshParticleIntersectionTest>(
+    //        new MeshParticleIntersectionTest(context));
+    //    return true;
+    //}
+    //else
+    //{
+    //    LDPLAB_LOG_ERROR("RTSCPU factory: Failed to create ray particle "\
+    //        "intersection test stage, unsupported type combination");
+    //    return false;
+    //}
 }

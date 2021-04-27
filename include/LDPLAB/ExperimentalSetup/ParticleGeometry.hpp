@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_PARTICLE_GEOMETRY_HPP
 
 #include <vector>
+#include <LDPLAB/Geometry.hpp>
 
 namespace ldplab
 {
@@ -76,9 +77,9 @@ namespace ldplab
     /**
      * @brief Geometry of an mash based particle. 
      */
-    struct TriangleMeshParticaleGeometry : public IParticleGeometry     
+    struct TriangleMeshParticleGeometry : public IParticleGeometry     
     {
-        TriangleMeshParticaleGeometry(std::vector<Triangle> mesh)
+        TriangleMeshParticleGeometry(std::vector<Triangle> mesh)
             :
             mesh{ mesh }
         {}

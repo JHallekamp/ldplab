@@ -37,8 +37,15 @@ namespace ldplab
         const Vec3 position,
         const Vec3 orientation);
 
-    Particle getSphereParticle(
+    Particle getSphereParticleByVolume(
         const double V,
+        const double np,
+        const double nu,
+        const Vec3 position,
+        const Vec3 orientation);
+
+    Particle getSphereParticleByRadius(
+        const double R,
         const double np,
         const double nu,
         const Vec3 position,
