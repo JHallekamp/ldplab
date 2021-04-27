@@ -15,14 +15,14 @@ const std::string DIR_PATH =
     "SimData\\";
 
 const bool SPHERICAL_PARTICLE = true;
-const double PARTICLE_VOLUME = 1;
+const double PARTICLE_VOLUME = 6000000;
 // Particle geometry properties (rod particle)
 const double ROD_PARTICLE_L = 2;
 const double ROD_PARTICLE_KAPPA = 1.0;
 
 // Particle material properties
 const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
-const double PARTICLE_MATERIAL_NU = 0.15;
+const double PARTICLE_MATERIAL_NU = 0.2;
 
 // Light intensity properties
 const double LIGHT_INTENSITY = 1;
@@ -44,7 +44,6 @@ const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
 
 // RK4
 const double RTS_SOLVER_STEP_SIZE = 0.005;
-const double RTS_SOLVER_STEP_SIZE_SMALL_GRADIENT = 0.5; //0.1;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -78,7 +77,7 @@ int main()
 
     // Run simulations
     std::vector<double> vec_nu = { 0.0, 0.15 };
-    std::vector<double> vec_kappa = { /*0.0,*/ 0.3 };
+    std::vector<double> vec_kappa = { 0.0, 0.3 };
     std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
@@ -179,12 +178,13 @@ void createExperimentalSetup(
     double kappa,
     double gradient)
 {
+    gradient = PARTICLE_MATERIAL_NU;
     // Create particle
     ldplab::Particle particle;
     double particle_world_extent;
     if (SPHERICAL_PARTICLE)
     {
-        particle = ldplab::getSphereParticle(
+        particle = ldplab::getSphereParticleByVolume(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             gradient,
@@ -256,7 +256,7 @@ void runSimulation(
     if (std::abs(material->gradient) > 1e-5)
         rts_step_size = RTS_SOLVER_STEP_SIZE / std::abs(material->gradient);
     else
-        rts_step_size = RTS_SOLVER_STEP_SIZE_SMALL_GRADIENT;
+        rts_step_size = RTS_SOLVER_STEP_SIZE * std::pow(PARTICLE_VOLUME,1.0/3.0);
     ldplab::RayTracingStepCPUInfo rtscpu_info;
     rtscpu_info.number_parallel_pipelines = NUM_RTS_THREADS;
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
