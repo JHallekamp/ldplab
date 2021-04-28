@@ -10,7 +10,7 @@ constexpr double const_pi()
     return 3.14159265358979323846264338327950288419716939937510;
 }
 
-ldplab::Vec3 ldplab::getRodParticleCenterOfMass(
+ldplab::Vec3 ldplab::PropertyGenerator::getRodParticleCenterOfMass(
     const ldplab::RodParticleGeometry& geometry)
 {
     Vec3 rs(0, 0, 0);
@@ -21,7 +21,7 @@ ldplab::Vec3 ldplab::getRodParticleCenterOfMass(
     return rs;
 }
 
-ldplab::Particle ldplab::getRodParticleConstArea(
+ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstArea(
     const double A,
     const double l,
     const double kappa,
@@ -55,13 +55,14 @@ ldplab::Particle ldplab::getRodParticleConstArea(
             delta_n,
             Vec3(0, 0, (L+h)/2),
             Vec3(0, 0, 1));
-    particle.centre_of_mass = ldplab::getRodParticleCenterOfMass(
-        *(ldplab::RodParticleGeometry*)particle.geometry.get());
+    particle.centre_of_mass = 
+        ldplab::PropertyGenerator::getRodParticleCenterOfMass(
+            *(ldplab::RodParticleGeometry*)particle.geometry.get());
 
     return particle;
 }
 
-ldplab::Particle ldplab::getRodParticleConstVolume(
+ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstVolume(
     const double V,
     const double l,
     const double kappa,
@@ -95,14 +96,15 @@ ldplab::Particle ldplab::getRodParticleConstVolume(
             delta_n,
             Vec3(0, 0, (L + h) / 2),
             Vec3(0, 0, 1));
-    particle.centre_of_mass = ldplab::getRodParticleCenterOfMass(
-        *(ldplab::RodParticleGeometry*)particle.geometry.get());
+    particle.centre_of_mass = 
+        ldplab::PropertyGenerator::getRodParticleCenterOfMass(
+            *(ldplab::RodParticleGeometry*)particle.geometry.get());
 
     return particle;
 }
 
 
-ldplab::Particle ldplab::getRodParticle(
+ldplab::Particle ldplab::PropertyGenerator::getRodParticle(
     const double R, 
     const double L, 
     const double kappa, 
@@ -134,12 +136,13 @@ ldplab::Particle ldplab::getRodParticle(
             delta_n,
             Vec3(0, 0, (L + h) / 2),
             Vec3(0, 0, 1));
-    particle.centre_of_mass = ldplab::getRodParticleCenterOfMass(
-        *(ldplab::RodParticleGeometry*)particle.geometry.get());
+    particle.centre_of_mass = 
+        ldplab::PropertyGenerator::getRodParticleCenterOfMass(
+            *(ldplab::RodParticleGeometry*)particle.geometry.get());
     return particle;
 }
 
-ldplab::Particle ldplab::getSphereParticleByVolume(
+ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
     const double V,
     const double np,
     const double nu,
@@ -168,7 +171,7 @@ ldplab::Particle ldplab::getSphereParticleByVolume(
     return particle;
 }
 
-ldplab::Particle ldplab::getSphereParticleByRadius(
+ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
     const double R,
     const double np,
     const double nu,

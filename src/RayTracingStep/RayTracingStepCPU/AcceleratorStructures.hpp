@@ -125,9 +125,6 @@ namespace ldplab
             inline size_t mapIndexGetChildNo(
                 size_t child_idx) const noexcept;
             /** @brief Constructs the octree. */
-            void construct(
-                const std::vector<Triangle>& mesh,
-                size_t octree_depth);
             AABB constructOctreeAABB(
                 const std::vector<Triangle>& mesh);
             void constructConstructionLayers(

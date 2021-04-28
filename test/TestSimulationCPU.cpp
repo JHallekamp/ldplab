@@ -184,7 +184,7 @@ void createExperimentalSetup(
     double particle_world_extent;
     if (SPHERICAL_PARTICLE)
     {
-        particle = ldplab::getSphereParticleByVolume(
+        particle = ldplab::PropertyGenerator::getSphereParticleByVolume(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             gradient,
@@ -197,7 +197,7 @@ void createExperimentalSetup(
     else
     {
         // Rod Particle
-        particle = ldplab::getRodParticleConstVolume(
+        particle = ldplab::PropertyGenerator::getRodParticleConstVolume(
             PARTICLE_VOLUME,
             ROD_PARTICLE_L,
             kappa,
@@ -209,7 +209,6 @@ void createExperimentalSetup(
             (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
         particle_world_extent = bs->center.z + bs->radius;
     }
-
 
     // Create light source
     const double LIGHT_GEOMETRY_PLANE_EXTENT = 10 * particle_world_extent;

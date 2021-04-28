@@ -52,4 +52,5 @@ if(NOT LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
 endif()
 
 add_subdirectory(external/glm)
+add_subdirectory(external/tinyobjloader)
 add_subdirectory(src)

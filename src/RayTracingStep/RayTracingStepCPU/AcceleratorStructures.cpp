@@ -69,9 +69,37 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::constructInternal(
     const std::vector<Triangle>& mesh, 
     const IAcceleratorStructureParameter* parameter)
 {
-    construct(
-        mesh,
-        ((AcceleratorStructureOctreeParameter*)parameter)->octree_depth);
+    // Check for empty mesh
+    if (mesh.size() == 0)
+    {
+        m_nodes.emplace_back();
+        m_nodes[0].aabb = AABB{ Vec3(0), Vec3(0) };
+        m_nodes[0].num_children = 0;
+        m_octree_depth = 0;
+        return true;
+    }
+
+    // Construct temporary octree layers
+    m_octree_depth = 
+        ((AcceleratorStructureOctreeParameter*)parameter)->octree_depth;
+    const AABB octree_aabb = constructOctreeAABB(mesh);
+
+    std::vector<std::vector<OctreeNode>> layers;
+    constructConstructionLayers(octree_aabb, layers);
+
+    // Create temporary triangle storage
+    std::vector<std::vector<Triangle>> triangle_storage(layers.back().size());
+    for (size_t i = 0; i < layers.back().size(); ++i)
+        layers.back()[i].children[0] = i;
+
+    // Sort in triangles
+    for (size_t i = 0; i < mesh.size(); ++i)
+        constructSortTrianglesRecursive(mesh[i], 0, 0, layers, triangle_storage);
+
+    // Move valuable information from temporary to octree storage and adjust
+    // indices accordingly
+    constructMakePersistentRecursive(0, 0, layers, triangle_storage);
+
     return true;
 }
 
@@ -110,41 +138,6 @@ inline size_t ldplab::rtscpu::TriangleMeshGeometryOctree::mapIndexGetChildNo(
     // <=> child_no == child_idx - floor(child_idx / 8) * 8
     // => child_no == child_idx % 8
     return child_idx % 8;
-}
-
-void ldplab::rtscpu::TriangleMeshGeometryOctree::construct(
-    const std::vector<Triangle>& mesh, 
-    size_t octree_depth)
-{
-    // Check for empty mesh
-    if (mesh.size() == 0)
-    {
-        m_nodes.emplace_back();
-        m_nodes[0].aabb = AABB{ Vec3(0), Vec3(0) };
-        m_nodes[0].num_children = 0;
-        m_octree_depth = 0;
-        return;
-    }
-
-    // Construct temporary octree layers
-    m_octree_depth = octree_depth;    
-    const AABB octree_aabb = constructOctreeAABB(mesh);
-    
-    std::vector<std::vector<OctreeNode>> layers;
-    constructConstructionLayers(octree_aabb, layers);
-
-    // Create temporary triangle storage
-    std::vector<std::vector<Triangle>> triangle_storage(layers.back().size());
-    for (size_t i = 0; i < layers.back().size(); ++i)
-        layers.back()[i].children[0] = i;
-
-    // Sort in triangles
-    for (size_t i = 0; i < mesh.size(); ++i)
-        constructSortTrianglesRecursive(mesh[i], 0, 0, layers, triangle_storage);
-
-    // Move valuable information from temporary to octree storage and adjust
-    // indices accordingly
-    constructMakePersistentRecursive(0, 0, layers, triangle_storage);
 }
 
 ldplab::AABB ldplab::rtscpu::TriangleMeshGeometryOctree::constructOctreeAABB(
