@@ -12,6 +12,8 @@
 // Simulation description
 #include "LDPLAB/SimulationState.hpp"
 #include "LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp"
+#include "LDPLAB/ExperimentalSetup/Utils/ObjLoader.hpp"
+#include "LDPLAB/ExperimentalSetup/Utils/PropertyGenerator.hpp"
 
 // Ray tracing step
 #include "LDPLAB/RayTracingStep/IRayTracingStep.hpp"

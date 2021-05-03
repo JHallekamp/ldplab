@@ -10,6 +10,15 @@ bool ldplab::ObjLoader::loadTriangleMesh(
     const std::string& filepath, 
     std::vector<Triangle>& loaded_mesh)
 {
+    AABB temp;
+    return loadTriangleMesh(filepath, loaded_mesh, temp);
+}
+
+bool ldplab::ObjLoader::loadTriangleMesh(
+    const std::string& filepath, 
+    std::vector<Triangle>& loaded_mesh, 
+    AABB& mesh_aabb)
+{
     LDPLAB_LOG_INFO("ObjLoader: Begin to load triangle mesh from \"%s\"",
         filepath.c_str());
 
@@ -24,10 +33,12 @@ bool ldplab::ObjLoader::loadTriangleMesh(
         &materials,
         &warn,
         &err,
-        "sphere.obj", //"teapot.obj",
+        filepath.c_str(),
         "./");
     if (!warn.empty())
     {
+        if (warn.back() == '\n')
+            warn.pop_back();
         LDPLAB_LOG_WARNING(
             "ObjLoader: tinyobjloader warning when loading \"%s\": %s",
             filepath.c_str(),
@@ -35,6 +46,8 @@ bool ldplab::ObjLoader::loadTriangleMesh(
     }
     if (!err.empty())
     {
+        if (err.back() == '\n')
+            err.pop_back();
         LDPLAB_LOG_ERROR(
             "ObjLoader: tinyobjloader error when loading \"%s\": %s",
             filepath.c_str(),
@@ -42,12 +55,22 @@ bool ldplab::ObjLoader::loadTriangleMesh(
     }
     if (!ret)
     {
-        LDPLAB_LOG_ERROR("ObjLoader: Could not load traingle mesh from \"%s\"", 
+        LDPLAB_LOG_ERROR("ObjLoader: Could not load traingle mesh from \"%s\"",
             filepath.c_str());
         return false;
     }
 
     loaded_mesh.clear();
+    Vec3& min = mesh_aabb.min;
+    Vec3& max = mesh_aabb.max;
+    min = Vec3(
+        std::numeric_limits<double>::max(),
+        std::numeric_limits<double>::max(),
+        std::numeric_limits<double>::max());
+    max = Vec3(
+        std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::lowest());
     for (size_t f = 0; f < shapes[0].mesh.indices.size() / 3; ++f)
     {
         tinyobj::index_t idx0 = shapes[0].mesh.indices[3 * f + 0];
@@ -64,9 +87,17 @@ bool ldplab::ObjLoader::loadTriangleMesh(
         t.c[0] = attrib.vertices[3 * idx2.vertex_index + 0];
         t.c[1] = attrib.vertices[3 * idx2.vertex_index + 1];
         t.c[2] = attrib.vertices[3 * idx2.vertex_index + 2];
+        min.x = std::min(min.x, std::min(t.a.x, std::min(t.b.x, t.c.x)));
+        max.x = std::max(max.x, std::max(t.a.x, std::max(t.b.x, t.c.x)));
+        min.y = std::min(min.y, std::min(t.a.y, std::min(t.b.y, t.c.y)));
+        max.y = std::max(max.y, std::max(t.a.y, std::max(t.b.y, t.c.y)));
+        min.z = std::min(min.z, std::min(t.a.z, std::min(t.b.z, t.c.z)));
+        max.z = std::max(max.z, std::max(t.a.z, std::max(t.b.z, t.c.z)));
     }
 
-    LDPLAB_LOG_INFO("ObjLoader: Finished loading triangle mesh from \"%s\"",
-        filepath.c_str());
+    LDPLAB_LOG_INFO("ObjLoader: Finished loading triangle mesh from \"%s\", " \
+        "loaded %i triangles",
+        filepath.c_str(),
+        loaded_mesh.size());
     return true;
 }

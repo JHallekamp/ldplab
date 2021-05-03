@@ -40,6 +40,10 @@ namespace ldplab
     struct AcceleratorStructureOctreeParameter :
         public IAcceleratorStructureParameter
     {
+        AcceleratorStructureOctreeParameter(size_t depth)
+            :
+            octree_depth { depth }
+        { }
         /** @brief Returns Type::octree */
         Type type() const override { return Type::octree; }
         /** @brief The depth used for the mesh octrees. */

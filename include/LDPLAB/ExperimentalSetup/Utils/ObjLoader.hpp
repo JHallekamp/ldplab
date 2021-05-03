@@ -10,9 +10,14 @@ namespace ldplab
 {
     class ObjLoader
     {
-        bool loadTriangleMesh(
+    public:
+        static bool loadTriangleMesh(
             const std::string& filepath,
             std::vector<Triangle>& loaded_mesh);
+        static bool loadTriangleMesh(
+            const std::string& filepath,
+            std::vector<Triangle>& loaded_mesh,
+            AABB& mesh_aabb);
     };
 }
 
