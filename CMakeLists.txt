@@ -6,7 +6,10 @@ project(LDPLAB
 )
 
 option (ENABEL_DOCS "Create documentation with Doxygen" OFF)
-option (LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL "Use OPENGL for Graphic card processing" OFF)
+option (LDPLAB_BUILD_OPTION_ENABLE_RTSOGL "Use OpenGL for Graphic card processing" OFF)
+option (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA "Use CUDA for Graphic card processing" OFF)
+option (LDPLAB_BUILD_OPTION_ENABLE_PROFILING "Enable LDPLAB internal profiling code" OFF)
+option (LDPLAB_BUILD_OPTION_DISABLE_LOGGING "Disable LDPLAB logging" OFF)
 
 if(ENABEL_DOCS)
     if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -46,7 +49,7 @@ endif()
 
 find_package(Threads REQUIRED)
 
-if(NOT LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
+if(LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)
     find_package(OpenGL REQUIRED)
     find_package(GLEW REQUIRED)
 endif()
