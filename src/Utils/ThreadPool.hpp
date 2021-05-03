@@ -32,8 +32,10 @@ namespace ldplab
                  * @brief Called by the thread pool to execute the job.
                  * @param[in] job_id The ID of the job inside its batch (ranging
                  *                   from 0 to batch size - 1).
+                 * @param[in] batch_size The number of jobs inside the batch to
+                 *                       which this job belongs.
                  */
-                virtual void execute(size_t job_id) = 0;
+                virtual void execute(size_t job_id, size_t batch_size) = 0;
             };
             /**
              * @brief Used to manage a batch of jobs that were submitted to the

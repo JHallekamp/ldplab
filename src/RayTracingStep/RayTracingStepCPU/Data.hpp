@@ -9,6 +9,8 @@
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
 
+#include "AcceleratorStructures.hpp"
+
 namespace ldplab
 {
     namespace rtscpu
@@ -108,43 +110,11 @@ namespace ldplab
             Mat3 p2w_scale_rotation;
         };
 
-        /**
-         * @brief Structure models the geometries of a rod like particle. The 
-         *        particle is cylindric shaped with a spherical cap and a 
-         *        spherical indent at the bottom.
-         * @detail The orientation of the cylinder is pointing to the 
-         *         z-direction. The origin is of the coordinate system is set 
-         *         in the middle point of bottom surface where the indentation 
-         *         is.
-         */
-        struct RodParticle
+        /** @brief Contains the particle geometry data. */
+        struct ParticleData
         {
-            double cylinder_radius;
-            double cylinder_length;
-            double sphere_radius;
-            Vec3 origin_cap;
-            Vec3 origin_indentation;
-        };
-
-        /**
-         * @brief Interface for structure containing the particle data rehashed
-         *        to be used during ray tracing.
-         */
-        struct IParticleData
-        {
-            virtual ~IParticleData() { }
-            /** @brief The type of the particles. */
-            enum class Type { rod_particles };
-            /** @brief Returns the type of the particles. */
-            virtual Type type() const = 0;
-        };
-
-        /** @brief Contains particle data. */
-        struct RodParticleData : public IParticleData
-        {
-            Type type() const override { return Type::rod_particles; }
-            /** @brief Contains the rod particles. */
-            std::vector<RodParticle> particle_data;
+            /** @brief Vector containing generic geometry instances. */
+            std::vector<std::shared_ptr<IGenericGeometry>> geometries;
         };
 
         /** 

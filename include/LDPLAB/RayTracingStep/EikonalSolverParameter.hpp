@@ -3,14 +3,14 @@
 
 namespace ldplab
 {
-    struct IEikonalSolver
+    struct IEikonalSolverParameter
     {
         enum class Type { rk45, rk4 };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IEikonalSolver.
          */
-        virtual ~IEikonalSolver() { }
+        virtual ~IEikonalSolverParameter() { }
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
         /** @brief Returns the type of the instance as string. */
@@ -25,9 +25,9 @@ namespace ldplab
         }
     };
 
-    struct RK45 : public IEikonalSolver
+    struct RK45Parameter : public IEikonalSolverParameter
     {
-        RK45(double initial_step_size, double epsilon, double safety_factor)
+        RK45Parameter(double initial_step_size, double epsilon, double safety_factor)
             :
             initial_step_size{ initial_step_size },
             epsilon{ epsilon },
@@ -40,19 +40,19 @@ namespace ldplab
         /** @brief Factor for new step size calculation in RK45 Method. */
         double safety_factor;
 
-        Type type() const override { return IEikonalSolver::Type::rk45; }
+        Type type() const override { return IEikonalSolverParameter::Type::rk45; }
     };
 
-    struct RK4 : public IEikonalSolver
+    struct RK4Parameter : public IEikonalSolverParameter
     {
-        RK4(double step_size)
+        RK4Parameter(double step_size)
             :
             step_size{ step_size }
         {}
         /** @brief Initial step size for each integration method. */
         double step_size;
 
-        Type type() const override { return IEikonalSolver::Type::rk4; }
+        Type type() const override { return IEikonalSolverParameter::Type::rk4; }
     };
 }
 

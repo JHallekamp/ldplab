@@ -9,47 +9,48 @@ namespace ldplab
     struct RodParticleGeometry;
     struct Particle;
 
-    Vec3 getRodParticleCenterOfMass(const RodParticleGeometry& geometry);
-    Particle getRodParticleConstArea(
-        const double A,
-        const double l,
-        const double kappa,
-        const double np,
-        const double nu,
-        const Vec3 position,
-        const Vec3 orientation);
-
-    Particle getRodParticleConstVolume(
-        const double V,
-        const double l,
-        const double kappa,
-        const double np,
-        const double nu,
-        const Vec3 position,
-        const Vec3 orientation);
-
-    Particle getRodParticle(
-        const double R,
-        const double L,
-        const double kappa,
-        const double np,
-        const double nu,
-        const Vec3 position,
-        const Vec3 orientation);
-
-    Particle getSphereParticleByVolume(
-        const double V,
-        const double np,
-        const double nu,
-        const Vec3 position,
-        const Vec3 orientation);
-
-    Particle getSphereParticleByRadius(
-        const double R,
-        const double np,
-        const double nu,
-        const Vec3 position,
-        const Vec3 orientation);
+    class PropertyGenerator
+    {
+    public:
+        static Vec3 getRodParticleCenterOfMass(
+            const RodParticleGeometry& geometry);
+        static Particle getRodParticleConstArea(
+            const double A,
+            const double l,
+            const double kappa,
+            const double np,
+            const double nu,
+            const Vec3 position,
+            const Vec3 orientation);
+        static Particle getRodParticleConstVolume(
+            const double V,
+            const double l,
+            const double kappa,
+            const double np,
+            const double nu,
+            const Vec3 position,
+            const Vec3 orientation);
+        static Particle getRodParticle(
+            const double R,
+            const double L,
+            const double kappa,
+            const double np,
+            const double nu,
+            const Vec3 position,
+            const Vec3 orientation);
+        static Particle getSphereParticleByVolume(
+            const double V,
+            const double np,
+            const double nu,
+            const Vec3 position,
+            const Vec3 orientation);
+        static Particle getSphereParticleByRadius(
+            const double R,
+            const double np,
+            const double nu,
+            const Vec3 position,
+            const Vec3 orientation);
+    };
 }
 
 #endif

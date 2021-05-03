@@ -1,7 +1,8 @@
 #ifndef WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 #define WWU_LDPLAB_RAY_TRACING_STEP_CPU_INFO_HPP
 
-#include "EikonalSolver.hpp"
+#include "AcceleratorStructureParameter.hpp"
+#include "EikonalSolverParameter.hpp"
 
 #include <memory>
 
@@ -25,7 +26,15 @@ namespace ldplab
             return_force_in_particle_coordinate_system{ false }
         { }
         /** @brief Parameters for the Eikonal solver. */
-        std::shared_ptr<IEikonalSolver> solver_parameters;
+        std::shared_ptr<IEikonalSolverParameter> solver_parameters;
+        /** 
+         * @brief Parameters for the particle accelerator structure.
+         * @details Determines the accelerator structure that is used.
+         * @note This is only relevant for mesh particles, you can pass a 
+         *       nullptr if no meshs are used.
+         */
+        std::shared_ptr<IAcceleratorStructureParameter> 
+            accelerator_structure_parameters;
         /**  @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff;
         /** @brief Number of rays per buffer. */

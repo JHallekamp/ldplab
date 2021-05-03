@@ -7,13 +7,13 @@
 #include "RayTracingStep.hpp"
 #include "Pipeline.hpp"
 #include "Data.hpp"
+#include "../../Utils/ThreadPool.hpp"
 
 #include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
 #include <LDPLAB/ExperimentalSetup/Lightsource.hpp>
 #include <LDPLAB/ExperimentalSetup/Particle.hpp>
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
-#include "../../Utils/ThreadPool.hpp"
 
 namespace ldplab
 {
@@ -87,16 +87,16 @@ namespace ldplab
             /** @brief The thread pool used by the ray tracing step. */
             std::shared_ptr<utils::ThreadPool> thread_pool;
             /** @brief Holds an array with particle data. */
-            std::shared_ptr<IParticleData> particle_data;
+            std::shared_ptr<ParticleData> particle_data;
             /** @brief Holds an array with bounding volume data. */
             std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
-            /** @brief Maps particle UIDs to the internaly used indices. */
+            /** @brief Maps particle UIDs to the internally used indices. */
             std::map<UID<Particle>, size_t> particle_uid_to_index_map;
-            /** @brief Maps light source UIDs to the internaly used indices. */
+            /** @brief Maps light source UIDs to the internally used indices. */
             std::map<UID<LightSource>, size_t> light_source_uid_to_index_map;
-            /** @brief Maps the internaly used particle indices to UIDs. */
+            /** @brief Maps the internally used particle indices to UIDs. */
             std::map<size_t, UID<Particle>> particle_index_to_uid_map;
-            /** @brief Maps the internaly used light source indices to UIDs. */
+            /** @brief Maps the internally used light source indices to UIDs. */
             std::map<size_t, UID<LightSource>> light_source_index_to_uid_map;
             /** @brief Structure holding simulation parameters. */
             struct
@@ -121,7 +121,7 @@ namespace ldplab
             struct
             {
                 /** 
-                 * @brief Determines whether a warning is emited when active
+                 * @brief Determines whether a warning is emitted when active
                  *        rays are not further traced because they would exceed
                  *        the maximum branching depth.
                  */

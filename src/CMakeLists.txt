@@ -23,11 +23,16 @@ set(HEADER_LDPLAB_EXPERIMENTAL_SETUP
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Particle.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ParticleGeometry.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/ParticleMaterial.hpp"
+)
+
+set(HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Utils/PropertyGenerator.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/ExperimentalSetup/Utils/ObjLoader.hpp"
 )
 	
 set(HEADER_LDPLAB_RAY_TRACING_STEP
-	"${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/EikonalSolver.hpp"
+	"${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/AcceleratorStructureParameter.hpp"
+	"${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/EikonalSolverParameter.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/IRayTracingStep.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepCPUInfo.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"
@@ -36,12 +41,15 @@ set(HEADER_LDPLAB_RAY_TRACING_STEP
 )
 
 set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
+	RayTracingStep/RayTracingStepCPU/AcceleratorStructures.hpp
 	RayTracingStep/RayTracingStepCPU/BufferControl.hpp
     RayTracingStep/RayTracingStepCPU/Context.hpp
     RayTracingStep/RayTracingStepCPU/Data.hpp
     RayTracingStep/RayTracingStepCPU/Factory.hpp
+    RayTracingStep/RayTracingStepCPU/GenericGeometry.hpp
     RayTracingStep/RayTracingStepCPU/InitialStage.hpp
     RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.hpp
+	RayTracingStep/RayTracingStepCPU/IntersectionTests.hpp
     RayTracingStep/RayTracingStepCPU/Pipeline.hpp
     RayTracingStep/RayTracingStepCPU/RayBoundingVolumeIntersectionTestStage.hpp
     RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.hpp
@@ -82,6 +90,7 @@ set(SOURCE_ROOT
 
 set(SOURCE_EXPERIMENTAL_SETUP_UTILS
 	ExperimentalSetup/Utils/PropertyGenerator.cpp
+	ExperimentalSetup/Utils/ObjLoader.cpp
 )
 
 set(SOURCE_RAY_TRACING_STEP
@@ -89,10 +98,13 @@ set(SOURCE_RAY_TRACING_STEP
 )
 
 set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
+	RayTracingStep/RayTracingStepCPU/AcceleratorStructures.cpp
 	RayTracingStep/RayTracingStepCPU/BufferControl.cpp
     RayTracingStep/RayTracingStepCPU/Factory.cpp
+    RayTracingStep/RayTracingStepCPU/GenericGeometry.cpp
     RayTracingStep/RayTracingStepCPU/InitialStage.cpp
     RayTracingStep/RayTracingStepCPU/InnerParticlePropagationStage.cpp
+	RayTracingStep/RayTracingStepCPU/IntersectionTests.cpp
     RayTracingStep/RayTracingStepCPU/Pipeline.cpp
     RayTracingStep/RayTracingStepCPU/RayBoundingVolumeIntersectionTestStage.cpp
     RayTracingStep/RayTracingStepCPU/RayParticleInteractionStage.cpp
@@ -126,6 +138,7 @@ add_library(ldplab STATIC
     ${HEADER_ROOT}
     ${HEADER_LDPLAB}
     ${HEADER_LDPLAB_EXPERIMENTAL_SETUP}
+    ${HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS}
     ${HEADER_LDPLAB_RAY_TRACING_STEP}
     ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU}
     ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL}
@@ -140,6 +153,7 @@ add_library(ldplab STATIC
 
 source_group("Header Files\\LDPLAB" FILES ${HEADER_LDPLAB})
 source_group("Header Files\\LDPLAB\\ExperimentalSetup" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP})
+source_group("Header Files\\LDPLAB\\ExperimentalSetup\\Utils" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS})
 source_group("Header Files\\LDPLAB\\RayTracingStep" FILES ${HEADER_LDPLAB_RAY_TRACING_STEP})
 source_group("Header Files\\Intern\\RayTracingStep\\RayTracingStepCPU" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU})
 source_group("Header Files\\Intern\\RayTracingStep\\RayTracingStepGPU\\OpenGL" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL})
@@ -155,6 +169,7 @@ target_include_directories(ldplab
     PUBLIC 
         ../include
         ../external/glm
+		../external/tinyobjloader
 )
 
 target_link_libraries(ldplab 

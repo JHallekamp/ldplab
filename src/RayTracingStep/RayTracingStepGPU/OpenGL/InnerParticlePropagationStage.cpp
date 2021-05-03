@@ -18,7 +18,7 @@
 ldplab::rtsgpu_ogl::LinearIndexGradientRodParticlePropagation::
     LinearIndexGradientRodParticlePropagation(
         Context& context,
-        RK45 parameters)
+        RK45Parameter parameters)
     :
     m_context{ context },
     m_parameters{parameters},

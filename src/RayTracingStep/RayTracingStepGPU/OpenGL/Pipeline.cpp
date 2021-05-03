@@ -84,7 +84,7 @@ void ldplab::rtsgpu_ogl::Pipeline::finalizeOutput(RayTracingStepOutput& output)
     }
 }
 
-void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id)
+void ldplab::rtsgpu_ogl::Pipeline::execute(size_t job_id, size_t batch_size)
 {
     LDPLAB_ASSERT(job_id < m_buffer_controls.size());
     LDPLAB_LOG_DEBUG("RTSGPU (OpenGL) context %i: Ray tracing pipeline executes "\

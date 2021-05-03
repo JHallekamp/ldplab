@@ -23,9 +23,8 @@ namespace ldplab
             ILightDistribution::Type m_light_distribution_type;
             ILightPolarisation::Type m_light_polarization_type;
             IBoundingVolume::Type m_bounding_volume_type;
-            IParticleGeometry::Type m_particle_geometry_type;
             IParticleMaterial::Type m_particle_material_type;
-            IEikonalSolver::Type m_solver_type;
+            IEikonalSolverParameter::Type m_solver_type;
         private:
             /** @brief Factory is used by factory functions. */
             Factory() { }
@@ -66,13 +65,18 @@ namespace ldplab
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
                 std::unique_ptr<Context>& context);
-            /** @brief Creates bounding spheres data instances. */
-            void createBoundingSphereDataInstances(
+            /** @brief Creates particle data instances. */
+            bool createParticleGenericGeometryInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
                 Context& context);
-            /** @brief Creates rod particle data instances. */
-            void createRodParticleDataInstances(
+            /** @brief Constructs a particle geometry accelerator structure. */
+            bool constructTriangleMeshAcceleratorStructure(
+                const TriangleMeshParticleGeometry* particle_geometry,
+                const RayTracingStepCPUInfo& info,
+                std::shared_ptr<IGenericGeometry>& output);
+            /** @brief Creates bounding spheres data instances. */
+            void createBoundingSphereDataInstances(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCPUInfo& info,
                 Context& context);
