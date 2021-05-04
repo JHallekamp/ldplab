@@ -55,7 +55,7 @@ std::vector<std::tuple<
     r.direction = glm::normalize(Vec3(0, 0, -1));
     tests.emplace_back(std::make_tuple(
         "ray-triangle-intersection-01",
-        RayTriangleIntersectionTestInput { r, t },
+        RayTriangleIntersectionTestInput{ r, t },
         IntersectionOutput{ true, 0.5 }
     ));
 
