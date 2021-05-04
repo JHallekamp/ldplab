@@ -48,7 +48,7 @@ namespace ldplab
                     const OutType result = getResult(input);
                     const double epsilon = getEpsilon(input);
                     const double error = getError(expected_output, result);
-                    const bool has_passed = (error <= epsilon);
+                    const bool has_passed = (std::abs(error) <= epsilon);
                     std::cout << "test " << test_name << ": ";
                     if (has_passed)
                         std::cout << "test " << test_name << ": passed ";
@@ -75,6 +75,9 @@ namespace ldplab
             /** 
              * @brief Calculates the error between an expected and a resulting
              *        OutType instance.
+             * @details The error will be tested against the epsilon. If the
+             *          sign is negative, the absolute value will be computed
+             *          and tested against the epsilon.
              */
             virtual double getError(
                 const OutType& expected, 

@@ -3,6 +3,7 @@ set(HEADER_VERIFICATION
 )
 
 set(HEADER_VERIFICATION_UNIT_TESTS
+	UnitTests/IntersectionCommon.hpp
 	UnitTests/RayAABBOverlapTest.hpp
 	UnitTests/RaySphereIntersectionTest.hpp
 	UnitTests/RayTriangleIntersectionTest.hpp
