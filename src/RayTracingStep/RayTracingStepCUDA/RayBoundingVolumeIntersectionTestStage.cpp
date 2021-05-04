@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "RayBoundingVolumeIntersectionTestStage.hpp"
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
@@ -117,3 +119,5 @@ inline void ldplab::rtscuda::RayBoundingSphereIntersectionTestStageBruteForce::
         m_context.particle_transformations[pidx].w2p_rotation_scale *
             ray.direction);
 }
+
+#endif

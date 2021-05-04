@@ -1,7 +1,7 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepFactory.hpp>
 
 #include "RayTracingStepCPU/Factory.hpp"
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSOGL
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #   include "RayTracingStepCUDA/Factory.hpp"
 #endif
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSOGL

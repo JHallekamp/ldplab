@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "RayParticleIntersectionTestStage.hpp"
 
 #include "Context.hpp"
@@ -73,3 +75,5 @@ void ldplab::rtscuda::RayParticleGenericGeometryIntersectionTest::execute(
         num_hit_rays,
         num_missed_rays);
 }
+
+#endif

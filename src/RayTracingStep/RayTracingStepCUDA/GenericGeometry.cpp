@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "GenericGeometry.hpp"
 
 #include <LDPLAB/Constants.hpp>
@@ -390,3 +392,5 @@ bool ldplab::rtscuda::SphericalGeometry::intersectRay(
         intersection_normal = -intersection_normal;
     return true;
 }
+
+#endif

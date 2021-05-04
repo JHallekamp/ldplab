@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "Pipeline.hpp"
 
 #include "Context.hpp"
@@ -226,3 +228,5 @@ void ldplab::rtscuda::Pipeline::processBatch(
             avg_intensity);
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "RayParticleInteractionStage.hpp"
 
 #include "Context.hpp"
@@ -185,3 +187,5 @@ double ldplab::rtscuda::UnpolirzedLight1DLinearIndexGradientInteraction::
         (((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta) * 
             ((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta));
 }
+
+#endif

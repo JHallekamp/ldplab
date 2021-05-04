@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "Factory.hpp"
 
 #include <LDPLAB/Constants.hpp>
@@ -482,3 +484,5 @@ bool ldplab::rtscuda::Factory::createRayParticleIntersectionTestStage(
     //    return false;
     //}
 }
+
+#endif

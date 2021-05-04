@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "AcceleratorStructures.hpp"
 
 #include "IntersectionTests.hpp"
@@ -397,3 +399,5 @@ ldplab::rtscuda::TriangleMeshGeometryOctree::OctreeNode::OctreeNode()
     aabb.min = Vec3(std::numeric_limits<double>::max());
     aabb.max = Vec3(std::numeric_limits<double>::lowest());
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "BufferControl.hpp"
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
@@ -121,3 +123,5 @@ void ldplab::rtscuda::BufferControl::initializeBuffers()
     m_output_buffer.force = m_force_data.data();
     m_output_buffer.torque = m_torque_data.data();
 }
+
+#endif

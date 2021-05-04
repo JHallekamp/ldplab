@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "IntersectionTests.hpp"
 
 #include <array>
@@ -431,3 +433,5 @@ bool ldplab::rtscuda::IntersectionTest::overlapSegmentAABB(
         return false;
     return true;
 }
+
+#endif

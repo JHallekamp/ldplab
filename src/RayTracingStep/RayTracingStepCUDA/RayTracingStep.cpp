@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "RayTracingStep.hpp"
 #include "Context.hpp"
 
@@ -153,3 +155,5 @@ void ldplab::rtscuda::RayTracingStep::execute(
     LDPLAB_LOG_INFO("RTSCUDA context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);
 }
+
+#endif

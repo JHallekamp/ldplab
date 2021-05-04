@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "InitialStage.hpp"
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
@@ -421,3 +423,5 @@ bool ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::createBatch(
 
     return false;
 }
+
+#endif
