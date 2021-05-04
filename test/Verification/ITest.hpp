@@ -15,7 +15,7 @@ namespace ldplab
         class ITest
         {
         public:
-            virtual ~ITest() { release(); }
+            virtual ~ITest() { }
             /** @brief Called to setup the test. */
             virtual bool setup() = 0;
             /** @brief Called to deinitialize the test. */
@@ -37,29 +37,41 @@ namespace ldplab
             /** @brief Inherited via ldplab::verification::ITest. */
             std::map<std::string, bool> runTests() override
             {
+                setup();
                 std::vector<std::tuple<std::string, InType, OutType>> tests =
                     getTests();
                 std::map<std::string, bool> results;
-                for (size_t i = 0; i < tests; ++i)
+                for (size_t i = 0; i < tests.size(); ++i)
                 {
-                    const std::string& test_name = tests[i][0];
-                    const InType& input = tests[i][1];
-                    const OutType& expected_output = tests[i][2];
+                    const std::string& test_name = std::get<0>(tests[i]);
+                    const InType& input = std::get<1>(tests[i]);
+                    const OutType& expected_output = std::get<2>(tests[i]);
                     const OutType result = getResult(input);
                     const double epsilon = getEpsilon(input);
                     const double error = getError(expected_output, result);
                     const bool has_passed = (std::abs(error) <= epsilon);
-                    std::cout << "test " << test_name << ": ";
+                    std::cout << "Test " << test_name << ": " << std::endl;
+                    std::cout << "    Input: " << 
+                        input2String(input) << std::endl;
+                    std::cout << "    Expected result: " << 
+                        output2String(expected_output) << std::endl;
+                    std::cout << "    Actual result: " <<
+                        output2String(result) << std::endl;
+                    std::cout << "    Error: " << error << " (epsilon " <<
+                        epsilon << ")" << std::endl;
                     if (has_passed)
-                        std::cout << "test " << test_name << ": passed ";
+                        std::cout << "    Test passed" << std::endl;
                     else
-                        std::cout << "test " << test_name << ": failed ";
-                    std::cout << "(error = " << error << ")" << std::endl;
+                        std::cout << "    Test failed" << std::endl;
+                    std::cout << std::endl;
                     results[test_name] = has_passed;
                 }
+                release();
                 return results;
             }
         protected:
+            virtual std::string output2String(const OutType&) = 0;
+            virtual std::string input2String(const InType&) = 0;
             /**
              * @brief Returns a vector containing tests.
              * @detials Each test consists of a triple. The first element is a
@@ -80,17 +92,15 @@ namespace ldplab
              *          and tested against the epsilon.
              */
             virtual double getError(
-                const OutType& expected, 
-                const OutType& result)
-            { return (expected == result ? 0 : 1); }
+                const OutType& expected,
+                const OutType& result) = 0;
             /**
              * @brief Returns an epsilon for when resulting values are still
              *        considered near enough to the expected value, so that
              *        the test passes.
              * @details The epsilon can depend on the InType value.
              */
-            virtual double getEpsilon(const InType& value)
-            { return 0; }
+            virtual double getEpsilon(const InType& value) = 0;
         };
     }
 }
