@@ -1,6 +1,9 @@
 #include <LDPLAB/ExperimentalSetup/Utils/ObjLoader.hpp>
 
 // Implement tiny obj loader functions for use
+#ifndef TINYOBJLOADER_USE_DOUBLE
+#define TINYOBJLOADER_USE_DOUBLE
+#endif
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 

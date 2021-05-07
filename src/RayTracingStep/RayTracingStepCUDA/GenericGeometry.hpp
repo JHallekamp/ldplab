@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCPU_GENERIC_GEOMETRY_HPP
-#define WWU_LDPLAB_RTSCPU_GENERIC_GEOMETRY_HPP
+#ifndef WWU_LDPLAB_RTSCUDA_GENERIC_GEOMETRY_HPP
+#define WWU_LDPLAB_RTSCUDA_GENERIC_GEOMETRY_HPP
 
 #include <LDPLAB/ExperimentalSetup/ParticleGeometry.hpp>
 #include <LDPLAB/Geometry.hpp>
@@ -8,7 +8,7 @@
 
 namespace ldplab
 {
-    namespace rtscpu
+    namespace rtscuda
     {
         /**
          * @brief Interface containing abstract intersection queries. 
@@ -40,7 +40,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersectRay(
+            bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal);
@@ -67,7 +67,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersectSegment(
+            bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
@@ -100,7 +100,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            virtual bool intersectSegment(
+            bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
