@@ -1,15 +1,24 @@
-cmake_minimum_required (VERSION 3.7)
-
-project(LDPLAB
-    VERSION 0.1
-    LANGUAGES CXX
-)
-
 option (ENABEL_DOCS "Create documentation with Doxygen" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_RTSOGL "Use OpenGL for Graphic card processing" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA "Use CUDA for Graphic card processing" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_PROFILING "Enable LDPLAB internal profiling code" OFF)
 option (LDPLAB_BUILD_OPTION_DISABLE_LOGGING "Disable LDPLAB logging" OFF)
+option (BUILD_LDPLAB_VERIFICATION_PROJECT "Builds the LDPLAB verification project" ON)
+
+if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
+	cmake_minimum_required (VERSION 3.18)
+	project(LDPLAB
+		VERSION 0.1
+		LANGUAGES CXX CUDA
+	)
+	#set(CMAKE_CUDA_ARCHITECTURES 50)
+else()
+	cmake_minimum_required (VERSION 3.7)
+	project(LDPLAB
+		VERSION 0.1
+		LANGUAGES CXX
+	)
+endif()
 
 if(ENABEL_DOCS)
     if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -54,6 +63,14 @@ if(LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)
     find_package(GLEW REQUIRED)
 endif()
 
+if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
+	find_package(CUDA REQUIRED)
+endif()
+
 add_subdirectory(external/glm)
 add_subdirectory(external/tinyobjloader)
 add_subdirectory(src)
+
+if(BUILD_LDPLAB_VERIFICATION_PROJECT)
+	add_subdirectory(test/Verification)
+endif()

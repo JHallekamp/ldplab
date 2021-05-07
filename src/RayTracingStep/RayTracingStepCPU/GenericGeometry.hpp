@@ -40,7 +40,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            bool intersectRay(
+            virtual bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal);
@@ -67,7 +67,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            bool intersectSegment(
+            virtual bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
@@ -100,7 +100,7 @@ namespace ldplab
              *       system as the underlying geometry. The caller has to make
              *       sure that this assumption is never violated.
              */
-            bool intersectSegment(
+            virtual bool intersectSegment(
                 const Vec3& segment_origin,
                 const Vec3& segment_end,
                 Vec3& intersection_point,
