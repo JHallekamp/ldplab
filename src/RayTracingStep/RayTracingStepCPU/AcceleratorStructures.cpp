@@ -10,7 +10,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersectRay(
     const Ray& ray,
     Vec3& intersection_point,
     Vec3& intersection_normal,
-    double& dist)
+    double& dist,
+    bool& intersect_outside)
 {
     size_t min_index = m_mesh.size();
     double t_dist;
@@ -29,11 +30,13 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersectRay(
     if (min_index < m_mesh.size())
     {
         intersection_point = ray.origin + dist * ray.direction;
-        const Vec3 edge1 = m_mesh[min_index].b - m_mesh[min_index].a;
-        const Vec3 edge2 = m_mesh[min_index].c - m_mesh[min_index].a;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
+        intersection_normal = m_mesh[min_index].outside_normal;
+        intersect_outside = true;
         if (glm::dot(intersection_normal, ray.direction) > 0)
+        {
             intersection_normal = -intersection_normal;
+            intersect_outside = false;
+        }
         return true;
     }
     return false;
@@ -51,7 +54,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
     Vec3& intersection_normal,
-    double& dist)
+    double& dist,
+    bool& intersect_outside)
 {
     if (IntersectionTest::overlapRayAABB(ray, m_nodes[0].aabb, dist))
     {
@@ -60,7 +64,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRay(
             0, 
             ray, 
             intersection_point, 
-            intersection_normal);
+            intersection_normal,
+            intersect_outside);
     }
     return false;
 }
@@ -302,7 +307,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRecursive(
     const size_t depth,
     const Ray& ray, 
     Vec3& intersection_point, 
-    Vec3& intersection_normal)
+    Vec3& intersection_normal,
+    bool& intersect_outside)
 {
     if (depth == m_octree_depth)
     {
@@ -312,7 +318,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRecursive(
             m_triangle_arrays[node.children[0]],
             ray,
             intersection_point,
-            intersection_normal);
+            intersection_normal,
+            intersect_outside);
     }
     else
     {
@@ -348,7 +355,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRecursive(
                 depth + 1,
                 ray,
                 intersection_point,
-                intersection_normal))
+                intersection_normal,
+                intersect_outside))
             {
                 return true;
             }
@@ -361,7 +369,8 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectBase(
     const utils::Array<Triangle>& triangles, 
     const Ray& ray,
     Vec3& intersection_point, 
-    Vec3& intersection_normal)
+    Vec3& intersection_normal,
+    bool& intersect_outside)
 {
     size_t min_index = triangles.size();
     double min_dist = std::numeric_limits<double>::max(), t_dist;
@@ -379,11 +388,13 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectBase(
     if (min_index < triangles.size())
     {
         intersection_point = ray.origin + ray.direction * min_dist;
-        const Vec3 edge1 = triangles[min_index].b - triangles[min_index].a;
-        const Vec3 edge2 = triangles[min_index].c - triangles[min_index].a;
-        intersection_normal = glm::normalize(glm::cross(edge1, edge2));
+        intersection_normal = triangles[min_index].outside_normal;
+        intersect_outside = true;
         if (glm::dot(intersection_normal, ray.direction) > 0)
+        {
             intersection_normal = -intersection_normal;
+            intersect_outside = false;
+        }
         return true;
     }
     return false;

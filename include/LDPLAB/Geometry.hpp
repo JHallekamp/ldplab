@@ -35,6 +35,8 @@ namespace ldplab
         Vec3 a;
         Vec3 b;
         Vec3 c;
+        /** @brief The triangle surface normal pointing to the outside. */
+        Vec3 outside_normal;
     };
 
     /** @brief Structure modeling an axis aligned bounding box. */
