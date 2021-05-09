@@ -97,6 +97,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
                     // We have found a case, where the ray tunnels through the
                     // Particle. We use the original ray and invalidate the 
                     // surface normal.
+                    inter_point = ray.origin;
                     inter_normal = Vec3(0, 0, 0);
                 }
                 else
@@ -119,6 +120,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
                         is_inside);
                     inter_point = ray.origin;
                     inter_normal = -inter_normal;
+                    ray.direction = glm::normalize(x.w);
                 }
             }
             else
@@ -316,6 +318,7 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
                             is_inside);
                         inter_point = ray.origin;
                         inter_normal = -inter_normal;
+                        ray.direction = glm::normalize(x.w);
                     }
                 }
                 else
