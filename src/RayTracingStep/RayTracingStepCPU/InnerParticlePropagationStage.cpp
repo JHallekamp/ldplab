@@ -80,8 +80,51 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
         if (intersected || !is_inside)
         {
             if (!intersected)
-                inter_point = x.r;
-            ray.direction = glm::normalize(x.w);
+            {
+                // The following check is neccessary to test if the ray hits in
+                // an extreme point (volume so small that it lies within the 
+                // epsilon region). If that is the case, we assume the ray 
+                // tunnels through the particle.
+                bool intersect_outside = false;
+                Vec3 t_ip, t_in;
+                intersected = m_context.particle_data->geometries[particle]->intersectRay(
+                    ray,
+                    t_ip,
+                    t_in,
+                    intersect_outside);
+                if (!intersected || intersect_outside)
+                {
+                    // We have found a case, where the ray tunnels through the
+                    // Particle. We use the original ray and invalidate the 
+                    // surface normal.
+                    inter_point = ray.origin;
+                    inter_normal = Vec3(0, 0, 0);
+                }
+                else
+                {
+                    // We have found a case, where the initial ray is bend 
+                    // out of the particle in the initial step due to the 
+                    // particle material gradient. In this case we assume that 
+                    // it hits in the original intersection point.
+                    // We use the previous normal and have to flip it, to 
+                    // ensure that we have correct behaviour in the interaction
+                    // stage.
+                    // To receive the previous normal, we simply perform the
+                    // Intersection test again, but this time we reverse the
+                    // segment directions. Then we flip the normal.
+                    m_context.particle_data->geometries[particle]->intersectSegment(
+                        x_new.r,
+                        x.r,
+                        inter_point,
+                        inter_normal,
+                        is_inside);
+                    inter_point = ray.origin;
+                    inter_normal = -inter_normal;
+                    ray.direction = glm::normalize(x.w);
+                }
+            }
+            else
+                ray.direction = glm::normalize(x.w);
             return;
         }
         else
@@ -215,6 +258,7 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
         .material.get();
 
     bool intersected = false;
+    bool is_inside = false;
     Arg x{
         ray.direction * material->indexOfRefraction(ray.origin),
         ray.origin };
@@ -225,15 +269,60 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
         double error = rk45(material, x, h, x_new);
         if (error <= m_parameters.epsilon)
         {
-            if (m_context.particle_data->geometries[particle]->intersectSegment(
-                x.r,
-                x_new.r,
-                inter_point,
-                inter_normal))
+            intersected =
+                m_context.particle_data->geometries[particle]->intersectSegment(
+                    x.r,
+                    x_new.r,
+                    inter_point,
+                    inter_normal,
+                    is_inside);
+            if (intersected || !is_inside)
             {
-                intersected = true;
-                ray.direction = glm::normalize(x.w);
-                ray.origin = x.r;
+                if (!intersected)
+                {
+                    // The following check is neccessary to test if the ray hits in
+                    // an extreme point (volume so small that it lies within the 
+                    // epsilon region). If that is the case, we assume the ray 
+                    // tunnels through the particle.
+                    bool intersect_outside = false;
+                    Vec3 t_ip, t_in;
+                    intersected = m_context.particle_data->geometries[particle]->intersectRay(
+                        ray,
+                        t_ip,
+                        t_in,
+                        intersect_outside);
+                    if (!intersected || intersect_outside)
+                    {
+                        // We have found a case, where the ray tunnels through the
+                        // Particle. We use the original ray and invalidate the 
+                        // surface normal.
+                        inter_normal = Vec3(0, 0, 0);
+                    }
+                    else
+                    {
+                        // We have found a case, where the initial ray is bend 
+                        // out of the particle in the initial step due to the 
+                        // particle material gradient. In this case we assume that 
+                        // it hits in the original intersection point.
+                        // We use the previous normal and have to flip it, to 
+                        // ensure that we have correct behaviour in the interaction
+                        // stage.
+                        // To receive the previous normal, we simply perform the
+                        // Intersection test again, but this time we reverse the
+                        // segment directions. Then we flip the normal.
+                        m_context.particle_data->geometries[particle]->intersectSegment(
+                            x_new.r,
+                            x.r,
+                            inter_point,
+                            inter_normal,
+                            is_inside);
+                        inter_point = ray.origin;
+                        inter_normal = -inter_normal;
+                        ray.direction = glm::normalize(x.w);
+                    }
+                }
+                else
+                    ray.direction = glm::normalize(x.w);
                 return;
             }
             else

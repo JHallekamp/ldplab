@@ -36,7 +36,7 @@ set(HEADER_LDPLAB_RAY_TRACING_STEP
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/IRayTracingStep.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepCPUInfo.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepFactory.hpp"
-    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepGPUOpenGLInfo.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepOpenGLInfo.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/RayTracingStepOutput.hpp"
 )
 
@@ -56,22 +56,39 @@ set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
     RayTracingStep/RayTracingStepCPU/RayParticleIntersectionTestStage.hpp
     RayTracingStep/RayTracingStepCPU/RayTracingStep.hpp
 )
+
+set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
+	RayTracingStep/RayTracingStepCUDA/AcceleratorStructures.hpp
+	RayTracingStep/RayTracingStepCUDA/BufferControl.hpp
+    RayTracingStep/RayTracingStepCUDA/Context.hpp
+    RayTracingStep/RayTracingStepCUDA/Data.hpp
+    RayTracingStep/RayTracingStepCUDA/Factory.hpp
+    RayTracingStep/RayTracingStepCUDA/GenericGeometry.hpp
+    RayTracingStep/RayTracingStepCUDA/InitialStage.hpp
+    RayTracingStep/RayTracingStepCUDA/InnerParticlePropagationStage.hpp
+	RayTracingStep/RayTracingStepCUDA/IntersectionTests.hpp
+    RayTracingStep/RayTracingStepCUDA/Pipeline.hpp
+    RayTracingStep/RayTracingStepCUDA/RayBoundingVolumeIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepCUDA/RayParticleInteractionStage.hpp
+    RayTracingStep/RayTracingStepCUDA/RayParticleIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepCUDA/RayTracingStep.hpp
+)
 	
-set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL
-	RayTracingStep/RayTracingStepGPU/OpenGL/BufferControl.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Constants.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Context.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Data.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Factory.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/InitialStage.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/InnerParticlePropagationStage.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/OpenGLContext.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Pipeline.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayBoundingVolumeIntersectionTestStage.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleInteractionStage.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleIntersectionTestStage.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayTracingStep.hpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/SharedShaders.hpp
+set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL
+	RayTracingStep/RayTracingStepOpenGL/BufferControl.hpp
+    RayTracingStep/RayTracingStepOpenGL/Constants.hpp
+    RayTracingStep/RayTracingStepOpenGL/Context.hpp
+    RayTracingStep/RayTracingStepOpenGL/Data.hpp
+    RayTracingStep/RayTracingStepOpenGL/Factory.hpp
+    RayTracingStep/RayTracingStepOpenGL/InitialStage.hpp
+    RayTracingStep/RayTracingStepOpenGL/InnerParticlePropagationStage.hpp
+    RayTracingStep/RayTracingStepOpenGL/OpenGLContext.hpp
+    RayTracingStep/RayTracingStepOpenGL/Pipeline.hpp
+    RayTracingStep/RayTracingStepOpenGL/RayBoundingVolumeIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepOpenGL/RayParticleInteractionStage.hpp
+    RayTracingStep/RayTracingStepOpenGL/RayParticleIntersectionTestStage.hpp
+    RayTracingStep/RayTracingStepOpenGL/RayTracingStep.hpp
+    RayTracingStep/RayTracingStepOpenGL/SharedShaders.hpp
 )
 
 set(HEADER_INTERN_UTILS 
@@ -112,19 +129,34 @@ set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
     RayTracingStep/RayTracingStepCPU/RayTracingStep.cpp
 )
 
-set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL
-	RayTracingStep/RayTracingStepGPU/OpenGL/BufferControl.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Data.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Factory.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/InitialStage.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/InnerParticlePropagationStage.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/OpenGLContext.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/Pipeline.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayBoundingVolumeIntersectionTestStage.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleInteractionStage.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayParticleIntersectionTestStage.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/RayTracingStep.cpp
-    RayTracingStep/RayTracingStepGPU/OpenGL/SharedShaders.cpp
+set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
+	RayTracingStep/RayTracingStepCUDA/AcceleratorStructures.cpp
+	RayTracingStep/RayTracingStepCUDA/BufferControl.cpp
+    RayTracingStep/RayTracingStepCUDA/Factory.cpp
+    RayTracingStep/RayTracingStepCUDA/GenericGeometry.cpp
+    RayTracingStep/RayTracingStepCUDA/InitialStage.cpp
+    RayTracingStep/RayTracingStepCUDA/InnerParticlePropagationStage.cpp
+	RayTracingStep/RayTracingStepCUDA/IntersectionTests.cpp
+    RayTracingStep/RayTracingStepCUDA/Pipeline.cpp
+    RayTracingStep/RayTracingStepCUDA/RayBoundingVolumeIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepCUDA/RayParticleInteractionStage.cpp
+    RayTracingStep/RayTracingStepCUDA/RayParticleIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepCUDA/RayTracingStep.cpp
+)
+
+set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL
+	RayTracingStep/RayTracingStepOpenGL/BufferControl.cpp
+    RayTracingStep/RayTracingStepOpenGL/Data.cpp
+    RayTracingStep/RayTracingStepOpenGL/Factory.cpp
+    RayTracingStep/RayTracingStepOpenGL/InitialStage.cpp
+    RayTracingStep/RayTracingStepOpenGL/InnerParticlePropagationStage.cpp
+    RayTracingStep/RayTracingStepOpenGL/OpenGLContext.cpp
+    RayTracingStep/RayTracingStepOpenGL/Pipeline.cpp
+    RayTracingStep/RayTracingStepOpenGL/RayBoundingVolumeIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepOpenGL/RayParticleInteractionStage.cpp
+    RayTracingStep/RayTracingStepOpenGL/RayParticleIntersectionTestStage.cpp
+    RayTracingStep/RayTracingStepOpenGL/RayTracingStep.cpp
+    RayTracingStep/RayTracingStepOpenGL/SharedShaders.cpp
 )
 
 set(SOURCE_UTILS
@@ -141,13 +173,15 @@ add_library(ldplab STATIC
     ${HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS}
     ${HEADER_LDPLAB_RAY_TRACING_STEP}
     ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU}
-    ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL}
+    ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA}
+    ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL}
     ${HEADER_INTERN_UTILS}
     ${SOURCE_ROOT}
     ${SOURCE_EXPERIMENTAL_SETUP_UTILS}
     ${SOURCE_RAY_TRACING_STEP}
     ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU}
-    ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL}
+    ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA}
+    ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL}
     ${SOURCE_UTILS}
 )
 
@@ -156,13 +190,15 @@ source_group("Header Files\\LDPLAB\\ExperimentalSetup" FILES ${HEADER_LDPLAB_EXP
 source_group("Header Files\\LDPLAB\\ExperimentalSetup\\Utils" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS})
 source_group("Header Files\\LDPLAB\\RayTracingStep" FILES ${HEADER_LDPLAB_RAY_TRACING_STEP})
 source_group("Header Files\\Intern\\RayTracingStep\\RayTracingStepCPU" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU})
-source_group("Header Files\\Intern\\RayTracingStep\\RayTracingStepGPU\\OpenGL" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL})
+source_group("Header Files\\Intern\\RayTracingStep\\RayTracingStepCUDA" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA})
+source_group("Header Files\\Intern\\RayTracingStep\\RayTracingStepOpenGL" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL})
 source_group("Header Files\\Intern\\Utils" FILES ${HEADER_INTERN_UTILS})
 
 source_group("Source Files\\ExperimentalSetup\\Utils" FILES ${SOURCE_EXPERIMENTAL_SETUP_UTILS})
 source_group("Source Files\\RayTracingStep" FILES ${SOURCE_RAY_TRACING_STEP})
 source_group("Source Files\\RayTracingStep\\RayTracingStepCPU" FILES ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU})
-source_group("Source Files\\RayTracingStep\\RayTracingStepGPU\\OpenGL" FILES ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_GPU_OPEN_GL})
+source_group("Source Files\\RayTracingStep\\RayTracingStepCUDA" FILES ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA})
+source_group("Source Files\\RayTracingStep\\RayTracingStepOpenGL" FILES ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL})
 source_group("Source Files\\Utils" FILES ${SOURCE_UTILS})
 
 target_include_directories(ldplab 
@@ -178,7 +214,20 @@ target_link_libraries(ldplab
         Threads::Threads
 )
 
-if(LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
-    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL)
+if(LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)
+    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)
 endif()
+
+if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
+    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
+endif()
+
+if(LDPLAB_BUILD_OPTION_ENABLE_PROFILING)
+    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_ENABLE_PROFILING)
+endif()
+
+if(LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
+    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
+endif()
+
 target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")
