@@ -47,7 +47,12 @@ bool ldplab::rtscuda::IGenericGeometry::intersectSegment(
         return false;
     }
     else
-        return dist <= seg_length;
+    {
+        if (dist <= seg_length)
+            return true;
+        end_point_inside = !end_point_inside;
+        return false;
+    }
 }
 
 ldplab::rtscuda::RodGeometry::RodGeometry(

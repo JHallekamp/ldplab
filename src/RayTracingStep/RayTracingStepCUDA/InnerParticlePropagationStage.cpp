@@ -119,6 +119,7 @@ void ldplab::rtscuda::EikonalSolverRK4LinearIndexGradient::
                         is_inside);
                     inter_point = ray.origin;
                     inter_normal = -inter_normal;
+                    ray.direction = glm::normalize(x.w);
                 }
             }
             else
@@ -316,6 +317,7 @@ void ldplab::rtscuda::EikonalSolverRK45LinearIndexGradient::
                             is_inside);
                         inter_point = ray.origin;
                         inter_normal = -inter_normal;
+                        ray.direction = glm::normalize(x.w);
                     }
                 }
                 else
