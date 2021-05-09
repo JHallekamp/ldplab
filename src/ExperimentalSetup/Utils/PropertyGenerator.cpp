@@ -21,19 +21,19 @@ ldplab::Vec3 ldplab::PropertyGenerator::getRodParticleCenterOfMass(
     return rs;
 }
 
-ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstArea(
-    const double A,
+ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstRadius(
+    const double R,
     const double l,
     const double kappa,
     const double np,
-    const double nu,
+    const double delta_n,
+    const double gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
-    const double R = std::sqrt(A / (2 * const_pi() * ((1 + kappa) + 2 * l)));
     const double L = l * 2 * R;
     const double h = kappa * R;
-    const double delta_n = nu / (L + h);
+    const double nu = delta_n / (L + h);
     const double bounding_sphere_radius = 
         std::sqrt(std::pow((L + h) / 2, 2.0) + R * R);
 
@@ -52,13 +52,12 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstArea(
     particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             np,
-            delta_n,
+            nu,
             Vec3(0, 0, (L+h)/2),
-            Vec3(0, 0, 1));
+            Vec3(0, 0, gradient_direction));
     particle.centre_of_mass = 
         ldplab::PropertyGenerator::getRodParticleCenterOfMass(
             *(ldplab::RodParticleGeometry*)particle.geometry.get());
-
     return particle;
 }
 
@@ -67,14 +66,15 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstVolume(
     const double l,
     const double kappa,
     const double np,
-    const double nu,
+    const double delta_n,
+    const double gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
     const double R = std::pow(V/(l * 2.0 * const_pi()),1.0/3.0);
     const double L = l * 2 * R;
     const double h = kappa * R;
-    const double delta_n = nu / (L + h);
+    const double nu = delta_n / (L + h);
     const double bounding_sphere_radius =
         std::sqrt(std::pow((L + h) / 2, 2.0) + R * R);
 
@@ -93,9 +93,9 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstVolume(
     particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             np,
-            delta_n,
+            nu,
             Vec3(0, 0, (L + h) / 2),
-            Vec3(0, 0, 1));
+            Vec3(0, 0 , gradient_direction));
     particle.centre_of_mass = 
         ldplab::PropertyGenerator::getRodParticleCenterOfMass(
             *(ldplab::RodParticleGeometry*)particle.geometry.get());
@@ -109,12 +109,13 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticle(
     const double L, 
     const double kappa, 
     const double np, 
-    const double nu, 
+    const double delta_n,
+    const double gradient_direction,
     const Vec3 position, 
     const Vec3 orientation)
 {
     const double h = kappa * R;
-    const double delta_n = nu / (L + h);
+    const double nu = delta_n / (L + h);
     const double bounding_sphere_radius =
         std::sqrt(std::pow((L + h) / 2, 2.0) + R * R);
 
@@ -133,9 +134,9 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticle(
     particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             np,
-            delta_n,
+            nu,
             Vec3(0, 0, (L + h) / 2),
-            Vec3(0, 0, 1));
+            Vec3(0, 0 , gradient_direction));
     particle.centre_of_mass = 
         ldplab::PropertyGenerator::getRodParticleCenterOfMass(
             *(ldplab::RodParticleGeometry*)particle.geometry.get());
@@ -145,12 +146,13 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticle(
 ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
     const double V,
     const double np,
-    const double nu,
+    const double delta_n,
+    const double gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
     const double R = std::pow(V * 3.0 / (const_pi()*4.0), (1.0 / 3.0));
-    const double delta_n = nu / (2*R);
+    const double nu = delta_n / (2*R);
 
     ldplab::Particle particle;
     particle.position = position;
@@ -164,9 +166,9 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
     particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             np,
-            delta_n,
+            nu,
             Vec3(0, 0, 0),
-            Vec3(0, 0, 1));
+            Vec3(0, 0 , gradient_direction));
     particle.centre_of_mass = Vec3(0,0,0);
     return particle;
 }
@@ -174,11 +176,12 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
 ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
     const double R,
     const double np,
-    const double nu,
+    const double delta_n,
+    const double gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
-    const double delta_n = nu / (2 * R);
+    const double nu = delta_n / (2 * R);
 
     ldplab::Particle particle;
     particle.position = position;
@@ -194,7 +197,7 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
             np,
             delta_n,
             Vec3(0, 0, 0),
-            Vec3(0, 0, 1));
+            Vec3(0, 0 , gradient_direction));
     particle.centre_of_mass = Vec3(0, 0, 0);
     return particle;
 }
