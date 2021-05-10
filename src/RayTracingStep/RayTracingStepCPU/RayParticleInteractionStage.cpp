@@ -47,6 +47,23 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         else if (rays.index_data[i] >= m_context.particles.size())
             continue;
 
+        // Check if the intersection normal is 0, in which case the ray will 
+        // be written into the transmission buffer without changes. This is
+        // done because in the inner particle propagation stage, there can
+        // occur situations where a ray is tangent to the geometry, in which
+        // case it will intersect it, but no inner particle propagation will
+        // actually occur. To ensure correct behavior in such case, the 
+        // intersection normal is set to 0.
+        if (intersection.normal[i] == Vec3(0, 0, 0))
+        {
+            reflected_rays.index_data[i] = -1;
+            refracted_rays.index_data[i] = rays.index_data[i];
+            refracted_rays.ray_data[i] = rays.ray_data[i];
+            refracted_rays.min_bounding_volume_distance_data[i] = 0.0;
+            refracted_rays.active_rays++;
+            continue;
+        }
+
         const ParticleMaterialLinearOneDirectional* material =
             (ParticleMaterialLinearOneDirectional*)m_context.
             particles[rays.index_data[i]].material.get();

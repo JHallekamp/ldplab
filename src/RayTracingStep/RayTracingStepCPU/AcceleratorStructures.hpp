@@ -72,7 +72,8 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist) override;
+                double& dist,
+                bool& intersect_outside) override;
             /** @brief Inherited via ITriangleMeshAcceleratorStructure */
             bool constructInternal(
                 const std::vector<Triangle>& mesh,
@@ -93,7 +94,8 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist) override;
+                double& dist,
+                bool& intersect_outside) override;
             /** @brief Inherited via ITriangleMeshAcceleratorStructure */
             bool constructInternal(
                 const std::vector<Triangle>& mesh,
@@ -147,12 +149,14 @@ namespace ldplab
                 const size_t depth,
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal);
+                Vec3& intersection_normal,
+                bool& intersect_outside);
             bool intersectBase(
                 const utils::Array<Triangle>& triangles,
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal);
+                Vec3& intersection_normal,
+                bool& intersect_outside);
         private:
             size_t m_octree_depth;
             std::vector<OctreeNode> m_nodes;

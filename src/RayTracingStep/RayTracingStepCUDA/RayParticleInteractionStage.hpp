@@ -36,6 +36,12 @@ namespace ldplab
              *                            reflected from the particle surface. 
              * @param[out] refracted_rays RayBuffer holds all rays that are 
              *                            refracted from the particle surface. 
+             * @note The inner particle propagation stage notifies situations
+             *       where a ray "tunnels" through a particle by setting the 
+             *       intersection normal to be the 0 vector. Any implementation
+             *       has to check if the intersection normal is the 0 vector
+             *       and if it is, it has to write the input ray into the 
+             *       refracted buffer (without changes) and ignore reflection.
              * @param[in, out] output Buffer holding the resulting force and torque
              *                    change of each particle.
              */
@@ -72,6 +78,12 @@ namespace ldplab
              *                            reflected from the particle surface. 
              * @param[out] refracted_rays RayBuffer holds all rays that are 
              *                            refracted from the particle surface. 
+             * @note The inner particle propagation stage notifies situations
+             *       where a ray "tunnels" through a particle by setting the 
+             *       intersection normal to be the 0 vector. Any implementation
+             *       has to check if the intersection normal is the 0 vector
+             *       and if it is, it has to write the input ray into the 
+             *       refracted buffer (without changes) and ignore reflection.
              * @param[in, out] output Buffer holding the resulting force and torque
              *                    change of each particle.
              */

@@ -14,12 +14,13 @@ namespace ldplab
     public:
         static Vec3 getRodParticleCenterOfMass(
             const RodParticleGeometry& geometry);
-        static Particle getRodParticleConstArea(
-            const double A,
+        static Particle getRodParticleConstRadius(
+            const double R,
             const double l,
             const double kappa,
             const double np,
             const double nu,
+            const double gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getRodParticleConstVolume(
@@ -28,6 +29,7 @@ namespace ldplab
             const double kappa,
             const double np,
             const double nu,
+            const double gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getRodParticle(
@@ -36,18 +38,21 @@ namespace ldplab
             const double kappa,
             const double np,
             const double nu,
-            const Vec3 position,
-            const Vec3 orientation);
-        static Particle getSphereParticleByVolume(
-            const double V,
-            const double np,
-            const double nu,
+            const double gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getSphereParticleByRadius(
+            const double V,
+            const double np,
+            const double nu,
+            const double gradient_direction,
+            const Vec3 position,
+            const Vec3 orientation);
+        static Particle getSphereParticleByVolume(
             const double R,
             const double np,
             const double nu,
+            const double gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
     };
