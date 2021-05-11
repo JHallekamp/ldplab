@@ -61,6 +61,7 @@ set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
 	RayTracingStep/RayTracingStepCUDA/AcceleratorStructures.hpp
 	RayTracingStep/RayTracingStepCUDA/BufferControl.hpp
     RayTracingStep/RayTracingStepCUDA/Context.hpp
+    RayTracingStep/RayTracingStepCUDA/CudaContext.hpp
     RayTracingStep/RayTracingStepCUDA/CudaResource.hpp
     RayTracingStep/RayTracingStepCUDA/Data.hpp
     RayTracingStep/RayTracingStepCUDA/Factory.hpp
