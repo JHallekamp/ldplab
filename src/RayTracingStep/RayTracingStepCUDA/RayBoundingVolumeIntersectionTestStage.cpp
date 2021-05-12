@@ -4,6 +4,7 @@
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
 
+#include <LDPLAB/Constants.hpp>
 #include <limits>
 
 ldplab::rtscuda::RayBoundingSphereIntersectionTestStageBruteForce::
@@ -43,7 +44,7 @@ size_t
             buffer.index_data[i] == -1)
             continue;
 
-        double min_d = -1.0;
+        real_t min_d = -1.0;
         int32_t min_j = 0;
 
         const Vec3& o = buffer.ray_data[i].origin;
@@ -51,23 +52,23 @@ size_t
             static_cast<int32_t>(m_context.particles.size()); ++j)
         {
             const Vec3& oc = o -  m_bounding_spheres[j].center;
-            const double rr = m_bounding_spheres[j].radius *
+            const real_t rr = m_bounding_spheres[j].radius *
                 m_bounding_spheres[j].radius;
 
-            const double q = glm::dot(oc, oc) - rr;
+            const real_t q = glm::dot(oc, oc) - rr;
             // Check if the ray origin lies within the sphere
-            if (q < 1e-9)
+            if (q < constant::intersection_tests::epsilon)
                 continue;
 
-            const double p = glm::dot(buffer.ray_data[i].direction, oc);
-            const double discriminant = p * p - q;
-            if (discriminant < 1e-9)
+            const real_t p = glm::dot(buffer.ray_data[i].direction, oc);
+            const real_t discriminant = p * p - q;
+            if (discriminant < constant::intersection_tests::epsilon)
                 continue;
 
-            const double d_root = sqrt(discriminant);
-            const double dist = -p - d_root;
+            const real_t d_root = sqrt(discriminant);
+            const real_t dist = -p - d_root;
 
-            double t = buffer.min_bounding_volume_distance_data[i];
+            real_t t = buffer.min_bounding_volume_distance_data[i];
             if (dist <= buffer.min_bounding_volume_distance_data[i])
                 continue;
 

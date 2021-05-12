@@ -8,27 +8,27 @@
 bool ldplab::rtscuda::IntersectionTest::intersectRayTriangle(
     const Ray& ray, 
     const Triangle& triangle, 
-    double& dist)
+    real_t& dist)
 {
     const Vec3 edge1 = triangle.b - triangle.a;
     const Vec3 edge2 = triangle.c - triangle.a;
     const Vec3 h = glm::cross(ray.direction, edge2);
-    const double a = glm::dot(edge1, h);
+    const real_t a = glm::dot(edge1, h);
     // Check parallelisim
     if (a > -constant::intersection_tests::epsilon && 
         a < constant::intersection_tests::epsilon)
         return false;
-    const double f = 1.0 / a;
+    const real_t f = 1.0 / a;
     const Vec3 s = ray.origin - triangle.a;
-    const double u = f * glm::dot(s, h);
+    const real_t u = f * glm::dot(s, h);
     if (u < 0.0 || u > 1.0)
         return false;
     const Vec3 q = glm::cross(s, edge1);
-    const double v = f * glm::dot(ray.direction, q);
+    const real_t v = f * glm::dot(ray.direction, q);
     if (v < 0.0 || u + v > 1.0)
         return false;
     // Calculate distance to intersection point
-    double t = f * glm::dot(edge2, q);
+    real_t t = f * glm::dot(edge2, q);
     if (t < constant::intersection_tests::epsilon)
         return false;
     dist = t;
@@ -39,28 +39,28 @@ bool ldplab::rtscuda::IntersectionTest::intersectSegmentTriangle(
     const Vec3& segment_start, 
     const Vec3& segment_end, 
     const Triangle& triangle, 
-    double& dist)
+    real_t& dist)
 {
     const Vec3 seg = segment_end - segment_start;
     const Vec3 edge1 = triangle.b - triangle.a;
     const Vec3 edge2 = triangle.c - triangle.a;
     const Vec3 h = glm::cross(glm::normalize(seg), edge2);
-    const double a = glm::dot(edge1, h);
+    const real_t a = glm::dot(edge1, h);
     // Check parallelisim
     if (a > -constant::intersection_tests::epsilon && 
         a < constant::intersection_tests::epsilon)
         return false;
-    const double f = 1.0 / a;
+    const real_t f = 1.0 / a;
     const Vec3 s = segment_start - triangle.a;
-    const double u = f * glm::dot(s, h);
+    const real_t u = f * glm::dot(s, h);
     if (u < 0.0 || u > 1.0)
         return false;
     const Vec3 q = glm::cross(s, edge1);
-    const double v = f * glm::dot(segment_start, q);
+    const real_t v = f * glm::dot(segment_start, q);
     if (v < 0.0 || u + v > 1.0)
         return false;
     // Calculate distance to intersection point
-    double t = f * glm::dot(edge2, q);
+    real_t t = f * glm::dot(edge2, q);
     if (t < constant::intersection_tests::epsilon ||
         t + constant::intersection_tests::epsilon > glm::length(seg))
         return false;
@@ -71,17 +71,17 @@ bool ldplab::rtscuda::IntersectionTest::intersectSegmentTriangle(
 bool ldplab::rtscuda::IntersectionTest::intersectRaySphere(
     const Ray& ray, 
     const Vec3& sphere_center, 
-    const double sphere_radius, 
-    double& min_dist, 
-    double& max_dist)
+    const real_t sphere_radius, 
+    real_t& min_dist, 
+    real_t& max_dist)
 {
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
-    const double p = glm::dot(ray.direction, o_minus_c);
-    const double q = glm::dot(o_minus_c, o_minus_c) -
+    const real_t p = glm::dot(ray.direction, o_minus_c);
+    const real_t q = glm::dot(o_minus_c, o_minus_c) -
         (sphere_radius * sphere_radius);
 
-    const double discriminant = (p * p) - q;
+    const real_t discriminant = (p * p) - q;
     if (discriminant < constant::intersection_tests::epsilon)
         return false;
 
@@ -93,24 +93,24 @@ bool ldplab::rtscuda::IntersectionTest::intersectRaySphere(
 bool ldplab::rtscuda::IntersectionTest::intersectRaySphereMin(
     const Ray& ray, 
     const Vec3& sphere_center, 
-    const double sphere_radius, 
+    const real_t sphere_radius, 
     Vec3& intersection_point, 
     Vec3& intersection_normal, 
-    double& dist)
+    real_t& dist)
 {
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
-    const double p = glm::dot(ray.direction, o_minus_c);
-    const double q = glm::dot(o_minus_c, o_minus_c) -
+    const real_t p = glm::dot(ray.direction, o_minus_c);
+    const real_t q = glm::dot(o_minus_c, o_minus_c) -
         (sphere_radius * sphere_radius);
 
-    const double discriminant = (p * p) - q;
+    const real_t discriminant = (p * p) - q;
     if (discriminant < constant::intersection_tests::epsilon)
         return false;
 
     // Calculate intersections
     dist = -p - std::sqrt(discriminant);
-    const double max_dist = -p + std::sqrt(discriminant);
+    const real_t max_dist = -p + std::sqrt(discriminant);
     if (max_dist < constant::intersection_tests::epsilon)
         return false;
     intersection_point = ray.origin + dist * ray.direction;
@@ -124,18 +124,18 @@ bool ldplab::rtscuda::IntersectionTest::intersectRaySphereMin(
 bool ldplab::rtscuda::IntersectionTest::intersectRaySphereMax(
     const Ray& ray, 
     const Vec3& sphere_center, 
-    const double sphere_radius, 
+    const real_t sphere_radius, 
     Vec3& intersection_point, 
     Vec3& intersection_normal, 
-    double& dist)
+    real_t& dist)
 {
     const Vec3 o_minus_c = ray.origin - sphere_center;
 
-    const double p = glm::dot(ray.direction, o_minus_c);
-    const double q = glm::dot(o_minus_c, o_minus_c) -
+    const real_t p = glm::dot(ray.direction, o_minus_c);
+    const real_t q = glm::dot(o_minus_c, o_minus_c) -
         (sphere_radius * sphere_radius);
 
-    const double discriminant = (p * p) - q;
+    const real_t discriminant = (p * p) - q;
     if (discriminant < constant::intersection_tests::epsilon)
         return false;
 
@@ -201,7 +201,7 @@ bool ldplab::rtscuda::IntersectionTest::overlapTriangleAABB(
 
     // ========================================================================
     // Test for triangle aabb intersection
-    double min, max;
+    real_t min, max;
 
     // X-Direction
     min = std::fmin(v0.x, std::fmin(v1.x, v2.x));
@@ -228,7 +228,7 @@ bool ldplab::rtscuda::IntersectionTest::overlapTriangleAABB(
     const Vec3 e2 = v0 - v2;
 
     Vec3 abs;
-    double rad;
+    real_t rad;
 
     // BUILD ABS
     abs.x = std::abs(e0.x);
@@ -238,21 +238,21 @@ bool ldplab::rtscuda::IntersectionTest::overlapTriangleAABB(
     // AXISTEST_X01
     min = e0.z * v0.y - e0.y * v0.z;
     max = e0.z * v2.y - e0.y * v2.z;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.z * aabb_extent.y + abs.y * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Y02
     min = -e0.z * v0.x + e0.x * v0.z;
     max = -e0.z * v2.x + e0.x * v2.z;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.z * aabb_extent.x + abs.x * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Z12
     min = e0.y * v1.x - e0.x * v1.y;
     max = e0.y * v2.x - e0.x * v2.y;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.y * aabb_extent.x + abs.x * aabb_extent.y;
     if (min > rad || max < -rad) return false;
 
@@ -264,21 +264,21 @@ bool ldplab::rtscuda::IntersectionTest::overlapTriangleAABB(
     // AXISTEST_X01
     min = e1.z * v0.y - e1.y * v0.z;
     max = e1.z * v2.y - e1.y * v2.z;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.z * aabb_extent.y + abs.y * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Y02
     min = -e1.z * v0.x + e1.x * v0.z;
     max = -e1.z * v2.x + e1.x * v2.z;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.z * aabb_extent.x + abs.x * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Z0
     min = e1.y * v0.x - e1.x * v0.y;				   
     max = e1.y * v1.x - e1.x * v1.y;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.y * aabb_extent.x + abs.x * aabb_extent.y;
     if (min > rad || max < -rad) return false;
 
@@ -290,21 +290,21 @@ bool ldplab::rtscuda::IntersectionTest::overlapTriangleAABB(
     // AXISTEST_X2
     min = e2.z * v0.y - e2.y * v0.z;
     max = e2.z * v1.y - e2.y * v1.z;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.z * aabb_extent.y + abs.y * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Y1
     min = -e2.z * v0.x + e2.x * v0.z;
     max = -e2.z * v1.x + e2.x * v1.z;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.z * aabb_extent.x + abs.x * aabb_extent.z;
     if (min > rad || max < -rad) return false;
 
     // AXISTEST_Z12
     min = e2.y * v1.x - e2.x * v1.y;
     max = e2.y * v2.x - e2.x * v2.y;
-    if (min > max) std::swap<double>(min, max);
+    if (min > max) std::swap<real_t>(min, max);
     rad = abs.y * aabb_extent.x + abs.x * aabb_extent.y;
     if (min > rad || max < -rad) return false;
 
@@ -340,7 +340,7 @@ bool ldplab::rtscuda::IntersectionTest::overlapTriangleAABB(
 bool ldplab::rtscuda::IntersectionTest::overlapRayAABB(
     const Ray& ray, 
     const AABB& aabb, 
-    double& min_dist)
+    real_t& min_dist)
 {
     // Based on original code by Andrew Woo
     // from "Graphics Gems", Academic Press, 1990
@@ -409,7 +409,7 @@ bool ldplab::rtscuda::IntersectionTest::overlapRayAABB(
     {
         if (which_plane != i)
         {
-            double coord = ray.origin[i] + min_dist * ray.direction[i];
+            real_t coord = ray.origin[i] + min_dist * ray.direction[i];
             if (coord < aabb.min[i] || coord > aabb.max[i])
                 return false;
         }
@@ -421,7 +421,7 @@ bool ldplab::rtscuda::IntersectionTest::overlapSegmentAABB(
     const Vec3& segment_start,
     const Vec3& segment_end, 
     const AABB& aabb, 
-    double& min_dist)
+    real_t& min_dist)
 {
     const Ray ray{ 
         segment_start, 

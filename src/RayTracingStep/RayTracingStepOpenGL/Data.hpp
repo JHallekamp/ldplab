@@ -34,9 +34,9 @@ namespace ldplab
             struct RayProperties
             {
                 Vec3 origin;
-                double intensity;
+                real_t intensity;
                 Vec3 direction;
-                double min_bounding_volume_distance;
+                real_t min_bounding_volume_distance;
             };
             /** @brief Array containing the ray properties per ray. */
             RayProperties* ray_properties_data;
@@ -73,9 +73,9 @@ namespace ldplab
             struct OutputData
             {
                 Vec3 force;
-                double UNUSED_00;
+                real_t UNUSED_00;
                 Vec3 torque;
-                double UNUSED_01;
+                real_t UNUSED_01;
             };
             /** @brief Number of particles. */
             size_t size;
@@ -105,9 +105,9 @@ namespace ldplab
             struct IntersectionProperties
             {
                 Vec3 point;
-                double UNUSED_00;
+                real_t UNUSED_00;
                 Vec3 normal;
-                double UNUSED_01;
+                real_t UNUSED_01;
             };
             /** @brief Array containing intersection properties. */
             IntersectionProperties* intersection_properties_data;
@@ -194,11 +194,11 @@ namespace ldplab
             /** @brief Contains GPU applicable rod particle data. */
             struct RodParticleProperties
             {
-                double cap_origin_z;
-                double indentation_origin_z;
-                double cylinder_radius;
-                double cylinder_length;
-                double sphere_radius;
+                real_t cap_origin_z;
+                real_t indentation_origin_z;
+                real_t cylinder_radius;
+                real_t cylinder_length;
+                real_t sphere_radius;
             };
             /** @brief Contains the rod particles. */
             std::vector<RodParticleProperties> rod_particles_data;
@@ -243,7 +243,7 @@ namespace ldplab
             struct LinearOneDirectionalMaterialProperties
             {
                 Vec3 direction_times_gradient;
-                double index_of_refraction_sum_term;
+                real_t index_of_refraction_sum_term;
             };
             std::vector<LinearOneDirectionalMaterialProperties> material_data;
             /**
@@ -281,7 +281,7 @@ namespace ldplab
             struct BoundingSphereProperties
             {
                 Vec3 center;
-                double radius;
+                real_t radius;
             };
             /** @brief Bounding sphere data in world space. */
             std::vector<BoundingSphereProperties> sphere_properties_data;

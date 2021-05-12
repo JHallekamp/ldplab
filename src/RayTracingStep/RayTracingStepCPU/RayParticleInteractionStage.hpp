@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSCPU_RAY_PARTICLE_INTERACTION_HPP
 
 #include <memory>
+#include <LDPLAB/Datatypes.hpp>
 
 namespace ldplab
 {
@@ -101,7 +102,7 @@ namespace ldplab
              * @param cos_beta Cosine of the angle of refraction
              * @param ratio of the index of reflection
              */
-            double reflectance(double cos_alpha, double cos_beta, double n_r);
+            real_t reflectance(real_t cos_alpha, real_t cos_beta, real_t n_r);
         private:
             Context& m_context;
         

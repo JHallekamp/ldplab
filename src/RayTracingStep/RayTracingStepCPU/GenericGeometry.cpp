@@ -9,7 +9,7 @@ bool ldplab::rtscpu::IGenericGeometry::intersectRay(
     Vec3& intersection_point, 
     Vec3& intersection_normal)
 {
-    double td;
+    real_t td;
     bool to;
     return intersectRay(ray, intersection_point, intersection_normal, td, to);
 }
@@ -20,7 +20,7 @@ bool ldplab::rtscpu::IGenericGeometry::intersectRay(
     Vec3& intersection_normal,
     bool& intersects_outside)
 {
-    double t;
+    real_t t;
     return intersectRay(
         ray, 
         intersection_point, 
@@ -37,9 +37,9 @@ bool ldplab::rtscpu::IGenericGeometry::intersectSegment(
     bool& end_point_inside)
 {
     const Vec3 seg = segment_end - segment_origin;
-    const double seg_length = glm::length(seg);
+    const real_t seg_length = glm::length(seg);
     const Ray r{ segment_origin, seg / seg_length, -1 };
-    double dist = 0;
+    real_t dist = 0;
     if (!intersectRay(
         r, intersection_point, intersection_normal, dist, end_point_inside))
     {
@@ -58,7 +58,7 @@ bool ldplab::rtscpu::IGenericGeometry::intersectSegment(
 ldplab::rtscpu::RodGeometry::RodGeometry(
     const RodParticleGeometry* geometry)
 { 
-    double h, sphere_radius;
+    real_t h, sphere_radius;
     if (geometry->kappa <= constant::rod_particle::min_kappa_threshold)
         h = sphere_radius = 0;
     else
@@ -78,10 +78,10 @@ bool ldplab::rtscpu::RodGeometry::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point,
     Vec3& intersection_normal,
-    double& dist,
+    real_t& dist,
     bool& intersects_outside)
 {
-    double min, max;
+    real_t min, max;
     if (overlapCylinder(ray, min, max))
     {
         // Ray intersects the cylinder or lies within it.
@@ -111,28 +111,28 @@ bool ldplab::rtscpu::RodGeometry::intersectRay(
 
 bool ldplab::rtscpu::RodGeometry::overlapCylinder(
     const Ray& ray, 
-    double& dist_min, 
-    double& dist_max)
+    real_t& dist_min, 
+    real_t& dist_max)
 {
-    const double ray_expansion_length = 
+    const real_t ray_expansion_length = 
         (ray.direction.x * ray.direction.x + 
             ray.direction.y * ray.direction.y);
     if (ray_expansion_length < constant::intersection_tests::epsilon)
     {
-        dist_min = -std::numeric_limits<double>::infinity();
-        dist_max = std::numeric_limits<double>::infinity();
+        dist_min = -std::numeric_limits<real_t>::infinity();
+        dist_max = std::numeric_limits<real_t>::infinity();
         return (ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y <
             m_cylinder_radius * m_cylinder_radius);
     }
 
-    const double p =
+    const real_t p =
         (ray.origin.x * ray.direction.x + ray.origin.y * ray.direction.y) /
             ray_expansion_length;
-    const double q = 
+    const real_t q = 
         ((ray.origin.x * ray.origin.x + ray.origin.y * ray.origin.y) -
             m_cylinder_radius * m_cylinder_radius) / ray_expansion_length;
     
-    const double discriminant = p * p - q;
+    const real_t discriminant = p * p - q;
     if (discriminant < constant::intersection_tests::epsilon)
         return false;
     dist_min = -p - std::sqrt(discriminant);
@@ -142,15 +142,15 @@ bool ldplab::rtscpu::RodGeometry::overlapCylinder(
 
 bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
     const Ray& ray, 
-    double max_dist,
+    real_t max_dist,
     Vec3& intersection_point, 
     Vec3& intersection_normal,
-    double& isec_dist,
+    real_t& isec_dist,
     bool& intersects_outside)
 {
     // Parallel to cylinder
     Vec3 t_point, t_normal;
-    double t;
+    real_t t;
     bool cap_intersection = false, indent_intersection = false;
 
     cap_intersection = intersectCap(
@@ -189,7 +189,7 @@ bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
         return true;
 
     // Check if parallel to cylinder
-    if (max_dist < std::numeric_limits<double>::infinity())
+    if (max_dist < std::numeric_limits<real_t>::infinity())
     {
         // Not parallel to cylinder
         intersection_point = ray.origin + max_dist * ray.direction;
@@ -210,10 +210,10 @@ bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
 
 bool ldplab::rtscpu::RodGeometry::intersectOutsideCylinder(
     const Ray& ray, 
-    double min_dist,
+    real_t min_dist,
     Vec3& intersection_point, 
     Vec3& intersection_normal,
-    double& isec_dist)
+    real_t& isec_dist)
 {
     intersection_point = ray.origin + min_dist * ray.direction;
     if (intersection_point.z >= 0 &&
@@ -256,7 +256,7 @@ bool ldplab::rtscpu::RodGeometry::intersectCap(
     bool inside_cylinder,
     Vec3& intersection_point, 
     Vec3& intersection_normal, 
-    double& isec_dist,
+    real_t& isec_dist,
     bool& intersects_outside)
 {
     // Kappa too small, we have a cylinder
@@ -270,8 +270,8 @@ bool ldplab::rtscpu::RodGeometry::intersectCap(
             if (isec_dist < constant::intersection_tests::epsilon)
                 return false;
             intersection_point = ray.origin + isec_dist * ray.direction;
-            const double isec_x2 = intersection_point.x * intersection_point.x;
-            const double isec_y2 = intersection_point.y * intersection_point.y;
+            const real_t isec_x2 = intersection_point.x * intersection_point.x;
+            const real_t isec_y2 = intersection_point.y * intersection_point.y;
             if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
                 return false;
         }
@@ -286,7 +286,7 @@ bool ldplab::rtscpu::RodGeometry::intersectCap(
     }
 
     // We have a sphere
-    double min, max;
+    real_t min, max;
     if (IntersectionTest::intersectRaySphere(
         ray,
         m_origin_cap,
@@ -321,7 +321,7 @@ bool ldplab::rtscpu::RodGeometry::intersectIndent(
     bool inside_cylinder,
     Vec3& intersection_point, 
     Vec3& intersection_normal, 
-    double& isec_dist,
+    real_t& isec_dist,
     bool& intersects_outside)
 {
     // Kappa too small, we have a cylinder
@@ -335,8 +335,8 @@ bool ldplab::rtscpu::RodGeometry::intersectIndent(
             if (isec_dist < constant::intersection_tests::epsilon)
                 return false;
             intersection_point = ray.origin + isec_dist * ray.direction;
-            const double isec_x2 = intersection_point.x * intersection_point.x;
-            const double isec_y2 = intersection_point.y * intersection_point.y;
+            const real_t isec_x2 = intersection_point.x * intersection_point.x;
+            const real_t isec_y2 = intersection_point.y * intersection_point.y;
             if (isec_x2 + isec_y2 > m_cylinder_radius * m_cylinder_radius)
                 return false;
         }
@@ -351,7 +351,7 @@ bool ldplab::rtscpu::RodGeometry::intersectIndent(
     }
 
     // We have a sphere
-    double min, max;
+    real_t min, max;
     if (IntersectionTest::intersectRaySphere(
         ray,
         m_origin_indentation,
@@ -391,10 +391,10 @@ bool ldplab::rtscpu::SphericalGeometry::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
     Vec3& intersection_normal,
-    double& dist,
+    real_t& dist,
     bool& intersects_outside)
 {
-    double max;
+    real_t max;
     if (!IntersectionTest::intersectRaySphere(ray, Vec3(0, 0, 0), m_radius, dist, max))
         return false;
     intersects_outside = true;

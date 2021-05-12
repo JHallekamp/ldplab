@@ -24,7 +24,7 @@ namespace ldplab
         class Profiler
         {
         public:
-            static void addMeasurement(const std::string& key, double time_secs);
+            static void addMeasurement(const std::string& key, real_t time_secs);
             static void printReport(const std::string& file);
             static void reset();
         private:
@@ -35,9 +35,9 @@ namespace ldplab
             {
                 Result();
                 std::mutex mtx;
-                double total_time;
-                double max_time;
-                double min_time;
+                real_t total_time;
+                real_t max_time;
+                real_t min_time;
                 size_t call_counter;
             };
         private:
@@ -57,7 +57,7 @@ namespace ldplab
             void stop();
         private:
             std::chrono::steady_clock::time_point m_start;
-            double m_runtime;
+            real_t m_runtime;
             std::string m_key;
             enum class State { running, paused, stopped } m_state;
         };

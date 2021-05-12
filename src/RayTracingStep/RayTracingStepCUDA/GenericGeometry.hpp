@@ -142,7 +142,7 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist,
+                real_t& dist,
                 bool& intersects_outside) = 0;
         };
 
@@ -158,7 +158,7 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist,
+                real_t& dist,
                 bool& intersects_outside) override;
         private:
             /** 
@@ -178,30 +178,30 @@ namespace ldplab
              */
             bool overlapCylinder(
                 const Ray& ray,
-                double& dist_min,
-                double& dist_max);
+                real_t& dist_min,
+                real_t& dist_max);
             /** @brief Test inside the cylinder. */
             bool intersectInsideCylinder(
                 const Ray& ray,
-                double max_dist,
+                real_t max_dist,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& isec_dist,
+                real_t& isec_dist,
                 bool& intersects_outside);
             /** @brief Test outside the cylinder. */
             bool intersectOutsideCylinder(
                 const Ray& ray,
-                double min_dist,
+                real_t min_dist,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& isec_dist);
+                real_t& isec_dist);
             /** @brief Intersection with rod particle cap. */
             bool intersectCap(
                 const Ray& ray,
                 bool inside_cylinder,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& isec_dist,
+                real_t& isec_dist,
                 bool& intersects_outside);
             /** @brief Intersection with rod particle indent. */
             bool intersectIndent(
@@ -209,12 +209,12 @@ namespace ldplab
                 bool inside_cylinder,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& isec_dist,
+                real_t& isec_dist,
                 bool& intersects_outside);
         private:
-            double m_cylinder_radius;
-            double m_cylinder_length;
-            double m_sphere_radius;
+            real_t m_cylinder_radius;
+            real_t m_cylinder_length;
+            real_t m_sphere_radius;
             Vec3 m_origin_cap;
             Vec3 m_origin_indentation;
         };
@@ -231,10 +231,10 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist,
+                real_t& dist,
                 bool& intersects_outside) override;
         private:
-            double m_radius;
+            real_t m_radius;
         };
     }
 }

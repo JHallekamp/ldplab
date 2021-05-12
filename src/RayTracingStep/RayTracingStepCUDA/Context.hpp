@@ -105,9 +105,9 @@ namespace ldplab
                  * @brief Under this cutoff intensity rays are not further
                  *        traced.
                  */
-                double intensity_cutoff;
+                real_t intensity_cutoff;
                 /** @brief Index of reflection from the medium. */
-                double medium_reflection_index;
+                real_t medium_reflection_index;
                 /** @brief Maximum number of times a ray can split. */
                 size_t maximum_branching_depth;
                 /** @brief Number of rays per buffer. */

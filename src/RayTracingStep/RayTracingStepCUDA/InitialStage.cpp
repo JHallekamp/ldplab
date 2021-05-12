@@ -40,8 +40,8 @@ void ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::setup()
             overlaps{ }
         { }
         Vec2 center;
-        double radius;
-        double depth;
+        real_t radius;
+        real_t depth;
         // Particle index
         size_t particle_index;
         // Light source index
@@ -62,7 +62,7 @@ void ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::setup()
         const Vec3 plane_base = m_context.light_sources[i].origin_corner;
         const Vec3 light_direction = m_context.light_sources[i].orientation;
 
-        const double division_term = 
+        const real_t division_term = 
             1.0 / -glm::dot(light_direction, light_direction);
 
         std::vector<ProjectionPerLight> light_projections;
@@ -70,7 +70,7 @@ void ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::setup()
         {
             const BoundingVolumeSphere& bounding_sphere =
                 bounding_spheres[j];
-            const double t =
+            const real_t t =
                 glm::dot(light_direction, 
                     plane_base - bounding_sphere.center) * division_term;
 
@@ -177,7 +177,7 @@ void ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::setup()
     m_batch_creation_light_index = 0;
     m_batch_creation_particle_initialized = false;
     m_rasterization_step_size = 
-        1.0 / static_cast<double>(m_context.parameters.number_rays_per_unit);
+        1.0 / static_cast<real_t>(m_context.parameters.number_rays_per_unit);
 
     LDPLAB_LOG_DEBUG("RTSCUDA context %i: Particle projections created",
         m_context.uid);
@@ -185,7 +185,7 @@ void ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::setup()
 
 bool ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::projLightOverlap(
     const Vec2& center,
-    const double radius,
+    const real_t radius,
     const LightSource& light_source) const
 {
     if (center.x + radius < 0 || 
@@ -200,12 +200,12 @@ bool ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::projLightOverl
     if (center.y >= 0 && center.y <= light_source.vertical_size)
         return true;
 
-    const double r2 = radius * radius;
-    const double x2 = center.x * center.x;
-    const double y2 = center.y * center.y;
-    const double vx2 = (light_source.vertical_size - center.x) *
+    const real_t r2 = radius * radius;
+    const real_t x2 = center.x * center.x;
+    const real_t y2 = center.y * center.y;
+    const real_t vx2 = (light_source.vertical_size - center.x) *
         (light_source.vertical_size - center.x);
-    const double hy2 = (light_source.horizontal_size - center.y) *
+    const real_t hy2 = (light_source.horizontal_size - center.y) *
         (light_source.horizontal_size - center.y);
 
     if ((r2 < x2 + y2) &&
@@ -220,13 +220,13 @@ bool ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::projLightOverl
 bool ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
     (const Projection& projection, const LightSource& light_source) const
 {
-    const double ro_xxyy = m_rasterization_x * m_rasterization_x
+    const real_t ro_xxyy = m_rasterization_x * m_rasterization_x
         + m_rasterization_y * m_rasterization_y;
-    const double ro_2x = 2.0 * m_rasterization_x;
-    const double ro_2y = 2.0 * m_rasterization_y;
+    const real_t ro_2x = 2.0 * m_rasterization_x;
+    const real_t ro_2y = 2.0 * m_rasterization_y;
 
-    const double pr_rr = projection.radius * projection.radius;
-    const double pr_dist = ro_xxyy
+    const real_t pr_rr = projection.radius * projection.radius;
+    const real_t pr_dist = ro_xxyy
         - projection.center.x * ro_2x
         - projection.center.y * ro_2y
         + projection.center.x * projection.center.x
@@ -237,8 +237,8 @@ bool ldplab::rtscuda::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
     for (size_t i = 0; i < projection.overlaps.size(); ++i)
     {
         const Projection* const t_pr = projection.overlaps[i];
-        const double t_rr = t_pr->radius * t_pr->radius;
-        const double t_dist = ro_xxyy
+        const real_t t_rr = t_pr->radius * t_pr->radius;
+        const real_t t_dist = ro_xxyy
             - t_pr->center.x * ro_2x
             - t_pr->center.y * ro_2y
             + t_pr->center.x * t_pr->center.x

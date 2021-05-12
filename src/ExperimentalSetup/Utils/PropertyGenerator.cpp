@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-constexpr double const_pi()
+constexpr ldplab::real_t const_pi()
 {
     return 3.14159265358979323846264338327950288419716939937510;
 }
@@ -22,19 +22,19 @@ ldplab::Vec3 ldplab::PropertyGenerator::getRodParticleCenterOfMass(
 }
 
 ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstRadius(
-    const double R,
-    const double l,
-    const double kappa,
-    const double np,
-    const double delta_n,
-    const double gradient_direction,
+    const real_t R,
+    const real_t l,
+    const real_t kappa,
+    const real_t np,
+    const real_t delta_n,
+    const real_t gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
-    const double L = l * 2 * R;
-    const double h = kappa * R;
-    const double nu = delta_n / (L + h);
-    const double bounding_sphere_radius = 
+    const real_t L = l * 2 * R;
+    const real_t h = kappa * R;
+    const real_t nu = delta_n / (L + h);
+    const real_t bounding_sphere_radius = 
         std::sqrt(std::pow((L + h) / 2, 2.0) + R * R);
 
     ldplab::Particle particle;
@@ -62,20 +62,20 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstRadius(
 }
 
 ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstVolume(
-    const double V,
-    const double l,
-    const double kappa,
-    const double np,
-    const double delta_n,
-    const double gradient_direction,
+    const real_t V,
+    const real_t l,
+    const real_t kappa,
+    const real_t np,
+    const real_t delta_n,
+    const real_t gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
-    const double R = std::pow(V/(l * 2.0 * const_pi()),1.0/3.0);
-    const double L = l * 2 * R;
-    const double h = kappa * R;
-    const double nu = delta_n / (L + h);
-    const double bounding_sphere_radius =
+    const real_t R = std::pow(V/(l * 2.0 * const_pi()),1.0/3.0);
+    const real_t L = l * 2 * R;
+    const real_t h = kappa * R;
+    const real_t nu = delta_n / (L + h);
+    const real_t bounding_sphere_radius =
         std::sqrt(std::pow((L + h) / 2, 2.0) + R * R);
 
     ldplab::Particle particle;
@@ -105,18 +105,18 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstVolume(
 
 
 ldplab::Particle ldplab::PropertyGenerator::getRodParticle(
-    const double R, 
-    const double L, 
-    const double kappa, 
-    const double np, 
-    const double delta_n,
-    const double gradient_direction,
+    const real_t R, 
+    const real_t L, 
+    const real_t kappa, 
+    const real_t np, 
+    const real_t delta_n,
+    const real_t gradient_direction,
     const Vec3 position, 
     const Vec3 orientation)
 {
-    const double h = kappa * R;
-    const double nu = delta_n / (L + h);
-    const double bounding_sphere_radius =
+    const real_t h = kappa * R;
+    const real_t nu = delta_n / (L + h);
+    const real_t bounding_sphere_radius =
         std::sqrt(std::pow((L + h) / 2, 2.0) + R * R);
 
     ldplab::Particle particle;
@@ -144,15 +144,15 @@ ldplab::Particle ldplab::PropertyGenerator::getRodParticle(
 }
 
 ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
-    const double V,
-    const double np,
-    const double delta_n,
-    const double gradient_direction,
+    const real_t V,
+    const real_t np,
+    const real_t delta_n,
+    const real_t gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
-    const double R = std::pow(V * 3.0 / (const_pi()*4.0), (1.0 / 3.0));
-    const double nu = delta_n / (2*R);
+    const real_t R = std::pow(V * 3.0 / (const_pi()*4.0), (1.0 / 3.0));
+    const real_t nu = delta_n / (2*R);
 
     ldplab::Particle particle;
     particle.position = position;
@@ -174,14 +174,14 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
 }
 
 ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
-    const double R,
-    const double np,
-    const double delta_n,
-    const double gradient_direction,
+    const real_t R,
+    const real_t np,
+    const real_t delta_n,
+    const real_t gradient_direction,
     const Vec3 position,
     const Vec3 orientation)
 {
-    const double nu = delta_n / (2 * R);
+    const real_t nu = delta_n / (2 * R);
 
     ldplab::Particle particle;
     particle.position = position;

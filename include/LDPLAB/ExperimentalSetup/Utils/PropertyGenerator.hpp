@@ -15,44 +15,44 @@ namespace ldplab
         static Vec3 getRodParticleCenterOfMass(
             const RodParticleGeometry& geometry);
         static Particle getRodParticleConstRadius(
-            const double R,
-            const double l,
-            const double kappa,
-            const double np,
-            const double nu,
-            const double gradient_direction,
+            const real_t R,
+            const real_t l,
+            const real_t kappa,
+            const real_t np,
+            const real_t nu,
+            const real_t gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getRodParticleConstVolume(
-            const double V,
-            const double l,
-            const double kappa,
-            const double np,
-            const double nu,
-            const double gradient_direction,
+            const real_t V,
+            const real_t l,
+            const real_t kappa,
+            const real_t np,
+            const real_t nu,
+            const real_t gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getRodParticle(
-            const double R,
-            const double L,
-            const double kappa,
-            const double np,
-            const double nu,
-            const double gradient_direction,
+            const real_t R,
+            const real_t L,
+            const real_t kappa,
+            const real_t np,
+            const real_t nu,
+            const real_t gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getSphereParticleByRadius(
-            const double V,
-            const double np,
-            const double nu,
-            const double gradient_direction,
+            const real_t V,
+            const real_t np,
+            const real_t nu,
+            const real_t gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getSphereParticleByVolume(
-            const double R,
-            const double np,
-            const double nu,
-            const double gradient_direction,
+            const real_t R,
+            const real_t np,
+            const real_t nu,
+            const real_t gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
     };

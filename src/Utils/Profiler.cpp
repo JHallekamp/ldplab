@@ -7,7 +7,7 @@
 // Implementing the profiler
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_PROFILING
 void ldplab::utils::Profiler::addMeasurement(
-    const std::string& key, double time_secs)
+    const std::string& key, real_t time_secs)
 {
     Profiler& me = instance();
     Result& result = me.m_results[key];
@@ -35,8 +35,8 @@ void ldplab::utils::Profiler::printReport(const std::string& file)
         out << "  total time..: " << result.total_time << "s" << std::endl; 
         if (result.call_counter > 0)
         {
-            double avg_time = result.total_time / 
-                static_cast<double>(result.call_counter);
+            real_t avg_time = result.total_time / 
+                static_cast<real_t>(result.call_counter);
             out << "  avg time....: " << avg_time << "s" << std::endl;
             out << "  min time....: " << result.min_time << "s" << std::endl;
             out << "  max time....: " << result.max_time << "s" << std::endl;
@@ -56,8 +56,8 @@ void ldplab::utils::Profiler::reset()
         std::lock_guard<std::mutex> lck{ result.mtx };
         result.call_counter = 0;
         result.total_time = 0;
-        result.max_time = std::numeric_limits<double>::min();
-        result.min_time = std::numeric_limits<double>::max();
+        result.max_time = std::numeric_limits<real_t>::min();
+        result.min_time = std::numeric_limits<real_t>::max();
     }
 }
 
@@ -71,8 +71,8 @@ ldplab::utils::Profiler::Result::Result()
     :
     call_counter{ 0 },
     total_time{ 0 },
-    max_time{ std::numeric_limits<double>::min() },
-    min_time{ std::numeric_limits<double>::max() }
+    max_time{ std::numeric_limits<real_t>::min() },
+    min_time{ std::numeric_limits<real_t>::max() }
 { }
 
 ldplab::utils::ProfilingMeasurement::ProfilingMeasurement(std::string&& key)
@@ -95,7 +95,7 @@ void ldplab::utils::ProfilingMeasurement::pause()
     {
         const std::chrono::steady_clock::time_point now =
             std::chrono::steady_clock::now();
-        m_runtime += std::chrono::duration<double>(now - m_start).count();
+        m_runtime += std::chrono::duration<real_t>(now - m_start).count();
         m_state = State::paused;
     }
 }
@@ -117,7 +117,7 @@ void ldplab::utils::ProfilingMeasurement::stop()
         {
             const std::chrono::steady_clock::time_point now =
                 std::chrono::steady_clock::now();
-            m_runtime += std::chrono::duration<double>(now - m_start).count();
+            m_runtime += std::chrono::duration<real_t>(now - m_start).count();
         }
         Profiler::addMeasurement(m_key, m_runtime);
         m_state = State::stopped;

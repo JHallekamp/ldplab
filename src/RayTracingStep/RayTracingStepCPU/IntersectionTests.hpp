@@ -41,7 +41,7 @@ namespace ldplab
             static bool intersectRayTriangle(
                 const Ray& ray,
                 const Triangle& triangle,
-                double& dist);
+                real_t& dist);
             /**
              * @brief Computes the intersection between a line segment and a
              *        triangle.
@@ -62,7 +62,7 @@ namespace ldplab
                 const Vec3& segment_start,
                 const Vec3& segment_end,
                 const Triangle& triangle,
-                double& dist);
+                real_t& dist);
             /**
              * @brief Computes the intersection between a ray and a sphere.
              * @param[in] ray Ray for which the intersection test is executed.
@@ -87,9 +87,9 @@ namespace ldplab
             static bool intersectRaySphere(
                 const Ray& ray,
                 const Vec3& sphere_center,
-                const double sphere_radius,
-                double& min_dist,
-                double& max_dist);
+                const real_t sphere_radius,
+                real_t& min_dist,
+                real_t& max_dist);
             /**
               * @brief Computes the minimal intersection between a ray and a 
               *        sphere.
@@ -117,10 +117,10 @@ namespace ldplab
             static bool intersectRaySphereMin(
                 const Ray& ray,
                 const Vec3& sphere_center,
-                const double sphere_radius,
+                const real_t sphere_radius,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist);
+                real_t& dist);
             /**
               * @brief Computes the maximal intersection between a ray and a
               *        sphere.
@@ -148,10 +148,10 @@ namespace ldplab
             static bool intersectRaySphereMax(
                 const Ray& ray,
                 const Vec3& sphere_center,
-                const double sphere_radius,
+                const real_t sphere_radius,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist);
+                real_t& dist);
             /**
              * @brief Computes if a triangle and a axis aligned bounding box
              *        intersect.
@@ -168,13 +168,13 @@ namespace ldplab
             static bool overlapRayAABB(
                 const Ray& ray,
                 const AABB& aabb,
-                double& min_dist);
+                real_t& min_dist);
             /** @todo documentation */
             static bool overlapSegmentAABB(
                 const Vec3& segment_start,
                 const Vec3& segment_end,
                 const AABB& aabb,
-                double& min_dist);
+                real_t& min_dist);
         };
     }
 }

@@ -19,7 +19,7 @@ namespace ldplab
         /** @brief Light sources */
         std::vector<LightSource> light_sources;
         /** @brief Index of reflection of the medium. */
-        double medium_reflection_index;
+        real_t medium_reflection_index;
         /** @brief Unique ID of the experimental setup. */
         UID<ExperimentalSetup> uid;
     };

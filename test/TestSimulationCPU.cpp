@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-constexpr double const_pi()
+constexpr ldplab::real_t const_pi()
 {
     return 3.14159265358979323846264338327950288419716939937510;
 }
@@ -17,7 +17,7 @@ enum class GeometryType
     sphere,
     triangle_mesh
 };
-const GeometryType GEOMETRY_TYPE = GeometryType::triangle_mesh;
+const GeometryType GEOMETRY_TYPE = GeometryType::rod;
 
 // Folder path
 const std::string OUTPUT_DIRECTORY = 
@@ -25,20 +25,20 @@ const std::string OUTPUT_DIRECTORY =
 const std::string OBJ_PATH = "sphere.obj";
 
 // Particle Geometry
-const double PARTICLE_VOLUME = 4.0 * const_pi() / 3.0;
+const ldplab::real_t PARTICLE_VOLUME = 4.0 * const_pi() / 3.0;
 // Particle geometry properties (rod particle)
-const double ROD_PARTICLE_L = 2;
-const double ROD_PARTICLE_KAPPA = 1.0;
+const ldplab::real_t ROD_PARTICLE_L = 2;
+const ldplab::real_t ROD_PARTICLE_KAPPA = 1.0;
 
 // Particle material properties
-const double PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
-const double PARTICLE_MATERIAL_NU = 0.2;
+const ldplab::real_t PARTICLE_MATERIAL_INDEX_OF_REFRACTION = 1.51;
+const ldplab::real_t PARTICLE_MATERIAL_NU = 0.2;
 
 // Light intensity properties
-const double LIGHT_INTENSITY = 1;
+const ldplab::real_t LIGHT_INTENSITY = 1;
 
 // Reflexion index of the medium
-const double MEDIUM_REFLEXION_INDEX = 1.33;
+const ldplab::real_t MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 #ifdef _DEBUG
@@ -47,33 +47,33 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
     const size_t NUM_RTS_THREADS = 8;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 2000; //500000;
+const ldplab::real_t NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 100000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
-const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
+const ldplab::real_t RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.05; //0.005;
+const ldplab::real_t RTS_SOLVER_STEP_SIZE = 0.05; //0.005;
 // RK45
-const double RTS_SOLVER_EPSILON = 0.0000001;
-const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
-const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
+const ldplab::real_t RTS_SOLVER_EPSILON = 0.0000001;
+const ldplab::real_t RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
+const ldplab::real_t RTS_SOLVER_SAFETY_FACTOR = 0.84;
 const size_t NUM_SIM_ROTATION_STEPS = 314;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,
-    double nu,
+    ldplab::real_t nu,
     std::string path,
     std::string type,
     size_t branching_depth);
-void plotProgress(double progress);
+void plotProgress(ldplab::real_t progress);
 void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup,
-    double kappa,
-    double gradient);
+    ldplab::real_t kappa,
+    ldplab::real_t gradient);
 void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
-    double kappa,
-    double nu,
+    ldplab::real_t kappa,
+    ldplab::real_t nu,
     size_t branching_depth);
 
 int main()
@@ -87,12 +87,12 @@ int main()
     clog.subscribe();
 
     // Run simulations
-    std::vector<double> vec_kappa = { 0.0 };
+    std::vector<ldplab::real_t> vec_kappa = { 0.0 };
     if (GEOMETRY_TYPE == GeometryType::rod)
         vec_kappa.push_back(0.3);
 
-    std::vector<double> vec_nu = { 0.0, 0.15 };
-    std::vector<size_t> vec_branching_depth = { 0, 1, 2, 3, 4, MAX_RTS_BRANCHING_DEPTH };
+    std::vector<ldplab::real_t> vec_nu = { 0.0, 0.15 };
+    std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_nu.size(); ++j)
@@ -117,9 +117,9 @@ int main()
     return 0;
 }
 
-void plotProgress(double progress)
+void plotProgress(ldplab::real_t progress)
 {
-    const double progress_epsilon = 0.00001;
+    const ldplab::real_t progress_epsilon = 0.00001;
     const size_t steps = 40;
     const size_t iprogress =
         static_cast<size_t>((progress + progress_epsilon) * 100.0);
@@ -147,7 +147,7 @@ void plotProgress(double progress)
 
 std::ofstream getFileStream(
     const ldplab::Particle& particle,
-    double nu,
+    ldplab::real_t nu,
     std::string path,
     std::string type,
     size_t branching_depth)
@@ -204,19 +204,20 @@ std::ofstream getFileStream(
 
 void createExperimentalSetup(
     ldplab::ExperimentalSetup& experimental_setup,
-    double kappa,
-    double nu)
+    ldplab::real_t kappa,
+    ldplab::real_t nu)
 {
     //nu = PARTICLE_MATERIAL_NU;
     // Create particle
     ldplab::Particle particle;
-    double particle_world_extent;
+    ldplab::real_t particle_world_extent;
     if (GEOMETRY_TYPE == GeometryType::sphere)
     {
         particle = ldplab::PropertyGenerator::getSphereParticleByVolume(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             nu,
+            0.02,
             ldplab::Vec3(0.0, 0.0, 0.0),
             ldplab::Vec3(0.0, 0.0, 0.0));
     }
@@ -229,6 +230,7 @@ void createExperimentalSetup(
             kappa,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             nu,
+            0.02,
             ldplab::Vec3(0.0,0.0,0.0),
             ldplab::Vec3(0.0,0.0,0.0));
     }
@@ -244,11 +246,11 @@ void createExperimentalSetup(
         particle.geometry =
             std::make_shared<ldplab::TriangleMeshParticleGeometry>(mesh);
         ldplab::Vec3 bs_extent = mesh_aabb.max - mesh_aabb.min;
-        ldplab::Vec3 bs_center = mesh_aabb.min + 0.5 * bs_extent;
-        double bs_radius = glm::length(mesh_aabb.max - bs_center);
+        ldplab::Vec3 bs_center = mesh_aabb.min + bs_extent * static_cast<ldplab::real_t>(0.5);
+        ldplab::real_t bs_radius = glm::length(mesh_aabb.max - bs_center);
         particle.bounding_volume =
             std::make_shared<ldplab::BoundingVolumeSphere>(bs_center, bs_radius);
-        const double delta_n = nu / 2.0; //nu / (2 * bs_radius);
+        const ldplab::real_t delta_n = nu / 2.0; //nu / (2 * bs_radius);
         particle.material =
             std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
                 PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
@@ -261,7 +263,7 @@ void createExperimentalSetup(
         (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
     particle_world_extent = bs->center.z + bs->radius;
     // Create light source
-    const double LIGHT_GEOMETRY_PLANE_EXTENT = 10 * particle_world_extent;
+    const ldplab::real_t LIGHT_GEOMETRY_PLANE_EXTENT = 10 * particle_world_extent;
     const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
         ldplab::Vec3(
             -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
@@ -289,8 +291,8 @@ void createExperimentalSetup(
 
 void runSimulation(
     const ldplab::ExperimentalSetup& experimental_setup,
-    double kappa,
-    double nu,
+    ldplab::real_t kappa,
+    ldplab::real_t nu,
     size_t branching_depth)
 {
     // Start timing
@@ -299,7 +301,7 @@ void runSimulation(
         std::chrono::steady_clock::now();
 
     // Create ray tracing step
-    double rts_step_size;
+    ldplab::real_t rts_step_size;
     ldplab::ParticleMaterialLinearOneDirectional* material =
         (ldplab::ParticleMaterialLinearOneDirectional*)experimental_setup.particles[0].material.get();
     if (std::abs(material->gradient) > 1e-5)
@@ -349,15 +351,15 @@ void runSimulation(
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
-    constexpr double offset = 0;
-    constexpr double lim = const_pi();
-    constexpr double step_size = (lim - offset) /
-        static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
-    constexpr double half_step_size = step_size / 2.0;
+    constexpr ldplab::real_t offset = 0;
+    constexpr ldplab::real_t lim = const_pi();
+    constexpr ldplab::real_t step_size = (lim - offset) /
+        static_cast<ldplab::real_t>(NUM_SIM_ROTATION_STEPS - 1);
+    constexpr ldplab::real_t half_step_size = step_size / 2.0;
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     
-    for (double rotation_x = offset + step_size;
+    for (ldplab::real_t rotation_x = offset + step_size;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
@@ -387,7 +389,7 @@ void runSimulation(
     // Stop timing
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
-    const double elapsed_time = std::chrono::duration<double>(
+    const ldplab::real_t elapsed_time = std::chrono::duration<ldplab::real_t>(
         end - start).count();
     std::ofstream elapsed_time_file("cpu_simulation_time_" + identificator.str());
     elapsed_time_file << elapsed_time << "s" << std::endl;

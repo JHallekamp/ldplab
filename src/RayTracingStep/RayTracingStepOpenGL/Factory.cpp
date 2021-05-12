@@ -298,8 +298,8 @@ void ldplab::rtsogl::Factory::createRodParticleDataInstances(
         std::make_shared<RodParticleData>(context);
     context.particle_data = particle_data;
     RodParticleData::RodParticleProperties t;
-    double h;
-    double sphere_radius;
+    real_t h;
+    real_t sphere_radius;
     for (size_t i = 0; i < setup.particles.size(); ++i)
     {
         const Particle& particle = setup.particles[i];

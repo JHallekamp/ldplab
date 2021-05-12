@@ -74,7 +74,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         const Vec3& inter_point = intersection.point[i];
         const Vec3& inter_normal = intersection.normal[i];
 
-        double nr,nx,ny;
+        real_t nr,nx,ny;
         if (rays.inner_particle_rays)
         {
             nx = material->indexOfRefraction(inter_point);
@@ -88,12 +88,12 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             nr = nx / ny;
         }
 
-        double cos_a = -glm::dot(ray.direction, inter_normal);
+        real_t cos_a = -glm::dot(ray.direction, inter_normal);
 
         if (1.0 - nr * nr * (1.0 - cos_a * cos_a) >= 0)
         {
-            double cos_b = std::sqrt(1.0 - nr * nr * (1.0 - cos_a * cos_a));
-            double R = reflectance(cos_a, cos_b, nr);
+            real_t cos_b = std::sqrt(1.0 - nr * nr * (1.0 - cos_a * cos_a));
+            real_t R = reflectance(cos_a, cos_b, nr);
 
             // refracted ray
             refracted_ray.intensity = ray.intensity * (1.0 - R);
@@ -135,7 +135,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
                 reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
                 reflected_ray.origin = inter_point;
                 reflected_ray.direction = 
-                    ray.direction + inter_normal * 2.0 * cos_a;
+                    ray.direction + inter_normal * cos_a * static_cast<real_t>(2);
                 reflected_rays.active_rays++;
 
                 const Vec3 delta_momentum = nx * 
@@ -150,7 +150,7 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             else
             {
                 reflected_rays.index_data[i] = -1;
-                const Vec3 delta_momentum = inter_normal * (nx * -2.0 * cos_a);
+                const Vec3 delta_momentum = inter_normal * (nx * cos_a * -static_cast<real_t>(2));
                 const Vec3 r = inter_point -
                     m_context.particles[rays.index_data[i]].centre_of_mass;
                 output.force[rays.index_data[i]] += reflected_ray.intensity *
@@ -166,7 +166,8 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
             reflected_rays.index_data[i] = rays.index_data[i];
             reflected_rays.min_bounding_volume_distance_data[i] = 0.0;
             reflected_ray.origin = inter_point;
-            reflected_ray.direction = ray.direction + inter_normal * 2.0 * cos_a;
+            reflected_ray.direction = ray.direction + 
+                inter_normal * cos_a * static_cast<real_t>(2);
             reflected_ray.intensity = ray.intensity;
             reflected_rays.active_rays++;
 
@@ -192,12 +193,12 @@ void ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::execute(
         refracted_rays.active_rays);
 }
 
-double ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
+ldplab::real_t ldplab::rtscpu::UnpolirzedLight1DLinearIndexGradientInteraction::
     reflectance(
-    double cos_alpha, double cos_beta, double n_r)
+    real_t cos_alpha, real_t cos_beta, real_t n_r)
 {
-    double cos2_a = cos_alpha * cos_alpha;
-    double cos2_b = cos_beta * cos_beta;
+    real_t cos2_a = cos_alpha * cos_alpha;
+    real_t cos2_b = cos_beta * cos_beta;
     return (cos2_a - cos2_b) * (cos2_a - cos2_b) /
         (((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta) * 
             ((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta));

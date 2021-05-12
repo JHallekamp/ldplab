@@ -59,16 +59,16 @@ namespace ldplab
             struct Projection
             {
                 Vec2 center;
-                double radius;
+                real_t radius;
                 size_t light_index;
-                double depth;
+                real_t depth;
                 // Pointers to overlapping projections
                 std::vector<Projection*> overlaps;
             };
         private:
             bool projLightOverlap(
                 const Vec2& center,
-                const double radius,
+                const real_t radius,
                 const LightSource& light_source) const;
             bool hasToCreateRay(
                 const Projection& projection,
@@ -84,11 +84,11 @@ namespace ldplab
             size_t m_batch_creation_particle_index;
             size_t m_batch_creation_light_index;
             bool m_batch_creation_particle_initialized;
-            double m_rasterization_x;
-            double m_rasterization_y;
+            real_t m_rasterization_x;
+            real_t m_rasterization_y;
             bool m_rasterization_up;
             bool m_rasterization_right;
-            double m_rasterization_step_size;
+            real_t m_rasterization_step_size;
             std::mutex m_mutex;
         };
     }

@@ -33,13 +33,13 @@ namespace ldplab
      */
     struct LightDistributionHomogeneous : public ILightDistribution
     {
-        LightDistributionHomogeneous(double intensity)
+        LightDistributionHomogeneous(real_t intensity)
             :
             intensity{ intensity }
         {}
         Type type() const override { return Type::homogeneous; }
         /** @brief Light intensity emitted by the light source. */
-        double intensity;
+        real_t intensity;
     };
 }
 

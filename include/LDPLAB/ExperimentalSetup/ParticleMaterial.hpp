@@ -30,7 +30,7 @@ namespace ldplab
 
 	struct ParticleMaterialHomogenous : public IParticleMaterial
 	{
-        ParticleMaterialHomogenous(double index_of_refraction)
+        ParticleMaterialHomogenous(real_t index_of_refraction)
             :
             index_of_refraction{ index_of_refraction }
         {}
@@ -38,13 +38,13 @@ namespace ldplab
 		/**
 		 * @brief The index of refraction of the hole particle. 
 		 */
-		double index_of_refraction;
+		real_t index_of_refraction;
 	};
 
 	struct ParticleMaterialLinearOneDirectional : public IParticleMaterial
 	{
-        ParticleMaterialLinearOneDirectional(double index_of_refraction,
-            double gradient,
+        ParticleMaterialLinearOneDirectional(real_t index_of_refraction,
+            real_t gradient,
             Vec3 origin,
             Vec3 direction)
             :
@@ -66,7 +66,7 @@ namespace ldplab
 		 * @warning There is no checking if the position is inside the 
 		 *           particle.
 		 */
-		inline double indexOfRefraction(const Vec3& position) const { 
+		inline real_t indexOfRefraction(const Vec3& position) const { 
 		    return index_of_refraction + 
 		    	gradient * glm::dot(direction, (position - origin));
             //return index_of_refraction_minus_partial_dot +
@@ -76,11 +76,11 @@ namespace ldplab
 		 * @brief The index of refraction at the origin of the linear index 
 		 *        change.
 		 */
-		double index_of_refraction;
+		real_t index_of_refraction;
 		/**
 		 * @brief The gradient of linear index of refraction change. 
 		 */
-		double gradient;
+		real_t gradient;
 		/**
 		 * @brief The origin of the index change.
 		 * @detail The origin is given in the particle coordinate system.
@@ -93,7 +93,7 @@ namespace ldplab
 		Vec3 direction;
         
         Vec3 direction_times_gradient;
-        double index_of_refraction_minus_partial_dot;
+        real_t index_of_refraction_minus_partial_dot;
 	};
 }
 

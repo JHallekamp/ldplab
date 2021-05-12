@@ -269,18 +269,18 @@ void ldplab::rtsogl::Pipeline::processBatch(
         m_context.ogl->unbindGlContext();
         lck.unlock();
         // Compute max and average length
-        double max_intensity = 0.0, avg_intensity = 0.0;
+        real_t max_intensity = 0.0, avg_intensity = 0.0;
         for (size_t i = 0; i < buffer.size; ++i)
         {
             if (buffer.particle_index_data[i] < 0)
                 continue;
 
-            double intensity = buffer.ray_properties_data[i].intensity;
+            real_t intensity = buffer.ray_properties_data[i].intensity;
             avg_intensity += intensity;
             if (intensity > max_intensity)
                 max_intensity = intensity;
         }
-        avg_intensity /= static_cast<double>(buffer.active_rays);
+        avg_intensity /= static_cast<real_t>(buffer.active_rays);
         LDPLAB_LOG_WARNING("RTSOGL context %i: Pipeline reached max "\
             "branching depth %i with a total of %i still active rays, which "\
             "include a max intensity of %f and average intensity of %f",

@@ -72,7 +72,7 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist,
+                real_t& dist,
                 bool& intersect_outside) override;
             /** @brief Inherited via ITriangleMeshAcceleratorStructure */
             bool constructInternal(
@@ -94,7 +94,7 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                double& dist,
+                real_t& dist,
                 bool& intersect_outside) override;
             /** @brief Inherited via ITriangleMeshAcceleratorStructure */
             bool constructInternal(

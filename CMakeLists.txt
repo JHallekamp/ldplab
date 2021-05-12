@@ -6,6 +6,7 @@ project(LDPLAB
 )
 
 option (ENABEL_DOCS "Create documentation with Doxygen" OFF)
+option (LDPLAB_BUILD_OPTION_USE_SINGLE_PRECISION "Use single instead of double precision" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_RTSOGL "Use OpenGL for Graphic card processing" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA "Use CUDA for Graphic card processing" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_PROFILING "Enable LDPLAB internal profiling code" OFF)

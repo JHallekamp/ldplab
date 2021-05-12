@@ -44,8 +44,8 @@ void ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::setup()
             overlaps{ }
         { }
         Vec2 center;
-        double radius;
-        double depth;
+        real_t radius;
+        real_t depth;
         // Particle index
         size_t particle_index;
         // Light source index
@@ -62,13 +62,13 @@ void ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::setup()
         const Vec3 plane_base = m_context.light_sources[i].origin_corner;
         const Vec3 light_direction = m_context.light_sources[i].orientation;
 
-        const double division_term = 
+        const real_t division_term = 
             1.0 / -glm::dot(light_direction, light_direction);
 
         std::vector<ProjectionPerLight> light_projections;
         for (size_t j = 0; j < m_context.particles.size(); ++j)
         {
-            const double t =
+            const real_t t =
                 glm::dot(light_direction, 
                     plane_base - m_bounding_spheres[j].center) * division_term;
 
@@ -80,7 +80,7 @@ void ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::setup()
             const Vec2 center{ 
                 glm::dot(planectr,  m_context.light_sources[i].horizontal_direction),
                 glm::dot(planectr,  m_context.light_sources[i].vertical_direction) };
-            const double radius = m_bounding_spheres[j].radius;
+            const real_t radius = m_bounding_spheres[j].radius;
             if (!projLightOverlap(center, radius, m_context.light_sources[i]))
             {
                 LDPLAB_LOG_TRACE("RTSOGL context %i: Particle %i has no"\
@@ -176,7 +176,7 @@ void ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::setup()
     m_batch_creation_light_index = 0;
     m_batch_creation_particle_initialized = false;
     m_rasterization_step_size = 
-        1.0 / static_cast<double>(m_context.parameters.number_rays_per_unit);
+        1.0 / static_cast<real_t>(m_context.parameters.number_rays_per_unit);
 
     LDPLAB_LOG_DEBUG("RTSOGL context %i: Particle projections created",
         m_context.uid);
@@ -184,7 +184,7 @@ void ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::setup()
 
 bool ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::projLightOverlap(
     const Vec2& center,
-    const double radius,
+    const real_t radius,
     const LightSource& light_source) const
 {
     if (center.x + radius < 0 || 
@@ -199,12 +199,12 @@ bool ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::projLightOverla
     if (center.y >= 0 && center.y <= light_source.vertical_size)
         return true;
 
-    const double r2 = radius * radius;
-    const double x2 = center.x * center.x;
-    const double y2 = center.y * center.y;
-    const double vx2 = (light_source.vertical_size - center.x) *
+    const real_t r2 = radius * radius;
+    const real_t x2 = center.x * center.x;
+    const real_t y2 = center.y * center.y;
+    const real_t vx2 = (light_source.vertical_size - center.x) *
         (light_source.vertical_size - center.x);
-    const double hy2 = (light_source.horizontal_size - center.y) *
+    const real_t hy2 = (light_source.horizontal_size - center.y) *
         (light_source.horizontal_size - center.y);
 
     if ((r2 < x2 + y2) &&
@@ -219,13 +219,13 @@ bool ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::projLightOverla
 bool ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
     (const Projection& projection, const LightSource& light_source) const
 {
-    const double ro_xxyy = m_rasterization_x * m_rasterization_x
+    const real_t ro_xxyy = m_rasterization_x * m_rasterization_x
         + m_rasterization_y * m_rasterization_y;
-    const double ro_2x = 2.0 * m_rasterization_x;
-    const double ro_2y = 2.0 * m_rasterization_y;
+    const real_t ro_2x = 2.0 * m_rasterization_x;
+    const real_t ro_2y = 2.0 * m_rasterization_y;
 
-    const double pr_rr = projection.radius * projection.radius;
-    const double pr_dist = ro_xxyy
+    const real_t pr_rr = projection.radius * projection.radius;
+    const real_t pr_dist = ro_xxyy
         - projection.center.x * ro_2x
         - projection.center.y * ro_2y
         + projection.center.x * projection.center.x
@@ -236,8 +236,8 @@ bool ldplab::rtsogl::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
     for (size_t i = 0; i < projection.overlaps.size(); ++i)
     {
         const Projection* const t_pr = projection.overlaps[i];
-        const double t_rr = t_pr->radius * t_pr->radius;
-        const double t_dist = ro_xxyy
+        const real_t t_rr = t_pr->radius * t_pr->radius;
+        const real_t t_dist = ro_xxyy
             - t_pr->center.x * ro_2x
             - t_pr->center.y * ro_2y
             + t_pr->center.x * t_pr->center.x

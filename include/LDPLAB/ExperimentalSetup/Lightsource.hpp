@@ -59,13 +59,13 @@ namespace ldplab
          *        x-axis in world units.
          * @note The x-axis is defined by horizontal_direction
          */
-        double horizontal_size;
+        real_t horizontal_size;
         /**
          * @brief Extent of the light source rectangle in the direction of the
          *        y-axis in world units.
          * @note The y-axis is defined by vertical_direction
          */
-        double vertical_size;
+        real_t vertical_size;
         /**
          * @brief Polarization state of the Light source.
          */

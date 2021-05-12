@@ -10,12 +10,12 @@ bool ldplab::rtscpu::TriangleMeshGeometryList::intersectRay(
     const Ray& ray,
     Vec3& intersection_point,
     Vec3& intersection_normal,
-    double& dist,
+    real_t& dist,
     bool& intersect_outside)
 {
     size_t min_index = m_mesh.size();
-    double t_dist;
-    dist = std::numeric_limits<double>::max();
+    real_t t_dist;
+    dist = std::numeric_limits<real_t>::max();
     for (size_t i = 0; i < m_mesh.size(); ++i)
     {
         if (IntersectionTest::intersectRayTriangle(ray, m_mesh[i], t_dist))
@@ -54,7 +54,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
     Vec3& intersection_normal,
-    double& dist,
+    real_t& dist,
     bool& intersect_outside)
 {
     if (IntersectionTest::overlapRayAABB(ray, m_nodes[0].aabb, dist))
@@ -150,13 +150,13 @@ ldplab::AABB ldplab::rtscpu::TriangleMeshGeometryOctree::constructOctreeAABB(
 {
     AABB octree_aabb;
     octree_aabb.min = Vec3(
-        std::numeric_limits<double>::max(),
-        std::numeric_limits<double>::max(),
-        std::numeric_limits<double>::max());
+        std::numeric_limits<real_t>::max(),
+        std::numeric_limits<real_t>::max(),
+        std::numeric_limits<real_t>::max());
     octree_aabb.max = Vec3(
-        std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest());
+        std::numeric_limits<real_t>::lowest(),
+        std::numeric_limits<real_t>::lowest(),
+        std::numeric_limits<real_t>::lowest());
 
     for (size_t i = 0; i < mesh.size(); ++i)
     {
@@ -203,10 +203,11 @@ void ldplab::rtscpu::TriangleMeshGeometryOctree::constructConstructionLayers(
                 const size_t child_no = mapIndexGetChildNo(j);
                 parent.children[child_no] = j;
                 // Set AABB
-                const Vec3 half_size = (parent.aabb.max - parent.aabb.min) * 0.5;
-                const double b0 = (child_no & 1) ? 1.0 : 0.0;
-                const double b1 = (child_no & 2) ? 1.0 : 0.0;
-                const double b2 = (child_no & 4) ? 1.0 : 0.0;
+                const Vec3 half_size = (parent.aabb.max - parent.aabb.min) * 
+                    static_cast<real_t>(0.5);
+                const real_t b0 = (child_no & 1) ? 1.0 : 0.0;
+                const real_t b1 = (child_no & 2) ? 1.0 : 0.0;
+                const real_t b2 = (child_no & 4) ? 1.0 : 0.0;
                 layers[i][j].aabb.min = Vec3(
                     parent.aabb.min.x + b0 * half_size.x,
                     parent.aabb.min.y + b1 * half_size.y, 
@@ -323,15 +324,15 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectRecursive(
     }
     else
     {
-        std::array<std::pair<size_t, double>, 8> nodes;
-        double dist;
+        std::array<std::pair<size_t, real_t>, 8> nodes;
+        real_t dist;
         size_t intersections = 0;
         // Check for intersections with the subdivisions
         for (size_t i = 0; i < node.num_children; ++i)
         {
             const size_t c = node.children[i];
             if (IntersectionTest::overlapRayAABB(ray, m_nodes[c].aabb, dist))
-                nodes[intersections++] = std::pair<size_t, double>(c, dist);
+                nodes[intersections++] = std::pair<size_t, real_t>(c, dist);
         }
         // Sort based on distance of intersection
         for (size_t j = 0; j < intersections; ++j)
@@ -373,7 +374,7 @@ bool ldplab::rtscpu::TriangleMeshGeometryOctree::intersectBase(
     bool& intersect_outside)
 {
     size_t min_index = triangles.size();
-    double min_dist = std::numeric_limits<double>::max(), t_dist;
+    real_t min_dist = std::numeric_limits<real_t>::max(), t_dist;
     for (size_t i = 0; i < triangles.size(); ++i)
     {
         if (IntersectionTest::intersectRayTriangle(ray, triangles[i], t_dist))
@@ -405,6 +406,6 @@ ldplab::rtscpu::TriangleMeshGeometryOctree::OctreeNode::OctreeNode()
     num_children{ 0 },
     children{ 0 }
 {
-    aabb.min = Vec3(std::numeric_limits<double>::max());
-    aabb.max = Vec3(std::numeric_limits<double>::lowest());
+    aabb.min = Vec3(std::numeric_limits<real_t>::max());
+    aabb.max = Vec3(std::numeric_limits<real_t>::lowest());
 }

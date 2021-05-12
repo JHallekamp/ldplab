@@ -67,13 +67,13 @@ bool ldplab::ObjLoader::loadTriangleMesh(
     Vec3& min = mesh_aabb.min;
     Vec3& max = mesh_aabb.max;
     min = Vec3(
-        std::numeric_limits<double>::max(),
-        std::numeric_limits<double>::max(),
-        std::numeric_limits<double>::max());
+        std::numeric_limits<real_t>::max(),
+        std::numeric_limits<real_t>::max(),
+        std::numeric_limits<real_t>::max());
     max = Vec3(
-        std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest());
+        std::numeric_limits<real_t>::lowest(),
+        std::numeric_limits<real_t>::lowest(),
+        std::numeric_limits<real_t>::lowest());
     for (size_t f = 0; f < shapes[0].mesh.indices.size() / 3; ++f)
     {
         tinyobj::index_t idx0 = shapes[0].mesh.indices[3 * f + 0];

@@ -40,11 +40,20 @@ bool ldplab::BuildInfo::profilingEnabled()
 #endif
 }
 
-bool ldplab::BuildInfo::RTSGPUOpenGLEnabled()
+bool ldplab::BuildInfo::OpenGLRayTracingEnabled()
 {
-#ifdef LDPLAB_BUILD_OPTION_DISABLE_RTSGPU_OGL
-    return false;
-#else
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSOGL
     return true;
+#else
+    return false;
+#endif
+}
+
+bool ldplab::BuildInfo::CUDARayTracingEnabled()
+{
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+    return true;
+#else
+    return false;
 #endif
 }

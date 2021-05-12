@@ -42,7 +42,7 @@ namespace ldplab
             bool initGPU(const RayTracingStepOpenGLInfo& info);
         private:
             Mat3 getRotationMatrix(
-                double rx, double ry, double rz, RotationOrder order);
+                real_t rx, real_t ry, real_t rz, RotationOrder order);
             /**
             * @brief Constructor
             */

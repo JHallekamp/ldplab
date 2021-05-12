@@ -6,6 +6,7 @@ set(HEADER_ROOT
 set(HEADER_LDPLAB
 	"${LDPLAB_SOURCE_DIR}/include/LDPLAB/BuildInfo.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Constants.hpp"
+    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Datatypes.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Geometry.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/LogCallback.hpp"
     "${LDPLAB_SOURCE_DIR}/include/LDPLAB/Profiling.hpp"
@@ -213,6 +214,10 @@ target_link_libraries(ldplab
         glm
         Threads::Threads
 )
+
+if(LDPLAB_BUILD_OPTION_USE_SINGLE_PRECISION)
+    target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_USE_SINGLE_PRECISION)
+endif()
 
 if(LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)

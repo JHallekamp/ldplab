@@ -129,8 +129,8 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
         }
         else
         {
-            const double nx = material->indexOfRefraction(x.r);
-            const double ny = material->indexOfRefraction(x_new.r);
+            const real_t nx = material->indexOfRefraction(x.r);
+            const real_t ny = material->indexOfRefraction(x_new.r);
             const Vec3 t_old_direction = glm::normalize(x.w);
             const Vec3 t_new_direction = glm::normalize(x_new.w);
             const Vec3 delta_momentum = nx * t_old_direction -
@@ -149,19 +149,19 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
 void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::rk4(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
-    const double h,
+    const real_t h,
     Arg& x_new) const
 {
     Arg k[4]{};
-    const double beta[4] = { 1.0, 0.5, 0.5, 1.0 };
-    const double c[4] = { 1.0, 2.0, 2.0, 1.0 };
+    const real_t beta[4] = { 1.0, 0.5, 0.5, 1.0 };
+    const real_t c[4] = { 1.0, 2.0, 2.0, 1.0 };
     x_new = { {0,0,0}, {0,0,0} };
     for (size_t i = 0; i < 4; ++i)
     {
         Arg x_step = x;
         if (i > 0)
         {
-            const double hb = h * beta[i];
+            const real_t hb = h * beta[i];
             x_step.w.x += k[i-1].w.x * hb;
             x_step.w.y += k[i-1].w.y * hb;
             x_step.w.z += k[i-1].w.z * hb;
@@ -171,7 +171,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::rk4(
         }
         // eikonal(particle, x_step)
         k[i].w = particle->direction_times_gradient;
-        const double index_of_refraction =
+        const real_t index_of_refraction =
             1.0 / particle->indexOfRefraction(x_step.r);
         k[i].r.x = x_step.w.x * index_of_refraction;
         k[i].r.y = x_step.w.y * index_of_refraction;
@@ -263,10 +263,10 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
         ray.direction * material->indexOfRefraction(ray.origin),
         ray.origin };
     Arg x_new{};
-    double h = m_parameters.initial_step_size;
+    real_t h = m_parameters.initial_step_size;
     while (!intersected)
     {
-        double error = rk45(material, x, h, x_new);
+        real_t error = rk45(material, x, h, x_new);
         if (error <= m_parameters.epsilon)
         {
             intersected =
@@ -327,8 +327,8 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
             }
             else
             {
-                const double nx = material->indexOfRefraction(x.r);
-                const double ny = material->indexOfRefraction(x_new.r);
+                const real_t nx = material->indexOfRefraction(x.r);
+                const real_t ny = material->indexOfRefraction(x_new.r);
                 Vec3 t_old_direction = glm::normalize(x.w);
                 Vec3 t_new_direction = glm::normalize(x_new.w);
                 const Vec3 delta_momentum = nx * t_old_direction -
@@ -354,10 +354,10 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
     }
 }
 
-double ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::rk45(
+ldplab::real_t ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::rk45(
     const ParticleMaterialLinearOneDirectional* particle,
     const Arg& x,
-    const double h,
+    const real_t h,
     Arg& x_new) const
 {
     Arg k[6]{};
@@ -369,7 +369,7 @@ double ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::rk45(
         Arg x_step = x;
         for (size_t j = 0; j < i; ++j)
         {
-            const double hb = h * beta[i * 6 + j];
+            const real_t hb = h * beta[i * 6 + j];
             x_step.w.x += k[j].w.x * hb;
             x_step.w.y += k[j].w.y * hb;
             x_step.w.z += k[j].w.z * hb;
@@ -379,7 +379,7 @@ double ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::rk45(
         }
         // eikonal(particle, x_step)
         k[i].w = particle->direction_times_gradient;
-        const double index_of_refraction =
+        const real_t index_of_refraction =
             1.0 / particle->indexOfRefraction(x_step.r);
         k[i].r.x = x_step.w.x * index_of_refraction;
         k[i].r.y = x_step.w.y * index_of_refraction;
@@ -433,9 +433,9 @@ inline ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::Arg
         x.w / particle->indexOfRefraction(x.r) };
 }
 
-double ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::Arg::absoluteMax()
+ldplab::real_t ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::Arg::absoluteMax()
 {
-    double max = std::abs(w.x);
+    real_t max = std::abs(w.x);
     if (max < std::abs(w.y))
         max = std::abs(w.y);
     if (max < std::abs(w.z))

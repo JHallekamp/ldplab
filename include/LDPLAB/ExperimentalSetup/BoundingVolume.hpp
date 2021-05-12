@@ -30,7 +30,7 @@ namespace ldplab
     /** @brief Contains parameters of bounding sphere. */
     struct BoundingVolumeSphere : public IBoundingVolume
     {
-        BoundingVolumeSphere(Vec3 center, double radius)
+        BoundingVolumeSphere(Vec3 center, real_t radius)
             :
             center{ center },
             radius{ radius }
@@ -41,7 +41,7 @@ namespace ldplab
          */
         Type type() const override { return Type::sphere; }
         /** @brief Radius of the sphere in world space. */
-        double radius;
+        real_t radius;
         /** @brief Center of the sphere in particle space. */
         Vec3 center;
     };

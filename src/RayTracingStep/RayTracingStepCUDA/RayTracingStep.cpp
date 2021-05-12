@@ -21,9 +21,9 @@ ldplab::rtscuda::RayTracingStep::RayTracingStep(
 }
 
 ldplab::Mat3 ldplab::rtscuda::RayTracingStep::getRotationMatrix(
-    double rx, 
-    double ry, 
-    double rz,
+    real_t rx, 
+    real_t ry, 
+    real_t rz,
     RotationOrder order)
 {
     ldplab::Mat3 rotx(0), roty(0), rotz(0);
@@ -150,7 +150,7 @@ void ldplab::rtscuda::RayTracingStep::execute(
 
     std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
-    const double elapsed_time = std::chrono::duration<double>(
+    const real_t elapsed_time = std::chrono::duration<real_t>(
             end - start).count();
     LDPLAB_LOG_INFO("RTSCUDA context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);

@@ -27,30 +27,30 @@ namespace ldplab
 
     struct RK45Parameter : public IEikonalSolverParameter
     {
-        RK45Parameter(double initial_step_size, double epsilon, double safety_factor)
+        RK45Parameter(real_t initial_step_size, real_t epsilon, real_t safety_factor)
             :
             initial_step_size{ initial_step_size },
             epsilon{ epsilon },
             safety_factor{ safety_factor }
         {}
         /** @brief Initial step size for each integration method. */
-        double initial_step_size;
+        real_t initial_step_size;
         /** @brief epsilon Maximum error tolerance of the integration steps. */
-        double epsilon;
+        real_t epsilon;
         /** @brief Factor for new step size calculation in RK45 Method. */
-        double safety_factor;
+        real_t safety_factor;
 
         Type type() const override { return IEikonalSolverParameter::Type::rk45; }
     };
 
     struct RK4Parameter : public IEikonalSolverParameter
     {
-        RK4Parameter(double step_size)
+        RK4Parameter(real_t step_size)
             :
             step_size{ step_size }
         {}
         /** @brief Initial step size for each integration method. */
-        double step_size;
+        real_t step_size;
 
         Type type() const override { return IEikonalSolverParameter::Type::rk4; }
     };

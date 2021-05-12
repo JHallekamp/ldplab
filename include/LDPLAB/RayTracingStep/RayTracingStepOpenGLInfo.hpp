@@ -27,7 +27,7 @@ namespace ldplab
         /** @brief Parameters for the Eikonal solver. */
         std::shared_ptr<IEikonalSolverParameter> solver_parameters;
         /**  @brief Under this cutoff intensity rays are not further traced. */
-        double intensity_cutoff;
+        real_t intensity_cutoff;
         /** @brief Number of rays per buffer. */
         size_t number_rays_per_buffer;
         /** @brief Number of rays per light source square unit */

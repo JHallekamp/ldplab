@@ -35,7 +35,7 @@ namespace ldplab
             /** @brief Array containing size (particle) indices. */
             int32_t* index_data;
             /** @brief Array containing the min distance to bounding volumes */
-            double* min_bounding_volume_distance_data;
+            real_t* min_bounding_volume_distance_data;
             /** @brief Counter for the still active rays inside this. */
             size_t active_rays;
             /** @brief Counter for the active rays that are in world space. */
