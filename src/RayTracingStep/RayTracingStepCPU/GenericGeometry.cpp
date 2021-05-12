@@ -48,7 +48,7 @@ bool ldplab::rtscpu::IGenericGeometry::intersectSegment(
     }
     else
     {
-        if (dist <= seg_length)
+        if (dist <= seg_length + constant::intersection_tests::epsilon)
             return true;
         end_point_inside = !end_point_inside;
         return false;
