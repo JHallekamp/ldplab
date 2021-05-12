@@ -18,7 +18,7 @@ namespace ldplab
             struct
             {
                 /** @brief 2D array holding index arrays per buffer. */
-                CudaPitchedPtr<uint32_t> index_buffers;
+                CudaPitchedPtr<int32_t> index_buffers;
                 /** @brief 2D array of origin vector arrays per buffers. */
                 CudaPitchedPtr<Vec3> origin_buffers;
                 /** @brief 2D array of direction vector arrays per buffer. */
@@ -35,7 +35,7 @@ namespace ldplab
             struct
             {
                 /** @brief Array of particle indices. */
-                CudaLinearArray<uint32_t> indices;
+                CudaLinearArray<int32_t> indices;
                 /** @brief Array of intersection points. */
                 CudaLinearArray<Vec3> intersection_points;
                 /** @brief Array of intersection normals. */
@@ -49,6 +49,30 @@ namespace ldplab
                 /** @brief Array containing torque vectors per particle. */
                 CudaLinearArray<Vec3> torque_per_particle;
             } OutputBufferData;
+            /** @brief Transformation data. */
+            struct
+            {
+                /** 
+                 * @brief Array containing world to particle space 
+                 *        translation vectors per particle. 
+                 */
+                CudaLinearArray<Vec3> w2p_translation_vectors;
+                /**
+                 * @brief Array containing world to particle space
+                 *        rotation and scale matrices per particle.
+                 */
+                CudaLinearArray<Mat3> w2p_rotation_scale_matrices;
+                /**
+                 * @brief Array containing particle to world space
+                 *        translation vectors per particle.
+                 */
+                CudaLinearArray<Vec3> p2w_translation_vectors;
+                /**
+                * @brief Array containing particle to world space
+                *        scale and rotation matrices per particle.
+                */
+                CudaLinearArray<Mat3> p2w_scale_rotation_matrices;
+            } ParticleTransformationData;
         };
     }
 }

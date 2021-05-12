@@ -148,18 +148,18 @@ set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
 )
 
 set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
-	RayTracingStep/RayTracingStepCUDA/AcceleratorStructures.cpp
-	RayTracingStep/RayTracingStepCUDA/BufferControl.cpp
-    RayTracingStep/RayTracingStepCUDA/Factory.cpp
-    RayTracingStep/RayTracingStepCUDA/GenericGeometry.cpp
-    RayTracingStep/RayTracingStepCUDA/InitialStage.cpp
-    RayTracingStep/RayTracingStepCUDA/InnerParticlePropagationStage.cpp
-	RayTracingStep/RayTracingStepCUDA/IntersectionTests.cpp
-    RayTracingStep/RayTracingStepCUDA/Pipeline.cpp
-    RayTracingStep/RayTracingStepCUDA/RayBoundingVolumeIntersectionTestStage.cpp
-    RayTracingStep/RayTracingStepCUDA/RayParticleInteractionStage.cpp
-    RayTracingStep/RayTracingStepCUDA/RayParticleIntersectionTestStage.cpp
-    RayTracingStep/RayTracingStepCUDA/RayTracingStep.cpp
+	RayTracingStep/RayTracingStepCUDA/AcceleratorStructures.cu
+	RayTracingStep/RayTracingStepCUDA/BufferControl.cu
+    RayTracingStep/RayTracingStepCUDA/Factory.cu
+    RayTracingStep/RayTracingStepCUDA/GenericGeometry.cu
+    RayTracingStep/RayTracingStepCUDA/InitialStage.cu
+    RayTracingStep/RayTracingStepCUDA/InnerParticlePropagationStage.cu
+	RayTracingStep/RayTracingStepCUDA/IntersectionTests.cu
+    RayTracingStep/RayTracingStepCUDA/Pipeline.cu
+    RayTracingStep/RayTracingStepCUDA/RayBoundingVolumeIntersectionTestStage.cu
+    RayTracingStep/RayTracingStepCUDA/RayParticleInteractionStage.cu
+    RayTracingStep/RayTracingStepCUDA/RayParticleIntersectionTestStage.cu
+    RayTracingStep/RayTracingStepCUDA/RayTracingStep.cu
 )
 
 if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
@@ -269,6 +269,10 @@ endif()
 
 if(LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
+endif()
+
+if (TINYOBJLOADER_USE_DOUBLE)
+	target_compile_definitions(ldplab PRIVATE TINYOBJLOADER_USE_DOUBLE)
 endif()
 
 target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")

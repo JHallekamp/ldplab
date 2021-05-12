@@ -9,7 +9,7 @@ namespace ldplab
 {
     namespace rtscuda
     {
-        __global__ bool intersectRaySphere(
+        __device__ bool intersectRaySphere(
             const Vec3& ray_origin,
             const Vec3& ray_direction,
             const Vec3& sphere_center,
@@ -24,7 +24,7 @@ namespace ldplab
             const double discriminant = (p * p) - q;
             if (discriminant < constant::intersection_tests::epsilon)
                 return false;
-            dist_min = -p + std::sqrt(discriminant);
+            dist_min = -p - std::sqrt(discriminant);
             dist_max = -p + std::sqrt(discriminant);
             return dist_max >= constant::intersection_tests::epsilon;
         }
