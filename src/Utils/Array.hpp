@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <cstring>
 #include <vector>
 
 namespace ldplab
