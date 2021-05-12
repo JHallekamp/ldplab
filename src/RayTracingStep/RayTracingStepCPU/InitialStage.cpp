@@ -138,7 +138,7 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::setup()
             const size_t particle_index =
                 projection_per_light_source[i][j].particle_index;
             projection_per_light_source[i][j].light_index =
-                m_projections_per_particle[particle_index].size();;
+                m_projections_per_particle[particle_index].size();
             Projection proj;
             proj.center = projection_per_light_source[i][j].center;
             proj.radius = projection_per_light_source[i][j].radius;
