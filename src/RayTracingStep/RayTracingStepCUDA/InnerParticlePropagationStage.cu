@@ -123,7 +123,18 @@ void ldplab::rtscuda::EikonalSolverRK4LinearIndexGradient::
                 }
             }
             else
+            {
                 ray.direction = glm::normalize(x.w);
+                const double nx = material->indexOfRefraction(x.r);
+                const double ny = material->indexOfRefraction(inter_point);
+                const Vec3 delta_momentum = (nx - ny) * ray.direction;
+                const Vec3 r = inter_point -
+                    m_context.particles[particle].centre_of_mass;
+                output.force[particle] += ray.intensity *
+                    delta_momentum;
+                output.torque[particle] += ray.intensity *
+                    glm::cross(r, delta_momentum);
+            }
             return;
         }
         else
@@ -321,7 +332,18 @@ void ldplab::rtscuda::EikonalSolverRK45LinearIndexGradient::
                     }
                 }
                 else
+                {
                     ray.direction = glm::normalize(x.w);
+                    const double nx = material->indexOfRefraction(x.r);
+                    const double ny = material->indexOfRefraction(inter_point);
+                    const Vec3 delta_momentum = (nx - ny) * ray.direction;
+                    const Vec3 r = inter_point -
+                        m_context.particles[particle].centre_of_mass;
+                    output.force[particle] += ray.intensity *
+                        delta_momentum;
+                    output.torque[particle] += ray.intensity *
+                        glm::cross(r, delta_momentum);
+                }
                 return;
             }
             else
