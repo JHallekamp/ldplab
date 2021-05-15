@@ -17,11 +17,11 @@ enum class GeometryType
     sphere,
     triangle_mesh
 };
-const GeometryType GEOMETRY_TYPE = GeometryType::triangle_mesh;
+const GeometryType GEOMETRY_TYPE = GeometryType::rod;
 
 // Folder path
 const std::string OUTPUT_DIRECTORY = 
-    "SimData\\";
+    "results\\cpu_";
 const std::string OBJ_PATH = "sphere.obj";
 
 // Particle Geometry
@@ -47,7 +47,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
     const size_t NUM_RTS_THREADS = 8;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 2000; //500000;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000; //500000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
@@ -79,7 +79,7 @@ void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
 int main()
 {
     // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "test_simulation_cpu.log" };
+    ldplab::LogCallbackFileStream flog{ "logs/test_simulation_cpu.log" };
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
@@ -91,8 +91,8 @@ int main()
     if (GEOMETRY_TYPE == GeometryType::rod)
         vec_kappa.push_back(0.3);
 
-    std::vector<double> vec_nu = { 0.0, 0.15 };
-    std::vector<size_t> vec_branching_depth = { 0, 1, 2, 3, 4, MAX_RTS_BRANCHING_DEPTH };
+    std::vector<double> vec_nu = { 0.15 };
+    std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_nu.size(); ++j)
@@ -217,6 +217,7 @@ void createExperimentalSetup(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             nu,
+            1.0,
             ldplab::Vec3(0.0, 0.0, 0.0),
             ldplab::Vec3(0.0, 0.0, 0.0));
     }
@@ -229,6 +230,7 @@ void createExperimentalSetup(
             kappa,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             nu,
+            1.0,
             ldplab::Vec3(0.0,0.0,0.0),
             ldplab::Vec3(0.0,0.0,0.0));
     }
@@ -389,9 +391,9 @@ void runSimulation(
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
         end - start).count();
-    std::ofstream elapsed_time_file("cpu_simulation_time_" + identificator.str());
+    std::ofstream elapsed_time_file("logs/cpu_simulation_time_" + identificator.str());
     elapsed_time_file << elapsed_time << "s" << std::endl;
 
     // Profiling
-    ldplab::Profiling::printReports("cpu_profiling_report_" + identificator.str());
+    ldplab::Profiling::printReports("logs/cpu_profiling_report_" + identificator.str());
 }

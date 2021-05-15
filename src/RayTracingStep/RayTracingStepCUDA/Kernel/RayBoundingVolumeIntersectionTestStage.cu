@@ -32,8 +32,7 @@ namespace ldplab
             if (gi >= num_rays)
                 return;
             // Check if the ray already is in a particle space or is invalid
-            if (ray_particle_indices[gi] < 0 ||
-                ray_particle_indices[gi] >= num_particles)
+            if (ray_particle_indices[gi] < static_cast<int32_t>(num_particles))
                 return;
             // Setup temporary variables
             double tmin, tmax;

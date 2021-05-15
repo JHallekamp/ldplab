@@ -62,6 +62,7 @@ set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
 	RayTracingStep/RayTracingStepCUDA/BufferControl.hpp
     RayTracingStep/RayTracingStepCUDA/Context.hpp
     RayTracingStep/RayTracingStepCUDA/CudaContext.hpp
+    RayTracingStep/RayTracingStepCUDA/CudaData.hpp
     RayTracingStep/RayTracingStepCUDA/CudaResource.hpp
     RayTracingStep/RayTracingStepCUDA/Data.hpp
     RayTracingStep/RayTracingStepCUDA/Factory.hpp
@@ -150,6 +151,7 @@ set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU
 set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
 	RayTracingStep/RayTracingStepCUDA/AcceleratorStructures.cu
 	RayTracingStep/RayTracingStepCUDA/BufferControl.cu
+	RayTracingStep/RayTracingStepCUDA/CudaContext.cu
     RayTracingStep/RayTracingStepCUDA/Factory.cu
     RayTracingStep/RayTracingStepCUDA/GenericGeometry.cu
     RayTracingStep/RayTracingStepCUDA/InitialStage.cu
@@ -261,6 +263,7 @@ endif()
 if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
 	set_target_properties(ldplab PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+	set_target_properties(ldplab PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 endif()
 
 if(LDPLAB_BUILD_OPTION_ENABLE_PROFILING)

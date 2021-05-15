@@ -195,6 +195,8 @@ bool ldplab::rtscuda::Factory::createContext(
 {
     context = std::unique_ptr<Context>(
         new Context{ setup.particles, setup.light_sources });
+    if (!context->cuda_context.create(info, setup))
+        return false;
     context->thread_pool = 
         std::make_shared<utils::ThreadPool>(info.number_parallel_pipelines);
     context->particle_transformations.resize(context->particles.size());

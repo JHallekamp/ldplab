@@ -116,6 +116,9 @@ void ldplab::rtscuda::RayTracingStep::updateContext(const SimulationState& input
                 m_context->particle_transformations[i].p2w_translation;
         }
     }
+
+    // Update cuda context
+    m_context->cuda_context.update(input);
 }
 
 void ldplab::rtscuda::RayTracingStep::execute(

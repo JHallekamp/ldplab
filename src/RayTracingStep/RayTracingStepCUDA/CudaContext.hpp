@@ -2,8 +2,13 @@
 #define WWU_LDPLAB_RTSCUDA_CUDA_CONTEXT_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
+#include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 #include <LDPLAB/Geometry.hpp>
+#include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
+#include <LDPLAB/SimulationState.hpp>
+#include <memory>
 
+#include "CudaData.hpp"
 #include "CudaResource.hpp"
 #include "Data.hpp"
 
@@ -14,6 +19,12 @@ namespace ldplab
         /** @brief Holds any resources acquired for the use of CUDA. */
         struct CudaContext
         {
+            /** @brief Creates the context and uploads neccessary data. */
+            bool create(
+                const RayTracingStepCUDAInfo& info,
+                const ExperimentalSetup& setup);
+            /** @brief Updates the context and uploads neccessary data. */
+            bool update(const SimulationState& input);
             /** @brief Ray buffer storage resources. */
             struct
             {
@@ -30,7 +41,7 @@ namespace ldplab
                  *        per buffer.
                  */
                 CudaPitchedPtr<double> min_bounding_volume_distance_buffers;
-            } RayBufferData;
+            } ray_buffer_data;
             /** @brief Intersection buffer storage resources. */
             struct
             {
@@ -40,7 +51,7 @@ namespace ldplab
                 CudaLinearArray<Vec3> intersection_points;
                 /** @brief Array of intersection normals. */
                 CudaLinearArray<Vec3> intersection_normal;
-            } IntersectionBufferData;
+            } intersection_buffer_data;
             /** @brief Output buffer storage resources. */
             struct
             {
@@ -48,7 +59,7 @@ namespace ldplab
                 CudaLinearArray<Vec3> force_per_particle;
                 /** @brief Array containing torque vectors per particle. */
                 CudaLinearArray<Vec3> torque_per_particle;
-            } OutputBufferData;
+            } output_buffer_data;
             /** @brief Transformation data. */
             struct
             {
@@ -72,7 +83,9 @@ namespace ldplab
                 *        scale and rotation matrices per particle.
                 */
                 CudaLinearArray<Mat3> p2w_scale_rotation_matrices;
-            } ParticleTransformationData;
+            } transformation_data;
+            /** @brief Contains bounding volume data. */
+            std::shared_ptr<IBoundingVolumeCudaData> bounding_volume_data;
         };
     }
 }

@@ -1,3 +1,5 @@
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
 #include "InnerParticlePropagationStage.hpp"
 
 #include "Data.hpp"
@@ -469,3 +471,5 @@ double ldplab::rtscuda::EikonalSolverRK45LinearIndexGradient::Arg::absoluteMax()
         max = std::abs(r.z);
     return max;
 }
+
+#endif

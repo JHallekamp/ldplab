@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 
+#include "CudaContext.hpp"
 #include "RayTracingStep.hpp"
 #include "Pipeline.hpp"
 #include "Data.hpp"
@@ -132,6 +133,8 @@ namespace ldplab
                  */
                 bool return_force_in_particle_coordinate_system;
             } flags;
+            /** @brief Cuda context. */
+            CudaContext cuda_context;
         };
     }
 }
