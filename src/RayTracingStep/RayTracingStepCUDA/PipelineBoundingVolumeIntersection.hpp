@@ -7,12 +7,15 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <memory>
 
-#include "Context.hpp"
+#include "GenericBoundingVolume.hpp"
 
 namespace ldplab
 {
     namespace rtscuda
     {
+        // Prototype
+        struct Context;
+
         /**
          * @brief Typedefinition of ray bounding volume intersection stage.
          * @param[in] ray_index_buffer Buffer containing ray indices.
@@ -49,6 +52,7 @@ namespace ldplab
         class IPipelineBoundingVolumeIntersectionStage
         {
         public:
+            virtual ~IPipelineBoundingVolumeIntersectionStage() { }
             /** @brief Creates an instance of a pipeline stage implementation. */
             static std::shared_ptr<IPipelineBoundingVolumeIntersectionStage>
                 createInstance(

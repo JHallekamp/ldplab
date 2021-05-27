@@ -221,6 +221,42 @@ namespace ldplab
         private:
             CudaPtr<Data> m_data;
         };
+
+        /** @brief Geometry implementation for sphere particles. */
+        class SphereParticle : public GenericParticleGeometry
+        {
+        public:
+            /** @brief Rod particle data. */
+            struct Data
+            {
+                double radius;
+            };
+        protected:
+            /** @brief Inherited via ldplab::rtscuda::GenericParticleGeometry. */
+            bool allocate(
+                std::shared_ptr<IParticleGeometry> particle_geometry) override;
+            /** @brief Inherited via ldplab::rtscuda::GenericParticleGeometry. */
+            void* getResourcePtr() override;
+            /** @brief Inherited via ldplab::rtscuda::GenericParticleGeometry. */
+            intersectRayParticleGeometryFunction_t getIsecFunction() override;
+            /** @brief Inherited via ldplab::rtscuda::GenericParticleGeometry. */
+            GenericParticleGeometryData::Type getGeometryType() override;
+        private:
+            /** @brief Intersection kernel. */
+            static __device__ bool intersectRayKernel(
+                const Vec3& ray_origin,
+                const Vec3& ray_direction,
+                void* particle_geometry_data,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                double& dist,
+                bool& intersects_outside);
+            /** @brief Actual function pointer. */
+            static __device__ intersectRayParticleGeometryFunction_t
+                intersect_ray_kernel_ptr;
+        private:
+            CudaPtr<Data> m_data;
+        };
     }
 }
 

@@ -7,13 +7,15 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <memory>
 
-#include "Context.hpp"
 #include "GenericParticleGeometry.hpp"
 
 namespace ldplab
 {
     namespace rtscuda
     {
+        // Prototype
+        struct Context;
+
         /** @brief Typedefinition of ray particle intersection stage. */
         typedef void (*pipelineParticleIntersectionStageKernel_t)(
             int32_t* input_ray_index_buffer,
@@ -30,6 +32,7 @@ namespace ldplab
         class IPipelineParticleIntersectionStage
         {
         public:
+            virtual ~IPipelineParticleIntersectionStage() { }
             /** @brief Creates an instance of a pipeline stage implementation. */
             static std::shared_ptr<IPipelineParticleIntersectionStage>
                 createInstance(

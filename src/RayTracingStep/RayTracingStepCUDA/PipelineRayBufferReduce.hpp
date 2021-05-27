@@ -8,12 +8,13 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <memory>
 
-#include "Context.hpp"
-
 namespace ldplab
 {
     namespace rtscuda
     {
+        // Prototype
+        struct Context;
+
         /** @brief Return value for ray buffer reduce kernel. */
         struct RayBufferReduceResult
         {

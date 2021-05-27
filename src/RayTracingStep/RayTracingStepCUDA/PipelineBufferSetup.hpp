@@ -8,12 +8,13 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <memory>
 
-#include "Context.hpp"
-
 namespace ldplab
 {
     namespace rtscuda
     {
+        // Prototype
+        struct Context;
+
         /** @brief Abstract baseclass for the gather output stage. */
         class PipelineBufferSetup
         {

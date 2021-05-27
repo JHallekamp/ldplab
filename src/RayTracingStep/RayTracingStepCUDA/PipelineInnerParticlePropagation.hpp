@@ -7,13 +7,15 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <memory>
 
-#include "Context.hpp"
 #include "GenericParticleGeometry.hpp"
 
 namespace ldplab
 {
     namespace rtscuda
     {
+        // Prototype
+        struct Context;
+
         /** @brief Typedefinition of inner particle propagation stage. */
         typedef void (*pipelineInnerParticlePropagationStageKernel_t)(
             int32_t* input_ray_index_buffer,
@@ -32,6 +34,7 @@ namespace ldplab
         class IPipelineInnerParticlePropagation
         {
         public:
+            virtual ~IPipelineInnerParticlePropagation() { }
             /** @brief Creates an instance of a pipeline stage implementation. */
             static std::shared_ptr<IPipelineInnerParticlePropagation> 
                 createInstance(

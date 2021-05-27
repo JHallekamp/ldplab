@@ -41,6 +41,10 @@ namespace ldplab
             /** @brief Structure holding simulation parameters. */
             struct
             {
+                /** @brief Ray intensity cutoff. */
+                double intensity_cutoff;
+                /** @brief Reflexion index of the medium. */
+                double medium_reflection_index;
                 /** @brief The maximum branching depth. */
                 size_t max_branching_depth;
                 /** @brief The number of rays per buffer. */
@@ -61,8 +65,8 @@ namespace ldplab
                 TransformationResources transformations;
                 /** @brief Holding bounding volume resources. */
                 BoundingVolumeResources bounding_volumes;
-                /** @brief Holding particle geometry resources. */
-                ParticleGeometryResources particle_geometries;
+                /** @brief Holding particle data. */
+                ParticleResources particles;
             } resources;
         };
     }

@@ -10,6 +10,7 @@
 #include "CudaResource.hpp"
 #include "GenericBoundingVolume.hpp"
 #include "GenericParticleGeometry.hpp"
+#include "GenericParticleMaterial.hpp"
 #include "PipelineBoundingVolumeIntersection.hpp"
 #include "PipelineInitial.hpp"
 #include "PipelineInnerParticlePropagation.hpp"
@@ -147,25 +148,35 @@ namespace ldplab
              */
             bool allocateResource(const std::vector<Particle>& particles);
             /** @brief Holding the generic resources. */
-            std::vector<GenericBoundingVolume> bounding_volumes;
+            std::vector<std::shared_ptr<GenericBoundingVolume>> bounding_volumes;
             /** @brief Array of generic bounding volume data per particle. */
             CudaPtr<GenericBoundingVolumeData> bounding_volume_per_particle;
         };
 
-        /** @brief Holds generic particle geometry data resources. */
-        struct ParticleGeometryResources
+        /** @brief Holds particle data. */
+        struct ParticleResources
         {
             /**
-             * @brief Allocates the device memory resources.
-             * @param[in] particles Vector of particles in the experimental
-             *                      setup.
-             * @returns true, if no error occured.
-             */
+            * @brief Allocates the device memory resources.
+            * @param[in] particles Vector of particles in the experimental
+            *                      setup.
+            * @returns true, if no error occured.
+            */
             bool allocateResource(const std::vector<Particle>& particles);
+            /** @brief Array of particle center of masses */
+            CudaPtr<Vec3> center_of_mass_per_particle;
+            /** @brief Holding the generic particle material resources. */
+            std::vector<std::shared_ptr<GenericParticleMaterial>> materials;
+            /** @brief Array of material per particle. */
+            CudaPtr<GenericParticleMaterialData> material_per_particle;
             /** @brief Holding the generic resources. */
-            std::vector<GenericParticleGeometry> particle_geometries;
+            std::vector<std::shared_ptr<GenericParticleGeometry>> geometries;
             /** @brief Array of geometry per particle. */
-            CudaPtr<GenericParticleGeometryData> particle_geometry_per_particle;
+            CudaPtr<GenericParticleGeometryData> geometry_per_particle;
+        private:
+            bool allocateGeometries(const std::vector<Particle>& particles);
+            bool allocateMaterials(const std::vector<Particle>& particles);
+            bool allocateCenterOfMass(const std::vector<Particle>& particles);
         };
     }
 }

@@ -92,6 +92,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
 		RayTracingStep/RayTracingStepCUDA/Factory.hpp
 		RayTracingStep/RayTracingStepCUDA/GenericBoundingVolume.hpp
 		RayTracingStep/RayTracingStepCUDA/GenericParticleGeometry.hpp
+		RayTracingStep/RayTracingStepCUDA/GenericParticleMaterial.hpp
 		RayTracingStep/RayTracingStepCUDA/IntersectionTests.hpp
 		RayTracingStep/RayTracingStepCUDA/Pipeline.hpp
 		RayTracingStep/RayTracingStepCUDA/PipelineBoundingVolumeIntersection.hpp
@@ -110,6 +111,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
 		RayTracingStep/RayTracingStepCUDA/Factory.cu
 		RayTracingStep/RayTracingStepCUDA/GenericBoundingVolume.cu
 		RayTracingStep/RayTracingStepCUDA/GenericParticleGeometry.cu
+		RayTracingStep/RayTracingStepCUDA/GenericParticleMaterial.cu
 		RayTracingStep/RayTracingStepCUDA/IntersectionTests.cu
 		RayTracingStep/RayTracingStepCUDA/Pipeline.cu
 		RayTracingStep/RayTracingStepCUDA/PipelineBoundingVolumeIntersection.cu

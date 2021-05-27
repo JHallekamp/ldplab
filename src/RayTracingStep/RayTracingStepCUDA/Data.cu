@@ -126,10 +126,13 @@ bool ldplab::rtscuda::BoundingVolumeResources::allocateResource(
     for (size_t i = 0; i < particles.size(); ++i)
     {
         // Allocate bounding volume container
-        if (!bounding_volumes[i].create(particles[i].bounding_volume))
+        std::shared_ptr<GenericBoundingVolume> bv =
+            GenericBoundingVolume::create(particles[i].bounding_volume);
+        if (bv == nullptr)
             return false;
+        bounding_volumes[i] = bv;
         // Get data that later is written into generic bv data array
-        host_data.push_back(bounding_volumes[i].getData());
+        host_data.push_back(bv->getData());
     }
     // Allocate generic bv data array
     if (!bounding_volume_per_particle.allocate(particles.size()))
@@ -140,24 +143,72 @@ bool ldplab::rtscuda::BoundingVolumeResources::allocateResource(
     return true;
 }
 
-bool ldplab::rtscuda::ParticleGeometryResources::allocateResource(
+bool ldplab::rtscuda::ParticleResources::allocateResource(
     const std::vector<Particle>& particles)
 {
+    return allocateGeometries(particles) &&
+        allocateMaterials(particles) &&
+        allocateCenterOfMass(particles);
+}
+
+bool ldplab::rtscuda::ParticleResources::allocateGeometries(const std::vector<Particle>& particles)
+{
     std::vector<GenericParticleGeometryData> host_data;
-    particle_geometries.resize(particles.size());
+    geometries.resize(particles.size());
     for (size_t i = 0; i < particles.size(); ++i)
     {
-        // Allocate bounding volume container
-        if (!particle_geometries[i].create(particles[i].geometry))
+        // Allocate particle geometry container
+        std::shared_ptr<GenericParticleGeometry> pg =
+            GenericParticleGeometry::create(particles[i].geometry);
+        if (pg == nullptr)
             return false;
+        geometries[i] = pg;
         // Get data that later is written into generic particle array
-        host_data.push_back(particle_geometries[i].getData());
+        host_data.push_back(pg->getData());
     }
     // Allocate generic particle geometry data array
-    if (!particle_geometry_per_particle.allocate(particles.size()))
+    if (!geometry_per_particle.allocate(particles.size()))
         return false;
     // Upload generic particle geometry data
-    if (!particle_geometry_per_particle.upload(host_data.data()))
+    if (!geometry_per_particle.upload(host_data.data()))
+        return false;
+    return true;
+}
+
+bool ldplab::rtscuda::ParticleResources::allocateMaterials(const std::vector<Particle>& particles)
+{
+    std::vector<GenericParticleMaterialData> host_data;
+    materials.resize(particles.size());
+    for (size_t i = 0; i < particles.size(); ++i)
+    {
+        // Allocate particle material container
+        std::shared_ptr<GenericParticleMaterial> pm =
+            GenericParticleMaterial::create(particles[i].material);
+        if (pm == nullptr)
+            return false;
+        materials[i] = pm;
+        // Get data that is later written into generic particle array
+        host_data.push_back(pm->getData());
+    }
+    // Allocate generic particle material data array
+    if (!material_per_particle.allocate(particles.size()))
+        return false;
+    // Upload generic particle material data
+    if (!material_per_particle.upload(host_data.data()))
+        return false;
+    return true;
+}
+
+bool ldplab::rtscuda::ParticleResources::allocateCenterOfMass(const std::vector<Particle>& particles)
+{
+    // Allocate buffer
+    if (!center_of_mass_per_particle.allocate(particles.size()))
+        return false;
+    // Collect center of masses and upload data
+    std::vector<Vec3> host_data;
+    for (size_t i = 0; i < particles.size(); ++i)
+        host_data.push_back(particles[i].centre_of_mass);
+    if (!center_of_mass_per_particle.upload(host_data.data()))
         return false;
     return true;
 }

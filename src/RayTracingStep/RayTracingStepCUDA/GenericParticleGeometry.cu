@@ -3,6 +3,7 @@
 
 #include <LDPLAB/Constants.hpp>
 
+#include "IntersectionTests.hpp"
 #include "../../Utils/Log.hpp"
 
 __device__ bool ldplab::rtscuda::GenericParticlFunctionWrapper::intersectRay(
@@ -88,6 +89,8 @@ std::shared_ptr<ldplab::rtscuda::GenericParticleGeometry>
     std::shared_ptr<ldplab::rtscuda::GenericParticleGeometry> geometry;
     if (particle_geometry->type() == IParticleGeometry::Type::rod_particle)
         geometry = std::make_shared<RodParticle>();
+    else if (particle_geometry->type() == IParticleGeometry::Type::sphere)
+        geometry = std::make_shared<SphereParticle>();
     else
     {
         // Type not supported.
@@ -167,6 +170,83 @@ ldplab::rtscuda::GenericParticleGeometryData::Type
     ldplab::rtscuda::RodParticle::getGeometryType()
 {
     return GenericParticleGeometryData::Type::TYPE_ROD;
+}
+
+bool ldplab::rtscuda::SphereParticle::allocate(std::shared_ptr<IParticleGeometry> particle_geometry)
+{
+    // Allocate data
+    if (!m_data.allocate(1))
+        return false;
+    // Upload data
+    SphericalParticleGeometry* geometry =
+        static_cast<SphericalParticleGeometry*>(particle_geometry.get());
+    Data data;
+    data.radius = geometry->radius;
+    if (!m_data.upload(&data))
+        return false;
+    return true;
+}
+
+void* ldplab::rtscuda::SphereParticle::getResourcePtr()
+{
+    return m_data.getResource();
+}
+
+ldplab::rtscuda::intersectRayParticleGeometryFunction_t
+    ldplab::rtscuda::SphereParticle::intersect_ray_kernel_ptr =
+        ldplab::rtscuda::SphereParticle::intersectRayKernel;
+
+ldplab::rtscuda::intersectRayParticleGeometryFunction_t 
+    ldplab::rtscuda::SphereParticle::getIsecFunction()
+{
+    // Copy the function pointer to the host
+    intersectRayParticleGeometryFunction_t kernel = nullptr;
+    if (cudaMemcpyFromSymbol(
+        &kernel,
+        intersect_ray_kernel_ptr,
+        sizeof(intersect_ray_kernel_ptr))
+        != cudaSuccess)
+        return nullptr;
+    return kernel;
+}
+
+ldplab::rtscuda::GenericParticleGeometryData::Type 
+    ldplab::rtscuda::SphereParticle::getGeometryType()
+{
+    return GenericParticleGeometryData::Type::TYPE_SPHERE;
+}
+
+__device__ bool ldplab::rtscuda::SphereParticle::intersectRayKernel(
+    const Vec3& ray_origin, 
+    const Vec3& ray_direction, 
+    void* particle_geometry_data, 
+    Vec3& intersection_point, 
+    Vec3& intersection_normal, 
+    double& dist, 
+    bool& intersects_outside)
+{
+    Data* const sphere_data = static_cast<Data*>(particle_geometry_data);
+    double max;
+    if (!IntersectionTest::intersectRaySphere(
+        ray_origin,
+        ray_direction,
+        Vec3(0, 0, 0),
+        sphere_data->radius,
+        dist,
+        max))
+        return false;
+
+    intersects_outside = true;
+    if (dist < constant::intersection_tests::epsilon)
+    {
+        dist = max;
+        intersects_outside = false;
+    }
+    intersection_point = ray_origin + dist * ray_direction;
+    intersection_normal = glm::normalize(intersection_point);
+    if (!intersects_outside)
+        intersection_normal = -intersection_normal;
+    return true;
 }
 
 #endif

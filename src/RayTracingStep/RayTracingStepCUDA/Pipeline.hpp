@@ -24,6 +24,7 @@ namespace ldplab
             /** @brief Type of the pipeline. */
             enum class Type { host_bound, device_bound };
         public:
+            virtual ~IPipeline() { }
             /** @brief Creates the pipeline instance. */
             static std::shared_ptr<IPipeline> create(
                 const Type pipeline_type,

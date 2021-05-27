@@ -7,12 +7,13 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <memory>
 
-#include "Context.hpp"
-
 namespace ldplab
 {
     namespace rtscuda
     {
+        // Prototype
+        struct Context;
+
         /** @brief Typedefinition of initial stage. */
         typedef bool (*pipelineInitialStageKernel_t)(
             /** @todo Declare parameters */);
@@ -21,6 +22,7 @@ namespace ldplab
         class IPipelineInitialStage
         {
         public:
+            virtual ~IPipelineInitialStage() { }
             /** @brief Creates an instance of a pipeline stage implementation. */
             static std::shared_ptr<IPipelineInitialStage> createInstance(
                     const RayTracingStepCUDAInfo& info, Context& context);
