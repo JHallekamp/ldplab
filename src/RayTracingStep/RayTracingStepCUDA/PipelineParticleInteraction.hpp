@@ -96,7 +96,7 @@ namespace ldplab
                 size_t transmitted_ray_buffer_index) override;
         private:
             /** @brief Intersection kernel. */
-            static __device__ void interactionKernel(
+            static __global__ void interactionKernel(
                 bool inner_particle_rays,
                 double medium_reflection_index,
                 double intensity_cutoff,

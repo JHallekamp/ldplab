@@ -78,6 +78,37 @@ namespace ldplab
              */
             virtual void execute(size_t ray_buffer_index) = 0;
         };
+
+        /** 
+         * @brief Bounding volume intersection stage bruteforcing the test by
+         *        iterating over every bounding volume.
+         */
+        class PipelineBoundingVolumeIntersectionBruteforce :
+            public IPipelineBoundingVolumeIntersectionStage
+        {
+        public:
+            PipelineBoundingVolumeIntersectionBruteforce(Context& context);
+            void execute(size_t ray_buffer_index) override;
+            pipelineBoundingVolumeIntersectionStageKernel_t 
+                getKernel() override;
+        private:
+            /** @brief Bounding volume intersection device kernel. */
+            static __global__ void bvIntersectionKernel(
+                int32_t* ray_index_buffer,
+                Vec3* ray_origin_buffer,
+                Vec3* ray_direction_buffer,
+                double* ray_min_bv_dist_buffer,
+                size_t num_rays,
+                GenericBoundingVolumeData* bounding_volumes,
+                Mat3* w2p_transformation,
+                Vec3* w2p_translation,
+                size_t num_particles);
+            /** @brief Device function pointer to the actual kernel. */
+            static __device__ pipelineBoundingVolumeIntersectionStageKernel_t
+                bv_intersection_kernel_ptr;
+        private:
+            Context& m_context;
+        };
     }
 }
 

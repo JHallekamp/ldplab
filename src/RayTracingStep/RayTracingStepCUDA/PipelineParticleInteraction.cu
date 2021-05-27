@@ -75,7 +75,7 @@ __device__ double reflectance(double cos_a, double cos_b, double nr)
             ((cos2_a + cos2_b) + (nr + 1 / nr) * cos_a * cos_b));
 }
 
-__device__ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
+__global__ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
     interactionKernel(
         bool inner_particle_rays, 
         double medium_reflection_index,
