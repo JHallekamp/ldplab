@@ -1,79 +1,95 @@
 #ifndef WWU_LDPLAB_RTSCUDA_PIPELINE_HPP
 #define WWU_LDPLAB_RTSCUDA_PIPELINE_HPP
-
-#include "BufferControl.hpp"
-#include "InitialStage.hpp"
-#include "InnerParticlePropagationStage.hpp"
-#include "RayBoundingVolumeIntersectionTestStage.hpp"
-#include "RayParticleInteractionStage.hpp"
-#include "RayParticleIntersectionTestStage.hpp"
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
-#include "../../Utils/ThreadPool.hpp"
 
-#include <memory>
-#include <vector>
+#include "PipelineBoundingVolumeIntersection.hpp"
+#include "PipelineBufferSetup.hpp"
+#include "PipelineGatherOutput.hpp"
+#include "PipelineInitial.hpp"
+#include "PipelineInnerParticlePropagation.hpp"
+#include "PipelineParticleInteraction.hpp"
+#include "PipelineParticleIntersection.hpp"
+#include "PipelineRayBufferReduce.hpp"
 
 namespace ldplab
 {
     namespace rtscuda
     {
-        // Prototype
-        struct Context;
-
-        /**
-         * @brief Contains the stages of the ray tracing CPU pipeline.
-         * @details Pipelines are meant to be executed in parallel. 
-         *          Each individual pipeline has its own state and its own
-         *          batch buffers. However, the stages are shared between
-         *          all parallel executed pipelines (at least within one
-         *          instance of the Pipeline class).
-         * @note Creates ldplab::rtscuda::BufferControl instances for each
-         *       parallel execution of the pipeline. This is likely to heavily
-         *       increase the memory footprint of a Pipeline instance.
-         */
-        class Pipeline : public utils::ThreadPool::IJob
+        /** @brief Baseclass for a pipeline. */
+        class IPipeline
         {
         public:
-            Pipeline(
-                std::unique_ptr<IInitialStage> initial,
-                std::unique_ptr<IRayBoundingVolumeIntersectionTestStage> rbvit,
-                std::unique_ptr<IRayParticleIntersectionTestStage> rpit,
-                std::unique_ptr<IRayParticleInteractionStage> rpi,
-                std::unique_ptr<IInnerParticlePropagationStage> ipp,
-                Context& context);
-            /**
-             * @brief Sets up the pipeline stages.
-             * @note Only called once per ray tracing step execution.
+            /** @brief Type of the pipeline. */
+            enum class Type { host_bound, device_bound };
+        public:
+            /** @brief Creates the pipeline instance. */
+            static std::shared_ptr<IPipeline> create(
+                const Type pipeline_type,
+                const RayTracingStepCUDAInfo& info,
+                Context& context,
+                std::shared_ptr<PipelineBufferSetup> buffer_setup,
+                std::shared_ptr<PipelineGatherOutput> gather_output,
+                std::shared_ptr<PipelineRayBufferReduceStage> rbr,
+                std::shared_ptr<IPipelineBoundingVolumeIntersectionStage> bvi,
+                std::shared_ptr<IPipelineInitialStage> initial,
+                std::shared_ptr<IPipelineInnerParticlePropagation> ipp,
+                std::shared_ptr<IPipelineParticleInteractionStage> interaction,
+                std::shared_ptr<IPipelineParticleIntersectionStage> intersection);
+            /** @brief Gets called before execution. */
+            virtual void setup();
+            /** @brief Executes the pipeline. */
+            virtual void execute() = 0;
+            /** @brief Returns the exectuion output. */
+            virtual bool getOutput(RayTracingStepOutput& output);
+        protected:
+            IPipeline(Context& ctx) : m_context{ ctx } { }
+            /** 
+             * @brief Called on pipeline creation after pipeline stages have
+             *        been set. 
+             * @returns true, if no error occured.
              */
-            void setup();
-            /**
-             * @brief Adding output form all batches together and writing it 
-             *        to the ldplab::RayTracingStepOutput.
-             */
-            void finalizeOutput(RayTracingStepOutput& output);
-            /** @brief Inherited via IJob */
-            void execute(size_t job_id, size_t batch_size) override;
-        private:
-            void processBatch(
-                RayBuffer& buffer,
-                BufferControl& buffer_control);
-        private:
-            std::unique_ptr<IInitialStage> 
-                m_initial_stage;
-            std::unique_ptr<IRayBoundingVolumeIntersectionTestStage>
-                m_ray_bounding_volume_intersection_test_stage;
-            std::unique_ptr<IRayParticleIntersectionTestStage>
-                m_ray_particle_intersection_test_stage;
-            std::unique_ptr<IRayParticleInteractionStage>
-                m_ray_particle_interaction_stage;
-            std::unique_ptr<IInnerParticlePropagationStage>
-                m_inner_particle_propagation_stage;
+            virtual bool allocate(const RayTracingStepCUDAInfo& info) = 0;
+        protected:
             Context& m_context;
-            std::vector<BufferControl>
-                m_buffer_controls;
+            std::shared_ptr<PipelineBufferSetup>
+                m_buffer_setup_stage;
+            std::shared_ptr<PipelineGatherOutput>
+                m_gather_output_stage;
+            std::shared_ptr<PipelineRayBufferReduceStage>
+                m_ray_buffer_reduce_stage;
+            std::shared_ptr<IPipelineBoundingVolumeIntersectionStage> 
+                m_bounding_volume_intersection_stage;
+            std::shared_ptr<IPipelineInitialStage> 
+                m_initial_stage;
+            std::shared_ptr<IPipelineInnerParticlePropagation> 
+                m_inner_particle_propagation_stage;
+            std::shared_ptr<IPipelineParticleInteractionStage> 
+                m_particle_interaction_stage;
+            std::shared_ptr<IPipelineParticleIntersectionStage> 
+                m_particle_intersection_stage;
+        };
+
+        /** @brief Host-bound pipeline. */
+        class HostPipeline : public IPipeline
+        {
+        public:
+            HostPipeline(Context& ctx);
+            /** @brief Inherited via ldplab::rtscuda::IPipeline */
+            void execute() override;
+        protected:
+            /** @brief Inherited via ldplab::rtscuda::IPipeline */
+            bool allocate(const RayTracingStepCUDAInfo& info) override;
+        private:
+            /** @brief Recursive pipeline execution. */
+            void executeBatch(
+                size_t depth,
+                size_t ray_buffer_index,
+                bool inside_particle);
         };
     }
 }
 
-#endif
+#endif // LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+#endif // WWU_LDPLAB_RTSCUDA_PIPELEINE_HPP

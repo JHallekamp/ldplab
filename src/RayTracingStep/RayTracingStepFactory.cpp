@@ -33,7 +33,6 @@ std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
         "LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA");
     return nullptr;
 #endif
-    return std::shared_ptr<IRayTracingStep>();
 }
 
 std::shared_ptr<ldplab::IRayTracingStep>

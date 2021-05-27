@@ -1,20 +1,13 @@
 #ifndef WWU_LDPLAB_RTSCUDA_CONTEXT_HPP
 #define WWU_LDPLAB_RTSCUDA_CONTEXT_HPP
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
-#include <map>
-#include <vector>
-
-#include "CudaContext.hpp"
-#include "RayTracingStep.hpp"
-#include "Pipeline.hpp"
-#include "Data.hpp"
-#include "../../Utils/ThreadPool.hpp"
-
-#include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
 #include <LDPLAB/ExperimentalSetup/Lightsource.hpp>
 #include <LDPLAB/ExperimentalSetup/Particle.hpp>
-#include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
+#include <map>
+
+#include "Data.hpp"
 
 namespace ldplab
 {
@@ -27,116 +20,53 @@ namespace ldplab
          *          storing the temporary data during ray tracer execution.
          *          This data is shared between the different stages of the ray
          *          tracing pipeline.
-         *          Individual pipeline stages can hold their own data.
+         *          It also includes all device resources.
          */
         struct Context
         {
-            Context(const std::vector<Particle>& particles,
-                const std::vector<LightSource>& light_sources)
-                :
-                uid{ }, 
-                particles{ particles },
-                light_sources{ light_sources },
-                particle_transformations{ },
-                pipeline{ nullptr },
-                thread_pool{ nullptr },
-                particle_data{ nullptr },
-                bounding_volume_data{ nullptr },
-                particle_uid_to_index_map{ },
-                light_source_uid_to_index_map{ },
-                particle_index_to_uid_map{ },
-                light_source_index_to_uid_map{ },
-                parameters{ }
-            {
-                // Create uid, index maps
-                for (size_t i = 0; i < particles.size(); ++i)
-                {
-                    particle_uid_to_index_map.emplace(std::make_pair(
-                        particles[i].uid, i));
-                    particle_index_to_uid_map.emplace(std::make_pair(
-                        i, particles[i].uid));
-                }
-                for (size_t i = 0; i < light_sources.size(); ++i)
-                {
-                    light_source_uid_to_index_map.emplace(std::make_pair(
-                        light_sources[i].uid, i));
-                    light_source_index_to_uid_map.emplace(std::make_pair(
-                        i, light_sources[i].uid));
-                }
-            }
-            /** @brief The ID of the context. */
+            /** @brief Context uid. */
             UID<Context> uid;
-            /**
-             * @brief Stores a copy of the particles present in the
-             *        experimental setup. 
-             */
-            const std::vector<Particle> particles;
-            /**
-             * @brief Stores a copy of the light sources present in the 
-             *        experimental setup.
-             */
-            const std::vector<LightSource> light_sources;
-            /**
-             * @brief Stores the particle transformations for the current 
-             *        state of the experimental setup.
-             * @details The index of a particle transformation directly
-             *          corresponds to the index of the related particle.
-             */
-            std::vector<ParticleTransformation> particle_transformations;
-            /** @brief The ray tracing step cpu pipeline. */
-            std::shared_ptr<Pipeline> pipeline;
-            /** @brief The thread pool used by the ray tracing step. */
-            std::shared_ptr<utils::ThreadPool> thread_pool;
-            /** @brief Holds an array with particle data. */
-            std::shared_ptr<ParticleData> particle_data;
-            /** @brief Holds an array with bounding volume data. */
-            std::shared_ptr<IBoundingVolumeData> bounding_volume_data;
-            /** @brief Maps particle UIDs to the internally used indices. */
-            std::map<UID<Particle>, size_t> particle_uid_to_index_map;
-            /** @brief Maps light source UIDs to the internally used indices. */
-            std::map<UID<LightSource>, size_t> light_source_uid_to_index_map;
-            /** @brief Maps the internally used particle indices to UIDs. */
-            std::map<size_t, UID<Particle>> particle_index_to_uid_map;
-            /** @brief Maps the internally used light source indices to UIDs. */
-            std::map<size_t, UID<LightSource>> light_source_index_to_uid_map;
+            /** @brief Holds mapping between RTS internals and its interface. */
+            struct
+            {
+                /** @brief Maps internally used light indices to uids. */
+                std::map<size_t, UID<LightSource>> light_source_index_to_uid;
+                /** @brief Maps light uids to internally used indices. */
+                std::map<UID<LightSource>, size_t> light_source_uid_to_index;
+                /** @brief Maps internally used particle indices to uids. */
+                std::map<size_t, UID<Particle>> particle_index_to_uid;
+                /** @brief Maps particle uids to internally used indices. */
+                std::map<UID<Particle>, size_t> particle_uid_to_index;
+            } interface_mapping;
             /** @brief Structure holding simulation parameters. */
             struct
             {
-                /**
-                 * @brief Under this cutoff intensity rays are not further
-                 *        traced.
-                 */
-                double intensity_cutoff;
-                /** @brief Index of reflection from the medium. */
-                double medium_reflection_index;
-                /** @brief Maximum number of times a ray can split. */
-                size_t maximum_branching_depth;
-                /** @brief Number of rays per buffer. */
-                size_t number_rays_per_buffer;
-                /** @brief Number of rays per world space unit. */
-                size_t number_rays_per_unit;
-                /** @brief Number of parallel pipeline instances. */
-                size_t number_parallel_pipelines;
+                /** @brief The maximum branching depth. */
+                size_t max_branching_depth;
+                /** @brief The number of rays per buffer. */
+                size_t num_rays_per_buffer;
+                /** @brief The number of particles in the simulation setup. */
+                size_t num_particles;
             } parameters;
-            /** @brief Structure holding simulation flags. */
+            /** @brief Structure holding device resources. */
             struct
             {
-                /** 
-                 * @brief Determines whether a warning is emitted when active
-                 *        rays are not further traced because they would exceed
-                 *        the maximum branching depth.
-                 */
-                bool emit_warning_on_maximum_branching_depth_discardment;
-                /**
-                 * @brief Determines if the finial particle force and torque is
-                 *        returned in particle coordinate system.
-                 */
-                bool return_force_in_particle_coordinate_system;
-            } flags;
-            /** @brief Cuda context. */
-            CudaContext cuda_context;
+                /** @brief Holding ray buffer resources. */
+                RayBufferResources ray_buffer;
+                /** @brief Holding intersection buffer resources. */
+                IntersectionBufferResources intersection_buffer;
+                /** @brief Holding output buffer resources. */
+                OutputBufferResources output_buffer;
+                /** @brief Holding transformation resources. */
+                TransformationResources transformations;
+                /** @brief Holding bounding volume resources. */
+                BoundingVolumeResources bounding_volumes;
+                /** @brief Holding particle geometry resources. */
+                ParticleGeometryResources particle_geometries;
+            } resources;
         };
     }
 }
 
-#endif
+#endif // LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+#endif // WWU_LDPLAB_RTSCUDA_CONTEXT_HPP

@@ -1,143 +1,174 @@
 #ifndef WWU_LDPLAB_RTSCUDA_DATA_HPP
 #define WWU_LDPLAB_RTSCUDA_DATA_HPP
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <cstdint>
-#include <memory>
 #include <vector>
-
-#include <LDPLAB/ExperimentalSetup/BoundingVolume.hpp>
+#include <LDPLAB/ExperimentalSetup/Particle.hpp>
 #include <LDPLAB/Geometry.hpp>
-#include <LDPLAB/UID.hpp>
 
-#include "AcceleratorStructures.hpp"
+#include "CudaResource.hpp"
+#include "GenericBoundingVolume.hpp"
+#include "GenericParticleGeometry.hpp"
+#include "PipelineBoundingVolumeIntersection.hpp"
+#include "PipelineInitial.hpp"
+#include "PipelineInnerParticlePropagation.hpp"
+#include "PipelineParticleInteraction.hpp"
+#include "PipelineParticleIntersection.hpp"
+#include "PipelineRayBufferReduce.hpp"
 
 namespace ldplab
 {
     namespace rtscuda
     {
-        /** @brief Holds the data of a batch of rays. */
-        struct RayBuffer
-        {
-            RayBuffer(size_t depth, size_t size)
-                :
-                uid{ },
-                depth{ depth },
-                size{ size },
-                ray_data{ nullptr },
-                index_data{ nullptr },
-                min_bounding_volume_distance_data{ nullptr },
-                active_rays{ 0 },
-                world_space_rays{ 0 },
-                inner_particle_rays{ false }
-            { }
-            /** @brief Array containing size Ray element. */
-            Ray* ray_data;
-            /** @brief Array containing size (particle) indices. */
-            int32_t* index_data;
-            /** @brief Array containing the min distance to bounding volumes */
-            double* min_bounding_volume_distance_data;
-            /** @brief Counter for the still active rays inside this. */
-            size_t active_rays;
-            /** @brief Counter for the active rays that are in world space. */
-            size_t world_space_rays;
-            /** @brief States whether buffer rays are inside a particle. */
-            bool inner_particle_rays;
-            /** @brief Branching depth (number of times rays split before). */
-            const size_t depth;
-            /** @brief Number of elements in ray_data and index_data arrays. */
-            const size_t size;
-            /** @brief Unique identifier of the buffer. */
-            UID<RayBuffer> uid;
-        };
-
-        /**
-         * @brief Buffer holding force and torque change of the particle
-         */
-        struct OutputBuffer
-        {
-            /** @brief Array containing size force changes per particle. */
-            Vec3* force;
-            /** @brief Array containing size torque changes per particle. */
-            Vec3* torque;
-            /** @brief Number of particles. */
-            size_t size;
-        };
-
-        /**
-         * @brief Buffer holding intersection points and the corresponding 
-         *        normal of the particle surface. 
-         */
-        struct IntersectionBuffer
-        {
-            /** @brief Array containing size intersection points. */
-            Vec3* point;
-            /** @brief Array containing size intersection normals. */
-            Vec3* normal;
-            /** @brief Array containing indices of intersected particles. */
-            int32_t* particle_index;
-            /** @brief Number of elements in point and normal arrays. */
-            size_t size;
-        };
-
-        /**
-         * @brief Holds data that is used to transform world space rays into
-         *        particle space or the other way around.
-         */
-        struct ParticleTransformation
+        /** @brief Holds ray buffer resources. */
+        struct RayBufferResources
         {
             /** 
-             * @brief Vector from particle space origin (in world space) to 
-             *        world space origin.
+             * @brief Allocates the resources. 
+             * @details If no allocation errors occur, this method is 
+             *          guaranteed to allocate at least num_buffers ray buffer
+             *          in device memory, each holding at least 
+             *          num_rays_per_buffer elements. Device pointer to the
+             *          allocated memory (per buffer) will be stored in the
+             *          vector members of the caller instance.
+             *          It will also fill and upload the device arrays holding
+             *          said pointers to each individual buffer.
+             * @param[in] num_buffers The number of individual ray buffers.
+             * @param[in] num_rays_per_buffer The number of individualy rays
+             *                                inside each ray buffer.
+             * @returns true, if no error occured.
              */
-            Vec3 w2p_translation;
-            /**
-             * @brief Matrix that transforms a world space vector (when the
-             *        vector is applied to the matrix from the right-hand side) 
-             *        by first rotating and then scaling it into particle space
-             *        (safe for translation).
-             */
-            Mat3 w2p_rotation_scale;
-            /**
-             * @brief Vector to the particle space (in world space)
-             */
-            Vec3 p2w_translation;
-            /**
-             * @brief Matrix that transforms a particle space vector (when the
-             *        vector is applied to the matrix from the right-hand side)
-             *        by first scaling and then rotating it into world space
-             *        (safe for translation).
-             */
-            Mat3 p2w_scale_rotation;
+            bool allocateResources(
+                size_t num_buffers, 
+                size_t num_rays_per_buffer);
+            /** @brief Index arrays per ray buffer. */
+            std::vector<CudaPtr<int32_t>> index_buffers;
+            /** @brief Ray origin vectors per ray buffer. */
+            std::vector<CudaPtr<Vec3>> origin_buffers;
+            /** @brief Ray direction vectors per ray buffer. */
+            std::vector<CudaPtr<Vec3>> direction_buffers;
+            /** @brief Ray intensity values per ray buffer. */
+            std::vector<CudaPtr<double>> intensity_buffers;
+            /** @brief Minimum bounding volume distance arrays per buffer. */
+            std::vector<CudaPtr<double>> min_bv_dist_buffers;
+            /** @brief Array with pointers to the index buffers. */
+            CudaPtr<int32_t*> index_buffer_pointers;
+            /** @brief Array with pointers to the origin buffers. */
+            CudaPtr<Vec3*> origin_buffer_pointers;
+            /** @brief Array with pointers to the direction buffers. */
+            CudaPtr<Vec3*> direction_buffer_pointers;
+            /** @brief Array with pointers to the intensity buffers. */
+            CudaPtr<double*> intensity_buffer_pointers;
+            /** @brief Array with pointers to the min bv dist buffers. */
+            CudaPtr<double*> min_bv_dist_buffer_pointers;
         };
 
-        /** @brief Contains the particle geometry data. */
-        struct ParticleData
+        /** @brief Holds intersection buffer resources. */
+        struct IntersectionBufferResources
         {
-            /** @brief Vector containing generic geometry instances. */
-            std::vector<std::shared_ptr<IGenericGeometry>> geometries;
+            /**
+             * @brief Allocates the buffer resources.
+             * @param[in] num_rays_per_buffer The number of rays per buffer.
+             * @returns true, if no error occured.
+             */
+            bool allocateResources(size_t num_rays_per_buffer);
+            /** @brief Buffer holding the intersection point per ray. */
+            CudaPtr<Vec3> intersection_point_buffer;
+            /** @brief Buffer holding the intersection normal per ray. */
+            CudaPtr<Vec3> intersection_normal_buffer;
+            /** @brief Buffer holding particle intersection indices. */
+            CudaPtr<int32_t> intersection_particle_index_buffer;
         };
 
-        /** 
-         * @brief Interface for structures containing data of bounding 
-         *        volumes. 
-         */
-        struct IBoundingVolumeData
+        /** @brief Holds output buffer resources. */
+        struct OutputBufferResources
         {
-            virtual ~IBoundingVolumeData() { }
-            /** @brief The type of the bounding volume data. */
-            enum class Type { spheres };
-            /** @brief Returns the type of the bounding volumes. */
-            virtual Type type() const = 0;
+            /**
+             * @brief Allocates the buffer resources.
+             * @param[in] num_particles The number of particles in the 
+             *                          experimental setup.
+             * @param[in] num_rays_per_buffer The number of rays per buffer.
+             * @returns true, if no error occured.
+             */
+            bool allocateResources(
+                size_t num_particles,
+                size_t num_rays_per_buffer);
+            /** @brief Host buffer for particle force vectors. */
+            std::vector<Vec3> host_force_per_particle;
+            /** @brief Host buffer for particle torque vectors. */
+            std::vector<Vec3> host_torque_per_particle;
+            /** @brief Buffer holding force vectors per particle. */
+            CudaPtr<Vec3> force_per_particle;
+            /** @brief Buffer holding torque vectors per particles. */
+            CudaPtr<Vec3> torque_per_particle;
+            /** @brief Buffer holding  force vectors per ray. */
+            CudaPtr<Vec3> force_per_ray;
+            /** @brief Buffer holding torque vectors per ray. */
+            CudaPtr<Vec3> torque_per_ray;
         };
 
-        /** @brief Contains the data of the transformed bounding spheres. */
-        struct BoundingSphereData : public IBoundingVolumeData
+        /** @brief Holds tranformation data resources. */
+        struct TransformationResources
         {
-            Type type() const override { return Type::spheres; }
-            /** @brief Bounding sphere data in world space. */
-            std::vector<BoundingVolumeSphere> sphere_data;
+            /**
+            * @brief Allocates the device memory resources.
+            * @param[in] num_particles The number of particles in the
+            *                          experimental setup.
+            * @returns true, if no error occured.
+            */
+            bool allocateResource(size_t num_particles);
+            /** @brief Host buffer particle to world space transformations. */
+            std::vector<Mat3> host_p2w_transformation;
+            /** @brief Host buffer particle to world space translation. */
+            std::vector<Vec3> host_p2w_translation;
+            /** @brief Host buffer world to particle space transformations. */
+            std::vector<Mat3> host_w2p_transformation;
+            /** @brief Host buffer world to particle space translation. */
+            std::vector<Vec3> host_w2p_translation;
+            /** @brief Particle to world space transformations per particle. */
+            CudaPtr<Mat3> p2w_transformation;
+            /** @brief Particle to world space translations per particle. */
+            CudaPtr<Vec3> p2w_translation;
+            /** @brief World to particle space transformations per particle. */
+            CudaPtr<Mat3> w2p_transformation;
+            /** @brief Particle to world space translations per particle. */
+            CudaPtr<Vec3> w2p_translation;
+        };
+
+        /** @brief Holds bounding volume data resources. */
+        struct BoundingVolumeResources
+        {
+            /**
+             * @brief Allocates the device memory resources.
+             * @param[in] particles Vector of particles in the experimental
+             *                      setup.
+             * @returns true, if no error occured.
+             */
+            bool allocateResource(const std::vector<Particle>& particles);
+            /** @brief Holding the generic resources. */
+            std::vector<GenericBoundingVolume> bounding_volumes;
+            /** @brief Array of generic bounding volume data per particle. */
+            CudaPtr<GenericBoundingVolumeData> bounding_volume_per_particle;
+        };
+
+        /** @brief Holds generic particle geometry data resources. */
+        struct ParticleGeometryResources
+        {
+            /**
+             * @brief Allocates the device memory resources.
+             * @param[in] particles Vector of particles in the experimental
+             *                      setup.
+             * @returns true, if no error occured.
+             */
+            bool allocateResource(const std::vector<Particle>& particles);
+            /** @brief Holding the generic resources. */
+            std::vector<GenericParticleGeometry> particle_geometries;
+            /** @brief Array of geometry per particle. */
+            CudaPtr<GenericParticleGeometryData> particle_geometry_per_particle;
         };
     }
 }
 
-#endif
+#endif // LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+#endif // WWU_LDPLAB_RTSCUDA_DATA_HPP

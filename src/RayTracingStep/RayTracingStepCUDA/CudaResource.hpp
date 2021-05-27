@@ -2,501 +2,224 @@
 #define WWU_LDPLAB_RTSCUDA_CUDA_RESOURCE_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
-#include <cstddef>
+#include <cstdint>
 #include <cuda_runtime.h>
-
-#include "../../Utils/Log.hpp"
+#include <LDPLAB/UID.hpp>
 
 namespace ldplab
 {
     namespace rtscuda
     {
-        template<typename T>
-        class CudaPtr
+        /** @brief Baseclass for CUDA memory resource wrapper classes. */
+        class ICudaResource
         {
         public:
-            CudaPtr() : m_device_ptr{ 0 } { }
-            ~CudaPtr() { free(); }
-            bool allocate();
-            void free();
-            bool memset(int val);
-            bool upload(const T* src);
-            bool download(T* dest);
-            inline T* get() { return m_device_ptr; }
-        private:
-            T* m_device_ptr;
+            ICudaResource() : m_device_ptr{ 0 }{ }
+            ICudaResource(ICudaResource&& other) noexcept;
+            virtual ~ICudaResource() { free(); }
+            /** @brief Frees the resource. */
+            virtual bool free() = 0;
+            /** @brief Checks if the resource is allocated. */
+            inline bool isAllocated() const { return m_device_ptr != 0; }
+            /** @brief Provides the device pointer as raw void pointer. */
+            inline void* getResource() const { return m_device_ptr; }
+        protected:
+            virtual const char* resourceTypeName() const = 0;
+            bool hasAllocationError(
+                cudaError_t return_value,
+                size_t num_bytes) const;
+            bool hasFreeError(
+                cudaError_t return_value,
+                size_t num_bytes) const;
+            bool hasMemsetError(
+                cudaError_t return_value,
+                void* device_offset_address,
+                size_t num_bytes,
+                int value) const;
+            bool hasUploadError(
+                cudaError_t return_value,
+                void* device_offset_address,
+                void* host_address,
+                size_t num_bytes) const;
+            bool hasDownloadError(
+                cudaError_t return_value,
+                void* device_offset_address,
+                void* host_address,
+                size_t num_bytes) const;
+        protected:
+            /** @brief Pointer to the device memory resource. */
+            void* m_device_ptr;
+            /** @brief Resource uid. */
+            UID<ICudaResource> m_resource_uid;
         };
 
-        template<typename T>
-        class CudaLinearArray
+        /** 
+         * @brief Simple wrapper for linear device memory. 
+         * @tparam basetype Type of the underlying data elements.  
+         */
+        template <typename basetype>
+        class CudaPtr : public ICudaResource
         {
         public:
-            CudaLinearArray() : m_device_ptr{ 0 }, m_size{ 0 } { }
-            ~CudaLinearArray() { free(); }
-            bool allocate(size_t size);
-            void free();
-            bool memset(int val);
-            bool memset(int val, size_t offset, size_t size);
-            bool upload(const T* src);
-            bool upload(const T* src, size_t offset, size_t size);
-            bool download(T* dst);
-            bool download(T* dst, size_t offset, size_t size);
-            inline size_t size() { return m_size; }
-            inline T* get() { return m_device_ptr; }
+            CudaPtr() : m_count{ 0 }{ }
+            /** 
+             * @brief Allocates device memory for a given number of basetype 
+             *        elements.
+             * @param[in] count The number of basetype elements that fit the 
+             *                  allocated linear array on the device.
+             * @returns false, if an error occured.
+             */
+            bool allocate(size_t count = 1);
+            /** @brief Inherited via ldplab::rtscuda::ICudaResource */
+            bool free() override;
+            /**
+             * @brief Sets the allocated device memory to the given value.
+             * @param[in] val Value to which the device memory is set.
+             * @returns false, if an error occured.
+             */
+            bool memset(int val) { return memset(val, 0, m_count); }
+            /**
+             * @brief Sets the allocated device memory to the given value.
+             * @param[in] val Value to which the device memory is set.
+             * @param[in] offset The memory offset in elements.
+             * @param[in] count The number of elements which memory is set to 
+             *                  val.
+             * @returns false, if an error occured.
+             */
+            bool memset(int val, size_t offset, size_t count);
+            /**
+             * @brief Uploads memory from a host source.
+             * @param[in] src Pointer to the source memory.
+             * @returns false, if an error occured.
+             */
+            bool upload(basetype* src) { return upload(src, 0, m_count); }
+            /**
+             * @brief Uploads memory from a host source.
+             * @param[in] src Pointer to the source memory.
+             * @param[in] offset The offset on the device memory in basetype
+             *                   elements.
+             * @param[in] count The number of basetype elements that are
+             *                  uploaded from src.
+             * @returns false, if an error occured.
+             */
+            bool upload(basetype* src, size_t offset, size_t count);
+            /**
+             * @brief Downloads memory to a host destination.
+             * @param[in] dst Pointer to the destination in host memory.
+             * @returns false, if an error occured.
+             */
+            bool download(basetype* dst) { return download(dst, 0, m_count); }
+            /**
+             * @brief Downloads memory to a host destination.
+             * @param[in] dst Pointer to the destination in host memory.
+             * @param[in] offset The offset on the device memory in basetype
+             *                   elements.
+             * @param[in]count The number of basetype elements that are 
+             *                 downloaded to dst.
+             * @returns false, if an error occured.
+             */
+            bool download(basetype* dst, size_t offset, size_t count);
+            /** @brief Provides the device resource as basetype pointer. */
+            inline basetype* get() const
+            { return static_cast<basetype*>(m_device_ptr); }
+            /** @brief Provides the number of allocated elements. */
+            inline size_t count() const { return m_count; }
+        protected:
+            /** @brief Inherited via ldplab::rtscuda::ICudaResource */
+            virtual const char* resourceTypeName() const override 
+            { return "CudaPtr"; }
         private:
-            T* m_device_ptr;
-            size_t m_size;
+            size_t m_count;
         };
 
-        template<typename T>
-        class CudaPitchedPtr
+        /** 
+         * @brief A memory region of undefined internal structure of a given
+         *        size.
+         */
+        class CudaBlob : public CudaPtr<uint8_t>
         {
-        public:
-            CudaPitchedPtr() : 
-                m_device_ptr{ 0 }, 
-                m_width{ 0 }, 
-                m_height{ 0 }, 
-                m_pitch{ 0 } 
-            { }
-            ~CudaPitchedPtr() { free(); }
-            bool allocate(size_t width, size_t height);
-            void free();
-            bool memset(int val);
-            bool upload(const T* src);
-            bool upload(const T* src, size_t row);
-            bool download(T* dst);
-            bool download(T* dst, size_t row);
-            inline size_t width() { return m_width; }
-            inline size_t height() { return m_height; }
-            inline size_t pitch() { return m_pitch; }
-            inline T* get() { return m_device_ptr; }
-        private:
-            T* m_device_ptr;
-            size_t m_width;
-            size_t m_height;
-            size_t m_pitch;
+        protected:
+            /** @brief Inherited via ldplab::rtscuda::CudaPtr<uint8_t> */
+            const char* resourceTypeName() const override
+            { return "CudaBlob"; }
         };
 
-        typedef CudaLinearArray<uint8_t> CudaBlob;
-
-        template<typename T>
-        inline bool CudaPtr<T>::allocate()
+        template<typename basetype>
+        inline bool CudaPtr<basetype>::allocate(size_t count)
         {
-            if (cudaMalloc(&m_device_ptr, sizeof(T)) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to allocate %i "\
-                    "bytes of device memory",
-                    sizeof(T));
+            const size_t size = sizeof(basetype) * count;
+            if (hasAllocationError(cudaMalloc(&m_device_ptr, size), size))
                 return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Allocated %i bytes of memory "\
-                "at device address %p",
-                sizeof(T),
-                (void*) m_device_ptr);
+            m_count = count;
             return true;
         }
 
-        template<typename T>
-        inline void CudaPtr<T>::free()
+        template<typename basetype>
+        inline bool CudaPtr<basetype>::free()
         {
-            if (m_device_ptr != 0)
-            {
-                LDPLAB_LOG_TRACE("RTSCUDA resource: Freed %i bytes of memory "\
-                    "at device address %p",
-                    sizeof(T),
-                    (void*)m_device_ptr);
-                cudaFree(m_device_ptr);
-                m_device_ptr = 0;
-            }
-        }
-
-        template<typename T>
-        inline bool CudaPtr<T>::memset(int val)
-        {
-            if (cudaMemset(
-                (void*)m_device_ptr, 
-                val, 
-                sizeof(T)) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed set %i bytes of "\
-                    "device memory to value %i at address %p",
-                    sizeof(T),
-                    val,
-                    (void*) m_device_ptr);
+            if (m_device_ptr == NULL)
+                return true;
+            const size_t size = sizeof(basetype) * m_count;
+            if (hasFreeError(cudaFree(m_device_ptr), size))
                 return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Set %i bytes of memory "\
-                "at device address %p to value %i",
-                sizeof(T),
-                (void*)m_device_ptr,
-                val);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaPtr<T>::upload(const T* src)
-        {
-            if (cudaMemcpy(
-                (void*)m_device_ptr,
-                (const void*)src,
-                sizeof(T),
-                cudaMemcpyHostToDevice) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to upload %i "\
-                    "bytes from host address %p to device address %p",
-                    sizeof(T),
-                    (void*)m_device_ptr,
-                    (void*)src);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Uploaded %i bytes from "\
-                "host address %p to device address %p",
-                sizeof(T),
-                (void*)m_device_ptr,
-                (void*)src);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaPtr<T>::download(T* dest)
-        {
-            if (cudaMemcpy(
-                (void*)src,
-                (const void*)m_device_ptr,
-                sizeof(T),
-                cudaMemcpyDeviceToHost) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to download %i "\
-                    "bytes from device address %p to host address %p",
-                    sizeof(T),
-                    (void*)src,
-                    (void*)m_device_ptr);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Downloaded %i bytes from "\
-                "device address %p to host address %p",
-                sizeof(T),
-                (void*)src,
-                (void*)m_device_ptr);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::allocate(size_t size)
-        {
-            if (cudaMalloc(&m_device_ptr, sizeof(T) * size) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to allocate %i "\
-                    "bytes of device memory",
-                    sizeof(T) * size);
-                return false;
-            }
-            m_size = size;
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Allocated %i bytes of memory "\
-                "at device address %p",
-                sizeof(T) * size,
-                (void*)m_device_ptr);
-            return true;
-        }
-
-        template<typename T>
-        inline void CudaLinearArray<T>::free()
-        {
-            if (m_device_ptr != 0)
-            {
-                LDPLAB_LOG_TRACE("RTSCUDA resource: Freed %i bytes of memory "\
-                    "at device address %p",
-                    sizeof(T) * m_size,
-                    (void*)m_device_ptr);
-                cudaFree(m_device_ptr);
-                m_device_ptr = 0;
-                m_size = 0;
-            }
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::memset(int val)
-        {
-            return memset(val, 0, m_size);
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::memset(int val, size_t offset, size_t size)
-        {
-            if (cudaMemset(
-                (void*)(m_device_ptr + offset), 
-                val, 
-                sizeof(T) * size) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed set %i bytes of "\
-                    "device memory to value %i at address %p with an offset "\
-                    "of %i bytes",
-                    sizeof(T) * size,
-                    val,
-                    (void*)m_device_ptr,
-                    sizeof(T) * offset);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Set %i bytes of memory "\
-                "at device address %p with an offset of %i bytes to value %i",
-                sizeof(T) * size,
-                (void*)m_device_ptr,
-                sizeof(T) * offset,
-                val);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::upload(const T* src)
-        {
-            return upload(src, 0, m_size);
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::upload(const T* src, size_t offset, size_t size)
-        {
-            if (cudaMemcpy(
-                (void*)(m_device_ptr + offset),
-                (const void*)src,
-                sizeof(T) * size,
-                cudaMemcpyHostToDevice) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed upload %i bytes "\
-                    "from host address %p to device address %p with an offset "\
-                    "of %i bytes",
-                    sizeof(T) * size,
-                    (void*)src,
-                    (void*)m_device_ptr,
-                    sizeof(T) * offset);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Uploaded %i bytes of from "\
-                "host address %p to device address %p with an offset of %i "\
-                "bytes",
-                sizeof(T) * size,
-                (void*)src,
-                (void*)m_device_ptr,
-                sizeof(T) * offset);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::download(T* dst)
-        {
-            return download(dst, 0, m_size);
-        }
-
-        template<typename T>
-        inline bool CudaLinearArray<T>::download(T* dst, size_t offset, size_t size)
-        {
-            if (cudaMemcpy(
-                (void*)src,
-                (const void*)(m_device_ptr + offset),
-                sizeof(T) * size,
-                cudaMemcpyDeviceToHost) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed download %i bytes "\
-                    "from device address %p to host address %p with an offset "\
-                    "of %i bytes",
-                    sizeof(T) * size,
-                    (void*)m_device_ptr,
-                    (void*)src,
-                    sizeof(T) * offset);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Downloaded %i bytes of from "\
-                "device address %p to host address %p with an offset of %i "\
-                "bytes",
-                sizeof(T) * size,
-                (void*)m_device_ptr,
-                (void*)src,
-                sizeof(T) * offset);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaPitchedPtr<T>::allocate(size_t width, size_t height)
-        {
-            if (cudaMallocPitch(
-                (void**)&m_device_ptr,
-                &m_pitch,
-                sizeof(T) * width,
-                height) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to allocate "\
-                    "device memory of %i bytes width and height %i",
-                    sizeof(T) * width,
-                    height);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Allocated device memory of "\
-                "%i bytes width and height %i at device address %p",
-                m_pitch,
-                m_height,
-                (void*)m_device_ptr);
-            m_width = width;
-            m_height = height;
-            return true;
-        }
-
-        template<typename T>
-        inline void CudaPitchedPtr<T>::free()
-        {
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Freed device memory of "\
-                "%i bytes width and height %i at device address %p",
-                m_pitch,
-                m_height,
-                (void*)m_device_ptr);
-            cudaFree((void*)m_device_ptr);
             m_device_ptr = 0;
-            m_width = m_height = m_pitch = 0;
+            m_count = 0;
+            return true;
         }
 
-        template<typename T>
-        inline bool CudaPitchedPtr<T>::memset(int val)
+        template<typename basetype>
+        inline bool CudaPtr<basetype>::memset(
+            int val, 
+            size_t offset, 
+            size_t count)
         {
-            if (cudaMemset2D(
-                (void*)m_device_ptr,
-                m_pitch,
+            const void* device_ptr = static_cast<void*>(
+                static_cast<basetype*>(m_device_ptr) + offset);
+            const size_t num_bytes = sizeof(basetype) * count;
+            const cudaError_t rv = cudaMemset(
+                device_ptr,
                 val,
-                sizeof(T) * m_width,
-                m_height) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to set device "\
-                    "memory of %i bytes width and height %i to value %i at "\
-                    "device address %p",
-                    sizeof(T) * m_width,
-                    m_height,
-                    val,
-                    (void*)m_device_ptr);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Set device memory of %i bytes "\
-                "width and height %i to value %i at device address %p",
-                sizeof(T) * m_width,
-                m_height,
-                val,
-                (void*)m_device_ptr);
-            return true;
+                num_bytes);
+            return !hasMemsetError(rv, device_ptr, num_bytes, val);
         }
 
-        template<typename T>
-        inline bool CudaPitchedPtr<T>::upload(const T* src)
+        template<typename basetype>
+        inline bool CudaPtr<basetype>::upload(
+            basetype* src, 
+            size_t offset, 
+            size_t count)
         {
-            if (cudaMemcpy2D(
-                (void*)m_device_ptr,
-                m_pitch,
-                (const void*)src,
-                sizeof(T) * m_width,
-                sizeof(T) * m_width,
-                m_height,
-                cudaMemcpyHostToDevice) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to upload memory "\
-                    "of %i bytes width and height %i from host address %p to "\
-                    "device address %p",
-                    m_pitch,
-                    m_height,
-                    (void*)src,
-                    (void*)m_device_ptr);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Uploaded memory of %i bytes "\
-                "width and height %i from host address %p to device address %p",
-                m_pitch,
-                m_height,
-                (void*)src,
-                (void*)m_device_ptr);
-            return true;
+            const void* device_ptr = static_cast<void*>(
+                static_cast<basetype*>(m_device_ptr) + offset);
+            const void* src_ptr = static_cast<void*>(src);
+            const size_t num_bytes = sizeof(basetype) * count;
+            const cudaError_t rv = cudaMemcpy(
+                device_ptr,
+                src_ptr,
+                num_bytes,
+                cudaMemcpyHostToDevice);
+            return !hasUploadError(rv, device_ptr, src_ptr, num_bytes);
         }
 
-        template<typename T>
-        inline bool CudaPitchedPtr<T>::upload(const T* src, size_t row)
+        template<typename basetype>
+        inline bool CudaPtr<basetype>::download(
+            basetype* dst, 
+            size_t offset, 
+            size_t count)
         {
-            if (cudaMemcpy(
-                (void*)(((char*)m_device_ptr) + row * m_pitch),
-                (const void*)src,
-                sizeof(T) * m_width,
-                cudaMemcpyHostToDevice) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to upload %i "\
-                    "bytes of memory from host address %p to device address "\
-                    "%p with an offset of %i bytes",
-                    sizeof(T) * m_width,
-                    (void*)src,
-                    (void*)m_device_ptr,
-                    row * m_pitch);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Uploaded %i bytes of memory"\
-                "from host address %p to device address %p with an offset of "\
-                "%i bytes",
-                sizeof(T) * m_width,
-                (void*)src,
-                (void*)m_device_ptr,
-                row * m_pitch);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaPitchedPtr<T>::download(T* dst)
-        {
-            if (cudaMemcpy2D(
-                (void*)src,
-                sizeof(T) * m_width,
-                (const void*)m_device_ptr,
-                m_pitch,
-                sizeof(T) * m_width,
-                m_height,
-                cudaMemcpyDeviceToHost) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to download memory "\
-                    "of %i bytes width and height %i from device address %p to "\
-                    "host address %p",
-                    m_pitch,
-                    m_height,
-                    (void*)m_device_ptr,
-                    (void*)src);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Downloaded memory of %i bytes "\
-                "width and height %i from device address %p to host address %p",
-                m_pitch,
-                m_height,
-                (void*)m_device_ptr,
-                (void*)src);
-            return true;
-        }
-
-        template<typename T>
-        inline bool CudaPitchedPtr<T>::download(T* dst, size_t row)
-        {
-            if (cudaMemcpy(
-                (void*)dst,
-                (const void*)(((char*)m_device_ptr) + row * m_pitch),
-                sizeof(T) * m_width,
-                cudaMemcpyDeviceToHost) != cudaSuccess)
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA resource: Failed to download %i "\
-                    "bytes of memory from host address %p to device address "\
-                    "%p with an offset of %i bytes",
-                    sizeof(T) * m_width,
-                    (void*)dst,
-                    (void*)m_device_ptr,
-                    row * m_pitch);
-                return false;
-            }
-            LDPLAB_LOG_TRACE("RTSCUDA resource: Downloaded %i bytes of memory"\
-                "from host address %p to device address %p with an offset of "\
-                "%i bytes",
-                sizeof(T) * m_width,
-                (void*)dst,
-                (void*)m_device_ptr,
-                row * m_pitch);
-            return true;
+            const void* dst_ptr = static_cast<void*>(dst);
+            const void* device_ptr = static_cast<void*>(
+                static_cast<basetype*>(m_device_ptr) + offset);
+            const size_t num_bytes = sizeof(basetype) * count;
+            const cudaError_t rv = cudaMemcpy(
+                dst_ptr,
+                device_ptr,
+                num_bytes,
+                cudaMemcpyDeviceToHost);
+            return !hasDownloadError(rv, device_ptr, dst_ptr, num_bytes);
         }
     }
 }
 
-#endif // LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+#endif //LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #endif // WWU_LDPLAB_RTSCUDA_CUDA_RESOURCE_HPP

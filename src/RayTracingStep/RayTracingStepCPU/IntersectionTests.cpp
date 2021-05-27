@@ -2,6 +2,7 @@
 
 #include <array>
 #include <LDPLAB/Constants.hpp>
+#include "..\RayTracingStepCUDA\IntersectionTests.hpp"
 
 bool ldplab::rtscpu::IntersectionTest::intersectRayTriangle(
     const Ray& ray, 

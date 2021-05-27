@@ -4,6 +4,7 @@
 #include "../../Utils/Log.hpp"
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"
+#include "..\RayTracingStepCUDA\Pipeline.hpp"
 
 
 ldplab::rtscpu::Pipeline::Pipeline(
@@ -106,9 +107,9 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
         }
     } while(batches_left);
 
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Pipeline instance %i executed "\
-        "successfully in a total of %i batches",
-        m_context.uid, job_id, num_batches);
+    LDPLAB_LOG_DEBUG("RTSCPU context %i: Ray tracing pipeline finished  "\
+        "execution of pipeline instance %i",
+        m_context.uid, job_id);
 }
 
 void ldplab::rtscpu::Pipeline::processBatch(
