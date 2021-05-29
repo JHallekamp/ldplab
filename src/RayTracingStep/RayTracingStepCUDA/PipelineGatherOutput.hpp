@@ -28,7 +28,7 @@ namespace ldplab
                 int32_t* ray_index_buffer,
                 Vec3* force_per_ray,
                 Vec3* torque_per_ray,
-                size_t num_rays_per_buffer,
+                size_t num_rays_per_batch,
                 Vec3* force_per_particle,
                 Vec3* torque_per_particle,
                 Mat3* p2w_transformations,

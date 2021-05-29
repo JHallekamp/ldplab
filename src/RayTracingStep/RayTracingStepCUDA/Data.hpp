@@ -42,7 +42,7 @@ namespace ldplab
              */
             bool allocateResources(
                 size_t num_buffers, 
-                size_t num_rays_per_buffer);
+                size_t num_rays_per_batch);
             /** @brief Index arrays per ray buffer. */
             std::vector<CudaPtr<int32_t>> index_buffers;
             /** @brief Ray origin vectors per ray buffer. */
@@ -73,7 +73,7 @@ namespace ldplab
              * @param[in] num_rays_per_buffer The number of rays per buffer.
              * @returns true, if no error occured.
              */
-            bool allocateResources(size_t num_rays_per_buffer);
+            bool allocateResources(size_t num_rays_per_batch);
             /** @brief Buffer holding the intersection point per ray. */
             CudaPtr<Vec3> intersection_point_buffer;
             /** @brief Buffer holding the intersection normal per ray. */
@@ -94,7 +94,7 @@ namespace ldplab
              */
             bool allocateResources(
                 size_t num_particles,
-                size_t num_rays_per_buffer);
+                size_t num_rays_per_batch);
             /** @brief Host buffer for particle force vectors. */
             std::vector<Vec3> host_force_per_particle;
             /** @brief Host buffer for particle torque vectors. */
@@ -177,6 +177,15 @@ namespace ldplab
             bool allocateGeometries(const std::vector<Particle>& particles);
             bool allocateMaterials(const std::vector<Particle>& particles);
             bool allocateCenterOfMass(const std::vector<Particle>& particles);
+        };
+
+        /** @brief Holds other pipeline resources, like temporary buffers. */
+        struct PipelineResources
+        {
+            /** @brief Host side array holding reduction results. */
+            std::vector<RayBufferReduceResult> host_reduction_result_buffer;
+            /** @brief Array holding reduction results. */
+            CudaPtr<RayBufferReduceResult> reduction_result_buffer;
         };
     }
 }

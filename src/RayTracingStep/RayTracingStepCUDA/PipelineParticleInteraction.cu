@@ -35,9 +35,9 @@ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradien
         size_t reflected_ray_buffer_index, 
         size_t transmitted_ray_buffer_index)
 {
-    const size_t block_size = 128;
-    const size_t grid_size = m_context.parameters.num_rays_per_buffer / block_size;
-    interactionKernel << <grid_size, block_size >> > (
+    const size_t block_size = m_context.parameters.num_threads_per_block;
+    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
+    interactionKernel <<<grid_size, block_size>>> (
         inner_particle_rays,
         m_context.parameters.medium_reflection_index,
         m_context.parameters.intensity_cutoff,
@@ -99,13 +99,13 @@ __global__ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearI
         Vec3* intersection_normal_buffer,
         Vec3* output_force_per_ray_buffer,
         Vec3* output_torque_per_ray_buffer, 
-        size_t num_rays_per_buffer,
+        size_t num_rays_per_batch,
         GenericParticleMaterialData* particle_materials,
         Vec3* particle_center_of_mass,
         size_t num_particles)
 {
-    int ri = blockIdx.x * blockDim.x + threadIdx.x;
-    if (ri >= num_rays_per_buffer)
+    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    if (ri >= num_rays_per_batch)
         return;
 
     int32_t particle_index = input_ray_index_buffer[ri];

@@ -8,6 +8,7 @@
 #include <map>
 
 #include "Data.hpp"
+#include "Pipeline.hpp"
 
 namespace ldplab
 {
@@ -47,11 +48,15 @@ namespace ldplab
                 double medium_reflection_index;
                 /** @brief The maximum branching depth. */
                 size_t max_branching_depth;
-                /** @brief The number of rays per buffer. */
-                size_t num_rays_per_buffer;
+                /** @brief The number of rays per batch. */
+                size_t num_rays_per_batch;
+                /** @brief The number of threads per block. */
+                size_t num_threads_per_block;
                 /** @brief The number of particles in the simulation setup. */
                 size_t num_particles;
             } parameters;
+            /** @brief The pipeline instance. */
+            std::unique_ptr<IPipeline> pipeline;
             /** @brief Structure holding device resources. */
             struct
             {
@@ -67,6 +72,8 @@ namespace ldplab
                 BoundingVolumeResources bounding_volumes;
                 /** @brief Holding particle data. */
                 ParticleResources particles;
+                /** @brief Holding other pipeline resources. */
+                PipelineResources pipeline;
             } resources;
         };
     }

@@ -28,7 +28,7 @@ namespace ldplab
                 int32_t* intersection_particle_index_buffer,
                 Vec3* output_force_per_ray,
                 Vec3* output_torque_per_ray,
-                size_t num_rays_per_buffer);
+                size_t num_rays_per_batch);
         private:
             Context& m_context;
         };

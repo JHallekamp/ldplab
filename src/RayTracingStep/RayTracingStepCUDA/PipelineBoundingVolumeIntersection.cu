@@ -21,8 +21,8 @@ ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
 void ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::execute(
     size_t ray_buffer_index)
 {
-    const size_t block_size = 128;
-    const size_t grid_size = m_context.parameters.num_rays_per_buffer / block_size;
+    const size_t block_size = m_context.parameters.num_threads_per_block;
+    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
     bvIntersectionKernel<<<grid_size, block_size>>>(
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.origin_buffers[ray_buffer_index].get(),
@@ -59,14 +59,14 @@ __global__ void ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
         Vec3* ray_origin_buffer, 
         Vec3* ray_direction_buffer, 
         double* ray_min_bv_dist_buffer, 
-        size_t num_rays, 
+        size_t num_rays_per_batch,
         GenericBoundingVolumeData* bounding_volumes, 
         Mat3* w2p_transformation, 
         Vec3* w2p_translation, 
         size_t num_particles)
 {
-    int ri = blockIdx.x * blockDim.x + threadIdx.x;
-    if (ri >= num_rays)
+    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    if (ri >= num_rays_per_batch)
         return;
 
     // Check if the ray already is in a particle space or is invalid
@@ -75,12 +75,21 @@ __global__ void ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
     double dist;
     double min_dist = -1.0;
     int32_t min_idx = -1;
+
+    Vec3 ray_origin = ray_origin_buffer[ri];
+    Vec3 ray_direction = ray_direction_buffer[ri];
+
     // Check each bounding volume sequentially for intersections
     for (int32_t i = 0; i < static_cast<int32_t>(num_particles); ++i)
     {
+        // Transform into particle space
+        Vec3 pspace_origin = w2p_transformation[i] *
+            (ray_origin + w2p_translation[i]);
+        Vec3 pspace_direction = glm::normalize(
+            w2p_transformation[i] * ray_direction);
         if (bounding_volumes->intersect_ray_bounding_volume(
-            ray_origin_buffer[ri],
-            ray_direction_buffer[ri],
+            pspace_origin,
+            pspace_direction,
             bounding_volumes->data,
             dist))
         {
@@ -100,9 +109,9 @@ __global__ void ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
         ray_min_bv_dist_buffer[ri] = min_dist;
         // Transform ray from world to particle space
         ray_origin_buffer[ri] = w2p_transformation[min_idx] *
-            (ray_origin_buffer[ri] + w2p_translation[min_idx]);
+            (ray_origin + w2p_translation[min_idx]);
         ray_direction_buffer[ri] = glm::normalize(
-            w2p_transformation[min_idx] * ray_direction_buffer[ri]);
+            w2p_transformation[min_idx] * ray_direction);
     }
     else
     {

@@ -1,6 +1,7 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include "Pipeline.hpp"
 
+#include "Context.hpp"
 #include "../../Utils/Log.hpp"
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"

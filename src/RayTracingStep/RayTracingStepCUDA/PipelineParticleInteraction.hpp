@@ -40,7 +40,7 @@ namespace ldplab
             Vec3* intersection_normal_buffer,
             Vec3* output_force_per_ray_buffer,
             Vec3* output_torque_per_ray_buffer,
-            size_t num_rays_per_buffer,
+            size_t num_rays_per_batch,
             GenericParticleMaterialData* particle_materials,
             Vec3* particle_center_of_mass,
             size_t num_particles);

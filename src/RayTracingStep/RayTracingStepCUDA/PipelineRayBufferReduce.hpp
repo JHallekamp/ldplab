@@ -33,10 +33,19 @@ namespace ldplab
                 m_context{ context } { }
             /** @brief Reduces the given ray buffers indices. */
             RayBufferReduceResult execute(size_t ray_buffer_index);
-            /** @brief Reduce reduction kernel. */
-            static __global__ RayBufferReduceResult rayBufferReduceKernel(
+            /** 
+             * @brief Ray buffer index reduction kernel.
+             * @note Cuda threads can only synchronize with threads in the same
+             *       block. Due to this, the reduction is performed block-wise
+             *       and the result_buffer is assumed to contain a result per
+             *       block, not a single overall result.
+             * @warning Block size needs to be a power of 2 for this to work!
+             */
+            static __global__ void rayBufferReduceKernel(
+                RayBufferReduceResult* result_buffer,
                 int32_t* ray_index_buffer,
-                size_t num_rays_per_buffer);
+                size_t num_rays_per_batch,
+                size_t num_particles);
         private:
             Context& m_context;
         };

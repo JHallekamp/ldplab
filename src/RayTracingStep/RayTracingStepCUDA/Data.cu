@@ -3,7 +3,7 @@
 
 bool ldplab::rtscuda::RayBufferResources::allocateResources(
     size_t num_buffers, 
-    size_t num_rays_per_buffer)
+    size_t num_rays_per_batch)
 {
     std::vector<int32_t*> temp_index_buffer_ptrs;
     std::vector<Vec3*> temp_origin_buffer_ptrs;
@@ -14,27 +14,27 @@ bool ldplab::rtscuda::RayBufferResources::allocateResources(
     {
         // Allocate index buffers
         index_buffers.emplace_back();
-        if (!index_buffers.back().allocate(num_rays_per_buffer))
+        if (!index_buffers.back().allocate(num_rays_per_batch))
             return false;
         temp_index_buffer_ptrs.push_back(index_buffers.back().get());
         // Allocate origin buffers
         origin_buffers.emplace_back();
-        if (!origin_buffers.back().allocate(num_rays_per_buffer))
+        if (!origin_buffers.back().allocate(num_rays_per_batch))
             return false;
         temp_origin_buffer_ptrs.push_back(origin_buffers.back().get());
         // Allocate direction buffers
         direction_buffers.emplace_back();
-        if (!direction_buffers.back().allocate(num_rays_per_buffer))
+        if (!direction_buffers.back().allocate(num_rays_per_batch))
             return false;
         temp_direction_buffer_ptrs.push_back(direction_buffers.back().get());
         // Allocate intensity buffers
         intensity_buffers.emplace_back();
-        if (!intensity_buffers.back().allocate(num_rays_per_buffer))
+        if (!intensity_buffers.back().allocate(num_rays_per_batch))
             return false;
         temp_intensity_buffer_ptrs.push_back(intensity_buffers.back().get());
         // Allocate min bounding volume distance buffers
         min_bv_dist_buffers.emplace_back();
-        if (!min_bv_dist_buffers.back().allocate(num_rays_per_buffer))
+        if (!min_bv_dist_buffers.back().allocate(num_rays_per_batch))
             return false;
         temp_min_bv_dist_buffer_ptrs.push_back(min_bv_dist_buffers.back().get());
     }
@@ -68,20 +68,20 @@ bool ldplab::rtscuda::RayBufferResources::allocateResources(
 }
 
 bool ldplab::rtscuda::IntersectionBufferResources::allocateResources(
-    size_t num_rays_per_buffer)
+    size_t num_rays_per_batch)
 {
-    if (!intersection_point_buffer.allocate(num_rays_per_buffer))
+    if (!intersection_point_buffer.allocate(num_rays_per_batch))
         return false;
-    if (!intersection_normal_buffer.allocate(num_rays_per_buffer))
+    if (!intersection_normal_buffer.allocate(num_rays_per_batch))
         return false;
-    if (!intersection_particle_index_buffer.allocate(num_rays_per_buffer))
+    if (!intersection_particle_index_buffer.allocate(num_rays_per_batch))
         return false;
     return true;
 }
 
 bool ldplab::rtscuda::OutputBufferResources::allocateResources(
     size_t num_particles, 
-    size_t num_rays_per_buffer)
+    size_t num_rays_per_batch)
 {
     // Allocate host memory
     host_force_per_particle.resize(num_particles);
@@ -89,11 +89,11 @@ bool ldplab::rtscuda::OutputBufferResources::allocateResources(
     // Allocate device memory
     if (!force_per_particle.allocate(num_particles))
         return false;
-    if (!force_per_ray.allocate(num_rays_per_buffer))
+    if (!force_per_ray.allocate(num_rays_per_batch))
         return false;
     if (!torque_per_particle.allocate(num_particles))
         return false;
-    if (!torque_per_ray.allocate(num_rays_per_buffer))
+    if (!torque_per_ray.allocate(num_rays_per_batch))
         return false;
     return true;
 }

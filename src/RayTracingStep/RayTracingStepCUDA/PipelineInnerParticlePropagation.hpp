@@ -24,7 +24,7 @@ namespace ldplab
             double* input_ray_intensity_buffer,
             Vec3* intersection_point_buffer,
             Vec3* intersection_normal_buffer,
-            size_t num_rays_per_buffer,
+            size_t num_rays_per_batch,
             GenericParticleGeometryData* geometry_per_particle,
             Vec3* output_force_per_particle_buffer,
             Vec3* output_torque_per_particle_buffer,
