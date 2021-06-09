@@ -157,11 +157,11 @@ namespace ldplab
         struct ParticleResources
         {
             /**
-            * @brief Allocates the device memory resources.
-            * @param[in] particles Vector of particles in the experimental
-            *                      setup.
-            * @returns true, if no error occured.
-            */
+             * @brief Allocates the device memory resources.
+             * @param[in] particles Vector of particles in the experimental
+             *                      setup.
+             * @returns true, if no error occured.
+             */
             bool allocateResource(const std::vector<Particle>& particles);
             /** @brief Array of particle center of masses */
             CudaPtr<Vec3> center_of_mass_per_particle;
@@ -182,6 +182,15 @@ namespace ldplab
         /** @brief Holds other pipeline resources, like temporary buffers. */
         struct PipelineResources
         {
+            /**
+            * @brief Allocates the buffer resources.
+            * @param[in] num_rays_per_buffer The number of rays per buffer.
+            * @param[in] num_threads_per_block Number of threads per cuda block.
+            * @returns true, if no error occured.
+            */
+            bool allocateResources(
+                size_t num_rays_per_batch, 
+                size_t num_threads_per_block);
             /** @brief Host side array holding reduction results. */
             std::vector<RayBufferReduceResult> host_reduction_result_buffer;
             /** @brief Array holding reduction results. */

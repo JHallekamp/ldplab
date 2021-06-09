@@ -17,7 +17,7 @@ enum class GeometryType
     sphere,
     triangle_mesh
 };
-const GeometryType GEOMETRY_TYPE = GeometryType::rod;
+const GeometryType GEOMETRY_TYPE = GeometryType::sphere;
 
 // Folder path
 const std::string OUTPUT_DIRECTORY = 
@@ -54,7 +54,7 @@ const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
 const size_t OCTREE_DEPTH = 5;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.05; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.01; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -309,19 +309,18 @@ void runSimulation(
     else
         rts_step_size = RTS_SOLVER_STEP_SIZE * std::pow(PARTICLE_VOLUME,1.0/3.0);
     ldplab::RayTracingStepCUDAInfo rtscuda_info;
-    rtscuda_info.number_parallel_pipelines = NUM_RTS_THREADS;
-    rtscuda_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
+   
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)experimental_setup.particles[0].bounding_volume.get();
-    rtscuda_info.light_source_ray_density_per_unit_area =
-        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi());
-    if (rtscuda_info.light_source_ray_density_per_unit_area == 0)
-        rtscuda_info.light_source_ray_density_per_unit_area = 1;
-    rtscuda_info.maximum_branching_depth = branching_depth;
+    
     rtscuda_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
+    rtscuda_info.light_source_resolution_per_world_unit = 
+        sqrt(NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
+    rtscuda_info.maximum_branching_depth = branching_depth;
+    rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
+    rtscuda_info.number_threads_per_block = 128;
     rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
         rts_step_size);
-    rtscuda_info.emit_warning_on_maximum_branching_depth_discardment = false;
     if (GEOMETRY_TYPE == GeometryType::triangle_mesh)
     {
         rtscuda_info.accelerator_structure_parameters =
@@ -385,7 +384,9 @@ void runSimulation(
         "_k" << static_cast<int>(kappa * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
         "_bd" << branching_depth <<
-        "_u" << rtscuda_info.light_source_ray_density_per_unit_area <<
+        "_u" << static_cast<int>(
+            rtscuda_info.light_source_resolution_per_world_unit *
+            rtscuda_info.light_source_resolution_per_world_unit) <<
         "_rs" << NUM_SIM_ROTATION_STEPS;
 
     // Stop timing

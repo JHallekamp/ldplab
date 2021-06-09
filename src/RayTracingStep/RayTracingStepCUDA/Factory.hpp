@@ -7,6 +7,8 @@
 #include <LDPLAB/RayTracingStep/IRayTracingStep.hpp>
 #include <memory>
 
+#include "Context.hpp"
+
 namespace ldplab
 {
     namespace rtscuda
@@ -19,6 +21,12 @@ namespace ldplab
             static std::shared_ptr<IRayTracingStep> createRTS(
                 const ExperimentalSetup& setup,
                 const RayTracingStepCUDAInfo& info);
+        private:
+            /** @brief Creates the context. */
+            static bool createContext(
+                const ExperimentalSetup& setup,
+                const RayTracingStepCUDAInfo& info,
+                Context& context);
         };
     }
 }

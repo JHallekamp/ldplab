@@ -44,16 +44,22 @@ namespace ldplab
             {
                 /** @brief Ray intensity cutoff. */
                 double intensity_cutoff;
+                /** @brief Number of rays per world space unit on light sources. */
+                double light_source_resolution_per_world_unit;
                 /** @brief Reflexion index of the medium. */
                 double medium_reflection_index;
                 /** @brief The maximum branching depth. */
                 size_t max_branching_depth;
+                /** @brief The number of light sources. */
+                size_t num_light_sources;
                 /** @brief The number of rays per batch. */
                 size_t num_rays_per_batch;
                 /** @brief The number of threads per block. */
                 size_t num_threads_per_block;
                 /** @brief The number of particles in the simulation setup. */
                 size_t num_particles;
+                /** @brief Determines wheather the output is in particle space. */
+                bool output_in_particle_space;
             } parameters;
             /** @brief The pipeline instance. */
             std::unique_ptr<IPipeline> pipeline;

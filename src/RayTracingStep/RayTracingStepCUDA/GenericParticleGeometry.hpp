@@ -206,19 +206,6 @@ namespace ldplab
             /** @brief Inherited via ldplab::rtscuda::GenericParticleGeometry. */
             GenericParticleGeometryData::Type getGeometryType() override;
         private:
-            /** @brief Intersection kernel. */
-            static __device__ bool intersectRayKernel(
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                void* particle_geometry_data,
-                Vec3& intersection_point,
-                Vec3& intersection_normal,
-                double& dist,
-                bool& intersects_outside);
-            /** @brief Actual function pointer. */
-            static __device__ intersectRayParticleGeometryFunction_t
-                intersect_ray_kernel_ptr;
-        private:
             CudaPtr<Data> m_data;
         };
 
@@ -241,19 +228,6 @@ namespace ldplab
             intersectRayParticleGeometryFunction_t getIsecFunction() override;
             /** @brief Inherited via ldplab::rtscuda::GenericParticleGeometry. */
             GenericParticleGeometryData::Type getGeometryType() override;
-        private:
-            /** @brief Intersection kernel. */
-            static __device__ bool intersectRayKernel(
-                const Vec3& ray_origin,
-                const Vec3& ray_direction,
-                void* particle_geometry_data,
-                Vec3& intersection_point,
-                Vec3& intersection_normal,
-                double& dist,
-                bool& intersects_outside);
-            /** @brief Actual function pointer. */
-            static __device__ intersectRayParticleGeometryFunction_t
-                intersect_ray_kernel_ptr;
         private:
             CudaPtr<Data> m_data;
         };

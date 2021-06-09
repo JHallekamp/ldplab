@@ -21,14 +21,10 @@ namespace ldplab
         public:
             /** @brief Creates an instance of the pipeline stage. */
             PipelineBufferSetup(Context& context) : m_context{ context }{ }
-            /** @brief Reduces the output. */
+            /** @brief Sets up the initial batch buffers. */
+            void executeInitial();
+            /** @brief Sets up the buffers. */
             void execute();
-            /** @brief Buffer setup device kernel. */
-            static __global__ void bufferSetupKernel(
-                int32_t* intersection_particle_index_buffer,
-                Vec3* output_force_per_ray,
-                Vec3* output_torque_per_ray,
-                size_t num_rays_per_batch);
         private:
             Context& m_context;
         };

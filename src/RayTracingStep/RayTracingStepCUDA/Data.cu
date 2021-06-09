@@ -213,4 +213,17 @@ bool ldplab::rtscuda::ParticleResources::allocateCenterOfMass(const std::vector<
     return true;
 }
 
+bool ldplab::rtscuda::PipelineResources::allocateResources(
+    size_t num_rays_per_batch, 
+    size_t num_threads_per_block)
+{
+    size_t num_blocks = num_rays_per_batch / num_threads_per_block;
+    if (num_rays_per_batch % num_threads_per_block)
+        ++num_blocks;
+    host_reduction_result_buffer.resize(num_blocks);
+    if (!reduction_result_buffer.allocate(num_blocks))
+        return false;
+    return true;
+}
+
 #endif

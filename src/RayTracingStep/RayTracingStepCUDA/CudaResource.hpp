@@ -173,7 +173,7 @@ namespace ldplab
             size_t offset, 
             size_t count)
         {
-            const void* device_ptr = static_cast<void*>(
+            void* device_ptr = static_cast<void*>(
                 static_cast<basetype*>(m_device_ptr) + offset);
             const size_t num_bytes = sizeof(basetype) * count;
             const cudaError_t rv = cudaMemset(
@@ -189,9 +189,9 @@ namespace ldplab
             size_t offset, 
             size_t count)
         {
-            const void* device_ptr = static_cast<void*>(
+            void* device_ptr = static_cast<void*>(
                 static_cast<basetype*>(m_device_ptr) + offset);
-            const void* src_ptr = static_cast<void*>(src);
+            void* src_ptr = static_cast<void*>(src);
             const size_t num_bytes = sizeof(basetype) * count;
             const cudaError_t rv = cudaMemcpy(
                 device_ptr,
@@ -207,8 +207,8 @@ namespace ldplab
             size_t offset, 
             size_t count)
         {
-            const void* dst_ptr = static_cast<void*>(dst);
-            const void* device_ptr = static_cast<void*>(
+            void* dst_ptr = static_cast<void*>(dst);
+            void* device_ptr = static_cast<void*>(
                 static_cast<basetype*>(m_device_ptr) + offset);
             const size_t num_bytes = sizeof(basetype) * count;
             const cudaError_t rv = cudaMemcpy(

@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_RTSCUDA_PIPELINE_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
+#include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 #include <LDPLAB/RayTracingStep/RayTracingStepOutput.hpp>
 
 #include "PipelineBoundingVolumeIntersection.hpp"
@@ -26,18 +27,11 @@ namespace ldplab
         public:
             virtual ~IPipeline() { }
             /** @brief Creates the pipeline instance. */
-            static std::shared_ptr<IPipeline> create(
+            static std::unique_ptr<IPipeline> create(
                 const Type pipeline_type,
+                const ExperimentalSetup& setup,
                 const RayTracingStepCUDAInfo& info,
-                Context& context,
-                std::shared_ptr<PipelineBufferSetup> buffer_setup,
-                std::shared_ptr<PipelineGatherOutput> gather_output,
-                std::shared_ptr<PipelineRayBufferReduceStage> rbr,
-                std::shared_ptr<IPipelineBoundingVolumeIntersectionStage> bvi,
-                std::shared_ptr<IPipelineInitialStage> initial,
-                std::shared_ptr<IPipelineInnerParticlePropagation> ipp,
-                std::shared_ptr<IPipelineParticleInteractionStage> interaction,
-                std::shared_ptr<IPipelineParticleIntersectionStage> intersection);
+                Context& context);
             /** @brief Gets called before execution. */
             virtual void setup();
             /** @brief Executes the pipeline. */

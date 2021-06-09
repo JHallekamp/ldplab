@@ -67,7 +67,11 @@ namespace ldplab
             struct Data
             {
                 inline __device__ double indexOfRefraction(
-                    const Vec3& position) const;
+                    const Vec3& position) const
+                {
+                    return index_of_refraction + gradient *
+                        glm::dot(direction, (position - origin));
+                }
                 double index_of_refraction;
                 double gradient;
                 Vec3 origin;

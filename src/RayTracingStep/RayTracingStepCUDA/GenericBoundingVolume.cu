@@ -4,6 +4,7 @@
 #include "IntersectionTests.hpp"
 #include "../../Utils/Log.hpp"
 
+
 std::shared_ptr<ldplab::rtscuda::GenericBoundingVolume> 
     ldplab::rtscuda::GenericBoundingVolume::create(
         std::shared_ptr<IBoundingVolume> bounding_volume)
@@ -32,6 +33,20 @@ ldplab::rtscuda::GenericBoundingVolumeData
     data.type = getBoundingVolumeType();
     data.data = getResourcePtr();
     data.intersect_ray_bounding_volume = getIsecFunction();
+    return data;
+}
+
+namespace bounding_sphere_cuda
+{
+    /** @brief The intersection kernel. */
+    static __device__ bool intersectRayKernel(
+        const ldplab::Vec3& ray_origin,
+        const ldplab::Vec3& ray_direction,
+        void* bounding_volume_data,
+        double& dist);
+    /** @brief Actual function pointer. */
+    static __device__ ldplab::rtscuda::intersectRayBoundingVolumeFunction_t
+        intersect_ray_kernel_ptr = intersectRayKernel;
 }
 
 bool ldplab::rtscuda::BoundingSphere::allocate(
@@ -56,11 +71,6 @@ void* ldplab::rtscuda::BoundingSphere::getResourcePtr()
     return m_data.getResource();
 }
 
-// Set function pointer
-ldplab::rtscuda::intersectRayBoundingVolumeFunction_t
-    ldplab::rtscuda::BoundingSphere::intersect_ray_kernel_ptr =
-        ldplab::rtscuda::BoundingSphere::intersectRayKernel;
-
 ldplab::rtscuda::intersectRayBoundingVolumeFunction_t 
     ldplab::rtscuda::BoundingSphere::getIsecFunction()
 {
@@ -68,8 +78,8 @@ ldplab::rtscuda::intersectRayBoundingVolumeFunction_t
     intersectRayBoundingVolumeFunction_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
             &kernel, 
-            intersect_ray_kernel_ptr, 
-            sizeof(intersect_ray_kernel_ptr)) 
+            bounding_sphere_cuda::intersect_ray_kernel_ptr,
+            sizeof(bounding_sphere_cuda::intersect_ray_kernel_ptr))
             != cudaSuccess)
         return nullptr;
     return kernel;
@@ -81,18 +91,18 @@ ldplab::rtscuda::GenericBoundingVolumeData::Type
     return GenericBoundingVolumeData::Type::TYPE_SPHERE;
 }
 
-__device__ bool ldplab::rtscuda::BoundingSphere::intersectRayKernel(
+__device__ bool bounding_sphere_cuda::intersectRayKernel(
     const ldplab::Vec3& ray_origin, 
     const ldplab::Vec3& ray_direction, 
     void* bounding_volume_data, 
     double& dist)
 {
     double t;
-    bool hit = IntersectionTest::intersectRaySphere(
+    bool hit = ldplab::rtscuda::IntersectionTest::intersectRaySphere(
         ray_origin,
         ray_direction,
-        static_cast<Data*>(bounding_volume_data)->center,
-        static_cast<Data*>(bounding_volume_data)->radius,
+        static_cast<ldplab::rtscuda::BoundingSphere::Data*>(bounding_volume_data)->center,
+        static_cast<ldplab::rtscuda::BoundingSphere::Data*>(bounding_volume_data)->radius,
         dist,
         t);
     return hit && dist >= 0;

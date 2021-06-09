@@ -31,6 +31,7 @@ ldplab::rtscuda::GenericParticleMaterialData
     GenericParticleMaterialData data;
     data.type = GenericParticleMaterialData::TYPE_HOMOGENOUS;
     data.data = m_data.getResource();
+    return data;
 }
 
 bool ldplab::rtscuda::ParticleHomogeneousMaterial::allocate(
@@ -55,6 +56,7 @@ ldplab::rtscuda::GenericParticleMaterialData
     GenericParticleMaterialData data;
     data.type = GenericParticleMaterialData::TYPE_LINEAR_ONE_DIRECTIONAL;
     data.data = m_data.getResource();
+    return data;
 }
 
 bool ldplab::rtscuda::ParticleLinearOneDirectionalMaterial::allocate(
@@ -78,11 +80,3 @@ bool ldplab::rtscuda::ParticleLinearOneDirectionalMaterial::allocate(
 }
 
 #endif
-
-inline __device__ double 
-    ldplab::rtscuda::ParticleLinearOneDirectionalMaterial::Data::indexOfRefraction(
-        const Vec3& position) const
-{
-    return index_of_refraction + gradient * 
-        glm::dot(direction, (position - origin));
-}

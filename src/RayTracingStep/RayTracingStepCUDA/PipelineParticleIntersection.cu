@@ -15,9 +15,23 @@ std::shared_ptr<ldplab::rtscuda::IPipelineParticleIntersectionStage>
     return impl;
 }
 
-ldplab::rtscuda::pipelineParticleIntersectionStageKernel_t
-    ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::intersection_kernel_ptr = 
-        ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::intersectionKernel;
+namespace generic_particle_geometry_cuda
+{
+    __global__ void intersectionKernel(
+        int32_t* ray_index_buffer,
+        ldplab::Vec3* ray_origin_buffer,
+        ldplab::Vec3* ray_direction_buffer,
+        int32_t* intersection_index_buffer,
+        ldplab::Vec3* intersection_point_buffer,
+        ldplab::Vec3* intersection_normal_buffer,
+        size_t num_rays_per_batch,
+        ldplab::rtscuda::GenericParticleGeometryData* geometry_per_particle,
+        ldplab::Mat3* p2w_transformation,
+        ldplab::Vec3* p2w_translation,
+        size_t num_particles);
+    __device__ ldplab::rtscuda::pipelineParticleIntersectionStageKernel_t
+        intersection_kernel_ptr;
+}
 
 ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
     PipelineParticleIntersectionGenericParticleGeometry(Context& context)
@@ -29,6 +43,7 @@ ldplab::rtscuda::pipelineParticleIntersectionStageKernel_t
     ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
         getKernel()
 {
+    using namespace generic_particle_geometry_cuda;
     // Copy the function pointer to the host
     pipelineParticleIntersectionStageKernel_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
@@ -43,9 +58,10 @@ ldplab::rtscuda::pipelineParticleIntersectionStageKernel_t
 void ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
     execute(size_t ray_buffer_index)
 {
+    using namespace generic_particle_geometry_cuda;
     const size_t block_size = m_context.parameters.num_threads_per_block;
     const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    intersectionKernel(
+    intersectionKernel<<<grid_size, block_size>>>(
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.origin_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.direction_buffers[ray_buffer_index].get(),
@@ -59,20 +75,22 @@ void ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
         m_context.parameters.num_particles);
 }
 
-__global__ void ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
-    intersectionKernel(
+__global__ void generic_particle_geometry_cuda::intersectionKernel(
         int32_t* ray_index_buffer,
-        Vec3* ray_origin_buffer,
-        Vec3* ray_direction_buffer,
+        ldplab::Vec3* ray_origin_buffer,
+        ldplab::Vec3* ray_direction_buffer,
         int32_t* intersection_index_buffer,
-        Vec3* intersection_point_buffer,
-        Vec3* intersection_normal_buffer,
+        ldplab::Vec3* intersection_point_buffer,
+        ldplab::Vec3* intersection_normal_buffer,
         size_t num_rays_per_batch,
-        GenericParticleGeometryData* geometry_per_particle, 
-        Mat3* p2w_transformation,
-        Vec3* p2w_translation,
+        ldplab::rtscuda::GenericParticleGeometryData* geometry_per_particle, 
+        ldplab::Mat3* p2w_transformation,
+        ldplab::Vec3* p2w_translation,
         size_t num_particles)
 {
+    using namespace ldplab;
+    using namespace rtscuda;
+
     unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (ri >= num_rays_per_batch)
         return;

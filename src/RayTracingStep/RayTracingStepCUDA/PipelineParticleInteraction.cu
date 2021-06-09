@@ -3,20 +3,61 @@
 
 #include "Context.hpp"
 
+std::shared_ptr<ldplab::rtscuda::IPipelineParticleInteractionStage> 
+    ldplab::rtscuda::IPipelineParticleInteractionStage::createInstance(
+        const RayTracingStepCUDAInfo& info, Context& context)
+{
+    // Currently simply return unpolarized 1d linear index gradient
+    return std::make_shared<
+        PipelineParticleInteractionUnpolarized1DLinearIndexGradient>(context);
+}
+
+namespace unpolarized_1d_linear_index_gradient_cuda
+{
+    /** @brief Intersection kernel. */
+    __global__ void interactionKernel(
+        bool inner_particle_rays,
+        double medium_reflection_index,
+        double intensity_cutoff,
+        int32_t* input_ray_index_buffer,
+        ldplab::Vec3* input_ray_origin_buffer,
+        ldplab::Vec3* input_ray_direction_buffer,
+        double* input_ray_intensity_buffer,
+        int32_t* reflected_ray_index_buffer,
+        ldplab::Vec3* reflected_ray_origin_buffer,
+        ldplab::Vec3* reflected_ray_direction_buffer,
+        double* reflected_ray_intensity_buffer,
+        double* reflected_ray_min_bv_dist_buffer,
+        int32_t* transmitted_ray_index_buffer,
+        ldplab::Vec3* transmitted_ray_origin_buffer,
+        ldplab::Vec3* transmitted_ray_direction_buffer,
+        double* transmitted_ray_intensity_buffer,
+        double* transmitted_ray_min_bv_dist_buffer,
+        int32_t* intersection_particle_index_buffer,
+        ldplab::Vec3* intersection_point_buffer,
+        ldplab::Vec3* intersection_normal_buffer,
+        ldplab::Vec3* output_force_per_ray_buffer,
+        ldplab::Vec3* output_torque_per_ray_buffer,
+        size_t num_rays_per_buffer,
+        ldplab::rtscuda::GenericParticleMaterialData* particle_materials,
+        ldplab::Vec3* particle_center_of_mass,
+        size_t num_particles);
+    /** @brief Actual function pointer. */
+    __device__ ldplab::rtscuda::pipelineParticleInteractionStageKernel_t
+        interaction_kernel_ptr = interactionKernel;
+}
+
 ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
     PipelineParticleInteractionUnpolarized1DLinearIndexGradient(Context& context)
     :
     m_context{ context }
 { }
 
-ldplab::rtscuda::pipelineParticleInteractionStageKernel_t
-    ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::interaction_kernel_ptr =
-        ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::interactionKernel;
-
 ldplab::rtscuda::pipelineParticleInteractionStageKernel_t 
     ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
         getKernel()
 {
+    using namespace unpolarized_1d_linear_index_gradient_cuda;
     // Copy the function pointer to the host
     pipelineParticleInteractionStageKernel_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
@@ -35,6 +76,7 @@ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradien
         size_t reflected_ray_buffer_index, 
         size_t transmitted_ray_buffer_index)
 {
+    using namespace unpolarized_1d_linear_index_gradient_cuda;
     const size_t block_size = m_context.parameters.num_threads_per_block;
     const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
     interactionKernel <<<grid_size, block_size>>> (
@@ -60,7 +102,7 @@ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradien
         m_context.resources.intersection_buffer.intersection_normal_buffer.get(),
         m_context.resources.output_buffer.force_per_ray.get(),
         m_context.resources.output_buffer.torque_per_ray.get(),
-        m_context.parameters.num_rays_per_buffer,
+        m_context.parameters.num_rays_per_batch,
         m_context.resources.particles.material_per_particle.get(),
         m_context.resources.particles.center_of_mass_per_particle.get(),
         m_context.parameters.num_particles);
@@ -75,35 +117,36 @@ __device__ double reflectance(double cos_a, double cos_b, double nr)
             ((cos2_a + cos2_b) + (nr + 1 / nr) * cos_a * cos_b));
 }
 
-__global__ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
-    interactionKernel(
+__global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
         bool inner_particle_rays, 
         double medium_reflection_index,
         double intensity_cutoff,
         int32_t* input_ray_index_buffer, 
-        Vec3* input_ray_origin_buffer, 
-        Vec3* input_ray_direction_buffer, 
+        ldplab::Vec3* input_ray_origin_buffer, 
+        ldplab::Vec3* input_ray_direction_buffer, 
         double* input_ray_intensity_buffer, 
         int32_t* reflected_ray_index_buffer,
-        Vec3* reflected_ray_origin_buffer,
-        Vec3* reflected_ray_direction_buffer,
+        ldplab::Vec3* reflected_ray_origin_buffer,
+        ldplab::Vec3* reflected_ray_direction_buffer,
         double* reflected_ray_intensity_buffer,
         double* reflected_ray_min_bv_dist_buffer,
         int32_t* transmitted_ray_index_buffer,
-        Vec3* transmitted_ray_origin_buffer,
-        Vec3* transmitted_ray_direction_buffer, 
+        ldplab::Vec3* transmitted_ray_origin_buffer,
+        ldplab::Vec3* transmitted_ray_direction_buffer, 
         double* transmitted_ray_intensity_buffer, 
         double* transmitted_ray_min_bv_dist_buffer, 
         int32_t* intersection_particle_index_buffer,
-        Vec3* intersection_point_buffer, 
-        Vec3* intersection_normal_buffer,
-        Vec3* output_force_per_ray_buffer,
-        Vec3* output_torque_per_ray_buffer, 
+        ldplab::Vec3* intersection_point_buffer, 
+        ldplab::Vec3* intersection_normal_buffer,
+        ldplab::Vec3* output_force_per_ray_buffer,
+        ldplab::Vec3* output_torque_per_ray_buffer, 
         size_t num_rays_per_batch,
-        GenericParticleMaterialData* particle_materials,
-        Vec3* particle_center_of_mass,
+        ldplab::rtscuda::GenericParticleMaterialData* particle_materials,
+        ldplab::Vec3* particle_center_of_mass,
         size_t num_particles)
 {
+    using namespace ldplab;
+    using namespace rtscuda;
     unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (ri >= num_rays_per_batch)
         return;

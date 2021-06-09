@@ -114,6 +114,22 @@ ldplab::rtscuda::GenericParticleGeometryData
     return data;
 }
 
+namespace rod_particle_cuda
+{
+    /** @brief Intersection kernel. */
+    __device__ bool intersectRayKernel(
+        const ldplab::Vec3& ray_origin,
+        const ldplab::Vec3& ray_direction,
+        void* particle_geometry_data,
+        ldplab::Vec3& intersection_point,
+        ldplab::Vec3& intersection_normal,
+        double& dist,
+        bool& intersects_outside);
+    /** @brief Actual function pointer. */
+    __device__ ldplab::rtscuda::intersectRayParticleGeometryFunction_t
+        intersect_ray_kernel_ptr = intersectRayKernel;
+}
+
 bool ldplab::rtscuda::RodParticle::allocate(
     std::shared_ptr<IParticleGeometry> particle_geometry)
 {
@@ -148,10 +164,6 @@ void* ldplab::rtscuda::RodParticle::getResourcePtr()
     return m_data.getResource();
 }
 
-ldplab::rtscuda::intersectRayParticleGeometryFunction_t
-    ldplab::rtscuda::RodParticle::intersect_ray_kernel_ptr =
-        ldplab::rtscuda::RodParticle::intersectRayKernel;
-
 ldplab::rtscuda::intersectRayParticleGeometryFunction_t 
     ldplab::rtscuda::RodParticle::getIsecFunction()
 {
@@ -159,8 +171,8 @@ ldplab::rtscuda::intersectRayParticleGeometryFunction_t
     intersectRayParticleGeometryFunction_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        intersect_ray_kernel_ptr,
-        sizeof(intersect_ray_kernel_ptr))
+        rod_particle_cuda::intersect_ray_kernel_ptr,
+        sizeof(rod_particle_cuda::intersect_ray_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
@@ -170,6 +182,35 @@ ldplab::rtscuda::GenericParticleGeometryData::Type
     ldplab::rtscuda::RodParticle::getGeometryType()
 {
     return GenericParticleGeometryData::Type::TYPE_ROD;
+}
+
+__device__ bool rod_particle_cuda::intersectRayKernel(
+    const ldplab::Vec3& ray_origin, 
+    const ldplab::Vec3& ray_direction, 
+    void* particle_geometry_data, 
+    ldplab::Vec3& intersection_point, 
+    ldplab::Vec3& intersection_normal, 
+    double& dist, 
+    bool& intersects_outside)
+{
+    /** @todo */
+    return false;
+}
+
+namespace sphere_particle_cuda
+{
+    /** @brief Intersection kernel. */
+    static __device__ bool intersectRayKernel(
+        const ldplab::Vec3& ray_origin,
+        const ldplab::Vec3& ray_direction,
+        void* particle_geometry_data,
+        ldplab::Vec3& intersection_point,
+        ldplab::Vec3& intersection_normal,
+        double& dist,
+        bool& intersects_outside);
+    /** @brief Actual function pointer. */
+    static __device__ ldplab::rtscuda::intersectRayParticleGeometryFunction_t
+        intersect_ray_kernel_ptr = intersectRayKernel;
 }
 
 bool ldplab::rtscuda::SphereParticle::allocate(std::shared_ptr<IParticleGeometry> particle_geometry)
@@ -192,10 +233,6 @@ void* ldplab::rtscuda::SphereParticle::getResourcePtr()
     return m_data.getResource();
 }
 
-ldplab::rtscuda::intersectRayParticleGeometryFunction_t
-    ldplab::rtscuda::SphereParticle::intersect_ray_kernel_ptr =
-        ldplab::rtscuda::SphereParticle::intersectRayKernel;
-
 ldplab::rtscuda::intersectRayParticleGeometryFunction_t 
     ldplab::rtscuda::SphereParticle::getIsecFunction()
 {
@@ -203,8 +240,8 @@ ldplab::rtscuda::intersectRayParticleGeometryFunction_t
     intersectRayParticleGeometryFunction_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        intersect_ray_kernel_ptr,
-        sizeof(intersect_ray_kernel_ptr))
+        sphere_particle_cuda::intersect_ray_kernel_ptr,
+        sizeof(sphere_particle_cuda::intersect_ray_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
@@ -216,16 +253,19 @@ ldplab::rtscuda::GenericParticleGeometryData::Type
     return GenericParticleGeometryData::Type::TYPE_SPHERE;
 }
 
-__device__ bool ldplab::rtscuda::SphereParticle::intersectRayKernel(
-    const Vec3& ray_origin, 
-    const Vec3& ray_direction, 
+__device__ bool sphere_particle_cuda::intersectRayKernel(
+    const ldplab::Vec3& ray_origin, 
+    const ldplab::Vec3& ray_direction, 
     void* particle_geometry_data, 
-    Vec3& intersection_point, 
-    Vec3& intersection_normal, 
+    ldplab::Vec3& intersection_point, 
+    ldplab::Vec3& intersection_normal, 
     double& dist, 
     bool& intersects_outside)
 {
-    Data* const sphere_data = static_cast<Data*>(particle_geometry_data);
+    using namespace ldplab;
+    using namespace ldplab::rtscuda;
+    SphereParticle::Data* const sphere_data = 
+        static_cast<SphereParticle::Data*>(particle_geometry_data);
     double max;
     if (!IntersectionTest::intersectRaySphere(
         ray_origin,

@@ -4,6 +4,20 @@
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
 
+/**
+ * @brief Ray buffer index reduction kernel.
+ * @note Cuda threads can only synchronize with threads in the same
+ *       block. Due to this, the reduction is performed block-wise
+ *       and the result_buffer is assumed to contain a result per
+ *       block, not a single overall result.
+ * @warning Block size needs to be a power of 2 for this to work!
+ */
+__global__ void rayBufferReduceKernel(
+    ldplab::rtscuda::RayBufferReduceResult* result_buffer, 
+    int32_t* ray_index_buffer, 
+    size_t num_rays_per_batch,
+    size_t num_particles);
+
 ldplab::rtscuda::RayBufferReduceResult 
     ldplab::rtscuda::PipelineRayBufferReduceStage::execute(
         size_t ray_buffer_index)
@@ -38,13 +52,15 @@ ldplab::rtscuda::RayBufferReduceResult
     return result;
 }
 
-__global__ void ldplab::rtscuda::PipelineRayBufferReduceStage::
-    rayBufferReduceKernel(
-        RayBufferReduceResult* result_buffer, 
-        int32_t* ray_index_buffer, 
-        size_t num_rays_per_batch,
-        size_t num_particles)
+__global__ void rayBufferReduceKernel(
+    ldplab::rtscuda::RayBufferReduceResult* result_buffer, 
+    int32_t* ray_index_buffer, 
+    size_t num_rays_per_batch,
+    size_t num_particles)
 {
+    using namespace ldplab;
+    using namespace rtscuda;
+
     // Shared memory
     extern __shared__ RayBufferReduceResult sbuf[];
 

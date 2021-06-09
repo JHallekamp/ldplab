@@ -17,7 +17,7 @@ namespace ldplab
         RayTracingStepCUDAInfo()
             :
             intensity_cutoff{ 0 },
-            light_source_ray_density_per_unit_area{ 0 },
+            light_source_resolution_per_world_unit{ 0 },
             maximum_branching_depth{ 0 },
             number_rays_per_batch{ 0 },
             number_threads_per_block{ 128 },
@@ -34,8 +34,8 @@ namespace ldplab
             accelerator_structure_parameters;
         /**  @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff;
-        /** @brief Number of rays per light source square unit */
-        size_t light_source_ray_density_per_unit_area;
+        /** @brief Number of rays per world space unit on a light source plane. */
+        double light_source_resolution_per_world_unit;
         /** @brief Maximum number of times a ray can split. */
         size_t maximum_branching_depth;
         /** @brief Number of rays per batch. */

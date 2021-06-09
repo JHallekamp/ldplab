@@ -65,21 +65,6 @@ namespace ldplab
              */
             void execute(size_t ray_buffer_index) override;
         private:
-            static __global__ void intersectionKernel(
-                int32_t* ray_index_buffer,
-                Vec3* ray_origin_buffer,
-                Vec3* ray_direction_buffer,
-                int32_t* intersection_index_buffer,
-                Vec3* intersection_point_buffer,
-                Vec3* intersection_normal_buffer,
-                size_t num_rays_per_batch,
-                GenericParticleGeometryData* geometry_per_particle,
-                Mat3* p2w_transformation,
-                Vec3* p2w_translation,
-                size_t num_particles);
-            static __device__ pipelineParticleIntersectionStageKernel_t
-                intersection_kernel_ptr;
-        private:
             Context& m_context;
         };
     }

@@ -85,16 +85,6 @@ namespace ldplab
             /** @brief Inherited via ldplab::rtscuda::GenericBoundingVolume */
             GenericBoundingVolumeData::Type getBoundingVolumeType() override;
         private:
-            /** @brief The intersection kernel. */
-            static __device__ bool intersectRayKernel(
-                const ldplab::Vec3& ray_origin,
-                const ldplab::Vec3& ray_direction,
-                void* bounding_volume_data,
-                double& dist);
-            /** @brief Actual function pointer. */
-            static __device__ intersectRayBoundingVolumeFunction_t
-                intersect_ray_kernel_ptr;
-        private:
             CudaPtr<Data> m_data;
         };
     }
