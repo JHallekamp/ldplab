@@ -72,7 +72,7 @@ void ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::setup()
     size_t total_rays;
     if (cudaMemcpyFromSymbol(
         &total_rays,
-        &total_num_rays,
+        total_num_rays,
         sizeof(total_num_rays)) != cudaSuccess)
     {
         total_rays = 0;
@@ -235,12 +235,12 @@ __global__ void homogenous_light_bounding_spheres_cuda::projectParticlesKernel(
 
     // Assuming ray direction is always orthogonal to light plane
     const double t = glm::dot(light.ray_direction, light.origin - bs.center) /
-        glm::dot(light.ray_direction, light.ray_direction);
+        -glm::dot(light.ray_direction, light.ray_direction);
     PipelineInitialHomogenousLightBoundingSpheres::Rect projection;
     if (t < 0.0)
     {
-        projection.x = 0;
-        projection.y = 0;
+        projection.x = -1;
+        projection.y = -1;
         projection.height = 0;
         projection.width = 0;
     }
@@ -258,8 +258,8 @@ __global__ void homogenous_light_bounding_spheres_cuda::projectParticlesKernel(
             bs.radius * light_source_resolution_per_world_unit) - projection.x;
         projection.height = static_cast<int>(projctr.y +
             bs.radius * light_source_resolution_per_world_unit) - projection.y;
-        projection_buffer_ptr[projection_idx] = projection;
     }
+    projection_buffer_ptr[projection_idx] = projection;
 
     // ========================================================================
     // Part 2: calculate projection size

@@ -16,7 +16,7 @@ namespace ldplab
         public:
             ICudaResource() : m_device_ptr{ 0 }{ }
             ICudaResource(ICudaResource&& other) noexcept;
-            virtual ~ICudaResource() { free(); }
+            virtual ~ICudaResource() { }
             /** @brief Frees the resource. */
             virtual bool free() = 0;
             /** @brief Checks if the resource is allocated. */
@@ -62,6 +62,9 @@ namespace ldplab
         {
         public:
             CudaPtr() : m_count{ 0 }{ }
+            CudaPtr(const CudaPtr<basetype>& other) = delete;
+            CudaPtr(CudaPtr<basetype>&& other);
+            virtual ~CudaPtr() { free(); }
             /** 
              * @brief Allocates device memory for a given number of basetype 
              *        elements.
@@ -143,6 +146,16 @@ namespace ldplab
             const char* resourceTypeName() const override
             { return "CudaBlob"; }
         };
+
+        template<typename basetype>
+        inline CudaPtr<basetype>::CudaPtr(CudaPtr<basetype>&& other)
+        {
+            this->m_device_ptr = other.m_device_ptr;
+            other.m_device_ptr = nullptr;
+            this->m_count = other.m_count;
+            other.m_count = 0;
+            this->m_resource_uid = other.m_resource_uid;
+        }
 
         template<typename basetype>
         inline bool CudaPtr<basetype>::allocate(size_t count)
