@@ -49,10 +49,10 @@ namespace ldplab
          * @brief Device side wrapper methods around a generic ray particle
          *        intersection function.
          */
-        class GenericParticlFunctionWrapper
+        class GenericParticleFunctionWrapper
         {
         public:
-            GenericParticlFunctionWrapper() = delete;
+            GenericParticleFunctionWrapper() = delete;
             /**
              * @brief Typedefinition of particle geometry intersection kernel
              *        function pointer.

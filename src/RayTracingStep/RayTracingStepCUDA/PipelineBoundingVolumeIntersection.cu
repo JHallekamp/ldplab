@@ -2,6 +2,7 @@
 #include "PipelineBoundingVolumeIntersection.hpp"
 
 #include "Context.hpp"
+#include <LDPLAB/Constants.hpp>
 
 std::shared_ptr<ldplab::rtscuda::IPipelineBoundingVolumeIntersectionStage> 
     ldplab::rtscuda::IPipelineBoundingVolumeIntersectionStage::createInstance(
@@ -95,7 +96,7 @@ __global__ void bruteforce_cuda::bvIntersectionKernel(
     Vec3 ray_direction = ray_direction_buffer[ri];
 
     // Check each bounding volume sequentially for intersections
-    for (int32_t i = 0; i < static_cast<int32_t>(num_particles); ++i)
+    for (size_t i = 0; i < num_particles; ++i)
     {
         // Transform into particle space
         Vec3 pspace_origin = w2p_transformation[i] *
@@ -108,7 +109,7 @@ __global__ void bruteforce_cuda::bvIntersectionKernel(
             bounding_volumes->data,
             dist))
         {
-            if (dist < min_dist &&
+            if ((dist < min_dist || min_dist < 0) &&
                 dist > ray_min_bv_dist_buffer[ri])
             {
                 min_dist = dist;
@@ -121,7 +122,8 @@ __global__ void bruteforce_cuda::bvIntersectionKernel(
     {
         // Ray hits particle with index min_idx
         ray_index_buffer[ri] = min_idx;
-        ray_min_bv_dist_buffer[ri] = min_dist;
+        ray_min_bv_dist_buffer[ri] = min_dist + 
+            constant::intersection_tests::epsilon;
         // Transform ray from world to particle space
         ray_origin_buffer[ri] = w2p_transformation[min_idx] *
             (ray_origin + w2p_translation[min_idx]);

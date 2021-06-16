@@ -46,7 +46,8 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 #else
     const size_t NUM_RTS_THREADS = 8;
 #endif
-const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
+const size_t NUM_RAYS_PER_BLOCK = 256;
+const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 8;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000; //500000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
@@ -315,10 +316,11 @@ void runSimulation(
     
     rtscuda_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscuda_info.light_source_resolution_per_world_unit = 
-        sqrt(NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
+        (size_t)sqrt(NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
     rtscuda_info.maximum_branching_depth = branching_depth;
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
-    rtscuda_info.number_threads_per_block = 128;
+    rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
+    rtscuda_info.return_force_in_particle_coordinate_system = true;
     rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
         rts_step_size);
     if (GEOMETRY_TYPE == GeometryType::triangle_mesh)
@@ -360,10 +362,16 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     
-    for (double rotation_x = offset + step_size;
+    size_t step = 0;
+    for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
+        if (step++ == 27)
+            std::cout << "BREAKPOINT" << std::endl;
+        else
+            std::cout << "Step: " << step << std::endl;
+
         state.particle_instances[puid].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
         output_force << rotation_x <<

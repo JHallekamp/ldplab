@@ -12,15 +12,13 @@ __global__ void gatherOutputKernel(
     ldplab::Vec3* force_per_particle,
     ldplab::Vec3* torque_per_particle,
     ldplab::Mat3* p2w_transformations,
-    ldplab::Vec3* p2w_translations,
     size_t num_particles,
     bool particle_space_output);
 
 void ldplab::rtscuda::PipelineGatherOutput::execute(size_t ray_buffer_index)
 {
-    const size_t block_size = m_context.parameters.num_particles;
-    const size_t grid_size = m_context.parameters.num_particles / block_size +
-        (m_context.parameters.num_particles % block_size ? 1 : 0);
+    const size_t grid_size = m_context.parameters.num_particles;
+    const size_t block_size = m_context.parameters.num_threads_per_block;
     const size_t shared_mem_size = block_size * sizeof(Vec3) * 2;
     gatherOutputKernel<<<grid_size, block_size, shared_mem_size>>>(
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
@@ -30,7 +28,6 @@ void ldplab::rtscuda::PipelineGatherOutput::execute(size_t ray_buffer_index)
         m_context.resources.output_buffer.force_per_particle.get(),
         m_context.resources.output_buffer.torque_per_particle.get(),
         m_context.resources.transformations.p2w_transformation.get(),
-        m_context.resources.transformations.p2w_translation.get(),
         m_context.parameters.num_particles,
         m_context.parameters.output_in_particle_space);
 }
@@ -43,7 +40,6 @@ __global__ void gatherOutputKernel(
     ldplab::Vec3* force_per_particle,
     ldplab::Vec3* torque_per_particle,
     ldplab::Mat3* p2w_transformations,
-    ldplab::Vec3* p2w_translations,
     size_t num_particles,
     bool particle_space_output)
 {
@@ -69,7 +65,7 @@ __global__ void gatherOutputKernel(
     {
         if (ri < num_rays_per_batch)
         {
-            if (ray_index_buffer[ri] == pi)
+            if (ray_index_buffer[ri] == static_cast<int32_t>(pi))
             {
                 sbuf[force_idx] += force_per_ray[ri];
                 sbuf[torque_idx] += torque_per_ray[ri];
@@ -92,7 +88,7 @@ __global__ void gatherOutputKernel(
     {
         unsigned int ofs = lim / 2;
         if (tid + ofs < lim)
-            sbuf[tid + blockDim.x] += sbuf[tid + ofs + blockDim.x];
+            sbuf[tid + blockDim.x] += sbuf[tid + blockDim.x + ofs];
         __syncthreads();
     }
 
@@ -100,13 +96,13 @@ __global__ void gatherOutputKernel(
     // Final step: Write the result from shared buffer in output buffers
     if (tid == 0)
     {
-        if (particle_space_output)
+        if (!particle_space_output)
         {
-            sbuf[0] = p2w_transformations[pi] * sbuf[0];
-            sbuf[blockDim.x] = p2w_transformations[pi] * sbuf[blockDim.x];
+            sbuf[force_idx] = p2w_transformations[pi] * sbuf[force_idx];
+            sbuf[torque_idx] = p2w_transformations[pi] * sbuf[torque_idx];
         }
-        force_per_particle[pi] += sbuf[0];
-        torque_per_particle[pi] += sbuf[blockDim.x];
+        force_per_particle[pi] += sbuf[force_idx];
+        torque_per_particle[pi] += sbuf[torque_idx];
     }
 }
 

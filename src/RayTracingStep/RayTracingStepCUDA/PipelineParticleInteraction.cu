@@ -152,7 +152,7 @@ __global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
         return;
 
     int32_t particle_index = input_ray_index_buffer[ri];
-    if (particle_index < 0 || particle_index >= num_particles)
+    if (particle_index < 0 || particle_index >= static_cast<int32_t>(num_particles))
     {
         reflected_ray_index_buffer[ri] = -1;
         transmitted_ray_index_buffer[ri] = -1;
@@ -183,7 +183,7 @@ __global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
         static_cast<ParticleLinearOneDirectionalMaterial::Data*>(
             particle_materials[particle_index].data);
     const Vec3 intersection_point = intersection_point_buffer[ri];
-    double nr, nx, ny;    
+    double nx, ny;    
     if (inner_particle_rays)
     {
         nx = material->indexOfRefraction(intersection_point);
@@ -194,7 +194,7 @@ __global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
         nx = medium_reflection_index;
         ny = material->indexOfRefraction(intersection_point);
     }
-    nr = nx / ny;
+    const double nr = nx / ny;
     const double cos_a = 
         -glm::dot(input_ray_direction_buffer[ri], intersection_normal);
     const Vec3 r = intersection_point -

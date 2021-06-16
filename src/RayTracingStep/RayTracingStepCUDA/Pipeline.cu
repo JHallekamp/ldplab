@@ -109,7 +109,7 @@ void ldplab::rtscuda::HostPipeline::execute()
         LDPLAB_PROFILING_STOP(rtscuda_pipeline_initial_batch_creation);
         LDPLAB_LOG_TRACE("RTSCUDA context %i: Pipeline executes batch %i",
             m_context.uid, num_batches);
-        executeBatch(0, initial_batch_buffer_index, false);
+        executeBatch(num_batches, 0, initial_batch_buffer_index, false);
         LDPLAB_LOG_TRACE("RTSCUDA context %i: Pipeline finished batch execution %i",
             m_context.uid, num_batches);
         ++num_batches;
@@ -126,6 +126,7 @@ bool ldplab::rtscuda::HostPipeline::allocate(const RayTracingStepCUDAInfo& info)
 }
 
 void ldplab::rtscuda::HostPipeline::executeBatch(
+    size_t batch_no,
     size_t depth, 
     size_t ray_buffer_index, 
     bool inside_particle)
@@ -145,7 +146,7 @@ void ldplab::rtscuda::HostPipeline::executeBatch(
         do
         {
             m_bounding_volume_intersection_stage->execute(ray_buffer_index);
-            m_particle_intersection_stage->execute(ray_buffer_index);
+            m_particle_intersection_stage->execute(ray_buffer_index);            
             ray_state_count = m_ray_buffer_reduce_stage->execute(ray_buffer_index);
         } while (ray_state_count.num_world_space_rays > 0);
     }
@@ -160,11 +161,18 @@ void ldplab::rtscuda::HostPipeline::executeBatch(
     // Gather output
     m_gather_output_stage->execute(ray_buffer_index);
 
+    //std::vector<Vec3> output(m_context.parameters.num_rays_per_batch);
+    //m_context.resources.output_buffer.force_per_ray.download(output.data());
+    //std::vector<int32_t> index1(m_context.parameters.num_rays_per_batch);
+    //std::vector<int32_t> index2(m_context.parameters.num_rays_per_batch);
+    //m_context.resources.ray_buffer.index_buffers[reflection_buffer_index].download(index1.data());
+    //m_context.resources.ray_buffer.index_buffers[ray_buffer_index].download(index2.data());
+
     // Branch
     if (depth < m_context.parameters.max_branching_depth)
     {
-        executeBatch(depth + 1, reflection_buffer_index, inside_particle);
-        executeBatch(depth + 1, transmission_buffer_index, !inside_particle);
+        executeBatch(batch_no, depth + 1, reflection_buffer_index, inside_particle);
+        executeBatch(batch_no, depth + 1, transmission_buffer_index, !inside_particle);
     }
 }
 

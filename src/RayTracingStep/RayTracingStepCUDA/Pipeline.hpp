@@ -79,6 +79,7 @@ namespace ldplab
         private:
             /** @brief Recursive pipeline execution. */
             void executeBatch(
+                size_t batch_no,
                 size_t depth,
                 size_t ray_buffer_index,
                 bool inside_particle);

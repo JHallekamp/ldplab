@@ -319,6 +319,7 @@ void runSimulation(
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
     rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
         rts_step_size);
+    rtscpu_info.return_force_in_particle_coordinate_system = true;
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
     if (GEOMETRY_TYPE == GeometryType::triangle_mesh)
     {
@@ -359,7 +360,7 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     
-    for (double rotation_x = offset + step_size;
+    for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {

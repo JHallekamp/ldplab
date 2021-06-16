@@ -145,7 +145,7 @@ __global__ void rk4_linear_index_gradient_cuda::innerParticlePropagationKernel(
     while (!intersected)
     {
         rk4(material, x, step_size, x_new);
-        intersected = GenericParticlFunctionWrapper::intersectSegment(
+        intersected = GenericParticleFunctionWrapper::intersectSegment(
             intersectRayParticle,
             x.r,
             x_new.r,
@@ -163,7 +163,7 @@ __global__ void rk4_linear_index_gradient_cuda::innerParticlePropagationKernel(
                 // tunnels through the particle.
                 bool intersect_outside = false;
                 Vec3 t_ip, t_in;
-                intersected = GenericParticlFunctionWrapper::intersectRay(
+                intersected = GenericParticleFunctionWrapper::intersectRay(
                     intersectRayParticle,
                     ray_origin,
                     ray_direction,
@@ -191,7 +191,7 @@ __global__ void rk4_linear_index_gradient_cuda::innerParticlePropagationKernel(
                     // To receive the previous normal, we simply perform the
                     // Intersection test again, but this time we reverse the
                     // segment directions. Then we flip the normal.
-                    GenericParticlFunctionWrapper::intersectSegment(
+                    GenericParticleFunctionWrapper::intersectSegment(
                         intersectRayParticle,
                         x_new.r,
                         x.r,

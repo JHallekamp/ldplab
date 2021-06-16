@@ -6,7 +6,7 @@
 #include "IntersectionTests.hpp"
 #include "../../Utils/Log.hpp"
 
-__device__ bool ldplab::rtscuda::GenericParticlFunctionWrapper::intersectRay(
+__device__ bool ldplab::rtscuda::GenericParticleFunctionWrapper::intersectRay(
     intersectRayParticleGeometryFunction_t function, 
     const Vec3& ray_origin, 
     const Vec3& ray_direction, 
@@ -26,7 +26,7 @@ __device__ bool ldplab::rtscuda::GenericParticlFunctionWrapper::intersectRay(
         to);
 }
 
-__device__ bool ldplab::rtscuda::GenericParticlFunctionWrapper::intersectRay(
+__device__ bool ldplab::rtscuda::GenericParticleFunctionWrapper::intersectRay(
     intersectRayParticleGeometryFunction_t function, 
     const Vec3& ray_origin, 
     const Vec3& ray_direction, 
@@ -46,7 +46,7 @@ __device__ bool ldplab::rtscuda::GenericParticlFunctionWrapper::intersectRay(
         intersects_outside);
 }
 
-__device__ bool ldplab::rtscuda::GenericParticlFunctionWrapper::intersectSegment(
+__device__ bool ldplab::rtscuda::GenericParticleFunctionWrapper::intersectSegment(
     intersectRayParticleGeometryFunction_t function, 
     const Vec3& segment_origin, 
     const Vec3& segment_end, 
@@ -85,7 +85,6 @@ std::shared_ptr<ldplab::rtscuda::GenericParticleGeometry>
     ldplab::rtscuda::GenericParticleGeometry::create(
         std::shared_ptr<IParticleGeometry> particle_geometry)
 {
-
     std::shared_ptr<ldplab::rtscuda::GenericParticleGeometry> geometry;
     if (particle_geometry->type() == IParticleGeometry::Type::rod_particle)
         geometry = std::make_shared<RodParticle>();

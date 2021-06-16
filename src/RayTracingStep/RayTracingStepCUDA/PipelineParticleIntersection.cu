@@ -91,12 +91,12 @@ __global__ void generic_particle_geometry_cuda::intersectionKernel(
     using namespace ldplab;
     using namespace rtscuda;
 
-    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (ri >= num_rays_per_batch)
         return;
     int32_t particle_index = ray_index_buffer[ri];
     if (particle_index < 0 || 
-        particle_index >= num_particles ||
+        particle_index >= static_cast<int32_t>(num_particles) ||
         particle_index == intersection_index_buffer[ri])
         return;
 
@@ -114,6 +114,8 @@ __global__ void generic_particle_geometry_cuda::intersectionKernel(
     {
         // Intersects particle
         intersection_index_buffer[ri] = particle_index;
+        intersection_normal_buffer[ri] = isec_norm;
+        intersection_point_buffer[ri] = isec_pt;
     }
     else
     {

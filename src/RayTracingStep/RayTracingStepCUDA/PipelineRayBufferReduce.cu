@@ -72,7 +72,8 @@ __global__ void rayBufferReduceKernel(
     if (ri < num_rays_per_batch)
         particle_index = ray_index_buffer[ri];
     sbuf[tid].num_active_rays = particle_index < 0 ? 0 : 1;
-    sbuf[tid].num_world_space_rays = particle_index < num_particles ? 0 : 1;
+    sbuf[tid].num_world_space_rays = 
+        particle_index < static_cast<int32_t>(num_particles) ? 0 : 1;
     __syncthreads();
 
     // ========================================================================

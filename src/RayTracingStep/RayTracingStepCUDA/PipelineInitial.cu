@@ -200,7 +200,9 @@ bool ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::allocate(
         light_source.origin = setup.light_sources[i].origin_corner;
         light_source.ray_direction = setup.light_sources[i].orientation;
         light_source.ray_intensity = static_cast<LightDistributionHomogeneous*>(
-            setup.light_sources[i].intensity_distribution.get())->intensity;
+            setup.light_sources[i].intensity_distribution.get())->intensity /
+            (info.light_source_resolution_per_world_unit *
+                info.light_source_resolution_per_world_unit);
         light_source.width = setup.light_sources[i].horizontal_size * 
             m_context.parameters.light_source_resolution_per_world_unit;
         light_source.x_axis = 
@@ -246,9 +248,10 @@ __global__ void homogenous_light_bounding_spheres_cuda::projectParticlesKernel(
     }
     else
     {
+        const Vec3 cntr = bs.center - t * light.ray_direction - light.origin;
         const Vec2 projctr = Vec2{
-           glm::dot(bs.center - t * light.ray_direction - light.origin, light.x_axis),
-           glm::dot(bs.center - t * light.ray_direction - light.origin, light.y_axis) } *
+           glm::dot(cntr, glm::normalize(light.x_axis)),
+           glm::dot(cntr, glm::normalize(light.y_axis)) } *
            light_source_resolution_per_world_unit;
         projection.x = static_cast<int>(
             projctr.x - bs.radius * light_source_resolution_per_world_unit);
@@ -289,7 +292,7 @@ __global__ void homogenous_light_bounding_spheres_cuda::countTotalRaysKernelFirs
     for (unsigned int i = 1; i < blockDim.x; ++i)
     {
         if (i == tid)
-            sbuf[tid] = sbuf[tid - 1];
+            sbuf[tid] += sbuf[tid - 1];
         __syncthreads();
     }
 
@@ -343,7 +346,8 @@ __global__ void homogenous_light_bounding_spheres_cuda::createBatchKernel(
 
     // ========================================================================
     // Part 1: Find which projection to use for this instance using binary search
-    unsigned int gid = batch_no * num_rays_per_batch + threadIdx.x;
+    const unsigned int gid = 
+        batch_no * num_rays_per_batch + blockIdx.x * blockDim.x + threadIdx.x;
     if (gid >= total_num_rays)
         return;
     size_t low = 0;
@@ -365,16 +369,13 @@ __global__ void homogenous_light_bounding_spheres_cuda::createBatchKernel(
 
     // ========================================================================
     // Part 2: Find which ray to create
-    unsigned int lid = gid - (nr - proj.width * proj.height);
-    int xid = static_cast<int>(lid) % proj.width;
-    int yid = static_cast<int>(lid) / proj.width;
-
-    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int lid = gid - (nr - proj.width * proj.height);
+    const int xid = static_cast<int>(lid) % proj.width;
+    const int yid = static_cast<int>(lid) / proj.width;
+    const unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (proj.x + xid < 0 ||
-        proj.y + yid < 0 ||
-        proj.x + xid >= proj.width ||
-        proj.y + yid >= proj.height)
-        ray_index_buffer[ri] = 0;
+        proj.y + yid < 0)
+        ray_index_buffer[ri] = -1;
     else
     {
         PipelineInitialHomogenousLightBoundingSpheres::HomogenousLightSource 
