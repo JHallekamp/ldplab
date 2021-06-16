@@ -44,7 +44,7 @@ __global__ void initialSetupKernel(
     ldplab::Vec3* output_torque_per_particle, 
     size_t num_particles)
 {
-    unsigned int pi = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t pi = blockIdx.x * blockDim.x + threadIdx.x;
     if (pi >= num_particles)
         return;
     output_force_per_particle[pi] = ldplab::Vec3(0, 0, 0);
@@ -57,7 +57,7 @@ __global__ void bufferSetupKernel(
     ldplab::Vec3* output_torque_per_ray, 
     size_t num_rays_per_batch)
 {
-    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (ri >= num_rays_per_batch)
         return;
     intersection_particle_index_buffer[ri] = -1;

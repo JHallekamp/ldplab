@@ -205,9 +205,9 @@ bool ldplab::rtscuda::ParticleResources::allocateCenterOfMass(const std::vector<
     if (!center_of_mass_per_particle.allocate(particles.size()))
         return false;
     // Collect center of masses and upload data
-    std::vector<Vec3> host_data;
+    std::vector<Vec3> host_data(particles.size());
     for (size_t i = 0; i < particles.size(); ++i)
-        host_data.push_back(particles[i].centre_of_mass);
+        host_data[i] = particles[i].centre_of_mass;
     if (!center_of_mass_per_particle.upload(host_data.data()))
         return false;
     return true;

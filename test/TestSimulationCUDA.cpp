@@ -46,7 +46,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 #else
     const size_t NUM_RTS_THREADS = 8;
 #endif
-const size_t NUM_RAYS_PER_BLOCK = 256;
+const size_t NUM_RAYS_PER_BLOCK = 128;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 8;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000; //500000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;

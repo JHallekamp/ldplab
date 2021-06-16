@@ -161,13 +161,6 @@ void ldplab::rtscuda::HostPipeline::executeBatch(
     // Gather output
     m_gather_output_stage->execute(ray_buffer_index);
 
-    //std::vector<Vec3> output(m_context.parameters.num_rays_per_batch);
-    //m_context.resources.output_buffer.force_per_ray.download(output.data());
-    //std::vector<int32_t> index1(m_context.parameters.num_rays_per_batch);
-    //std::vector<int32_t> index2(m_context.parameters.num_rays_per_batch);
-    //m_context.resources.ray_buffer.index_buffers[reflection_buffer_index].download(index1.data());
-    //m_context.resources.ray_buffer.index_buffers[ray_buffer_index].download(index2.data());
-
     // Branch
     if (depth < m_context.parameters.max_branching_depth)
     {

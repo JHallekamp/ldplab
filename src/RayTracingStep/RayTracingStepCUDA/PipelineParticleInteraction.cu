@@ -166,7 +166,7 @@ __global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
     // case it will intersect it, but no inner particle propagation will
     // actually occur. To ensure correct behavior in such case, the 
     // intersection normal is set to 0.
-    Vec3 intersection_normal = intersection_normal_buffer[ri];
+    const Vec3 intersection_normal = intersection_normal_buffer[ri];
     if (intersection_normal == Vec3(0, 0, 0))
     {
         reflected_ray_index_buffer[ri] = -1;
@@ -251,9 +251,9 @@ __global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
             delta_momentum = intersection_normal * (nx * -2.0 * cos_a);
         }
         output_force_per_ray_buffer[ri] +=
-            transmitted_ray_intensity_buffer[ri] * delta_momentum;
+            reflected_ray_intensity_buffer[ri] * delta_momentum;
         output_torque_per_ray_buffer[ri] +=
-            transmitted_ray_intensity_buffer[ri] * glm::cross(r, delta_momentum);
+            reflected_ray_intensity_buffer[ri] * glm::cross(r, delta_momentum);
     }
     else
     {
@@ -269,9 +269,9 @@ __global__ void unpolarized_1d_linear_index_gradient_cuda::interactionKernel(
         delta_momentum = nx * (input_ray_direction_buffer[ri] - 
             reflected_ray_direction_buffer[ri]);
         output_force_per_ray_buffer[ri] +=
-            transmitted_ray_intensity_buffer[ri] * delta_momentum;
+            reflected_ray_intensity_buffer[ri] * delta_momentum;
         output_torque_per_ray_buffer[ri] +=
-            transmitted_ray_intensity_buffer[ri] * glm::cross(r, delta_momentum);
+            reflected_ray_intensity_buffer[ri] * glm::cross(r, delta_momentum);
     }
 }
 

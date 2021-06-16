@@ -380,7 +380,7 @@ __global__ void homogenous_light_bounding_spheres_cuda::createBatchKernel(
     {
         PipelineInitialHomogenousLightBoundingSpheres::HomogenousLightSource 
             light = light_source_buffer_ptr[proj_idx % num_particles];
-        ray_index_buffer[ri] = num_particles;
+        ray_index_buffer[ri] = static_cast<int32_t>(num_particles);
         ray_origin_buffer[ri] = light.origin +
             static_cast<double>(proj.x + xid) * light.x_axis +
             static_cast<double>(proj.y + yid) * light.y_axis;
