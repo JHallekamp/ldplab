@@ -12,6 +12,7 @@ void ldplab::rtscuda::RayTracingStep::execute(
     const SimulationState& input, 
     RayTracingStepOutput& output)
 {
+    LDPLAB_PROFILING_START(rtscuda_step);
     // Start execution
     LDPLAB_LOG_INFO("RTSCUDA context %i: "\
         "Ray tracing step starts execution",
@@ -24,9 +25,17 @@ void ldplab::rtscuda::RayTracingStep::execute(
         return;
 
     // Execute pipeline
+    LDPLAB_PROFILING_START(ray_tracing_step_pipeline_setup);
     m_context->pipeline->setup();
+    LDPLAB_PROFILING_STOP(ray_tracing_step_pipeline_setup);
+
+    LDPLAB_PROFILING_START(ray_tracing_step_pipeline_execution);
     m_context->pipeline->execute();
+    LDPLAB_PROFILING_STOP(ray_tracing_step_pipeline_execution);
+
+    LDPLAB_PROFILING_START(ray_tracing_step_receive_output);
     m_context->pipeline->getOutput(output);
+    LDPLAB_PROFILING_STOP(ray_tracing_step_receive_output);
 
     // Finish execution
     std::chrono::steady_clock::time_point end =
@@ -35,6 +44,7 @@ void ldplab::rtscuda::RayTracingStep::execute(
         end - start).count();
     LDPLAB_LOG_INFO("RTSCUDA context %i: Ray tracing step executed after %fs",
         m_context->uid, elapsed_time);
+    LDPLAB_PROFILING_STOP(rtscuda_step);
 }
 
 bool ldplab::rtscuda::RayTracingStep::updateContext(

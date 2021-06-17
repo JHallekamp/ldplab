@@ -3,6 +3,11 @@
 
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
+#include "../../Utils/Profiler.hpp"
+
+#include <atomic>
+
+__device__ ldplab::rtscuda::RayBufferReduceResult global_ray_counter;
 
 /**
  * @brief Ray buffer index reduction kernel.
@@ -23,6 +28,9 @@ ldplab::rtscuda::RayBufferReduceResult
         size_t ray_buffer_index)
 {
     // Execute kernel
+    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce_kernel_execution);
+    //RayBufferReduceResult result{ 0, 0 };
+    //cudaMemcpyToSymbol(global_ray_counter, &result, sizeof(RayBufferReduceResult));
     const size_t block_size = m_context.parameters.num_threads_per_block;
     const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
     const size_t shared_mem_size = block_size * sizeof(RayBufferReduceResult);
@@ -31,7 +39,11 @@ ldplab::rtscuda::RayBufferReduceResult
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
         m_context.parameters.num_rays_per_batch,
         m_context.parameters.num_particles);
+    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_kernel_execution);
+
     // Download data and reduce into single result buffer
+    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce_data_download);
+    //cudaMemcpyFromSymbol(&result, global_ray_counter, sizeof(RayBufferReduceResult)); 
     RayBufferReduceResult result{ 0, 0 };
     std::vector<RayBufferReduceResult>& host_results =
         m_context.resources.pipeline.host_reduction_result_buffer;
@@ -49,6 +61,7 @@ ldplab::rtscuda::RayBufferReduceResult
             "failed to download reduction results from device",
             m_context.uid);
     }
+    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_data_download);
     return result;
 }
 
@@ -92,7 +105,11 @@ __global__ void rayBufferReduceKernel(
     // ========================================================================
     // Final step: Write the result from shared buffer in result_buffer
     if (tid == 0)
+    {
+        //atomicAdd(&global_ray_counter.num_active_rays, sbuf[0].num_active_rays);
+        //atomicAdd(&global_ray_counter.num_world_space_rays, sbuf[0].num_world_space_rays);
         result_buffer[blockIdx.x] = sbuf[0];
+    }
 }
 
 #endif

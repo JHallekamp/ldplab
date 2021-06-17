@@ -84,6 +84,18 @@ namespace ldplab
                 size_t ray_buffer_index,
                 bool inside_particle);
         };
+
+        /** @brief Device-bound pipeline. */
+        class DevicePipeline : public IPipeline
+        {
+        public:
+            DevicePipeline(Context& ctx);
+            /** @brief Inherited via ldplab::rtscuda::IPipeline */
+            void execute() override;
+        protected:
+            /** @brief Inherited via ldplab::rtscuda::IPipeline */
+            bool allocate(const RayTracingStepCUDAInfo& info) override;
+        };
     }
 }
 

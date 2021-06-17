@@ -109,7 +109,11 @@ void ldplab::rtscuda::HostPipeline::execute()
         LDPLAB_PROFILING_STOP(rtscuda_pipeline_initial_batch_creation);
         LDPLAB_LOG_TRACE("RTSCUDA context %i: Pipeline executes batch %i",
             m_context.uid, num_batches);
+
+        LDPLAB_PROFILING_START(pipeline_process_batch);
         executeBatch(num_batches, 0, initial_batch_buffer_index, false);
+        LDPLAB_PROFILING_STOP(pipeline_process_batch);
+
         LDPLAB_LOG_TRACE("RTSCUDA context %i: Pipeline finished batch execution %i",
             m_context.uid, num_batches);
         ++num_batches;
@@ -132,34 +136,59 @@ void ldplab::rtscuda::HostPipeline::executeBatch(
     bool inside_particle)
 {
     // Prepare buffer
+    LDPLAB_PROFILING_START(pipeline_buffer_setup);
     m_buffer_setup_stage->execute();
-    RayBufferReduceResult ray_state_count;
+    LDPLAB_PROFILING_STOP(pipeline_buffer_setup);
+
+
     // Check if buffer contains rays
+    LDPLAB_PROFILING_START(pipeline_ray_index_reduction);
+    RayBufferReduceResult ray_state_count;
     ray_state_count = m_ray_buffer_reduce_stage->execute(ray_buffer_index);
+    LDPLAB_PROFILING_STOP(pipeline_ray_index_reduction);
+
     if (ray_state_count.num_active_rays == 0)
         return;
+    
     // Switch between inside and outside particle
     if (inside_particle)
+    {
+        LDPLAB_PROFILING_START(pipeline_inner_particle_propagation);
         m_inner_particle_propagation_stage->execute(ray_buffer_index);
+        LDPLAB_PROFILING_STOP(pipeline_inner_particle_propagation);
+    }
     else
     {
         do
         {
+            LDPLAB_PROFILING_START(pipeline_bounding_volume_intersection);
             m_bounding_volume_intersection_stage->execute(ray_buffer_index);
-            m_particle_intersection_stage->execute(ray_buffer_index);            
+            LDPLAB_PROFILING_STOP(pipeline_bounding_volume_intersection);
+
+            LDPLAB_PROFILING_START(pipeline_particle_intersection);
+            m_particle_intersection_stage->execute(ray_buffer_index);
+            LDPLAB_PROFILING_STOP(pipeline_particle_intersection);
+
+            LDPLAB_PROFILING_START(pipeline_ray_index_reduction);
             ray_state_count = m_ray_buffer_reduce_stage->execute(ray_buffer_index);
+            LDPLAB_PROFILING_STOP(pipeline_ray_index_reduction);
         } while (ray_state_count.num_world_space_rays > 0);
     }
     // Perform particle interaction
     size_t reflection_buffer_index = depth * 2 + 1;
     size_t transmission_buffer_index = depth * 2 + 2;
+    LDPLAB_PROFILING_START(pipeline_particle_interaction);
     m_particle_interaction_stage->execute(
         inside_particle, 
         ray_buffer_index, 
         reflection_buffer_index, 
         transmission_buffer_index);
+    LDPLAB_PROFILING_STOP(pipeline_particle_interaction);
+
     // Gather output
+    LDPLAB_PROFILING_START(pipeline_gather_output);
     m_gather_output_stage->execute(ray_buffer_index);
+    LDPLAB_PROFILING_STOP(pipeline_gather_output);
 
     // Branch
     if (depth < m_context.parameters.max_branching_depth)
@@ -167,6 +196,21 @@ void ldplab::rtscuda::HostPipeline::executeBatch(
         executeBatch(batch_no, depth + 1, reflection_buffer_index, inside_particle);
         executeBatch(batch_no, depth + 1, transmission_buffer_index, !inside_particle);
     }
+}
+
+ldplab::rtscuda::DevicePipeline::DevicePipeline(Context& ctx)
+    :
+    IPipeline{ ctx }
+{ }
+
+void ldplab::rtscuda::DevicePipeline::execute()
+{
+}
+
+bool ldplab::rtscuda::DevicePipeline::allocate(
+    const RayTracingStepCUDAInfo& info)
+{
+    return false;
 }
 
 #endif

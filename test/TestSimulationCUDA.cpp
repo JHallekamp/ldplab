@@ -48,7 +48,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 #endif
 const size_t NUM_RAYS_PER_BLOCK = 128;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 8;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000; //500000;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 50000; //500000;
 const size_t MAX_RTS_BRANCHING_DEPTH = 8;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
@@ -60,7 +60,7 @@ const double RTS_SOLVER_STEP_SIZE = 0.01; //0.005;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 314;
+const size_t NUM_SIM_ROTATION_STEPS = 314 * 2;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,
@@ -362,16 +362,10 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
     
-    size_t step = 0;
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
-        if (step++ == 27)
-            std::cout << "BREAKPOINT" << std::endl;
-        else
-            std::cout << "Step: " << step << std::endl;
-
         state.particle_instances[puid].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
         output_force << rotation_x <<
