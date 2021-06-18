@@ -60,7 +60,7 @@ const double RTS_SOLVER_STEP_SIZE = 0.01; //0.005;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 314 * 2;
+const size_t NUM_SIM_ROTATION_STEPS = 314;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,

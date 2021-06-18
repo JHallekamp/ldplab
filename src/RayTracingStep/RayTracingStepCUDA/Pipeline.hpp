@@ -89,7 +89,7 @@ namespace ldplab
         class DevicePipeline : public IPipeline
         {
         public:
-            DevicePipeline(Context& ctx);
+            DevicePipeline(Context& ctx); 
             /** @brief Inherited via ldplab::rtscuda::IPipeline */
             void execute() override;
         protected:
