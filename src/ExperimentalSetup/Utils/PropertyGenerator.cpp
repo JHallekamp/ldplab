@@ -21,6 +21,11 @@ ldplab::Vec3 ldplab::PropertyGenerator::getRodParticleCenterOfMass(
     return rs;
 }
 
+ldplab::Vec3 ldplab::PropertyGenerator::getCapParticleCenterOfMass(const CapParticleGeometry& geometry)
+{
+    return Vec3(0,0,geometry.radius-geometry.cap_hight/2);
+}
+
 ldplab::Particle ldplab::PropertyGenerator::getRodParticleConstRadius(
     const double R,
     const double l,
@@ -173,6 +178,36 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByVolume(
     return particle;
 }
 
+ldplab::Particle ldplab::PropertyGenerator::getCapParticleByRadius(
+    const double R,
+    const double kappa,
+    const double np,
+    const double delta_n,
+    const double gradient_direction, 
+    const Vec3 position, 
+    const Vec3 orientation)
+{
+    const double nu = delta_n / (2 * R * kappa);
+
+    ldplab::Particle particle;
+    particle.position = position;
+    particle.orientation = orientation;
+    particle.geometry =
+        std::make_shared<ldplab::CapParticleGeometry>(R,2*R*kappa);
+    particle.bounding_volume =
+        std::make_shared<ldplab::BoundingVolumeSphere>(
+            Vec3(0, 0, 0),
+            R + R * 1e-6);
+    particle.material =
+        std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
+            np,
+            nu,
+            Vec3(0, 0, R * (1-kappa)),
+            Vec3(0, 0, gradient_direction));
+    particle.centre_of_mass = Vec3(0, 0, R * (1 - kappa));
+    return particle;
+}
+
 ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
     const double R,
     const double np,
@@ -198,6 +233,8 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
             nu,
             Vec3(0, 0, 0),
             Vec3(0, 0 , gradient_direction));
-    particle.centre_of_mass = Vec3(0, 0, 0);
+    particle.centre_of_mass =
+        ldplab::PropertyGenerator::getCapParticleCenterOfMass(
+            *(ldplab::CapParticleGeometry*)particle.geometry.get());
     return particle;
 }

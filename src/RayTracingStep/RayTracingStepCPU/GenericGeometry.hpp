@@ -236,6 +236,26 @@ namespace ldplab
         private:
             double m_radius;
         };
+
+        /** @brief Geometry implementation for cap particles. */
+        class CapGeometry : public IGenericGeometry
+        {
+        public:
+            /** @brief Constructs the sphere particle geometry. */
+            CapGeometry(const CapParticleGeometry* geometry);
+        protected:
+            /** @brief Inherited via IGenericGeometry */
+            bool intersectRay(
+                const Ray& ray,
+                Vec3& intersection_point,
+                Vec3& intersection_normal,
+                double& dist,
+                bool& intersects_outside) override;
+        private:
+            double m_radius;
+            double m_cut_hight;
+        };
+
     }
 }
 

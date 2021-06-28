@@ -7,6 +7,7 @@ namespace ldplab
 {
     // Prototype
     struct RodParticleGeometry;
+    struct CapParticleGeometry;
     struct Particle;
 
     class PropertyGenerator
@@ -14,6 +15,8 @@ namespace ldplab
     public:
         static Vec3 getRodParticleCenterOfMass(
             const RodParticleGeometry& geometry);
+        static Vec3 getCapParticleCenterOfMass(
+            const CapParticleGeometry& geometry);
         static Particle getRodParticleConstRadius(
             const double R,
             const double l,
@@ -42,14 +45,22 @@ namespace ldplab
             const Vec3 position,
             const Vec3 orientation);
         static Particle getSphereParticleByRadius(
-            const double V,
+            const double R,
             const double np,
             const double nu,
             const double gradient_direction,
             const Vec3 position,
             const Vec3 orientation);
         static Particle getSphereParticleByVolume(
+            const double V,
+            const double np,
+            const double nu,
+            const double gradient_direction,
+            const Vec3 position,
+            const Vec3 orientation);
+        static Particle getCapParticleByRadius(
             const double R,
+            const double kappa,
             const double np,
             const double nu,
             const double gradient_direction,

@@ -411,3 +411,76 @@ bool ldplab::rtscpu::SphericalGeometry::intersectRay(
         intersection_normal = -intersection_normal;
     return true;
 }
+
+ldplab::rtscpu::CapGeometry::CapGeometry(
+    const CapParticleGeometry* geometry)
+    :
+    m_radius{ geometry->radius },
+    m_cut_hight{ geometry->radius - geometry->cap_hight}
+{ }
+
+bool ldplab::rtscpu::CapGeometry::intersectRay(
+    const Ray& ray,
+    Vec3& intersection_point,
+    Vec3& intersection_normal,
+    double& dist,
+    bool& intersects_outside)
+{
+    double min, max, plane_dist;
+    if (!IntersectionTest::intersectRaySphere(ray, Vec3(0, 0, 0), m_radius, dist, max))
+        return false;
+    intersects_outside = true;
+    if (dist < constant::intersection_tests::epsilon)
+    {
+        if (m_cut_hight - ray.origin.z > constant::intersection_tests::epsilon)
+        {
+            dist = (m_cut_hight - ray.origin.z) / ray.direction.z;
+            if (dist < constant::intersection_tests::epsilon)
+                return false;
+            intersection_point = ray.origin + dist * ray.direction;
+            intersection_normal = Vec3(0, 0, -1);
+        }
+        else
+        {
+            intersects_outside = false;
+            plane_dist = (m_cut_hight - ray.origin.z) / ray.direction.z;
+            if (plane_dist < max && plane_dist > constant::intersection_tests::epsilon)
+            {
+                intersection_point = ray.origin + dist * ray.direction;
+                intersection_normal = Vec3(0, 0, -1);
+            }
+            else
+            {
+                dist = max;
+                intersection_point = ray.origin + dist * ray.direction;
+                intersection_normal = glm::normalize(intersection_point);
+            }
+        }
+    }
+    else
+    {
+        intersection_point = ray.origin + dist * ray.direction;
+        if (intersection_point.z <= m_cut_hight)
+        {
+            if (ray.direction.z == 0)
+                return false;
+            else
+            {
+                dist = (m_cut_hight - ray.origin.z) / ray.direction.z;
+                if (dist < constant::intersection_tests::epsilon)
+                    return false;
+                intersection_point = ray.origin + dist * ray.direction;
+                const double isec_x2 = intersection_point.x * intersection_point.x;
+                const double isec_y2 = intersection_point.y * intersection_point.y;
+                if (isec_x2 + isec_y2 > m_radius * m_radius)
+                    return false;
+            }
+            intersection_normal = Vec3(0, 0, -1);
+        }
+        else
+            intersection_normal = glm::normalize(intersection_point);
+    }
+    if (!intersects_outside)
+        intersection_normal = -intersection_normal;
+    return true;
+}

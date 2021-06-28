@@ -254,6 +254,11 @@ bool ldplab::rtscpu::Factory::createParticleGenericGeometryInstances(
             geometries.emplace_back(new SphericalGeometry(
                 (SphericalParticleGeometry*) particle_geometry));
         }
+        else if (particle_geometry->type() == IParticleGeometry::Type::cap)
+        {
+            geometries.emplace_back(new CapGeometry(
+                (CapParticleGeometry*)particle_geometry));
+        }
         else if (particle_geometry->type() == IParticleGeometry::Type::triangle_mesh)
         {
             std::shared_ptr<IGenericGeometry> geometry;
