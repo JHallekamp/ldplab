@@ -27,6 +27,8 @@ namespace ldplab
                 const ExperimentalSetup& setup,
                 const RayTracingStepCUDAInfo& info,
                 Context& context);
+            /** @brief Reads cuda device infos and writes them into context. */
+            static bool readCudaInfo(Context& context);
         };
     }
 }

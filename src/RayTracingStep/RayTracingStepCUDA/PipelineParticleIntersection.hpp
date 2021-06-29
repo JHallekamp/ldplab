@@ -15,20 +15,12 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter; 
+        struct DevicePipelineResources;
 
-        /** @brief Typedefinition of ray particle intersection stage. */
-        typedef void (*pipelineParticleIntersectionStageKernel_t)(
-            int32_t* ray_index_buffer,
-            Vec3* ray_origin_buffer,
-            Vec3* ray_direction_buffer,
-            int32_t* intersection_index_buffer,
-            Vec3* intersection_point_buffer,
-            Vec3* intersection_normal_buffer,
-            size_t num_rays_per_batch,
-            GenericParticleGeometryData* geometry_per_particle,
-            Mat3* p2w_transformation,
-            Vec3* p2w_translation,
-            size_t num_particles);
+        typedef void(*pipelineExecuteParticleIntersectionStage_t)(
+            DevicePipelineResources& resources,
+            size_t ray_buffer_index);
 
         /** @brief Abstract baseclass for ray particle intersection stage. */
         class IPipelineParticleIntersectionStage
@@ -42,12 +34,14 @@ namespace ldplab
             /** @brief Gets called before the pipeline enters execution. */
             virtual void setup() { }
             /** @brief Provides the caller with a pointer to the kernel. */
-            virtual pipelineParticleIntersectionStageKernel_t getKernel() = 0;
+            virtual pipelineExecuteParticleIntersectionStage_t getKernel() = 0;
             /**
              * @brief Calculating resulting rays of the interaction of the
              *        incident ray with a particle surface.
              */
             virtual void execute(size_t ray_buffer_index) = 0;
+            /** @brief Returns the launch parameter for the kernel. */
+            virtual KernelLaunchParameter getLaunchParameter() = 0;
         };
 
         /** @brief Basic intersection test for generic geometry. */
@@ -58,12 +52,13 @@ namespace ldplab
             PipelineParticleIntersectionGenericParticleGeometry(
                 Context& context);
             /** @brief Provides the caller with a pointer to the kernel. */
-            pipelineParticleIntersectionStageKernel_t getKernel() override;
+            pipelineExecuteParticleIntersectionStage_t getKernel() override;
             /**
              * @brief Calculating resulting rays of the interaction of the
              *        incident ray with a particle surface.
              */
             void execute(size_t ray_buffer_index) override;
+            KernelLaunchParameter getLaunchParameter() override;
         private:
             Context& m_context;
         };

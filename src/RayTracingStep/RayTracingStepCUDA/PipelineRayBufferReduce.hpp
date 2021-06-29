@@ -14,6 +14,8 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter;
+        struct DevicePipelineResources;
 
         /** @brief Return value for ray buffer reduce kernel. */
         struct RayBufferReduceResult
@@ -24,6 +26,10 @@ namespace ldplab
             size_t num_world_space_rays;
         };
 
+        __device__ RayBufferReduceResult executeRayBufferReduceKernel(
+            DevicePipelineResources& resources,
+            size_t ray_buffer_index);
+
         /** @brief Abstract baseclass for the ray buffer reduction stage. */
         class PipelineRayBufferReduceStage
         {
@@ -33,6 +39,10 @@ namespace ldplab
                 m_context{ context } { }
             /** @brief Reduces the given ray buffers indices. */
             RayBufferReduceResult execute(size_t ray_buffer_index);
+            /** @brief Kernel launch parameter. */
+            KernelLaunchParameter getLaunchParameterStep1();
+            /** @brief Kernel launch parameter. */
+            KernelLaunchParameter getLaunchParameterStep2();
         private:
             Context& m_context;
         };

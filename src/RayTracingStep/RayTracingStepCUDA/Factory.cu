@@ -2,6 +2,7 @@
 #include "Factory.hpp"
 
 #include "RayTracingStep.hpp"
+#include "../../Utils/Log.hpp"
 
 std::shared_ptr<ldplab::IRayTracingStep> ldplab::rtscuda::Factory::createRTS(
     const ExperimentalSetup& setup, 
@@ -30,6 +31,8 @@ bool ldplab::rtscuda::Factory::createContext(
     context.parameters.num_threads_per_block = info.number_threads_per_block;
     context.parameters.output_in_particle_space = 
         info.return_force_in_particle_coordinate_system;
+    if (!readCudaInfo(context))
+        return false;
 
     // Create data
     if (!context.resources.bounding_volumes.allocateResource(setup.particles))
@@ -80,6 +83,49 @@ bool ldplab::rtscuda::Factory::createContext(
     if (context.pipeline == nullptr)
         return false;
 
+    return true;
+}
+
+bool ldplab::rtscuda::Factory::readCudaInfo(Context& context)
+{
+    int device_count = 0;
+    cudaError_t error_id = cudaGetDeviceCount(&device_count);
+
+    if (error_id != cudaSuccess)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to get cuda device count, "\
+            "cudaGetDeviceCount returned error code %i: %s",
+            error_id,
+            cudaGetErrorString(error_id));
+        return false;
+    }
+
+    if (device_count == 0)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to find any cuda devices.");
+        return false;
+    }
+
+    cudaSetDevice(0);
+    cudaDeviceProp device_prop;
+    cudaGetDeviceProperties(&device_prop, 0);
+    LDPLAB_LOG_INFO("RTSCUDA factory: Using cuda device %s", device_prop.name);
+    
+    auto &props = context.device_properties;
+    props.max_block_size.x = device_prop.maxThreadsDim[0];
+    props.max_block_size.y = device_prop.maxThreadsDim[1];
+    props.max_block_size.z = device_prop.maxThreadsDim[2];
+    props.max_grid_size.x = device_prop.maxGridSize[0];
+    props.max_grid_size.y = device_prop.maxGridSize[1];
+    props.max_grid_size.z = device_prop.maxGridSize[2];
+    props.max_num_threads_per_block = device_prop.maxThreadsPerBlock;
+    props.max_num_threads_per_mp = device_prop.maxThreadsPerMultiProcessor;
+    props.num_mps = device_prop.multiProcessorCount;
+    props.registers_per_block = device_prop.regsPerBlock;
+    props.shared_mem_per_block = device_prop.sharedMemPerBlock;
+    props.shared_mem_per_mp = device_prop.sharedMemPerMultiprocessor;
+    props.warp_size = device_prop.warpSize;
+    
     return true;
 }
 

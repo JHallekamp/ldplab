@@ -3,33 +3,14 @@
 
 #include "Context.hpp"
 
-/** @brief Gather output kernel. */
-__global__ void gatherOutputKernel(
-    int32_t* ray_index_buffer,
-    ldplab::Vec3* force_per_ray,
-    ldplab::Vec3* torque_per_ray,
-    size_t num_rays_per_batch,
-    ldplab::Vec3* force_per_particle,
-    ldplab::Vec3* torque_per_particle,
-    ldplab::Mat3* p2w_transformations,
-    size_t num_particles,
-    bool particle_space_output);
-
-void ldplab::rtscuda::PipelineGatherOutput::execute(size_t ray_buffer_index)
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineGatherOutput::getLaunchParameter()
 {
-    const size_t grid_size = m_context.parameters.num_particles;
-    const size_t block_size = m_context.parameters.num_threads_per_block;
-    const size_t shared_mem_size = block_size * sizeof(Vec3) * 2;
-    gatherOutputKernel<<<grid_size, block_size, shared_mem_size>>>(
-        m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
-        m_context.resources.output_buffer.force_per_ray.get(),
-        m_context.resources.output_buffer.torque_per_ray.get(),
-        m_context.parameters.num_rays_per_batch,
-        m_context.resources.output_buffer.force_per_particle.get(),
-        m_context.resources.output_buffer.torque_per_particle.get(),
-        m_context.resources.transformations.p2w_transformation.get(),
-        m_context.parameters.num_particles,
-        m_context.parameters.output_in_particle_space);
+    KernelLaunchParameter lp;
+    lp.block_size.x = 128;
+    lp.grid_size.x = m_context.parameters.num_particles;
+    lp.shared_memory_size = lp.block_size.x * sizeof(Vec3) * 2;
+    return lp;
 }
 
 __global__ void gatherOutputKernel(
@@ -104,6 +85,43 @@ __global__ void gatherOutputKernel(
         force_per_particle[pi] += sbuf[force_idx];
         torque_per_particle[pi] += sbuf[torque_idx];
     }
+}
+
+void ldplab::rtscuda::PipelineGatherOutput::execute(size_t ray_buffer_index)
+{
+    //const size_t grid_size = m_context.parameters.num_particles;
+    //const size_t block_size = m_context.parameters.num_threads_per_block;
+    //const size_t shared_memory_size = block_size * sizeof(Vec3) * 2;
+    const KernelLaunchParameter lp = getLaunchParameter();
+    gatherOutputKernel << <lp.grid_size, lp.block_size, lp.shared_memory_size >> > (
+        m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
+        m_context.resources.output_buffer.force_per_ray.get(),
+        m_context.resources.output_buffer.torque_per_ray.get(),
+        m_context.parameters.num_rays_per_batch,
+        m_context.resources.output_buffer.force_per_particle.get(),
+        m_context.resources.output_buffer.torque_per_particle.get(),
+        m_context.resources.transformations.p2w_transformation.get(),
+        m_context.parameters.num_particles,
+        m_context.parameters.output_in_particle_space);
+}
+
+__device__ void ldplab::rtscuda::executeGatherOutputKernel(
+    DevicePipelineResources& resources, 
+    size_t ray_buffer_index)
+{
+    const dim3 grid_sz = resources.launch_params.gatherOutput.grid_size;
+    const dim3 block_sz = resources.launch_params.gatherOutput.block_size;
+    const unsigned int mem_sz = resources.launch_params.gatherOutput.shared_memory_size;
+    gatherOutputKernel<<<grid_sz, block_sz, mem_sz>>>(
+        resources.ray_buffer.indices[ray_buffer_index],
+        resources.output_buffer.force_per_ray,
+        resources.output_buffer.torque_per_ray,
+        resources.parameters.num_rays_per_batch,
+        resources.output_buffer.force_per_particle,
+        resources.output_buffer.torque_per_particle,
+        resources.transformations.p2w_transformation,
+        resources.parameters.num_particles,
+        resources.parameters.output_in_particle_space);
 }
 
 #endif

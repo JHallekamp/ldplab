@@ -26,9 +26,13 @@ namespace bruteforce_cuda
         ldplab::Mat3* w2p_transformation,
         ldplab::Vec3* w2p_translation,
         size_t num_particles);
+    /** @brief Execution kernel. */
+    __device__ void executeKernel(
+        ldplab::rtscuda::DevicePipelineResources& resources,
+        size_t ray_buffer_index);
     /** @brief Device function pointer to the actual kernel. */
-    __device__ ldplab::rtscuda::pipelineBoundingVolumeIntersectionStageKernel_t
-        bv_intersection_kernel_ptr = bvIntersectionKernel;
+    __device__ ldplab::rtscuda::pipelineExecuteBoundingVolumeIntersectionStage_t
+        execution_kernel_ptr = executeKernel;
 }
 
 ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
@@ -40,9 +44,10 @@ ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
 void ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::execute(
     size_t ray_buffer_index)
 {
-    const size_t block_size = m_context.parameters.num_threads_per_block;
-    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    bruteforce_cuda::bvIntersectionKernel<<<grid_size, block_size>>>(
+    //const size_t block_size = m_context.parameters.num_threads_per_block;
+    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
+    const KernelLaunchParameter lp = getLaunchParameter();
+    bruteforce_cuda::bvIntersectionKernel<<<lp.grid_size, lp.block_size>>>(
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.origin_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.direction_buffers[ray_buffer_index].get(),
@@ -54,18 +59,48 @@ void ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::execute(
         m_context.parameters.num_particles);
 }
 
-ldplab::rtscuda::pipelineBoundingVolumeIntersectionStageKernel_t 
+__device__ void bruteforce_cuda::executeKernel(
+    ldplab::rtscuda::DevicePipelineResources& resources, 
+    size_t ray_buffer_index)
+{
+    const dim3 grid_sz = resources.launch_params.boundingVolumeIntersection.grid_size;
+    const dim3 block_sz = resources.launch_params.boundingVolumeIntersection.block_size;
+    const unsigned int mem_sz = resources.launch_params.boundingVolumeIntersection.shared_memory_size;
+    bvIntersectionKernel<<<grid_sz, block_sz, mem_sz>>>(
+        resources.ray_buffer.indices[ray_buffer_index],
+        resources.ray_buffer.origins[ray_buffer_index],
+        resources.ray_buffer.directions[ray_buffer_index],
+        resources.ray_buffer.min_bv_dists[ray_buffer_index],
+        resources.parameters.num_rays_per_batch,
+        resources.bounding_volumes.per_particle,
+        resources.transformations.w2p_transformation,
+        resources.transformations.w2p_translation,
+        resources.parameters.num_particles);
+}
+
+ldplab::rtscuda::pipelineExecuteBoundingVolumeIntersectionStage_t
     ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::getKernel()
 {
     // Copy the function pointer to the host
-    pipelineBoundingVolumeIntersectionStageKernel_t kernel = nullptr;
+    pipelineExecuteBoundingVolumeIntersectionStage_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        bruteforce_cuda::bv_intersection_kernel_ptr,
-        sizeof(bruteforce_cuda::bv_intersection_kernel_ptr))
+        bruteforce_cuda::execution_kernel_ptr,
+        sizeof(bruteforce_cuda::execution_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
+}
+
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineBoundingVolumeIntersectionBruteforce::
+        getLaunchParameter()
+{
+    KernelLaunchParameter p;
+    p.block_size.x = 128; //m_context.device_properties.max_num_threads_per_block;
+    p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
+        (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
+    return p;
 }
 
 __global__ void bruteforce_cuda::bvIntersectionKernel(

@@ -14,6 +14,12 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter;
+        struct DevicePipelineResources;
+
+        __device__ void executeGatherOutputKernel(
+            DevicePipelineResources& resources,
+            size_t ray_buffer_index);
 
         /** @brief For the gather output stage. */
         class PipelineGatherOutput
@@ -23,6 +29,8 @@ namespace ldplab
             PipelineGatherOutput(Context& context) : m_context{ context }{ }
             /** @brief Host interface for output gather stage execution. */
             void execute(size_t ray_buffer_index);
+            /** @brief Returns kernel launch parameters. */
+            KernelLaunchParameter getLaunchParameter();
         private:
             Context& m_context;
         };

@@ -42,9 +42,15 @@ namespace unpolarized_1d_linear_index_gradient_cuda
         ldplab::rtscuda::GenericParticleMaterialData* particle_materials,
         ldplab::Vec3* particle_center_of_mass,
         size_t num_particles);
+    __device__ void executeKernel(
+        ldplab::rtscuda::DevicePipelineResources& resources,
+        bool inner_particle_rays,
+        size_t input_ray_buffer_index,
+        size_t reflected_ray_buffer_index,
+        size_t transmitted_ray_buffer_index);
     /** @brief Actual function pointer. */
-    __device__ ldplab::rtscuda::pipelineParticleInteractionStageKernel_t
-        interaction_kernel_ptr = interactionKernel;
+    __device__ ldplab::rtscuda::pipelineExecuteParticleInteractionStage_t
+        execution_kernel_ptr = executeKernel;
 }
 
 ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
@@ -53,17 +59,17 @@ ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
     m_context{ context }
 { }
 
-ldplab::rtscuda::pipelineParticleInteractionStageKernel_t 
+ldplab::rtscuda::pipelineExecuteParticleInteractionStage_t
     ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
         getKernel()
 {
     using namespace unpolarized_1d_linear_index_gradient_cuda;
     // Copy the function pointer to the host
-    pipelineParticleInteractionStageKernel_t kernel = nullptr;
+    pipelineExecuteParticleInteractionStage_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        interaction_kernel_ptr,
-        sizeof(interaction_kernel_ptr))
+        execution_kernel_ptr,
+        sizeof(execution_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
@@ -77,9 +83,10 @@ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradien
         size_t transmitted_ray_buffer_index)
 {
     using namespace unpolarized_1d_linear_index_gradient_cuda;
-    const size_t block_size = m_context.parameters.num_threads_per_block;
-    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    interactionKernel <<<grid_size, block_size>>> (
+    //const size_t block_size = m_context.parameters.num_threads_per_block;
+    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
+    const KernelLaunchParameter lp = getLaunchParameter();
+    interactionKernel <<<lp.grid_size, lp.block_size>>> (
         inner_particle_rays,
         m_context.parameters.medium_reflection_index,
         m_context.parameters.intensity_cutoff,
@@ -106,6 +113,56 @@ void ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradien
         m_context.resources.particles.material_per_particle.get(),
         m_context.resources.particles.center_of_mass_per_particle.get(),
         m_context.parameters.num_particles);
+}
+
+__device__ void unpolarized_1d_linear_index_gradient_cuda::executeKernel(
+    ldplab::rtscuda::DevicePipelineResources& resources,
+    bool inner_particle_rays,
+    size_t input_ray_buffer_index,
+    size_t reflected_ray_buffer_index,
+    size_t transmitted_ray_buffer_index)
+{
+    const dim3 grid_sz = resources.launch_params.particleInteraction.grid_size;
+    const dim3 block_sz = resources.launch_params.particleInteraction.block_size;
+    const unsigned int mem_sz = resources.launch_params.particleInteraction.shared_memory_size;
+    interactionKernel<<<grid_sz, block_sz, mem_sz>>>(
+        inner_particle_rays,
+        resources.parameters.medium_reflection_index,
+        resources.parameters.intensity_cutoff,
+        resources.ray_buffer.indices[input_ray_buffer_index],
+        resources.ray_buffer.origins[input_ray_buffer_index],
+        resources.ray_buffer.directions[input_ray_buffer_index],
+        resources.ray_buffer.intensities[input_ray_buffer_index],
+        resources.ray_buffer.indices[reflected_ray_buffer_index],
+        resources.ray_buffer.origins[reflected_ray_buffer_index],
+        resources.ray_buffer.directions[reflected_ray_buffer_index],
+        resources.ray_buffer.intensities[reflected_ray_buffer_index],
+        resources.ray_buffer.min_bv_dists[reflected_ray_buffer_index],
+        resources.ray_buffer.indices[transmitted_ray_buffer_index],
+        resources.ray_buffer.origins[transmitted_ray_buffer_index],
+        resources.ray_buffer.directions[transmitted_ray_buffer_index],
+        resources.ray_buffer.intensities[transmitted_ray_buffer_index],
+        resources.ray_buffer.min_bv_dists[transmitted_ray_buffer_index],
+        resources.intersection_buffer.isec_indices,
+        resources.intersection_buffer.points,
+        resources.intersection_buffer.normals,
+        resources.output_buffer.force_per_ray,
+        resources.output_buffer.torque_per_ray,
+        resources.parameters.num_rays_per_batch,
+        resources.particles.material_per_particle,
+        resources.particles.center_of_mass_per_particle,
+        resources.parameters.num_particles);
+}
+
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineParticleInteractionUnpolarized1DLinearIndexGradient::
+        getLaunchParameter()
+{
+    KernelLaunchParameter p;
+    p.block_size.x = 128; //m_context.device_properties.max_num_threads_per_block;
+    p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
+        (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
+    return p;
 }
 
 __device__ double reflectance(double cos_a, double cos_b, double nr)

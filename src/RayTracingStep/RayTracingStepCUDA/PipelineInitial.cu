@@ -29,7 +29,8 @@ namespace homogenous_light_bounding_spheres_cuda
     __global__ void countTotalRaysKernelFirst(
         size_t num_blocks);
     __global__ void countTotalRaysKernelSecond(
-        size_t num_blocks);
+        size_t num_blocks,
+        size_t num_rays_per_batch);
     __global__ void createBatchKernel(
         int32_t* ray_index_buffer,
         ldplab::Vec3* ray_origin_buffer,
@@ -38,8 +39,12 @@ namespace homogenous_light_bounding_spheres_cuda
         double* ray_min_bv_dist_buffer,
         size_t num_rays_per_batch,
         size_t batch_no);
-    __device__ ldplab::rtscuda::pipelineInitialStageCreateBatchKernel_t
-        create_batch_kernel_ptr = createBatchKernel;
+    __device__ bool executeKernel(
+        ldplab::rtscuda::DevicePipelineResources& resources,
+        size_t initial_ray_buffer_index,
+        size_t batch_no);
+    __device__ ldplab::rtscuda::pipelineExecuteInitialStage_t
+        execution_kernel_ptr = executeKernel;
     __device__ ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::
         Rect* projection_buffer_ptr;
     __device__ ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::
@@ -47,6 +52,7 @@ namespace homogenous_light_bounding_spheres_cuda
     __device__ size_t* num_rays_buffer_ptr;
     __device__ size_t* temp_num_rays_buffer_ptr;
     __device__ size_t total_num_rays;
+    __device__ size_t total_batch_count;
     __device__ size_t num_particles;
     __device__ size_t num_light_sources;
 }
@@ -67,7 +73,9 @@ void ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::setup()
         m_context.resources.bounding_volumes.bounding_volume_per_particle.get(),
         m_context.parameters.light_source_resolution_per_world_unit);
     countTotalRaysKernelFirst<<<grid_size, block_size, mem_size>>>(grid_size);
-    countTotalRaysKernelSecond<<<grid_size, block_size, mem_size>>>(grid_size);
+    countTotalRaysKernelSecond<<<grid_size, block_size, mem_size>>>(
+        grid_size,
+        m_context.parameters.num_rays_per_batch);
     // Download the total number of rays
     size_t total_rays;
     if (cudaMemcpyFromSymbol(
@@ -83,15 +91,15 @@ void ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::setup()
         (total_rays % m_context.parameters.num_rays_per_batch ? 1 : 0);
 }
 
-ldplab::rtscuda::pipelineInitialStageCreateBatchKernel_t 
+ldplab::rtscuda::pipelineExecuteInitialStage_t 
     ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::getKernel()
 {
     using namespace homogenous_light_bounding_spheres_cuda;
-    pipelineInitialStageCreateBatchKernel_t kernel = nullptr;
+    pipelineExecuteInitialStage_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        create_batch_kernel_ptr,
-        sizeof(create_batch_kernel_ptr))
+        execution_kernel_ptr,
+        sizeof(execution_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
@@ -101,9 +109,10 @@ bool ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::execute(
     size_t initial_ray_buffer_index)
 {
     using namespace homogenous_light_bounding_spheres_cuda;
-    const size_t block_size = m_context.parameters.num_threads_per_block;
-    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    createBatchKernel<<<block_size, grid_size>>>(
+    //const size_t block_size = m_context.parameters.num_threads_per_block;
+    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
+    const KernelLaunchParameter lp = getLaunchParameter();    
+    createBatchKernel<<<lp.grid_size, lp.block_size>>>(
         m_context.resources.ray_buffer.index_buffers[initial_ray_buffer_index].get(),
         m_context.resources.ray_buffer.origin_buffers[initial_ray_buffer_index].get(),
         m_context.resources.ray_buffer.direction_buffers[initial_ray_buffer_index].get(),
@@ -113,6 +122,36 @@ bool ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::execute(
         m_batch_ctr);
     ++m_batch_ctr;
     return m_batch_ctr < m_total_batch_count;
+}
+
+__device__ bool homogenous_light_bounding_spheres_cuda::executeKernel(
+    ldplab::rtscuda::DevicePipelineResources& resources, 
+    size_t initial_ray_buffer_index, 
+    size_t batch_no)
+{
+    const dim3 grid_sz = resources.launch_params.createBatch.grid_size;
+    const dim3 block_sz = resources.launch_params.createBatch.block_size;
+    const unsigned int mem_sz = resources.launch_params.createBatch.shared_memory_size;
+    createBatchKernel<<<grid_sz, block_sz, mem_sz>>>(
+        resources.ray_buffer.indices[initial_ray_buffer_index],
+        resources.ray_buffer.origins[initial_ray_buffer_index],
+        resources.ray_buffer.directions[initial_ray_buffer_index],
+        resources.ray_buffer.intensities[initial_ray_buffer_index],
+        resources.ray_buffer.min_bv_dists[initial_ray_buffer_index],
+        resources.parameters.num_rays_per_batch,
+        batch_no);
+    return (batch_no + 1 < total_batch_count);
+}
+
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::
+        getLaunchParameter()
+{
+    KernelLaunchParameter p;
+    p.block_size.x = 128; //m_context.device_properties.max_num_threads_per_block;
+    p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
+        (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
+    return p;
 }
 
 bool ldplab::rtscuda::PipelineInitialHomogenousLightBoundingSpheres::allocate(
@@ -302,7 +341,7 @@ __global__ void homogenous_light_bounding_spheres_cuda::countTotalRaysKernelFirs
 }
 
 __global__ void homogenous_light_bounding_spheres_cuda::
-    countTotalRaysKernelSecond(size_t num_blocks)
+    countTotalRaysKernelSecond(size_t num_blocks, size_t num_rays_per_batch)
 {
     using namespace ldplab;
     using namespace rtscuda;
@@ -329,7 +368,11 @@ __global__ void homogenous_light_bounding_spheres_cuda::
     // Part 3: Write back results
     num_rays_buffer_ptr[gid] = sbuf[tid];
     if (blockIdx.x == num_blocks - 1 && tid + 1 == blockDim.x)
+    {
         total_num_rays = sbuf[tid];
+        total_batch_count = sbuf[tid] / num_rays_per_batch +
+            (sbuf[tid] % num_rays_per_batch ? 1 : 0);
+    }
 }
 
 __global__ void homogenous_light_bounding_spheres_cuda::createBatchKernel(

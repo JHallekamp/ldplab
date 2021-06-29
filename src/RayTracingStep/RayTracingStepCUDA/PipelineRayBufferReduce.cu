@@ -5,103 +5,32 @@
 #include "../../Utils/Log.hpp"
 #include "../../Utils/Profiler.hpp"
 
-#include <atomic>
+//#include <atomic>
 
 __device__ ldplab::rtscuda::RayBufferReduceResult global_ray_counter;
 
-/**
- * @brief Ray buffer index reduction kernel.
- * @note Cuda threads can only synchronize with threads in the same
- *       block. Due to this, the reduction is performed block-wise
- *       and the result_buffer is assumed to contain a result per
- *       block, not a single overall result.
- * @warning Block size needs to be a power of 2 for this to work!
- */
-__global__ void rayBufferReduceKernel(
-    ldplab::rtscuda::RayBufferReduceResult* result_buffer, 
-    int32_t* ray_index_buffer, 
-    size_t num_rays_per_batch,
-    size_t num_particles);
-
-__global__ void rayBufferReduceKernelStep2(
-    ldplab::rtscuda::RayBufferReduceResult* result_buffer,
-    size_t buffer_size);
-
-ldplab::rtscuda::RayBufferReduceResult 
-    ldplab::rtscuda::PipelineRayBufferReduceStage::execute(
-        size_t ray_buffer_index)
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineRayBufferReduceStage::getLaunchParameterStep1()
 {
-    // ========================================================================
-    // Execute kernel
-    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce_kernel_execution);
-    
-    /* VERSION BETA: Use atomics */
-    //RayBufferReduceResult result{ 0, 0 };
-    //cudaMemcpyToSymbol(global_ray_counter, &result, sizeof(RayBufferReduceResult));
+    KernelLaunchParameter lp;
+    lp.block_size.x = 128;
+    lp.grid_size.x = m_context.parameters.num_rays_per_batch / lp.block_size.x +
+        (m_context.parameters.num_rays_per_batch % lp.block_size.x ? 1 : 0);
+    lp.shared_memory_size = lp.block_size.x * sizeof(RayBufferReduceResult);
+    return lp;
+}
 
-    /* VERSION ALPHA: Always required */
-    size_t block_size = m_context.parameters.num_threads_per_block;
-    size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    size_t shared_mem_size = block_size * sizeof(RayBufferReduceResult);
-    rayBufferReduceKernel<<<grid_size, block_size, shared_mem_size>>>(
-        m_context.resources.pipeline.reduction_result_buffer.get(),
-        m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
-        m_context.parameters.num_rays_per_batch,
-        m_context.parameters.num_particles);
-    
-    /* VERSION GAMMA: Use seperate kernel to gather sum. */
-    if (grid_size < block_size)
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineRayBufferReduceStage::getLaunchParameterStep2()
+{
+    KernelLaunchParameter lp = getLaunchParameterStep1();
+    if (lp.grid_size.x < lp.block_size.x)
     {
-        block_size = grid_size;
-        shared_mem_size = block_size * sizeof(RayBufferReduceResult);
+        lp.block_size.x = lp.grid_size.x;
+        lp.shared_memory_size = lp.block_size.x * sizeof(RayBufferReduceResult);
     }
-    rayBufferReduceKernelStep2<<<1, block_size, shared_mem_size>>>(
-        m_context.resources.pipeline.reduction_result_buffer.get(),
-        grid_size);
-    
-    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_kernel_execution);
-
-    // ========================================================================
-    // Download data and reduce into single result buffer
-    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce_data_download);
-
-    /* VERSION ALPHA: Gather sum on host */
-    //RayBufferReduceResult result{ 0, 0 };
-    //std::vector<RayBufferReduceResult>& host_results =
-    //    m_context.resources.pipeline.host_reduction_result_buffer;
-    //if (m_context.resources.pipeline.reduction_result_buffer.download(host_results.data()))
-    //{
-    //    for (size_t i = 0; i < host_results.size(); ++i)
-    //    {
-    //        result.num_active_rays += host_results[i].num_active_rays;
-    //        result.num_world_space_rays += host_results[i].num_world_space_rays;
-    //    }
-    //}
-    //else
-    //{
-    //    LDPLAB_LOG_ERROR("RTSCUDA context %i: Ray buffer reduce pipeline step "\
-    //        "failed to download reduction results from device",
-    //        m_context.uid);
-    //}
-
-    /* VERSION BETA: Use atomics and global counter buffer. */
-    //cudaMemcpyFromSymbol(&result, global_ray_counter, sizeof(RayBufferReduceResult)); 
-
-    /* VERSION GAMMA: Use seperate kernel to gather sum. */
-    RayBufferReduceResult result;
-    //if (!m_context.resources.pipeline.reduction_result_buffer.download(&result, 0, 1))
-    if (cudaMemcpyFromSymbol(
-        &result, 
-        global_ray_counter, 
-        sizeof(RayBufferReduceResult)) != cudaSuccess)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA context %i: Ray buffer reduce pipeline step "\
-            "failed to download reduction results from device",
-            m_context.uid);
-    }    
-
-    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_data_download);
-    return result;
+    lp.grid_size.x = 1;
+    return lp;
 }
 
 __global__ void rayBufferReduceKernel(
@@ -197,6 +126,102 @@ __global__ void rayBufferReduceKernelStep2(
     // Final step: Write the result from shared buffer in result_buffer
     if (tid == 0)
         global_ray_counter = sbuf[0];
+}
+
+
+ldplab::rtscuda::RayBufferReduceResult
+ldplab::rtscuda::PipelineRayBufferReduceStage::execute(
+    size_t ray_buffer_index)
+{
+    // ========================================================================
+    // Execute kernel
+    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce_kernel_execution);
+    /* VERSION BETA: Use atomics */
+    //RayBufferReduceResult result{ 0, 0 };
+    //cudaMemcpyToSymbol(global_ray_counter, &result, sizeof(RayBufferReduceResult));
+
+    /* VERSION ALPHA: Always required */
+    KernelLaunchParameter lp = getLaunchParameterStep1();
+    rayBufferReduceKernel << <lp.grid_size, lp.block_size, lp.shared_memory_size >> > (
+        m_context.resources.pipeline.reduction_result_buffer.get(),
+        m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
+        m_context.parameters.num_rays_per_batch,
+        m_context.parameters.num_particles);
+
+    /* VERSION GAMMA: Use seperate kernel to gather sum. */
+    const size_t buffer_size = lp.grid_size.x;
+    lp = getLaunchParameterStep2();
+    rayBufferReduceKernelStep2 << <lp.grid_size, lp.block_size, lp.shared_memory_size >> > (
+        m_context.resources.pipeline.reduction_result_buffer.get(),
+        buffer_size);
+    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_kernel_execution);
+
+    // ========================================================================
+    // Download data and reduce into single result buffer
+    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce_data_download);
+
+    /* VERSION ALPHA: Gather sum on host */
+    //RayBufferReduceResult result{ 0, 0 };
+    //std::vector<RayBufferReduceResult>& host_results =
+    //    m_context.resources.pipeline.host_reduction_result_buffer;
+    //if (m_context.resources.pipeline.reduction_result_buffer.download(host_results.data()))
+    //{
+    //    for (size_t i = 0; i < host_results.size(); ++i)
+    //    {
+    //        result.num_active_rays += host_results[i].num_active_rays;
+    //        result.num_world_space_rays += host_results[i].num_world_space_rays;
+    //    }
+    //}
+    //else
+    //{
+    //    LDPLAB_LOG_ERROR("RTSCUDA context %i: Ray buffer reduce pipeline step "\
+    //        "failed to download reduction results from device",
+    //        m_context.uid);
+    //}
+
+    /* VERSION BETA: Use atomics and global counter buffer. */
+    //cudaMemcpyFromSymbol(&result, global_ray_counter, sizeof(RayBufferReduceResult)); 
+
+    /* VERSION GAMMA: Use seperate kernel to gather sum. */
+    RayBufferReduceResult result;
+    //if (!m_context.resources.pipeline.reduction_result_buffer.download(&result, 0, 1))
+    if (cudaMemcpyFromSymbol(
+        &result,
+        global_ray_counter,
+        sizeof(RayBufferReduceResult)) != cudaSuccess)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA context %i: Ray buffer reduce pipeline step "\
+            "failed to download reduction results from device",
+            m_context.uid);
+    }
+
+    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_data_download);
+    return result;
+}
+
+__device__ ldplab::rtscuda::RayBufferReduceResult 
+    ldplab::rtscuda::executeRayBufferReduceKernel(
+        DevicePipelineResources& resources, 
+        size_t ray_buffer_index)
+{
+    const dim3 step1_grid_sz = resources.launch_params.rayBufferReduceStep1.grid_size;
+    const dim3 step1_block_sz = resources.launch_params.rayBufferReduceStep1.block_size;
+    const unsigned int step1_mem_sz = resources.launch_params.rayBufferReduceStep1.shared_memory_size;
+    rayBufferReduceKernel<<<step1_grid_sz, step1_block_sz, step1_mem_sz>>>(
+        resources.reduction.reduction_result_buffer,
+        resources.ray_buffer.indices[ray_buffer_index],
+        resources.parameters.num_rays_per_batch,
+        resources.parameters.num_particles);
+
+    const dim3 step2_grid_sz = resources.launch_params.rayBufferReduceStep2.grid_size;
+    const dim3 step2_block_sz = resources.launch_params.rayBufferReduceStep2.block_size;
+    const unsigned int step2_mem_sz = resources.launch_params.rayBufferReduceStep2.shared_memory_size;
+    const size_t buffer_sz = step1_grid_sz.x;
+    rayBufferReduceKernelStep2<<<step2_grid_sz, step2_block_sz, step2_mem_sz>>>(
+        resources.reduction.reduction_result_buffer,
+        buffer_sz);
+
+    return global_ray_counter;
 }
 
 #endif

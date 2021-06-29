@@ -6,6 +6,7 @@
 #include <vector>
 #include <LDPLAB/ExperimentalSetup/Particle.hpp>
 #include <LDPLAB/Geometry.hpp>
+#include <cuda.h>
 
 #include "CudaResource.hpp"
 #include "GenericBoundingVolume.hpp"
@@ -195,6 +196,100 @@ namespace ldplab
             std::vector<RayBufferReduceResult> host_reduction_result_buffer;
             /** @brief Array holding reduction results. */
             CudaPtr<RayBufferReduceResult> reduction_result_buffer;
+        };
+
+        /** @brief Contains kernel launch parameters. */
+        struct KernelLaunchParameter
+        {
+            KernelLaunchParameter() : 
+                grid_size{ 1, 1, 1 }, 
+                block_size{ 1, 1, 1 }, 
+                shared_memory_size{ 0 } 
+            { }
+            dim3 grid_size;
+            dim3 block_size;
+            unsigned int shared_memory_size;
+        };
+
+        /** @brief Resources on device. */
+        struct DevicePipelineResources
+        {
+            // --------------------------------
+            struct {
+                int32_t** indices;
+                Vec3** origins;
+                Vec3** directions;
+                double** intensities;
+                double** min_bv_dists;
+            } ray_buffer;
+            // --------------------------------
+            struct {
+                Vec3* points;
+                Vec3* normals;
+                int32_t* isec_indices;
+            } intersection_buffer;
+            // --------------------------------
+            struct {
+                Vec3* force_per_ray;
+                Vec3* torque_per_ray;
+                Vec3* force_per_particle;
+                Vec3* torque_per_particle;
+            } output_buffer;
+            // --------------------------------
+            struct {
+                Mat3* p2w_transformation;
+                Vec3* p2w_translation;
+                Mat3* w2p_transformation;
+                Vec3* w2p_translation;
+            } transformations;
+            // --------------------------------
+            struct {
+                GenericBoundingVolumeData* per_particle;
+            } bounding_volumes;
+            // --------------------------------
+            struct {
+                Vec3* center_of_mass_per_particle;
+                GenericParticleMaterialData* material_per_particle;
+                GenericParticleGeometryData* geometry_per_particle;
+            } particles;
+            // --------------------------------
+            struct {
+                RayBufferReduceResult* reduction_result_buffer;
+            } reduction;
+            // --------------------------------
+            struct {
+                double intensity_cutoff;
+                double light_source_resolution_per_world_unit;
+                double medium_reflection_index;
+                size_t max_branching_depth;
+                size_t num_light_sources;
+                size_t num_rays_per_batch;
+                size_t num_particles;
+                bool output_in_particle_space;
+            } parameters;
+            // --------------------------------
+            struct {
+                KernelLaunchParameter boundingVolumeIntersection;
+                KernelLaunchParameter initialBufferSetup;
+                KernelLaunchParameter bufferSetup;
+                KernelLaunchParameter gatherOutput;
+                KernelLaunchParameter createBatch;
+                KernelLaunchParameter innerParticlePropagation;
+                KernelLaunchParameter particleInteraction;
+                KernelLaunchParameter particleIntersection;
+                KernelLaunchParameter rayBufferReduceStep1;
+                KernelLaunchParameter rayBufferReduceStep2;
+            } launch_params;
+        };
+
+        /** @brief Contains pipeline stage kernel execution function pointer. */
+        struct PipelineExecuteFunctions
+        {
+            pipelineExecuteBoundingVolumeIntersectionStage_t bounding_volume_intersection;
+            pipelineExecuteInitialStage_t initial;
+            pipelineExecuteInnerParticlePropagationStage_t inner_particle_propagation;
+            pipelineExecuteParticleInteractionStage_t particle_interaction;
+            pipelineExecuteParticleIntersectionStage_t particle_intersection;
         };
     }
 }

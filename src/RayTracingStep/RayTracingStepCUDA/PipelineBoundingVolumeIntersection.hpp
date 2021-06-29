@@ -15,35 +15,12 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter;
+        struct DevicePipelineResources;
 
-        /**
-         * @brief Typedefinition of ray bounding volume intersection stage.
-         * @param[in] ray_index_buffer Buffer containing ray indices.
-         * @param[in] ray_origin_buffer Buffer containing the ray origins.
-         * @param[in] ray_direction_buffer Buffer containing the ray directions.
-         * @param[in] ray_min_bv_dist_buffer Buffer containing the minimum
-         *                                   distance to the last hit bounding
-         *                                   sphere from the ray origin.
-         * @param[in] num_rays Number of rays in the given ray buffers.
-         * @param[in] bounding_volumes Buffer containing the generic bounding
-         *                             volume data.
-         * @param[in] w2p_transformation Buffer holding world to particle space
-         *                               tranformation matrices.
-         * @param[in] w2p_translation Buffer holding world to particle space
-         *                            translation vectors.
-         * @param[in] num_particles Number of particles in the experimental
-         *                          setup.
-         */
-        typedef void (*pipelineBoundingVolumeIntersectionStageKernel_t)(
-            int32_t* ray_index_buffer,
-            Vec3* ray_origin_buffer,
-            Vec3* ray_direction_buffer,
-            double* ray_min_bv_dist_buffer,
-            size_t num_rays_per_batch,
-            GenericBoundingVolumeData* bounding_volumes,
-            Mat3* w2p_transformation,
-            Vec3* w2p_translation,
-            size_t num_particles);
+        typedef void(*pipelineExecuteBoundingVolumeIntersectionStage_t)(
+            DevicePipelineResources& resources,
+            size_t ray_buffer_index);
 
         /** 
          * @brief Abstract baseclass for bounding volume intersection test 
@@ -60,7 +37,7 @@ namespace ldplab
             /** @brief Gets called before the pipeline enters execution. */
             virtual void setup() { }
             /** @brief Provides the caller with a pointer to the kernel. */
-            virtual pipelineBoundingVolumeIntersectionStageKernel_t
+            virtual pipelineExecuteBoundingVolumeIntersectionStage_t
                 getKernel() = 0;
             /** 
              * @brief Performs the ray bounding volume intersection test stage
@@ -77,6 +54,8 @@ namespace ldplab
              *          set to be invalid.
              */
             virtual void execute(size_t ray_buffer_index) = 0;
+            /** @brief Returns the launch parameter for the kernel. */
+            virtual KernelLaunchParameter getLaunchParameter() = 0;
         };
 
         /** 
@@ -89,8 +68,9 @@ namespace ldplab
         public:
             PipelineBoundingVolumeIntersectionBruteforce(Context& context);
             void execute(size_t ray_buffer_index) override;
-            pipelineBoundingVolumeIntersectionStageKernel_t 
+            pipelineExecuteBoundingVolumeIntersectionStage_t
                 getKernel() override;  
+            KernelLaunchParameter getLaunchParameter() override;
         private:
             Context& m_context;
         };

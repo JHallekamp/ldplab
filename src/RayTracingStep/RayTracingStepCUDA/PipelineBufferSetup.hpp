@@ -14,6 +14,13 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter;
+        struct DevicePipelineResources;
+
+        __device__ void executeInitialSetupKernel(
+            DevicePipelineResources& resources);
+        __device__ void executeBufferSetupKernel(
+            DevicePipelineResources& resources);
 
         /** @brief Abstract baseclass for the gather output stage. */
         class PipelineBufferSetup
@@ -25,6 +32,10 @@ namespace ldplab
             void executeInitial();
             /** @brief Sets up the buffers. */
             void execute();
+            /** @brief Returns kernel launch parameter. */
+            KernelLaunchParameter getLaunchParameterInitialSetup();
+            /** @brief Returns kernel launch parameter. */
+            KernelLaunchParameter getLaunchParameterBufferSetup();
         private:
             Context& m_context;
         };

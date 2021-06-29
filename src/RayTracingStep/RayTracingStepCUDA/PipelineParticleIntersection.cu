@@ -29,8 +29,11 @@ namespace generic_particle_geometry_cuda
         ldplab::Mat3* p2w_transformation,
         ldplab::Vec3* p2w_translation,
         size_t num_particles);
-    __device__ ldplab::rtscuda::pipelineParticleIntersectionStageKernel_t
-        intersection_kernel_ptr;
+    __device__ void executeKernel(
+        ldplab::rtscuda::DevicePipelineResources& resources,
+        size_t ray_buffer_index);
+    __device__ ldplab::rtscuda::pipelineExecuteParticleIntersectionStage_t
+        execution_kernel_ptr = executeKernel;
 }
 
 ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
@@ -39,17 +42,17 @@ ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
     m_context{ context }
 { }
 
-ldplab::rtscuda::pipelineParticleIntersectionStageKernel_t
+ldplab::rtscuda::pipelineExecuteParticleIntersectionStage_t
     ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
         getKernel()
 {
     using namespace generic_particle_geometry_cuda;
     // Copy the function pointer to the host
-    pipelineParticleIntersectionStageKernel_t kernel = nullptr;
+    pipelineExecuteParticleIntersectionStage_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        intersection_kernel_ptr,
-        sizeof(intersection_kernel_ptr))
+        execution_kernel_ptr,
+        sizeof(execution_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
@@ -59,9 +62,10 @@ void ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
     execute(size_t ray_buffer_index)
 {
     using namespace generic_particle_geometry_cuda;
-    const size_t block_size = m_context.parameters.num_threads_per_block;
-    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    intersectionKernel<<<grid_size, block_size>>>(
+    //const size_t block_size = m_context.parameters.num_threads_per_block;
+    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
+    const KernelLaunchParameter lp = getLaunchParameter();
+    intersectionKernel<<<lp.grid_size, lp.block_size>>>(
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.origin_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.direction_buffers[ray_buffer_index].get(),
@@ -73,6 +77,38 @@ void ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
         m_context.resources.transformations.p2w_transformation.get(),
         m_context.resources.transformations.p2w_translation.get(),
         m_context.parameters.num_particles);
+}
+
+__device__ void generic_particle_geometry_cuda::executeKernel(
+    ldplab::rtscuda::DevicePipelineResources& resources,
+    size_t ray_buffer_index)
+{
+    const dim3 grid_sz = resources.launch_params.particleIntersection.grid_size;
+    const dim3 block_sz = resources.launch_params.particleIntersection.block_size;
+    const unsigned int mem_sz = resources.launch_params.particleIntersection.shared_memory_size;
+    intersectionKernel<<<grid_sz, block_sz, mem_sz>>>(
+        resources.ray_buffer.indices[ray_buffer_index],
+        resources.ray_buffer.origins[ray_buffer_index],
+        resources.ray_buffer.directions[ray_buffer_index],
+        resources.intersection_buffer.isec_indices,
+        resources.intersection_buffer.points,
+        resources.intersection_buffer.normals,
+        resources.parameters.num_rays_per_batch,
+        resources.particles.geometry_per_particle,
+        resources.transformations.p2w_transformation,
+        resources.transformations.p2w_translation,
+        resources.parameters.num_particles);
+}
+
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineParticleIntersectionGenericParticleGeometry::
+        getLaunchParameter()
+{
+    KernelLaunchParameter p;
+    p.block_size.x = 128; //m_context.device_properties.max_num_threads_per_block;
+    p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
+        (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
+    return p;
 }
 
 __global__ void generic_particle_geometry_cuda::intersectionKernel(

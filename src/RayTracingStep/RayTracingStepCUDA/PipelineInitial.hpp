@@ -16,17 +16,14 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter;
+        struct DevicePipelineResources;
 
-        /** @brief Typedefinition of initial stage. */
-        typedef void (*pipelineInitialStageCreateBatchKernel_t)(
-            int32_t* ray_index_buffer,
-            Vec3* ray_origin_buffer,
-            Vec3* ray_direction_buffer,
-            double* ray_intensity_buffer,
-            double* ray_min_bv_dist_buffer,
-            size_t num_rays_per_batch,
+        typedef bool(*pipelineExecuteInitialStage_t)(
+            DevicePipelineResources& resources,
+            size_t initial_ray_buffer_index,
             size_t batch_no);
-
+        
         /** @brief Abstract baseclass for the initial stage. */
         class IPipelineInitialStage
         {
@@ -37,12 +34,14 @@ namespace ldplab
                     const ExperimentalSetup& setup,
                     const RayTracingStepCUDAInfo& info, 
                     Context& context);
+            /** @brief Returns the execution kernel. */
+            virtual pipelineExecuteInitialStage_t getKernel() = 0;
             /** @brief Gets called before the pipeline enters execution. */
             virtual void setup() { }
-            /** @brief Provides the caller with a pointer to the kernel. */
-            virtual pipelineInitialStageCreateBatchKernel_t getKernel() = 0;
             /** @brief Fills the initial batch buffer with rays. */
             virtual bool execute(size_t initial_ray_buffer_index) = 0;
+            /** @brief Returns the launch parameter for the kernel. */
+            virtual KernelLaunchParameter getLaunchParameter() = 0;
         protected:
             virtual bool allocate(
                 const ExperimentalSetup& setup,
@@ -55,8 +54,9 @@ namespace ldplab
         public:
             PipelineInitialHomogenousLightBoundingSpheres(Context& context);
             void setup() override;
-            pipelineInitialStageCreateBatchKernel_t getKernel() override;
+            pipelineExecuteInitialStage_t getKernel() override;
             bool execute(size_t initial_ray_buffer_index) override;
+            KernelLaunchParameter getLaunchParameter() override;
         protected:
             bool allocate(
                 const ExperimentalSetup& setup,

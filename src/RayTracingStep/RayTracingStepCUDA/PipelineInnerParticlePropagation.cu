@@ -4,25 +4,6 @@
 #include "Context.hpp"
 #include "../../Utils/Log.hpp"
 
-std::shared_ptr<ldplab::rtscuda::IPipelineInnerParticlePropagation> 
-    ldplab::rtscuda::IPipelineInnerParticlePropagation::createInstance(
-        const RayTracingStepCUDAInfo& info, 
-        Context& context)
-{
-    if (info.solver_parameters->type() == IEikonalSolverParameter::Type::rk4)
-    {
-        return std::make_shared<PipelineInnerParticlePropagationRK4LinearIndexGradient>
-            (context, *static_cast<RK4Parameter*>(info.solver_parameters.get()));
-    }
-    else
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA context %i: Inner particle propagation "\
-            "stage creation failed, unsupported solver type",
-            context.uid);
-        return nullptr;
-    }
-}
-
 namespace rk4_linear_index_gradient_cuda
 {
     __global__ void innerParticlePropagationKernel(
@@ -45,8 +26,38 @@ namespace rk4_linear_index_gradient_cuda
         const ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::Arg& x,
         const double h,
         ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::Arg& x_new);
-    __device__ ldplab::rtscuda::pipelineInnerParticlePropagationStageKernel_t
-        inner_particle_propagation_kernel_ptr = innerParticlePropagationKernel;
+    __device__ void executeKernel(
+        ldplab::rtscuda::DevicePipelineResources& resources,
+        size_t ray_buffer_index);
+    __device__ ldplab::rtscuda::pipelineExecuteInnerParticlePropagationStage_t
+        execution_kernel_ptr = executeKernel;
+    __device__ ldplab::RK4Parameter parameter;
+}
+
+std::shared_ptr<ldplab::rtscuda::IPipelineInnerParticlePropagation>
+ldplab::rtscuda::IPipelineInnerParticlePropagation::createInstance(
+    const RayTracingStepCUDAInfo& info,
+    Context& context)
+{
+    if (info.solver_parameters->type() == IEikonalSolverParameter::Type::rk4)
+    {
+        std::shared_ptr<ldplab::rtscuda::IPipelineInnerParticlePropagation>
+            rk4 = std::make_shared<PipelineInnerParticlePropagationRK4LinearIndexGradient>
+            (context, *static_cast<RK4Parameter*>(info.solver_parameters.get()));
+        if (cudaMemcpyToSymbol(
+            rk4_linear_index_gradient_cuda::parameter,
+            info.solver_parameters.get(),
+            sizeof(rk4_linear_index_gradient_cuda::parameter)) != cudaSuccess)
+            return nullptr;
+        return rk4;
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA context %i: Inner particle propagation "\
+            "stage creation failed, unsupported solver type",
+            context.uid);
+        return nullptr;
+    }
 }
 
 ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
@@ -58,17 +69,17 @@ ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
     m_parameters{ parameter }
 { }
 
-ldplab::rtscuda::pipelineInnerParticlePropagationStageKernel_t 
+ldplab::rtscuda::pipelineExecuteInnerParticlePropagationStage_t 
     ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
         getKernel()
 {
     using namespace rk4_linear_index_gradient_cuda;
     // Copy the function pointer to the host
-    pipelineInnerParticlePropagationStageKernel_t kernel = nullptr;
+    pipelineExecuteInnerParticlePropagationStage_t kernel = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel,
-        inner_particle_propagation_kernel_ptr,
-        sizeof(inner_particle_propagation_kernel_ptr))
+        execution_kernel_ptr,
+        sizeof(execution_kernel_ptr))
         != cudaSuccess)
         return nullptr;
     return kernel;
@@ -78,9 +89,10 @@ void ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
     execute(size_t ray_buffer_index)
 {
     using namespace rk4_linear_index_gradient_cuda;
-    const size_t block_size = m_context.parameters.num_threads_per_block;
-    const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    innerParticlePropagationKernel<<<grid_size, block_size>>>(
+    //const size_t block_size = m_context.parameters.num_threads_per_block;
+    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
+    const KernelLaunchParameter lp = getLaunchParameter();
+    innerParticlePropagationKernel<<<lp.grid_size, lp.block_size>>>(
         m_parameters.step_size,
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
         m_context.resources.ray_buffer.origin_buffers[ray_buffer_index].get(),
@@ -95,6 +107,41 @@ void ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
         m_context.resources.output_buffer.force_per_ray.get(),
         m_context.resources.output_buffer.torque_per_ray.get(),
         m_context.parameters.num_particles);
+}
+
+__device__ void rk4_linear_index_gradient_cuda::executeKernel(
+    ldplab::rtscuda::DevicePipelineResources& resources,
+    size_t ray_buffer_index)
+{
+    const dim3 grid_sz = resources.launch_params.innerParticlePropagation.grid_size;
+    const dim3 block_sz = resources.launch_params.innerParticlePropagation.block_size;
+    const unsigned int mem_sz = resources.launch_params.innerParticlePropagation.shared_memory_size;
+    innerParticlePropagationKernel<<<grid_sz, block_sz, mem_sz>>>(
+        parameter.step_size,
+        resources.ray_buffer.indices[ray_buffer_index],
+        resources.ray_buffer.origins[ray_buffer_index],
+        resources.ray_buffer.directions[ray_buffer_index],
+        resources.ray_buffer.intensities[ray_buffer_index],
+        resources.intersection_buffer.points,
+        resources.intersection_buffer.normals,
+        resources.parameters.num_rays_per_batch,
+        resources.particles.geometry_per_particle,
+        resources.particles.material_per_particle,
+        resources.particles.center_of_mass_per_particle,
+        resources.output_buffer.force_per_ray,
+        resources.output_buffer.torque_per_ray,
+        resources.parameters.num_particles);
+}
+
+ldplab::rtscuda::KernelLaunchParameter 
+    ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
+        getLaunchParameter()
+{
+    KernelLaunchParameter p;
+    p.block_size.x = 128; //m_context.device_properties.max_num_threads_per_block;
+    p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
+        (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
+    return p;
 }
 
 __global__ void rk4_linear_index_gradient_cuda::innerParticlePropagationKernel(

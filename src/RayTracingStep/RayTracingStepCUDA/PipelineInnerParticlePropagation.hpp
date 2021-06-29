@@ -16,23 +16,12 @@ namespace ldplab
     {
         // Prototype
         struct Context;
+        struct KernelLaunchParameter;
+        struct DevicePipelineResources;
 
-        /** @brief Typedefinition of inner particle propagation stage. */
-        typedef void (*pipelineInnerParticlePropagationStageKernel_t)(
-            double step_size,
-            int32_t* ray_index_buffer,
-            Vec3* ray_origin_buffer,
-            Vec3* ray_direction_buffer,
-            double* ray_intensity_buffer,
-            Vec3* intersection_point_buffer,
-            Vec3* intersection_normal_buffer,
-            size_t num_rays_per_batch,
-            GenericParticleGeometryData* geometry_per_particle,
-            GenericParticleMaterialData* material_per_particle,
-            Vec3* particle_center_of_mass,
-            Vec3* output_force_per_ray,
-            Vec3* output_torque_per_ray,
-            size_t num_particles);
+        typedef void(*pipelineExecuteInnerParticlePropagationStage_t)(
+            DevicePipelineResources& resources,
+            size_t ray_buffer_index);
 
         /** @brief Abstract baseclass for the inner particle propagation. */
         class IPipelineInnerParticlePropagation
@@ -46,10 +35,12 @@ namespace ldplab
             /** @brief Gets called before the pipeline enters execution. */
             virtual void setup() { }
             /** @brief Provides the caller with a pointer to the kernel. */
-            virtual pipelineInnerParticlePropagationStageKernel_t 
+            virtual pipelineExecuteInnerParticlePropagationStage_t
                 getKernel() = 0;
             /** @brief Calculating the path of the rays threw the particle. */
             virtual void execute(size_t ray_buffer_index) = 0;
+            /** @brief Returns the launch parameter for the kernel. */
+            virtual KernelLaunchParameter getLaunchParameter() = 0;
         };
 
         /**
@@ -65,8 +56,9 @@ namespace ldplab
             PipelineInnerParticlePropagationRK4LinearIndexGradient(
                 Context& context,
                 RK4Parameter parameter);
-            pipelineInnerParticlePropagationStageKernel_t getKernel() override;
+            pipelineExecuteInnerParticlePropagationStage_t getKernel() override;
             void execute(size_t ray_buffer_index) override;
+            KernelLaunchParameter getLaunchParameter() override;
         public:
             /**
              * @brief Structure keeping all variables of the differential
