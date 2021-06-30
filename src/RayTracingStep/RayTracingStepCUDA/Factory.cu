@@ -75,8 +75,11 @@ bool ldplab::rtscuda::Factory::createContext(
     }
 
     // Create the pipeline
+    IPipeline::Type pipeline_type = IPipeline::Type::device_bound;
+    if (info.host_bound_pipeline)
+        pipeline_type = IPipeline::Type::host_bound;
     context.pipeline = IPipeline::create(
-        IPipeline::Type::host_bound, 
+        pipeline_type,
         setup,
         info, 
         context);

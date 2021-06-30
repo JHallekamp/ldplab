@@ -6,6 +6,8 @@
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"
 
+#include <cstdlib>
+
 std::unique_ptr<ldplab::rtscuda::IPipeline> ldplab::rtscuda::IPipeline::create(
     const Type pipeline_type, 
     const ExperimentalSetup& setup,
@@ -15,6 +17,8 @@ std::unique_ptr<ldplab::rtscuda::IPipeline> ldplab::rtscuda::IPipeline::create(
     std::unique_ptr<IPipeline> pipeline;
     if (pipeline_type == Type::host_bound)
         pipeline = std::make_unique<HostPipeline>(context);
+    else if (pipeline_type == Type::device_bound)
+        pipeline = std::make_unique<DevicePipeline>(context);
     else
     {
         LDPLAB_LOG_ERROR("RTSCUDA context %i: Pipeline creation failed, "\
@@ -97,16 +101,18 @@ void ldplab::rtscuda::HostPipeline::execute()
         m_context.uid);
 
     // Initial buffer setup
+    LDPLAB_PROFILING_START(pipeline_initial_buffer_setup);
     m_buffer_setup_stage->executeInitial();
+    LDPLAB_PROFILING_STOP(pipeline_initial_buffer_setup);
 
     constexpr size_t initial_batch_buffer_index = 0;
     bool batches_left = false;
     size_t num_batches = 0;
     do
     {
-        LDPLAB_PROFILING_START(rtscuda_pipeline_initial_batch_creation);
+        LDPLAB_PROFILING_START(pipeline_initial_batch_creation);
         batches_left = m_initial_stage->execute(initial_batch_buffer_index);
-        LDPLAB_PROFILING_STOP(rtscuda_pipeline_initial_batch_creation);
+        LDPLAB_PROFILING_STOP(pipeline_initial_batch_creation);
         LDPLAB_LOG_TRACE("RTSCUDA context %i: Pipeline executes batch %i",
             m_context.uid, num_batches);
 
@@ -212,40 +218,23 @@ __device__ bool executePipelineSingleStage(
     bool inside_particle);
 __global__ void executePipelineKernel(
     ldplab::rtscuda::DevicePipelineResources resources,
-    ldplab::rtscuda::PipelineExecuteFunctions execute_functions)
-{
-    using namespace ldplab;
-    using namespace ldplab::rtscuda;
-
-    // Shared memory
-    extern __shared__ char stack[];
-
-    // Execute initial stage
-    executeInitialSetupKernel(resources);
-
-    // Execute while there are still batches.
-    bool batches_left = false;
-    size_t batch_no = 0;
-    do 
-    {
-        batches_left = execute_functions.initial(resources, 0, batch_no++);
-        executePipelineBatch(
-            resources, 
-            execute_functions, 
-            stack, 
-            resources.parameters.max_branching_depth);
-
-    } while (batches_left);
-}
-
+    ldplab::rtscuda::PipelineExecuteFunctions execute_functions);
 
 ldplab::rtscuda::DevicePipeline::DevicePipeline(Context& ctx)
     :
     IPipeline{ ctx }
 { }
 
+bool ldplab::rtscuda::DevicePipeline::allocate(
+    const RayTracingStepCUDAInfo& info)
+{
+    return true;
+}
+
 void ldplab::rtscuda::DevicePipeline::execute()
 {
+    LDPLAB_PROFILING_START(pipeline_resource_setup);
+
     // Prepare resource structure
     DevicePipelineResources resources;
     
@@ -348,15 +337,41 @@ void ldplab::rtscuda::DevicePipeline::execute()
     execute_functions.particle_intersection =
         m_particle_intersection_stage->getKernel();
 
+    LDPLAB_PROFILING_STOP(pipeline_resource_setup);
+
+    LDPLAB_PROFILING_START(pipeline_main_kernel_execution);
     executePipelineKernel<<<1, 1, m_context.parameters.max_branching_depth>>>(
         resources,
         execute_functions);
+    LDPLAB_PROFILING_STOP(pipeline_main_kernel_execution);
 }
 
-bool ldplab::rtscuda::DevicePipeline::allocate(
-    const RayTracingStepCUDAInfo& info)
+__global__ void executePipelineKernel(
+    ldplab::rtscuda::DevicePipelineResources resources,
+    ldplab::rtscuda::PipelineExecuteFunctions execute_functions)
 {
-    return false;
+    using namespace ldplab;
+    using namespace ldplab::rtscuda;
+
+    // Shared memory
+    extern __shared__ char stack[];
+
+    // Execute initial stage
+    executeInitialSetupKernel(resources);
+
+    // Execute while there are still batches.
+    bool batches_left = false;
+    size_t batch_no = 0;
+    do
+    {
+        batches_left = execute_functions.initial(resources, 0, batch_no++);
+        executePipelineBatch(
+            resources,
+            execute_functions,
+            stack,
+            resources.parameters.max_branching_depth);
+
+    } while (batches_left);
 }
 
 __device__ void executePipelineBatch(
@@ -397,10 +412,15 @@ __device__ void executePipelineBatch(
                     inside_particle = !inside_particle;
             }
 
+            //printf("runs depth %i with stack[", depth + 1);
+            //printf("%i] = ", depth);
+            //printf("%i on buffer ", stack[depth]);
+            //printf("%i\n", ray_buffer_index);
+
             // At this level, we will later look for another subtree
             ++stack[depth];
 
-            // Execute subtree root 
+            // Execute subtree root
             if (!executePipelineSingleStage(
                 resources,
                 execute_functions,
@@ -408,20 +428,14 @@ __device__ void executePipelineBatch(
                 reflection_buffer_index,
                 transmission_buffer_index,
                 inside_particle))
-            {
-                --depth;
                 continue;
-            }
 
             // Setup next subtree
             if (depth + 1 < stack_size)
             {
-                for (size_t i = depth + 1; i < stack_size; ++i)
-                    stack[i] = 0;
                 ++depth;
+                stack[depth] = 0;
             }
-            else
-                --depth;
         }
     }
 }

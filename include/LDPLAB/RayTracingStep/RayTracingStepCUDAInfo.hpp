@@ -16,6 +16,7 @@ namespace ldplab
     {
         RayTracingStepCUDAInfo()
             :
+            host_bound_pipeline{ false },
             intensity_cutoff{ 0 },
             light_source_resolution_per_world_unit{ 0 },
             maximum_branching_depth{ 0 },
@@ -32,6 +33,8 @@ namespace ldplab
          */
         std::shared_ptr<IAcceleratorStructureParameter> 
             accelerator_structure_parameters;
+        /** @brief Only executes pipeline stages on device. */
+        bool host_bound_pipeline;
         /**  @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff;
         /** @brief Number of rays per world space unit on a light source plane. */

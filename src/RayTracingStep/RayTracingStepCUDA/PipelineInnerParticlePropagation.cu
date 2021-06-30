@@ -31,7 +31,7 @@ namespace rk4_linear_index_gradient_cuda
         size_t ray_buffer_index);
     __device__ ldplab::rtscuda::pipelineExecuteInnerParticlePropagationStage_t
         execution_kernel_ptr = executeKernel;
-    __device__ ldplab::RK4Parameter parameter;
+    __device__ double rk4_parameter_step_size;
 }
 
 std::shared_ptr<ldplab::rtscuda::IPipelineInnerParticlePropagation>
@@ -39,17 +39,11 @@ ldplab::rtscuda::IPipelineInnerParticlePropagation::createInstance(
     const RayTracingStepCUDAInfo& info,
     Context& context)
 {
+    std::shared_ptr<ldplab::rtscuda::IPipelineInnerParticlePropagation> ipp;
     if (info.solver_parameters->type() == IEikonalSolverParameter::Type::rk4)
     {
-        std::shared_ptr<ldplab::rtscuda::IPipelineInnerParticlePropagation>
-            rk4 = std::make_shared<PipelineInnerParticlePropagationRK4LinearIndexGradient>
+        ipp = std::make_shared<PipelineInnerParticlePropagationRK4LinearIndexGradient>
             (context, *static_cast<RK4Parameter*>(info.solver_parameters.get()));
-        if (cudaMemcpyToSymbol(
-            rk4_linear_index_gradient_cuda::parameter,
-            info.solver_parameters.get(),
-            sizeof(rk4_linear_index_gradient_cuda::parameter)) != cudaSuccess)
-            return nullptr;
-        return rk4;
     }
     else
     {
@@ -58,6 +52,10 @@ ldplab::rtscuda::IPipelineInnerParticlePropagation::createInstance(
             context.uid);
         return nullptr;
     }
+
+    if (!ipp->allocate())
+        return nullptr;
+    return ipp;
 }
 
 ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
@@ -117,7 +115,7 @@ __device__ void rk4_linear_index_gradient_cuda::executeKernel(
     const dim3 block_sz = resources.launch_params.innerParticlePropagation.block_size;
     const unsigned int mem_sz = resources.launch_params.innerParticlePropagation.shared_memory_size;
     innerParticlePropagationKernel<<<grid_sz, block_sz, mem_sz>>>(
-        parameter.step_size,
+        rk4_parameter_step_size,
         resources.ray_buffer.indices[ray_buffer_index],
         resources.ray_buffer.origins[ray_buffer_index],
         resources.ray_buffer.directions[ray_buffer_index],
@@ -142,6 +140,21 @@ ldplab::rtscuda::KernelLaunchParameter
     p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
         (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
     return p;
+}
+
+bool ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::allocate()
+{
+    if (cudaMemcpyToSymbol(
+        rk4_linear_index_gradient_cuda::rk4_parameter_step_size,
+        &m_parameters.step_size,
+        sizeof(rk4_linear_index_gradient_cuda::rk4_parameter_step_size)) != cudaSuccess)
+    {
+            LDPLAB_LOG_ERROR("RTSCUDA context %i: Inner particle propagation "\
+                "stage allocation failed, couldn't upload parameters",
+                m_context.uid);
+        return false;
+    }
+    return true;
 }
 
 __global__ void rk4_linear_index_gradient_cuda::innerParticlePropagationKernel(

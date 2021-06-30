@@ -194,7 +194,6 @@ ldplab::rtscuda::PipelineRayBufferReduceStage::execute(
             "failed to download reduction results from device",
             m_context.uid);
     }
-
     LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_data_download);
     return result;
 }
@@ -220,6 +219,7 @@ __device__ ldplab::rtscuda::RayBufferReduceResult
     rayBufferReduceKernelStep2<<<step2_grid_sz, step2_block_sz, step2_mem_sz>>>(
         resources.reduction.reduction_result_buffer,
         buffer_sz);
+    cudaDeviceSynchronize();
 
     return global_ray_counter;
 }

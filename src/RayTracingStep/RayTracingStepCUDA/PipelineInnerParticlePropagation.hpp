@@ -32,6 +32,8 @@ namespace ldplab
             static std::shared_ptr<IPipelineInnerParticlePropagation> 
                 createInstance(
                     const RayTracingStepCUDAInfo& info, Context& context);
+            /** @brief Gets called once after instance creation. */
+            virtual bool allocate() { return true; }
             /** @brief Gets called before the pipeline enters execution. */
             virtual void setup() { }
             /** @brief Provides the caller with a pointer to the kernel. */
@@ -59,6 +61,7 @@ namespace ldplab
             pipelineExecuteInnerParticlePropagationStage_t getKernel() override;
             void execute(size_t ray_buffer_index) override;
             KernelLaunchParameter getLaunchParameter() override;
+            bool allocate() override;
         public:
             /**
              * @brief Structure keeping all variables of the differential
