@@ -154,6 +154,7 @@ ldplab::rtscuda::PipelineRayBufferReduceStage::execute(
     rayBufferReduceKernelStep2 << <lp.grid_size, lp.block_size, lp.shared_memory_size >> > (
         m_context.resources.pipeline.reduction_result_buffer.get(),
         buffer_size);
+    cudaDeviceSynchronize();
     LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce_kernel_execution);
 
     // ========================================================================

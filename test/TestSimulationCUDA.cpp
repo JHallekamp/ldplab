@@ -19,9 +19,22 @@ enum class GeometryType
 };
 const GeometryType GEOMETRY_TYPE = GeometryType::sphere;
 
+// CUDA Pipeline on host
+constexpr bool HOST_PIPELINE = true;
+
 // Folder path
-const std::string OUTPUT_DIRECTORY = 
-    "results\\cuda_";
+constexpr const char* OUTPUT_DIRECTORY() {
+    if (HOST_PIPELINE)
+        return "results\\cuda_host_";
+    else
+        return "results\\cuda_device_";
+}
+constexpr const char* LOG_DIRECTORY() {
+    if (HOST_PIPELINE)
+        return "logs\\cuda_host_";
+    else
+        return "logs\\cuda_device_";
+}
 const std::string OBJ_PATH = "sphere.obj";
 
 // Particle Geometry
@@ -40,20 +53,17 @@ const double LIGHT_INTENSITY = 1;
 // Reflexion index of the medium
 const double MEDIUM_REFLEXION_INDEX = 1.33;
 
-// CUDA Pipeline on host
-const bool HOST_PIPELINE = false;
-
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 8;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 3 * 50000; //500000;
-const size_t MAX_RTS_BRANCHING_DEPTH = 18;
+const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 16;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 50000;
+const size_t MAX_RTS_BRANCHING_DEPTH = 32;
 const double RTS_INTENSITY_CUTOFF =  0.005 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.01; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -341,13 +351,13 @@ void runSimulation(
     std::ofstream output_force = getFileStream(
         experimental_setup.particles[0], 
         nu, 
-        OUTPUT_DIRECTORY, 
+        OUTPUT_DIRECTORY(), 
         "force", 
         branching_depth);
     std::ofstream output_torque = getFileStream(
         experimental_setup.particles[0], 
         nu, 
-        OUTPUT_DIRECTORY, 
+        OUTPUT_DIRECTORY(), 
         "torque", 
         branching_depth);
 
@@ -395,9 +405,9 @@ void runSimulation(
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
         end - start).count();
-    std::ofstream elapsed_time_file("logs/cuda_simulation_time_" + identificator.str());
+    std::ofstream elapsed_time_file(std::string(LOG_DIRECTORY()) + "simulation_time_" + identificator.str());
     elapsed_time_file << elapsed_time << "s" << std::endl;
 
     // Profiling
-    ldplab::Profiling::printReports("logs/cuda_profiling_report_" + identificator.str());
+    ldplab::Profiling::printReports(std::string(LOG_DIRECTORY()) + "profiling_report_" + identificator.str());
 }
