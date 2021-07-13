@@ -195,7 +195,7 @@ ldplab::Particle ldplab::PropertyGenerator::getSphereParticleByRadius(
     particle.material =
         std::make_shared<ldplab::ParticleMaterialLinearOneDirectional>(
             np,
-            delta_n,
+            nu,
             Vec3(0, 0, 0),
             Vec3(0, 0 , gradient_direction));
     particle.centre_of_mass = Vec3(0, 0, 0);
