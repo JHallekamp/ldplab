@@ -20,7 +20,7 @@ enum class GeometryType
 const GeometryType GEOMETRY_TYPE = GeometryType::sphere;
 
 // CUDA Pipeline on host
-constexpr bool HOST_PIPELINE = true;
+constexpr bool HOST_PIPELINE = false;
 
 // Folder path
 constexpr const char* OUTPUT_DIRECTORY() {
@@ -56,9 +56,9 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 16;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 50000;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000 * 2;
 const size_t MAX_RTS_BRANCHING_DEPTH = 32;
-const double RTS_INTENSITY_CUTOFF =  0.005 * LIGHT_INTENSITY /
+const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 

@@ -167,6 +167,7 @@ else()
 endif()
 
 set(HEADER_INTERN_UTILS
+	Utils/Array.hpp
     Utils/Assert.hpp
     Utils/ComputeHelper.hpp
     Utils/Log.hpp

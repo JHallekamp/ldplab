@@ -217,7 +217,7 @@ void ldplab::rtscuda::HostPipeline::executeBatch(
 __device__ void executePipelineBatch(
     ldplab::rtscuda::DevicePipelineResources& resources,
     ldplab::rtscuda::PipelineExecuteFunctions& execute_functions,
-    char* stack,
+    size_t* stack,
     size_t stack_size);
 __device__ bool executePipelineSingleStage(
     ldplab::rtscuda::DevicePipelineResources& resources,
@@ -350,6 +350,8 @@ void ldplab::rtscuda::DevicePipeline::execute()
     LDPLAB_PROFILING_STOP(pipeline_resource_setup);
 
     LDPLAB_PROFILING_START(pipeline_main_kernel_execution);
+    const size_t mem_req = m_context.parameters.max_branching_depth *
+        sizeof(size_t);
     executePipelineKernel<<<1, 1, m_context.parameters.max_branching_depth>>>(
         resources,
         execute_functions);
@@ -365,7 +367,7 @@ __global__ void executePipelineKernel(
     using namespace ldplab::rtscuda;
 
     // Shared memory
-    extern __shared__ char stack[];
+    extern __shared__ size_t stack[];
 
     // Execute initial stage
     executeInitialSetupKernel(resources);
@@ -381,14 +383,13 @@ __global__ void executePipelineKernel(
             execute_functions,
             stack,
             resources.parameters.max_branching_depth);
-
     } while (batches_left);
 }
 
 __device__ void executePipelineBatch(
     ldplab::rtscuda::DevicePipelineResources& resources, 
     ldplab::rtscuda::PipelineExecuteFunctions& execute_functions,
-    char* stack, 
+    size_t* stack,
     size_t stack_size)
 {
     using namespace ldplab;
@@ -403,33 +404,29 @@ __device__ void executePipelineBatch(
     {
         stack[0] = 0;
         size_t depth = 0;
-        while (stack[0] < 2)
+        while (stack[0] < 2 || depth > 0)
         {
-            // If we are done at this stage, look for parent subtree
-            if (stack[depth] >= 2)
+            // If we are done at this stage, look for parent subtree,
+            // otherwise increase the stack so we look at the next subtree next
+            // time
+            if (stack[depth] < 2)
+                stack[depth]++;
+            else
             {
-                --depth;
+                depth--;
                 continue;
             }
 
             // Get the buffers
-            const size_t ray_buffer_index = 2 * depth + stack[depth] + 1;
+            const size_t ray_buffer_index = 2 * depth + stack[depth];
             const size_t reflection_buffer_index = 2 * (depth + 1) + 1;
             const size_t transmission_buffer_index = 2 * (depth + 1) + 2;
             bool inside_particle = false;
             for (size_t i = 0; i <= depth; ++i)
             {
-                if (stack[i] > 0)
+                if (stack[i] - 1 > 0)
                     inside_particle = !inside_particle;
             }
-
-            //printf("runs depth %i with stack[", depth + 1);
-            //printf("%i] = ", depth);
-            //printf("%i on buffer ", stack[depth]);
-            //printf("%i\n", ray_buffer_index);
-
-            // At this level, we will later look for another subtree
-            ++stack[depth];
 
             // Execute subtree root
             if (!executePipelineSingleStage(
@@ -443,10 +440,7 @@ __device__ void executePipelineBatch(
 
             // Setup next subtree
             if (depth + 1 < stack_size)
-            {
-                ++depth;
-                stack[depth] = 0;
-            }
+                stack[++depth] = 0;
         }
     }
 }
