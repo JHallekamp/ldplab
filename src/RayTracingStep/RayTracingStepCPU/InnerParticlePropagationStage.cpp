@@ -125,33 +125,21 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::
             }
             else
             {
-                ray.direction = glm::normalize(x.w);
-                const double nx = material->indexOfRefraction(x.r);
-                const double ny = material->indexOfRefraction(inter_point);
-                const Vec3 delta_momentum = (nx - ny)*ray.direction;
-                const Vec3 r = inter_point -
+                double ds = glm::length(inter_point - x.r);
+                const Vec3 r = x.r -
                     m_context.particles[particle].centre_of_mass;
-                output.force[particle] += ray.intensity *
-                    delta_momentum;
-                output.torque[particle] += ray.intensity *
-                    glm::cross(r, delta_momentum);
+                output.force[particle] += (-ray.intensity * ds) * material->direction_times_gradient;
+                output.torque[particle] += (-ray.intensity * ds) * glm::cross(r, material->direction_times_gradient);
+                ray.direction = glm::normalize(x.w);
             }
             return;
         }
         else
         {
-            const double nx = material->indexOfRefraction(x.r);
-            const double ny = material->indexOfRefraction(x_new.r);
-            const Vec3 t_old_direction = glm::normalize(x.w);
-            const Vec3 t_new_direction = glm::normalize(x_new.w);
-            const Vec3 delta_momentum = nx * t_old_direction -
-                ny * t_new_direction;
-            const Vec3 r = x_new.r -
+            const Vec3 r = x.r -
                 m_context.particles[particle].centre_of_mass;
-            output.force[particle] += ray.intensity *
-                delta_momentum;
-            output.torque[particle] += ray.intensity *
-                glm::cross(r, delta_momentum);
+            output.force[particle] += (-ray.intensity * m_parameters.step_size) * material->direction_times_gradient;
+            output.torque[particle] += (-ray.intensity * m_parameters.step_size) * glm::cross(r, material->direction_times_gradient);
             x = x_new;
         }
     }
@@ -249,7 +237,6 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::execute(
             intersection.normal[i],
             output);
     }
-
     LDPLAB_LOG_TRACE("RTSCPU context %i: Inner particle ray propagation on "\
         "buffer %i completed",
         m_context.uid,
@@ -349,12 +336,7 @@ void ldplab::rtscpu::EikonalSolverRK45LinearIndexGradient::
             }
             else
             {
-                const double nx = material->indexOfRefraction(x.r);
-                const double ny = material->indexOfRefraction(x_new.r);
-                Vec3 t_old_direction = glm::normalize(x.w);
-                Vec3 t_new_direction = glm::normalize(x_new.w);
-                const Vec3 delta_momentum = nx * t_old_direction -
-                    ny * t_new_direction;
+                const Vec3 delta_momentum = x.w - x_new.w;
                 const Vec3 r = x_new.r -
                     m_context.particles[particle].centre_of_mass;
                 output.force[particle] += ray.intensity *
