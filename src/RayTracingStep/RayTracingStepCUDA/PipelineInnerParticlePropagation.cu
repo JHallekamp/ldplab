@@ -87,9 +87,7 @@ void ldplab::rtscuda::PipelineInnerParticlePropagationRK4LinearIndexGradient::
     execute(size_t ray_buffer_index)
 {
     using namespace rk4_linear_index_gradient_cuda;
-    //const size_t block_size = m_context.parameters.num_threads_per_block;
-    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    const KernelLaunchParameter lp = getLaunchParameter();
+    static const KernelLaunchParameter lp = getLaunchParameter();
     innerParticlePropagationKernel<<<lp.grid_size, lp.block_size>>>(
         m_parameters.step_size,
         m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
@@ -136,9 +134,12 @@ ldplab::rtscuda::KernelLaunchParameter
         getLaunchParameter()
 {
     KernelLaunchParameter p;
-    p.block_size.x = 128; //m_context.device_properties.max_num_threads_per_block;
+    p.block_size.x = 192;
+        //std::min(m_context.device_properties.registers_per_block / 96, 
+        //    m_context.device_properties.max_num_threads_per_block);
     p.grid_size.x = m_context.parameters.num_rays_per_batch / p.block_size.x +
         (m_context.parameters.num_rays_per_batch % p.block_size.x ? 1 : 0);
+    p.shared_memory_size = 0;
     return p;
 }
 

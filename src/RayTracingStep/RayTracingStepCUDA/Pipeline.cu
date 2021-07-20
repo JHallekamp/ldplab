@@ -350,9 +350,10 @@ void ldplab::rtscuda::DevicePipeline::execute()
     LDPLAB_PROFILING_STOP(pipeline_resource_setup);
 
     LDPLAB_PROFILING_START(pipeline_main_kernel_execution);
-    const size_t mem_req = m_context.parameters.max_branching_depth *
-        sizeof(size_t);
-    executePipelineKernel<<<1, 1, m_context.parameters.max_branching_depth>>>(
+    const size_t mem_req =
+        m_context.parameters.max_branching_depth * sizeof(size_t);
+
+    executePipelineKernel<<<1, 1, mem_req>>>(
         resources,
         execute_functions);
     cudaDeviceSynchronize();
@@ -367,7 +368,7 @@ __global__ void executePipelineKernel(
     using namespace ldplab::rtscuda;
 
     // Shared memory
-    extern __shared__ size_t stack[];
+    extern __shared__ char shared_mem[];
 
     // Execute initial stage
     executeInitialSetupKernel(resources);
@@ -381,7 +382,7 @@ __global__ void executePipelineKernel(
         executePipelineBatch(
             resources,
             execute_functions,
-            stack,
+            (size_t*)shared_mem,
             resources.parameters.max_branching_depth);
     } while (batches_left);
 }

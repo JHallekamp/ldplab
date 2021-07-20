@@ -101,7 +101,7 @@ int main()
         vec_kappa.push_back(0.3);
 
     std::vector<double> vec_nu = { 0.15 };
-    std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
+    std::vector<size_t> vec_branching_depth = { /*0,*/ MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_nu.size(); ++j)
@@ -363,10 +363,10 @@ void runSimulation(
 
     // Create simulation
     ldplab::SimulationState state{ experimental_setup };
-    constexpr double offset = 0;
+    constexpr double offset = const_pi() / 2.0; //0;
     constexpr double lim = const_pi();
-    constexpr double step_size = (lim - offset) /
-        static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
+    constexpr double step_size = const_pi(); /*(lim - offset) /
+        static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);*/
     constexpr double half_step_size = step_size / 2.0;
 
     ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
