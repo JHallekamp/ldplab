@@ -4,6 +4,8 @@
 #include "RayTracingStepOutput.hpp"
 #include "../SimulationState.hpp"
 
+#include <LDPLAB/UID.hpp>
+
 namespace ldplab
 {
     /**
@@ -27,6 +29,10 @@ namespace ldplab
         virtual void execute(
             const SimulationState& input,
             RayTracingStepOutput& output) = 0;
+        /** @brief Returns the uid of the ray tracing step instance. */
+        UID<IRayTracingStep> uid() const { return m_uid; }
+    private:
+        UID<IRayTracingStep> m_uid;
     };
 }
 
