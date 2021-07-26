@@ -1,5 +1,15 @@
 #include "MemoryControl.hpp"
 
+ldplab::rtscpu::MemoryInfo ldplab::rtscpu::MemoryControl::getMemoryInfo(
+    const RayTracingStepCPUInfo& info, 
+    size_t thread_idx)
+{
+    MemoryInfo meminfo;
+    meminfo.thread_idx = thread_idx;
+    meminfo.num_intersection_buffers = info.maximum_branching_depth + 1;
+    meminfo.num_ray_buffers = info.maximum_branching_depth + 2;
+}
+
 bool ldplab::rtscpu::MemoryControl::allocateBuffers(
     const RayTracingStepCPUInfo& info,
     const ExperimentalSetup& setup,

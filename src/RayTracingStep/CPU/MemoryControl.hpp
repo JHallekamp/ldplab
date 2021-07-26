@@ -28,6 +28,9 @@ namespace ldplab
                 std::shared_ptr<void> surface_interaction_data;
             };
         public:
+            MemoryInfo getMemoryInfo (
+                const RayTracingStepCPUInfo& info, 
+                size_t thread_idx);
             bool allocateBuffers(
                 const RayTracingStepCPUInfo& info,
                 const ExperimentalSetup& setup,
