@@ -23,10 +23,14 @@ namespace ldplab
                 double intensity_cutoff,
                 double medium_reflection_index,
                 const std::vector<std::shared_ptr<IParticleMaterial>>& material_data,
+                const std::vector<Vec3>& center_of_mass,
                 InteractionPassType pass_type,
                 size_t pass_no,
                 const SimulationParameter& simulation_parameter,
                 void* stage_dependent_data) override;
+        private:
+            double reflectance(
+                double cos_alpha, double cos_beta, double n_r);
         };
     }
 } 
