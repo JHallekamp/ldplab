@@ -1,7 +1,7 @@
 #include "ImplGenericGeometry.hpp"
 #include "IntersectionTests.hpp"
 
-ldplab::rtscpu::default_geometries::RodGeometry::RodGeometry(
+ldplab::rtscpu::RodGeometry::RodGeometry(
     const RodParticleGeometry* geometry)
 {
     double h, sphere_radius;
@@ -20,7 +20,7 @@ ldplab::rtscpu::default_geometries::RodGeometry::RodGeometry(
     m_origin_indentation = Vec3(0, 0, h - m_sphere_radius);
 }
 
-bool ldplab::rtscpu::default_geometries::RodGeometry::intersectRay(
+bool ldplab::rtscpu::RodGeometry::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
     Vec3& intersection_normal, 
@@ -30,7 +30,7 @@ bool ldplab::rtscpu::default_geometries::RodGeometry::intersectRay(
     return false;
 }
 
-bool ldplab::rtscpu::default_geometries::RodGeometry::overlapCylinder(
+bool ldplab::rtscpu::RodGeometry::overlapCylinder(
     const Ray& ray,
     double& dist_min,
     double& dist_max)
@@ -61,7 +61,7 @@ bool ldplab::rtscpu::default_geometries::RodGeometry::overlapCylinder(
     return dist_max >= constant::intersection_tests::epsilon;
 }
 
-bool ldplab::rtscpu::default_geometries::RodGeometry::intersectInsideCylinder(
+bool ldplab::rtscpu::RodGeometry::intersectInsideCylinder(
     const Ray& ray,
     double max_dist,
     Vec3& intersection_point,
@@ -129,7 +129,7 @@ bool ldplab::rtscpu::default_geometries::RodGeometry::intersectInsideCylinder(
     return false;
 }
 
-bool ldplab::rtscpu::default_geometries::RodGeometry::intersectOutsideCylinder(
+bool ldplab::rtscpu::RodGeometry::intersectOutsideCylinder(
     const Ray& ray,
     double min_dist,
     Vec3& intersection_point,
@@ -172,7 +172,7 @@ bool ldplab::rtscpu::default_geometries::RodGeometry::intersectOutsideCylinder(
     return false;
 }
 
-bool ldplab::rtscpu::default_geometries::RodGeometry::intersectCap(
+bool ldplab::rtscpu::RodGeometry::intersectCap(
     const Ray& ray,
     bool inside_cylinder,
     Vec3& intersection_point,
@@ -237,7 +237,7 @@ bool ldplab::rtscpu::default_geometries::RodGeometry::intersectCap(
     return false;
 }
 
-bool ldplab::rtscpu::default_geometries::RodGeometry::intersectIndent(
+bool ldplab::rtscpu::RodGeometry::intersectIndent(
     const Ray& ray,
     bool inside_cylinder,
     Vec3& intersection_point,
@@ -302,13 +302,13 @@ bool ldplab::rtscpu::default_geometries::RodGeometry::intersectIndent(
     return false;
 }
 
-ldplab::rtscpu::default_geometries::SphericalGeometry::SphericalGeometry(
+ldplab::rtscpu::SphericalGeometry::SphericalGeometry(
     const SphericalParticleGeometry* geometry)
     :
     m_radius{ geometry->radius }
 { }
 
-bool ldplab::rtscpu::default_geometries::SphericalGeometry::intersectRay(
+bool ldplab::rtscpu::SphericalGeometry::intersectRay(
     const Ray& ray, 
     Vec3& intersection_point, 
     Vec3& intersection_normal, 
