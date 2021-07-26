@@ -1,3 +1,4 @@
+#include "..\ImplGenericGeometry.hpp"
 #include "GenericGeometry.hpp"
 
 #include <LDPLAB/Constants.hpp>
@@ -386,6 +387,8 @@ ldplab::rtscpu::SphericalGeometry::SphericalGeometry(
     :
     m_radius{ geometry->radius }
 { }
+
+
 
 bool ldplab::rtscpu::SphericalGeometry::intersectRay(
     const Ray& ray, 
