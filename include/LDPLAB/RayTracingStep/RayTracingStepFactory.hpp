@@ -7,6 +7,8 @@
 #include "RayTracingStepCUDAInfo.hpp"
 #include "RayTracingStepOpenGLInfo.hpp"
 
+#include "CPU/PipelineConfiguration.hpp"
+
 #include <memory>
 
 namespace ldplab
@@ -25,14 +27,48 @@ namespace ldplab
         RayTracingStepFactory() = delete;
         /** 
          * @brief Creates a ray tracing step that runs on CPU only.
-         * @param[in] setup The setup of the experiment.
          * @param[in] info Contains the information needed to create the stage.
+         * @param[in] setup The setup of the experiment.
          * @returns Pointer to the ray tracing step instance.
+         * @note Forfeits ownership of the experimental setup. If you want to
+         *       keep the ownership, you should create a complete copy of the
+         *       setup and all its contents.
          */
-        static std::shared_ptr<IRayTracingStep> 
+        static std::shared_ptr<IRayTracingStep>
             createRayTracingStepCPU(
-                const ExperimentalSetup& setup,
-                const RayTracingStepCPUInfo& info);
+                const RayTracingStepCPUInfo& info,
+                ExperimentalSetup&& setup);
+        /**
+         * @brief Creates a ray tracing step that runs on CPU only.
+         * @param[in] info Contains the information needed to create the stage.
+         * @param[in] setup The setup of the experiment.
+         * @param[in] user_defined_configuration A pipeline configuration 
+         *                                       containing stage factories 
+         *                                       that the ray tracing step 
+         *                                       factory favours over the 
+         *                                       automatic generated default
+         *                                       configuration.
+         * @param[in] allow_default_stage_overwrites If set to true, allows the
+         *                                           ray tracing step factory 
+         *                                           to overwrite stages in the
+         *                                           user defined pipeline 
+         *                                           configuration with default
+         *                                           stages, if the user 
+         *                                           provided stage factory 
+         *                                           reports incompatibility
+         *                                           to the given setup and
+         *                                           configuration.
+         * @returns Pointer to the ray tracing step instance.
+         * @note Forfeits ownership of the experimental setup. If you want to
+         *       keep the ownership, you should create a complete copy of the
+         *       setup and all its contents.
+         */
+        static std::shared_ptr<IRayTracingStep>
+            createRayTracingStepCPU(
+                const RayTracingStepCPUInfo& info,
+                ExperimentalSetup&& setup,
+                rtscpu::PipelineConfiguration& user_defined_configuration,
+                bool allow_default_stage_overwrites = false);
         /**
          * @brief Creates a ray tracing step that utilizes CUDA.
          * @param[in] setup The setup of the experiment.

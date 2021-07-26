@@ -1,22 +1,39 @@
 #include <LDPLAB/RayTracingStep/RayTracingStepFactory.hpp>
 
-#include "RayTracingStepCPU/Factory.hpp"
+#include "CPU/Factory.hpp"
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
-#   include "RayTracingStepCUDA/Factory.hpp"
+#   include "CUDA/Factory.hpp"
 #endif
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSOGL
-#   include "RayTracingStepOpenGL/Factory.hpp"
+#   include "OpenGL/Factory.hpp"
 #endif
 #include "../Utils/Log.hpp"
 #include "../Utils/Profiler.hpp"
 
-std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
-    createRayTracingStepCPU(
-        const ExperimentalSetup& setup,
-        const RayTracingStepCPUInfo& info)
+std::shared_ptr<ldplab::IRayTracingStep> 
+    ldplab::RayTracingStepFactory::createRayTracingStepCPU(
+        const RayTracingStepCPUInfo& info, 
+        ExperimentalSetup&& setup)
 {
     LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscpu);
-    return std::move(rtscpu::Factory::createRTS(setup, info));
+    rtscpu::Factory rts_factory;
+    return std::move(rts_factory.createRTS(info, std::move(setup)));
+}
+
+std::shared_ptr<ldplab::IRayTracingStep> 
+    ldplab::RayTracingStepFactory::createRayTracingStepCPU(
+        const RayTracingStepCPUInfo& info, 
+        ExperimentalSetup&& setup, 
+        rtscpu::PipelineConfiguration& user_defined_configuration, 
+        bool allow_default_stage_overwrites)
+{
+    LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscpu);
+    rtscpu::Factory rts_factory;
+    return std::move(rts_factory.createRTS(
+        info, 
+        std::move(setup), 
+        user_defined_configuration, 
+        allow_default_stage_overwrites));
 }
 
 std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
