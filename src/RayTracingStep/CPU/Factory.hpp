@@ -50,6 +50,7 @@ namespace ldplab
             bool createViableConfiguration(
                 const RayTracingStepCPUInfo& info,
                 const ExperimentalSetup& setup,
+                const InterfaceMapping& interface_mapping,
                 std::set<IParticleGeometry::Type>& geometry_types,
                 PipelineConfiguration& configuration,
                 PipelineConfiguration& default_configuration,
@@ -58,10 +59,21 @@ namespace ldplab
             PipelineConfigurationBooleanState validateConfigurationCompability(
                 const RayTracingStepCPUInfo& info,
                 const ExperimentalSetup& setup,
+                const InterfaceMapping& interface_mapping,
                 PipelineConfiguration& configuration);
             PipelineConfigurationBooleanState checkConfigurationCast(
                 std::set<IParticleGeometry::Type>& geometry_types,
                 PipelineConfiguration& configuration);
+            bool checkForConfigurationStateUniformity(
+                const PipelineConfigurationBooleanState& configuration_state,
+                bool desired_uniform_state);
+            void logViableConfiguration(PipelineConfiguration& config);
+            bool createPipeline(
+                const RayTracingStepCPUInfo& info,
+                InterfaceMapping&& interface_mapping,
+                ExperimentalSetup&& setup,
+                PipelineConfiguration& pipeline_config,
+                std::shared_ptr<RayTracingStepCPU>& rts);
         };
     }
 }

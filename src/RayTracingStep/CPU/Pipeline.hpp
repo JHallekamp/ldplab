@@ -29,14 +29,14 @@ namespace ldplab
                 const RayTracingStepCPUInfo& info,
                 const SimulationParameter& simulation_parameter,
                 InterfaceMapping&& interface_mapping,
-                std::unique_ptr<ExperimentalSetup>&& setup,
+                ExperimentalSetup&& setup,
                 std::vector<MemoryControl>&& memory_controls,
                 std::vector<std::shared_ptr<IGenericGeometry>>&& geometries,
-                std::unique_ptr<IBoundingVolumeIntersection>&& bvi,
-                std::unique_ptr<IInitialStage>&& is,
-                std::unique_ptr<IInnerParticlePropagation>&& ipp,
-                std::unique_ptr<IParticleIntersection>&& pi,
-                std::unique_ptr<ISurfaceInteraction>&& si);
+                std::shared_ptr<IBoundingVolumeIntersection>&& bvi,
+                std::shared_ptr<IInitialStage>&& is,
+                std::shared_ptr<IInnerParticlePropagation>&& ipp,
+                std::shared_ptr<IParticleIntersection>&& pi,
+                std::shared_ptr<ISurfaceInteraction>&& si);
             void stepSetup(const SimulationState& sim_state);
             void finalizeOutput(RayTracingStepOutput& output);
             /** @brief Inherited via IJob */
@@ -52,17 +52,17 @@ namespace ldplab
             RayTracingStepCPUInfo m_info;
             SimulationParameter m_sim_params;
             InterfaceMapping m_interface_mapping;
-            std::unique_ptr<ExperimentalSetup> m_setup;
+            ExperimentalSetup m_setup;
             
             std::vector<MemoryControl> m_memory_controls;
             std::vector<std::shared_ptr<IGenericGeometry>> m_generic_geometries;
             std::vector<ParticleTransformation> m_particle_transformations;
 
-            std::unique_ptr<IBoundingVolumeIntersection> m_stage_bvi;
-            std::unique_ptr<IInitialStage> m_stage_is;
-            std::unique_ptr<IInnerParticlePropagation> m_stage_ipp;
-            std::unique_ptr<IParticleIntersection> m_stage_pi;
-            std::unique_ptr<ISurfaceInteraction> m_stage_si;
+            std::shared_ptr<IBoundingVolumeIntersection> m_stage_bvi;
+            std::shared_ptr<IInitialStage> m_stage_is;
+            std::shared_ptr<IInnerParticlePropagation> m_stage_ipp;
+            std::shared_ptr<IParticleIntersection> m_stage_pi;
+            std::shared_ptr<ISurfaceInteraction> m_stage_si;
         };
     }
 }

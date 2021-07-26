@@ -1,6 +1,8 @@
 #ifndef WWU_LDPLAB_RTSCPU_DATA_HPP
 #define WWU_LDPLAB_RTSCPU_DATA_HPP
 
+#include <map>
+
 #include <LDPLAB/ExperimentalSetup/BoundingVolume.hpp>
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
