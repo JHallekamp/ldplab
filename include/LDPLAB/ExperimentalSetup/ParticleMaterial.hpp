@@ -14,6 +14,13 @@ namespace ldplab
 		 *        IParticleMaterial.
 		 */
 		virtual ~IParticleMaterial() { }
+		/**
+		 * @brief Get the index of refraction of a particle at a position in
+		 *        particle coordinate system.
+		 * @param position in particle coordinate system.
+		 * @return index of refraction
+		 */
+		virtual double indexOfRefraction(const Vec3& position) const = 0;
 		/** @brief Returns the type of the instance. */
 		virtual Type type() const = 0;
         /** @brief Returns the type of the instance as string. */
@@ -21,7 +28,7 @@ namespace ldplab
         {
             switch (type())
             {
-            case Type::homogenous: return "homogenous";
+            case Type::homogenous: return "homogeneous";
             case Type::linear_one_directional: return "linear_one_directional";
             default: return "unknown_type";
             }
@@ -66,12 +73,12 @@ namespace ldplab
 		 * @warning There is no checking if the position is inside the 
 		 *           particle.
 		 */
-		inline double indexOfRefraction(const Vec3& position) const { 
-		    return index_of_refraction + 
-		    	gradient * glm::dot(direction, (position - origin));
-            //return index_of_refraction_minus_partial_dot +
-            //    glm::dot(direction_times_gradient, position);
-        }
+		inline double indexOfRefraction(const Vec3& position) const override {
+			return index_of_refraction +
+				gradient * glm::dot(direction, (position - origin));
+			//return index_of_refraction_minus_partial_dot +
+			//    glm::dot(direction_times_gradient, position);
+		}
 		/**
 		 * @brief The index of refraction at the origin of the linear index 
 		 *        change.

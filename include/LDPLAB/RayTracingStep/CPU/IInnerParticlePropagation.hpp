@@ -31,6 +31,12 @@ namespace ldplab
              *                             ray propagation.
              * @param[in] geometry_data Generic geometry instances per particle
              *                          used for intersection tests.
+             * @param[in] material_data Generic material instances per particle
+             *                          used for ray particle interaction 
+             *                          behavior.
+             * @param[in] center_of_mass Center of mass per particle given in 
+             *                           the respective particle coordinate 
+             *                           system.
              * @param[in] simulation_parameter Parameters of the simulation.
              * @param[in] stage_dependent_data A trhead-local pointer to a data
              *                                 structure created by the stage
@@ -42,7 +48,9 @@ namespace ldplab
                 RayBuffer& ray_data,
                 IntersectionBuffer& intersection_data,
                 OutputBuffer& output_data,
-                const std::vector<std::shared_ptr<IGenericGeometry>>& geometry_data,
+                const std::vector<std::shared_ptr<IGenericGeometry>>& geometry_data, 
+                const std::vector<std::shared_ptr<IParticleMaterial>>& material_data,
+                const std::vector<Vec3>& center_of_mass,
                 const SimulationParameter& simulation_parameter,
                 void* stage_dependent_data) = 0;
         };

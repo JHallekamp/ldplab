@@ -51,6 +51,12 @@ namespace ldplab
              * @param[in] medium_reflection_index The reflection index of the
              *                                    physical medium between the 
              *                                    particles.
+             * @param[in] material_data Generic material instances per particle
+             *                          used for ray particle interaction 
+             *                          behavior.
+             * @param[in] center_of_mass Center of mass per particle given in 
+             *                           the respective particle coordinate 
+             *                           system.
              * @param[in] pass_type The type of the pass, determining whether
              *                      the interaction results in a reflection or
              *                      in a transmission.
@@ -72,6 +78,8 @@ namespace ldplab
                 OutputBuffer& output_data,
                 double intensity_cutoff,
                 double medium_reflection_index,
+                const std::vector<std::shared_ptr<IParticleMaterial>>& material_data,
+                const std::vector<Vec3>& center_of_mass,
                 InteractionPassType pass_type,
                 size_t pass_no,
                 const SimulationParameter& simulation_parameter,
