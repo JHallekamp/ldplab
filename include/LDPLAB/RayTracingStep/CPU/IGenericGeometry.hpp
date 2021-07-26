@@ -41,7 +41,7 @@ namespace ldplab
             virtual bool intersectRay(
                 const Ray& ray,
                 Vec3& intersection_point,
-                Vec3& intersection_normal)
+                Vec3& intersection_normal) const
             {
                 double td;
                 bool to;
@@ -81,7 +81,7 @@ namespace ldplab
                 const Ray& ray,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                bool& intersects_outside)
+                bool& intersects_outside) const
             {
                 double t;
                 return intersectRay(
@@ -126,7 +126,7 @@ namespace ldplab
                 const Vec3& segment_end,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
-                bool& end_point_inside)
+                bool& end_point_inside) const
             {
                 const Vec3 seg = segment_end - segment_origin;
                 const double seg_length = glm::length(seg);
@@ -183,7 +183,7 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 double& dist,
-                bool& intersects_outside) = 0;
+                bool& intersects_outside) const = 0;
         };
     }
 }

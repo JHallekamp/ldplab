@@ -32,6 +32,8 @@ namespace ldplab
                 ExperimentalSetup&& setup,
                 std::vector<MemoryControl>&& memory_controls,
                 std::vector<std::shared_ptr<IGenericGeometry>>&& geometries,
+                std::vector<std::shared_ptr<IParticleMaterial>>&& materials,
+                std::vector<Vec3>&& particle_center_of_mass,
                 std::shared_ptr<IBoundingVolumeIntersection>&& bvi,
                 std::shared_ptr<IInitialStage>&& is,
                 std::shared_ptr<IInnerParticlePropagation>&& ipp,
@@ -56,6 +58,8 @@ namespace ldplab
             
             std::vector<MemoryControl> m_memory_controls;
             std::vector<std::shared_ptr<IGenericGeometry>> m_generic_geometries;
+            std::vector<std::shared_ptr<IParticleMaterial>> m_particle_materials;
+            std::vector<Vec3> m_particle_center_of_mass;
             std::vector<ParticleTransformation> m_particle_transformations;
 
             std::shared_ptr<IBoundingVolumeIntersection> m_stage_bvi;

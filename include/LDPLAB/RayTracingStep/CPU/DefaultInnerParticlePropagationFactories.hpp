@@ -33,29 +33,6 @@ namespace ldplab
             private:
                 RK4Parameter m_params;
             };
-
-            /** @brief Uses RK45 method to solve inner particle propagation. */
-            class InnerParticlePropagationRK45Factory :
-                public IInnerParticlePropagationFactory
-            {
-            public:
-                InnerParticlePropagationRK45Factory(RK45Parameter params);
-                static std::string name();
-                std::string implementationName() const override;
-                bool userDefined() const override;
-                bool checkCompability(
-                    const RayTracingStepCPUInfo& step_info,
-                    const PipelineConfiguration& configuration,
-                    const ExperimentalSetup& setup,
-                    const InterfaceMapping& interface_mapping) override;
-                std::shared_ptr<IInnerParticlePropagation> create(
-                    const RayTracingStepCPUInfo& step_info,
-                    const PipelineConfiguration& configuration,
-                    const ExperimentalSetup& setup,
-                    const InterfaceMapping& interface_mapping) override;
-            private:
-                RK45Parameter m_params;
-            };
         }
     }
 }

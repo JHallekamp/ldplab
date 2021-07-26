@@ -788,6 +788,15 @@ bool ldplab::rtscpu::Factory::createPipeline(
     if (error)
         return false;
 
+    // Collect particle data
+    std::vector<std::shared_ptr<IParticleMaterial>> particle_materials;
+    std::vector<Vec3> particle_center_of_mass;
+    for (size_t i = 0; i < setup.particles.size(); ++i)
+    {
+        particle_materials.push_back(setup.particles[i].material);
+        particle_center_of_mass.push_back(setup.particles[i].centre_of_mass);
+    }
+
     // Create simulation parameter
     SimulationParameter sim_params;
     sim_params.max_branching_depth = info.maximum_branching_depth;
@@ -807,6 +816,8 @@ bool ldplab::rtscpu::Factory::createPipeline(
         std::move(setup),
         std::move(memory_controls),
         std::move(geometries),
+        std::move(particle_materials),
+        std::move(particle_center_of_mass),
         std::move(bvi),
         std::move(is),
         std::move(ipp),

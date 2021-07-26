@@ -13,14 +13,16 @@ ldplab::rtscpu::Pipeline::Pipeline(
     const RayTracingStepCPUInfo& info, 
     const SimulationParameter& simulation_parameter,
     InterfaceMapping&& interface_mapping, 
-    std::unique_ptr<ExperimentalSetup>&& setup, 
+    ExperimentalSetup&& setup, 
     std::vector<MemoryControl>&& memory_controls, 
     std::vector<std::shared_ptr<IGenericGeometry>>&& geometries,
-    std::unique_ptr<IBoundingVolumeIntersection>&& bvi, 
-    std::unique_ptr<IInitialStage>&& is, 
-    std::unique_ptr<IInnerParticlePropagation>&& ipp, 
-    std::unique_ptr<IParticleIntersection>&& pi, 
-    std::unique_ptr<ISurfaceInteraction>&& si)
+    std::vector<std::shared_ptr<IParticleMaterial>>&& materials,
+    std::vector<Vec3>&& particle_center_of_mass,
+    std::shared_ptr<IBoundingVolumeIntersection>&& bvi,
+    std::shared_ptr<IInitialStage>&& is,
+    std::shared_ptr<IInnerParticlePropagation>&& ipp,
+    std::shared_ptr<IParticleIntersection>&& pi,
+    std::shared_ptr<ISurfaceInteraction>&& si)
     :
     m_owner{ owner },
     m_info{ info },
@@ -29,6 +31,8 @@ ldplab::rtscpu::Pipeline::Pipeline(
     m_setup{ std::move(setup) },
     m_memory_controls{ std::move(memory_controls) },
     m_generic_geometries{ std::move(geometries) },
+    m_particle_materials{ std::move(materials) },
+    m_particle_center_of_mass{ std::move(particle_center_of_mass) },
     m_particle_transformations{ simulation_parameter.num_particles },
     m_stage_bvi{ std::move(bvi) },
     m_stage_is{ std::move(is) },
@@ -74,11 +78,11 @@ void ldplab::rtscpu::Pipeline::stepSetup(const SimulationState& sim_state)
     }
 
     // Call stage setups
-    m_stage_bvi->stepSetup(*m_setup, sim_state, m_interface_mapping);
-    m_stage_is->stepSetup(*m_setup, sim_state, m_interface_mapping);
-    m_stage_ipp->stepSetup(*m_setup, sim_state, m_interface_mapping);
-    m_stage_pi->stepSetup(*m_setup, sim_state, m_interface_mapping);
-    m_stage_si->stepSetup(*m_setup, sim_state, m_interface_mapping);
+    m_stage_bvi->stepSetup(m_setup, sim_state, m_interface_mapping);
+    m_stage_is->stepSetup(m_setup, sim_state, m_interface_mapping);
+    m_stage_ipp->stepSetup(m_setup, sim_state, m_interface_mapping);
+    m_stage_pi->stepSetup(m_setup, sim_state, m_interface_mapping);
+    m_stage_si->stepSetup(m_setup, sim_state, m_interface_mapping);
 }
 
 void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
@@ -209,6 +213,8 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
             intersection_buffer,
             output_buffer,
             m_generic_geometries,
+            m_particle_materials,
+            m_particle_center_of_mass,
             m_sim_params,
             sdd.inner_particle_propagation_data.get());
         LDPLAB_PROFILING_STOP(pipeline_inner_particle_propagation);
@@ -275,7 +281,9 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
                 output_ray_buffer,
                 output_buffer,
                 m_info.intensity_cutoff,
-                m_setup->medium_reflection_index,
+                m_setup.medium_reflection_index,
+                m_particle_materials,
+                m_particle_center_of_mass,
                 ISurfaceInteraction::InteractionPassType::reflection,
                 r,
                 m_sim_params,
@@ -295,7 +303,9 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
                 output_ray_buffer,
                 output_buffer,
                 m_info.intensity_cutoff,
-                m_setup->medium_reflection_index,
+                m_setup.medium_reflection_index,
+                m_particle_materials,
+                m_particle_center_of_mass,
                 ISurfaceInteraction::InteractionPassType::transmission,
                 t,
                 m_sim_params,
