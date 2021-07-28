@@ -14,7 +14,7 @@ void ldplab::rtscpu::ParticleIntersection::execute(
     const SimulationParameter& simulation_parameter, 
     void* stage_dependent_data)
 {
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle intersection"\
+    LDPLAB_LOG_TRACE("RTSCPU %i: Execute ray particle intersection"\
         " test on batch buffer %i",
         getParentRayTracingStepUID(),
         rays.uid);
@@ -56,7 +56,7 @@ void ldplab::rtscpu::ParticleIntersection::execute(
 
     ray_data.world_space_rays += num_missed_rays;
 
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle intersection test on "\
+    LDPLAB_LOG_TRACE("RTSCPU %i: Ray particle intersection test on "\
         "batch buffer %i completed, of %i tested rays %i rays hit particles "\
         "and %i rays missed",
         getParentRayTracingStepUID(),

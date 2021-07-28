@@ -50,7 +50,7 @@ void ldplab::rtscpu::Pipeline::stepSetup(const SimulationState& sim_state)
         auto particle_it = sim_state.particle_instances.find(particle_uid);
         if (particle_it == sim_state.particle_instances.end())
         {
-            LDPLAB_LOG_ERROR("RTSCPU context %i: Could not update particle "\
+            LDPLAB_LOG_ERROR("RTSCPU %i: Could not update particle "\
                 "transformations, particle %i is not present in the given "\
                 "simulation state, abort RTSCPU execution",
                 m_owner.uid(),
@@ -85,10 +85,37 @@ void ldplab::rtscpu::Pipeline::stepSetup(const SimulationState& sim_state)
     m_stage_si->stepSetup(m_setup, sim_state, m_interface_mapping);
 }
 
+void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
+{
+    for (size_t p = 0; p < m_setup.particles.size(); ++p)
+    {
+        UID<Particle> puid = m_interface_mapping.particle_index_to_uid[p];
+        output.force_per_particle[puid] = Vec3{ 0, 0, 0 };
+        output.torque_per_particle[puid] = Vec3{ 0, 0, 0 };
+        for (size_t bc = 0; bc < m_memory_controls.size(); ++bc)
+        {
+            output.force_per_particle[puid] +=
+                m_memory_controls[bc].getOutputBuffer().force[p];
+            output.torque_per_particle[puid] +=
+                m_memory_controls[bc].getOutputBuffer().torque[p];
+        }
+        
+        if (!m_info.return_force_in_particle_coordinate_system)
+        {
+            // Transform output from particle into world space
+            const ParticleTransformation& trans = m_particle_transformations[p];
+            output.force_per_particle[puid] = trans.p2w_scale_rotation *
+                output.force_per_particle[puid];
+            output.torque_per_particle[puid] = trans.p2w_scale_rotation *
+                output.torque_per_particle[puid];
+        }
+    }
+}
+
 void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
 {
     LDPLAB_ASSERT(job_id < m_memory_controls.size());
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Ray tracing pipeline executes "\
+    LDPLAB_LOG_DEBUG("RTSCPU %i: Ray tracing pipeline executes "\
         "pipeline instance %i",
         m_owner.uid(), job_id);
 
@@ -117,7 +144,7 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
             m_sim_params,
             sdd.initial_stage_data.get());
         LDPLAB_PROFILING_STOP(pipeline_initial_batch_creation);
-        LDPLAB_LOG_TRACE("RTSCPU context %i: Filled batch buffer %i with %i "\
+        LDPLAB_LOG_TRACE("RTSCPU %i: Filled batch buffer %i with %i "\
             "initial rays",
             m_owner.uid(),
             initial_batch_buffer.uid,
@@ -125,7 +152,7 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
 
         if (initial_batch_buffer.active_rays > 0)
         {
-            LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i executes "\
+            LDPLAB_LOG_TRACE("RTSCPU %i: Pipeline instance %i executes "\
                 "batch %i on initial buffer %i",
                 m_owner.uid(), job_id, num_batches, initial_batch_buffer.uid);
             ++num_batches;
@@ -134,13 +161,13 @@ void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
             processBatch(initial_batch_buffer, memory_control);
             LDPLAB_PROFILING_STOP(pipeline_process_batch);
 
-            LDPLAB_LOG_TRACE("RTSCPU context %i: Pipeline instance %i "\
+            LDPLAB_LOG_TRACE("RTSCPU %i: Pipeline instance %i "\
                 "finished batch execution",
                 m_owner.uid(), job_id);
         }
     } while (batches_left);
 
-    LDPLAB_LOG_DEBUG("RTSCPU context %i: Ray tracing pipeline finished  "\
+    LDPLAB_LOG_DEBUG("RTSCPU %i: Ray tracing pipeline finished  "\
         "execution of pipeline instance %i",
         m_owner.uid(), job_id);
 }
@@ -182,7 +209,7 @@ ldplab::Mat3 ldplab::rtscpu::Pipeline::getRotationMatrix(
     }
 
     // To avoid compiler warnings
-    LDPLAB_LOG_WARNING("RTSCPU context %i: Encountered unknown rotation "\
+    LDPLAB_LOG_WARNING("RTSCPU %i: Encountered unknown rotation "\
         "order, assumes xyz instead.",
         m_owner.uid());
     return rotz * roty * rotx;
@@ -330,7 +357,7 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
                 max_intensity = intensity;
         }
         avg_intensity /= static_cast<double>(buffer.active_rays);
-        LDPLAB_LOG_WARNING("RTSCPU context %i: Pipeline reached max branching "\
+        LDPLAB_LOG_WARNING("RTSCPU %i: Pipeline reached max branching "\
             "depth %i with a total of %i still active rays, which include a "\
             "max intensity of %f and average intensity of %f",
             m_owner.uid(),

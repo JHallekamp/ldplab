@@ -1,10 +1,8 @@
 #include "ImplSurfaceInteraction.hpp"
 
-#include "Factory.hpp"
-#include "RayTracingStepCPU.hpp"
 #include "../../Utils/Log.hpp"
 
-void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
+void ldplab::rtscpu::SurfaceInteraction::execute(
 	const RayBuffer& input_ray_data, 
     const IntersectionBuffer& intersection_data, 
 	RayBuffer& output_ray_data, 
@@ -18,9 +16,9 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
 	const SimulationParameter& simulation_parameter, 
 	void* stage_dependent_data)
 {
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Execute ray particle interaction "\
+    LDPLAB_LOG_TRACE("RTSCPU %i: Execute ray particle interaction "\
         "on batch buffer %i",
-        m_context.uid, input_ray_data.uid);
+        getParentRayTracingStepUID(), input_ray_data.uid);
 
     if(pass_type == InteractionPassType::reflection)
         output_ray_data.inner_particle_rays = input_ray_data.inner_particle_rays;
@@ -31,13 +29,16 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
 
     for (size_t i = 0; i < input_ray_data.size; i++)
     {
-        if (input_ray_data.index_data[i] < 0)
+        const int32_t particle_id = input_ray_data.index_data[i];
+
+        if (particle_id < 0)
         {
             output_ray_data.index_data[i] = -1;
             continue;
         }
-        //else if (input_ray_data.index_data[i] >=  m_context.particles.size())
-        //    continue;
+        else if (particle_id >= 
+                 simulation_parameter.num_particles)
+            continue;
 
         // Check if the intersection normal is 0, in which case the ray will 
         // be written into the transmission buffer without changes. This is
@@ -49,40 +50,33 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
         if (intersection_data.normal[i] == Vec3(0, 0, 0))
         {
             output_ray_data.index_data[i] = -1;
-            output_ray_data.index_data[i] = input_ray_data.index_data[i];
+            output_ray_data.index_data[i] = particle_id;
             output_ray_data.ray_data[i] = input_ray_data.ray_data[i];
             output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
             output_ray_data.active_rays++;
             continue;
         }
 
-        const int32_t particle_id = input_ray_data.index_data[i];
         const Ray& ray = input_ray_data.ray_data[i];
         Ray& output_ray = output_ray_data.ray_data[i];
         const Vec3& inter_point = intersection_data.point[i];
         const Vec3& inter_normal = intersection_data.normal[i];
 
-        const ParticleMaterialLinearOneDirectional* material =
-            (ParticleMaterialLinearOneDirectional*)
-            material_data[particle_id].get();
-
         double nr, nx, ny;
         if (input_ray_data.inner_particle_rays)
         {
-            nx = material->indexOfRefraction(inter_point);
+            nx = material_data[particle_id]->indexOfRefraction(inter_point);
             ny = medium_reflection_index;
             nr = nx / ny;
         }
         else
         {
             nx = medium_reflection_index;
-            ny = material->indexOfRefraction(inter_point);
+            ny = material_data[particle_id]->indexOfRefraction(inter_point);
             nr = nx / ny;
         }
 
         double cos_a = -glm::dot(ray.direction, inter_normal);
-
-
 
         if (1.0 - nr * nr * (1.0 - cos_a * cos_a) >= 0)
         {
@@ -115,9 +109,9 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
                     output_ray_data.index_data[i] = -1;
                     const Vec3 delta_momentum = inter_normal * (nx * -2.0 * cos_a);
                     const Vec3 r = inter_point - center_of_mass[particle_id];
-                    output_data.force[input_ray_data.index_data[i]] += output_ray.intensity *
+                    output_data.force[particle_id] += output_ray.intensity *
                         delta_momentum;
-                    output_data.torque[input_ray_data.index_data[i]] += output_ray.intensity *
+                    output_data.torque[particle_id] += output_ray.intensity *
                         glm::cross(r, delta_momentum);
                 }
             }
@@ -125,7 +119,7 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
             {
                 if (output_ray.intensity > intensity_cutoff)
                 {
-                    output_ray_data.index_data[i] = input_ray_data.index_data[i];
+                    output_ray_data.index_data[i] = particle_id;
                     output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
                     output_ray.origin = inter_point;
                     output_ray.direction = nr * ray.direction +
@@ -135,9 +129,9 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
                     const Vec3 delta_momentum = nx * ray.direction -
                         ny * output_ray.direction;
                     const Vec3 r = inter_point - center_of_mass[particle_id];
-                    output_data.force[input_ray_data.index_data[i]] += output_ray.intensity *
+                    output_data.force[particle_id] += output_ray.intensity *
                         delta_momentum;
-                    output_data.torque[input_ray_data.index_data[i]] += output_ray.intensity *
+                    output_data.torque[particle_id] += output_ray.intensity *
                         glm::cross(r, delta_momentum);
                 }
                 else
@@ -145,16 +139,16 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
                     output_ray_data.index_data[i] = -1;
                     const Vec3 delta_momentum = inter_normal * (ny * cos_b - nx * cos_a);
                     const Vec3 r = inter_point - center_of_mass[particle_id];
-                    output_data.force[input_ray_data.index_data[i]] += output_ray.intensity *
+                    output_data.force[particle_id] += output_ray.intensity *
                         delta_momentum;
-                    output_data.torque[input_ray_data.index_data[i]] += output_ray.intensity *
+                    output_data.torque[particle_id] += output_ray.intensity *
                         glm::cross(r, delta_momentum);
                 }
             }
         }
         else // total reflected ray
         {
-            output_ray_data.index_data[i] = input_ray_data.index_data[i];
+            output_ray_data.index_data[i] = particle_id;
             output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
             output_ray.origin = inter_point;
             output_ray.direction = ray.direction + inter_normal * 2.0 * cos_a;
@@ -164,17 +158,17 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
             const Vec3 delta_momentum = nx *
                 (ray.direction - output_ray.direction);
             const Vec3 r = inter_point - center_of_mass[particle_id];
-            output_data.force[input_ray_data.index_data[i]] += output_ray.intensity *
+            output_data.force[particle_id] += output_ray.intensity *
                 delta_momentum;
-            output_data.torque[input_ray_data.index_data[i]] += output_ray.intensity *
+            output_data.torque[particle_id] += output_ray.intensity *
                 glm::cross(r, delta_momentum);
         }
     }
 
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Ray particle interaction on batch "\
+    LDPLAB_LOG_TRACE("RTSCPU %i: Ray particle interaction on batch "\
         "buffer %i executed, buffer %i now holds %i reflected rays, buffer "\
         "%i now holds %i refracted rays",
-        m_context.uid,
+        getParentRayTracingStepUID(),
         input_ray_data.uid,
         reflected_input_ray_data.uid,
         reflected_input_ray_data.active_rays,
@@ -182,8 +176,7 @@ void ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::execute(
         refracted_input_ray_data.active_rays);
 }
 
-double ldplab::rtscpu::SurfaceInteraction1DLinearRefractionIndexGradient::
-reflectance(
+double ldplab::rtscpu::SurfaceInteraction::reflectance(
     double cos_alpha, double cos_beta, double n_r)
 {
     double cos2_a = cos_alpha * cos_alpha;
