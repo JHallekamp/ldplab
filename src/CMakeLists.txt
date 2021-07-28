@@ -224,11 +224,13 @@ add_library(ldplab STATIC
     ${SOURCE_UTILS}
 )
 
-source_group("include" FILES ${HEADER_LDPLAB})
-source_group("include\\ExperimentalSetup" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP})
-source_group("include\\ExperimentalSetup\\Utils" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS})
-source_group("include\\RayTracingStep" FILES ${HEADER_LDPLAB_RAY_TRACING_STEP})
-source_group("include\\RayTracingStep\\CPU" FILES ${HEADER_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU})
+source_group("include" FILES ${HEADER_ROOT})
+source_group("include\\LDPLAB" FILES ${HEADER_LDPLAB})
+source_group("include\\LDPLAB\\ExperimentalSetup" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP})
+source_group("include\\LDPLAB\\ExperimentalSetup\\Utils" FILES ${HEADER_LDPLAB_EXPERIMENTAL_SETUP_UTILS})
+source_group("include\\LDPLAB\\RayTracingStep" FILES ${HEADER_LDPLAB_RAY_TRACING_STEP})
+source_group("include\\LDPLAB\\RayTracingStep\\CPU" FILES ${HEADER_RAY_TRACING_STEP_RAY_TRACING_STEP_CPU})
+source_group("src" FILES ${SOURCE_LDPLAB})
 source_group("src\\ExperimentalSetup\\Utils" FILES ${SOURCE_EXPERIMENTAL_SETUP_UTILS})
 source_group("src\\RayTracingStep" FILES ${SOURCE_RAY_TRACING_STEP})
 source_group("src\\Utils" FILES ${HEADER_INTERN_UTILS})
