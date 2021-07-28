@@ -9,7 +9,8 @@ void ldplab::rtscpu::BoundingSphereIntersectionBruteforce::stepSetup(
     const SimulationState& simulation_state, 
     const InterfaceMapping& interface_mapping)
 {
-    m_particle_bounding_spheres.resize(setup.particles.size());
+    m_particle_bounding_spheres.resize(setup.particles.size(), 
+        BoundingVolumeSphere(Vec3(0,0,0), 0));
     for (size_t i = 0; i < setup.particles.size(); ++i)
     {
         // Get the particle instance for particle i using the interface mapping
@@ -30,7 +31,7 @@ size_t ldplab::rtscpu::BoundingSphereIntersectionBruteforce::execute(
     const SimulationParameter& simulation_parameter, 
     void* stage_dependent_data)
 {
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Test bounding sphere intersections "\
+    LDPLAB_LOG_TRACE("RTSCPU %i: Test bounding sphere intersections "\
         "for batch buffer %i",
         getParentRayTracingStepUID(),
         buffer.uid);
@@ -104,7 +105,7 @@ size_t ldplab::rtscpu::BoundingSphereIntersectionBruteforce::execute(
     ray_data.active_rays -= num_rays_exiting_scene;
     ray_data.world_space_rays = 0;
 
-    LDPLAB_LOG_TRACE("RTSCPU context %i: Bounding sphere intersection "\
+    LDPLAB_LOG_TRACE("RTSCPU %i: Bounding sphere intersection "\
         "test on batch buffer %i completed, of %i tested rays %i hit "\
         "bounding spheres and %i rays exited the scene",
         getParentRayTracingStepUID(),

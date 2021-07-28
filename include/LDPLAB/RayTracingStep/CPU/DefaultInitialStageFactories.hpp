@@ -29,6 +29,8 @@ namespace ldplab
                     const PipelineConfiguration& configuration,
                     const ExperimentalSetup& setup,
                     const InterfaceMapping& interface_mapping) override;
+            private:
+                double m_num_rays_per_world_space_unit;
             };
         }
     }

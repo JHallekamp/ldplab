@@ -4,6 +4,12 @@
 #include "MemoryControl.hpp"
 
 #include <LDPLAB/RayTracingStep/CPU/StageFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultBoundingVolumeIntersectionFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultGenericGeometryFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultInitialStageFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultInnerParticlePropagationFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultParticleIntersectionFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultSurfaceInteractionFactories.hpp>
 
 std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> 
     ldplab::rtscpu::Factory::createRTS(
@@ -86,7 +92,32 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU>
     return rts;
 }
 
-std::set<ldplab::IParticleGeometry::Type> 
+void ldplab::rtscpu::Factory::createDefaultConfiguration(
+    const RayTracingStepCPUInfo& info,
+    const ExperimentalSetup& setup,
+    PipelineConfiguration& default_config)
+{
+    default_config.initial_stage = std::make_shared<
+        default_stages::InitialStageHomogenousLightBoundingSphereProjectionFactory>(140);
+    default_config.bounding_volume_intersection = std::make_shared<
+        default_stages::BoundingSphereIntersectionBruteforceFactory>();
+    default_config.particle_intersection = std::make_shared<
+        default_stages::ParticleIntersectionFactory>();
+    default_config.surface_interaction = std::make_shared<
+        default_stages::SurfaceInteractionFactory>();
+    RK4Parameter rk4_parameter = { 0.005 };
+    default_config.inner_particle_propagation = std::make_shared<
+        default_stages::InnerParticlePropagationRK4Factory>(rk4_parameter);
+
+    default_config.generic_geometries.emplace(
+        IParticleGeometry::Type::rod_particle, 
+        std::make_shared<default_generic_geometry::GenericGeometryRodFactory>());
+    default_config.generic_geometries.emplace(
+        IParticleGeometry::Type::sphere,
+        std::make_shared<default_generic_geometry::GenericGeometrySphereFactory>());
+}
+
+std::set<ldplab::IParticleGeometry::Type>
     ldplab::rtscpu::Factory::getPresentGeometryTypes(
         const ExperimentalSetup& setup)
 {
@@ -579,6 +610,8 @@ bool ldplab::rtscpu::Factory::createPipeline(
             "Failed to create initial stage");
         error = true;
     }
+    else
+        is->m_parent_rts_uid = rts->uid();
 
     std::shared_ptr<IBoundingVolumeIntersection> bvi =
         pipeline_config.bounding_volume_intersection->create(
@@ -592,6 +625,8 @@ bool ldplab::rtscpu::Factory::createPipeline(
             "Failed to create bounding volume intersection");
         error = true;
     }
+    else
+        bvi->m_parent_rts_uid = rts->uid();
 
     std::shared_ptr<IParticleIntersection> pi =
         pipeline_config.particle_intersection->create(
@@ -605,6 +640,8 @@ bool ldplab::rtscpu::Factory::createPipeline(
             "Failed to create particle intersection");
         error = true;
     }
+    else
+        pi->m_parent_rts_uid = rts->uid();
 
     std::shared_ptr<ISurfaceInteraction> si =
         pipeline_config.surface_interaction->create(
@@ -618,6 +655,8 @@ bool ldplab::rtscpu::Factory::createPipeline(
             "Failed to create surface interaction");
         error = true;
     }
+    else
+        si->m_parent_rts_uid = rts->uid();
 
     std::shared_ptr<IInnerParticlePropagation> ipp =
         pipeline_config.inner_particle_propagation->create(
@@ -631,6 +670,8 @@ bool ldplab::rtscpu::Factory::createPipeline(
             "Failed to create inner particle propagation");
         error = true;
     }
+    else
+        ipp->m_parent_rts_uid = rts->uid();
 
     if (error)
         return false;

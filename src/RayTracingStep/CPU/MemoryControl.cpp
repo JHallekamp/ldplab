@@ -8,6 +8,7 @@ ldplab::rtscpu::MemoryInfo ldplab::rtscpu::MemoryControl::getMemoryInfo(
     meminfo.thread_idx = thread_idx;
     meminfo.num_intersection_buffers = info.maximum_branching_depth + 1;
     meminfo.num_ray_buffers = info.maximum_branching_depth + 2;
+    return meminfo;
 }
 
 bool ldplab::rtscpu::MemoryControl::allocateBuffers(

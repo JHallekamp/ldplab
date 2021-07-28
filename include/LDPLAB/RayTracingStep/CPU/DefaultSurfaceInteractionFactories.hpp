@@ -13,7 +13,7 @@ namespace ldplab
              * @brief Implements particle surface interaction for materials with a
              *        linear index of refraction gradient in one direction.
              */
-            class SurfaceInteraction1DLinearRefractionIndexGradientFactory :
+            class SurfaceInteractionFactory :
                 public ISurfaceInteractionFactory
             {
             public:

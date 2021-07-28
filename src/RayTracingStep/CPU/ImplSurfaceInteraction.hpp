@@ -7,7 +7,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        class SurfaceInteraction1DLinearRefractionIndexGradient :
+        class SurfaceInteraction :
             public ISurfaceInteraction
         {
         public:
