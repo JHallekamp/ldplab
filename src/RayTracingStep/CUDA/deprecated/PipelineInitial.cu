@@ -3,7 +3,7 @@
 
 #include "Context.hpp"
 #include "GenericBoundingVolume.hpp"
-#include "../../Utils/Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 #include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 

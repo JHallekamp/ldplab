@@ -2,7 +2,7 @@
 #include "PipelineInnerParticlePropagation.hpp"
 
 #include "Context.hpp"
-#include "../../Utils/Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 namespace rk4_linear_index_gradient_cuda
 {

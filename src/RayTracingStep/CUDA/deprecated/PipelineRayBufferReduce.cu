@@ -2,8 +2,8 @@
 #include "PipelineRayBufferReduce.hpp"
 
 #include "Context.hpp"
-#include "../../Utils/Log.hpp"
-#include "../../Utils/Profiler.hpp"
+#include "../../../Utils/Log.hpp"
+#include "../../../Utils/Profiler.hpp"
 
 //#include <atomic>
 

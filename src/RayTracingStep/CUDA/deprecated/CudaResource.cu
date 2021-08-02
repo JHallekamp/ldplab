@@ -1,7 +1,7 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include "CudaResource.hpp"
 
-#include "../../Utils/Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 ldplab::rtscuda::ICudaResource::ICudaResource(ICudaResource&& other) noexcept
     :

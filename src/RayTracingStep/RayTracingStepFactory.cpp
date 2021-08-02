@@ -2,7 +2,7 @@
 
 #include "CPU/Factory.hpp"
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
-#   include "CUDA/Factory.hpp"
+#   include "CUDA/deprecated/Factory.hpp"
 #endif
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSOGL
 #   include "OpenGL/Factory.hpp"

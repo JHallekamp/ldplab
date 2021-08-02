@@ -2,7 +2,7 @@
 #include "GenericBoundingVolume.hpp"
 
 #include "IntersectionTests.hpp"
-#include "../../Utils/Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 
 std::shared_ptr<ldplab::rtscuda::GenericBoundingVolume> 

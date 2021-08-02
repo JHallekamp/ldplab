@@ -2,7 +2,7 @@
 #include "Factory.hpp"
 
 #include "RayTracingStep.hpp"
-#include "../../Utils/Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 std::shared_ptr<ldplab::IRayTracingStep> ldplab::rtscuda::Factory::createRTS(
     const ExperimentalSetup& setup, 

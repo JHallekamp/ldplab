@@ -1,0 +1,14 @@
+#ifndef WWU_LDPLAB_RTSCUDA_IMPL_INNER_PARTICLE_PROPAGATION_HPP
+#define WWU_LDPLAB_RTSCUDA_IMPL_INNER_PARTICLE_PROPAGATION_HPP
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+
+namespace ldplab
+{
+    namespace rtscuda
+    {
+
+    }
+}
+
+#endif
+#endif

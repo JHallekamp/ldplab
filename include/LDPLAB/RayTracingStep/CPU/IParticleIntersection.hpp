@@ -15,6 +15,8 @@ namespace ldplab
         // Prototype
         class IGenericGeometry;
 
+
+
         /**
          * @brief Abstract baseclass for the geometry intersection pipeline
          *        stage.

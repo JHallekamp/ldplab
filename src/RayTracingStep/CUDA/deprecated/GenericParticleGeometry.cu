@@ -4,7 +4,7 @@
 #include <LDPLAB/Constants.hpp>
 
 #include "IntersectionTests.hpp"
-#include "../../Utils/Log.hpp"
+#include "../../../Utils/Log.hpp"
 
 __device__ bool ldplab::rtscuda::GenericParticleFunctionWrapper::intersectRay(
     intersectRayParticleGeometryFunction_t function, 
