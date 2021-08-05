@@ -1,7 +1,7 @@
 #include <LDPLAB/RayTracingStep/CPU/DefaultInitialStageFactories.hpp>
 #include "ImplInitialStage.hpp"
 
-ldplab::rtscpu::default_stages::InitialStageHomogenousLightBoundingSphereProjectionFactory::
+ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 InitialStageHomogenousLightBoundingSphereProjectionFactory(
 	double num_rays_per_world_space_unit)
 	:
@@ -9,25 +9,25 @@ InitialStageHomogenousLightBoundingSphereProjectionFactory(
 {
 }
 
-std::string ldplab::rtscpu::default_stages::
+std::string ldplab::rtscpu::default_factories::
 	InitialStageHomogenousLightBoundingSphereProjectionFactory::name()
 {
 	return "InitialStageBoundingSpheresHomogenousLight";
 }
 
-std::string ldplab::rtscpu::default_stages::InitialStageHomogenousLightBoundingSphereProjectionFactory::
+std::string ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 	implementationName() const
 {
 	return name();
 }
 
-bool ldplab::rtscpu::default_stages::InitialStageHomogenousLightBoundingSphereProjectionFactory::
+bool ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 	userDefined() const
 {
 	return false;
 }
 
-bool ldplab::rtscpu::default_stages::InitialStageHomogenousLightBoundingSphereProjectionFactory::
+bool ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 	checkCompability(
 		const RayTracingStepCPUInfo& step_info,
 		const PipelineConfiguration& configuration, 
@@ -51,7 +51,7 @@ bool ldplab::rtscpu::default_stages::InitialStageHomogenousLightBoundingSpherePr
 		}
 	}
 }
-std::shared_ptr<ldplab::rtscpu::IInitialStage> ldplab::rtscpu::default_stages::
+std::shared_ptr<ldplab::rtscpu::IInitialStage> ldplab::rtscpu::default_factories::
 	InitialStageHomogenousLightBoundingSphereProjectionFactory::create(
 		const RayTracingStepCPUInfo& step_info,
 		const PipelineConfiguration& configuration,

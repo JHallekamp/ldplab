@@ -7,7 +7,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        namespace default_stages
+        namespace default_factories
         {
             /**
              * @brief Implements particle surface interaction for materials with a

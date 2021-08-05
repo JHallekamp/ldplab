@@ -2,22 +2,22 @@
 
 #include "ImplParticleIntersection.hpp"
 
-std::string ldplab::rtscpu::default_stages::ParticleIntersectionFactory::name()
+std::string ldplab::rtscpu::default_factories::ParticleIntersectionFactory::name()
 {
     return "ParticleIntersection";
 }
 
-std::string ldplab::rtscpu::default_stages::ParticleIntersectionFactory::implementationName() const
+std::string ldplab::rtscpu::default_factories::ParticleIntersectionFactory::implementationName() const
 {
     return name();
 }
 
-bool ldplab::rtscpu::default_stages::ParticleIntersectionFactory::userDefined() const
+bool ldplab::rtscpu::default_factories::ParticleIntersectionFactory::userDefined() const
 {
     return false;
 }
 
-bool ldplab::rtscpu::default_stages::ParticleIntersectionFactory::checkCompability(
+bool ldplab::rtscpu::default_factories::ParticleIntersectionFactory::checkCompability(
     const RayTracingStepCPUInfo& step_info, 
     const PipelineConfiguration& configuration, 
     const ExperimentalSetup& setup, 
@@ -27,7 +27,7 @@ bool ldplab::rtscpu::default_stages::ParticleIntersectionFactory::checkCompabili
 }
 
 std::shared_ptr<ldplab::rtscpu::IParticleIntersection> 
-    ldplab::rtscpu::default_stages::ParticleIntersectionFactory::create(
+    ldplab::rtscpu::default_factories::ParticleIntersectionFactory::create(
         const RayTracingStepCPUInfo& step_info, 
         const PipelineConfiguration& configuration, 
         const ExperimentalSetup& setup, 

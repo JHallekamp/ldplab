@@ -1,31 +1,31 @@
 #include <LDPLAB/RayTracingStep/CPU/DefaultInnerParticlePropagationFactories.hpp>
 #include "ImplInnerParticlePropagation.hpp"
 
-ldplab::rtscpu::default_stages::InnerParticlePropagationRK4Factory::
+ldplab::rtscpu::default_factories::InnerParticlePropagationRK4Factory::
     InnerParticlePropagationRK4Factory(RK4Parameter params)
     :
     m_params{ params }
 { }
 
-std::string ldplab::rtscpu::default_stages::
+std::string ldplab::rtscpu::default_factories::
     InnerParticlePropagationRK4Factory::name()
 {
     return "EikonalSolverRK4LinearIndexGradient";
 }
 
-std::string ldplab::rtscpu::default_stages::
+std::string ldplab::rtscpu::default_factories::
     InnerParticlePropagationRK4Factory::implementationName() const
 {
     return name();
 }
 
-bool ldplab::rtscpu::default_stages::
+bool ldplab::rtscpu::default_factories::
     InnerParticlePropagationRK4Factory::userDefined() const
 {
     return false;
 }
 
-bool ldplab::rtscpu::default_stages::
+bool ldplab::rtscpu::default_factories::
     InnerParticlePropagationRK4Factory::checkCompability(
         const RayTracingStepCPUInfo& step_info, 
         const PipelineConfiguration& configuration, 
@@ -44,7 +44,7 @@ bool ldplab::rtscpu::default_stages::
 }
 
 std::shared_ptr<ldplab::rtscpu::IInnerParticlePropagation> 
-    ldplab::rtscpu::default_stages::InnerParticlePropagationRK4Factory::create(
+    ldplab::rtscpu::default_factories::InnerParticlePropagationRK4Factory::create(
         const RayTracingStepCPUInfo& step_info, 
         const PipelineConfiguration& configuration, 
         const ExperimentalSetup& setup, 

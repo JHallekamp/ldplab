@@ -7,7 +7,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        namespace default_stages
+        namespace default_factories
         {
             class ParticleIntersectionFactory :
                 public IParticleIntersectionFactory

@@ -98,23 +98,23 @@ void ldplab::rtscpu::Factory::createDefaultConfiguration(
     PipelineConfiguration& default_config)
 {
     default_config.initial_stage = std::make_shared<
-        default_stages::InitialStageHomogenousLightBoundingSphereProjectionFactory>(140);
+        default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(140);
     default_config.bounding_volume_intersection = std::make_shared<
-        default_stages::BoundingSphereIntersectionBruteforceFactory>();
+        default_factories::BoundingSphereIntersectionBruteforceFactory>();
     default_config.particle_intersection = std::make_shared<
-        default_stages::ParticleIntersectionFactory>();
+        default_factories::ParticleIntersectionFactory>();
     default_config.surface_interaction = std::make_shared<
-        default_stages::SurfaceInteractionFactory>();
+        default_factories::SurfaceInteractionFactory>();
     RK4Parameter rk4_parameter = { 0.005 };
     default_config.inner_particle_propagation = std::make_shared<
-        default_stages::InnerParticlePropagationRK4Factory>(rk4_parameter);
+        default_factories::InnerParticlePropagationRK4Factory>(rk4_parameter);
 
     default_config.generic_geometries.emplace(
         IParticleGeometry::Type::rod_particle, 
-        std::make_shared<default_generic_geometry::GenericGeometryRodFactory>());
+        std::make_shared<default_factories::GenericGeometryRodFactory>());
     default_config.generic_geometries.emplace(
         IParticleGeometry::Type::sphere,
-        std::make_shared<default_generic_geometry::GenericGeometrySphereFactory>());
+        std::make_shared<default_factories::GenericGeometrySphereFactory>());
 }
 
 std::set<ldplab::IParticleGeometry::Type>

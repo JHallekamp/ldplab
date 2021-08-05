@@ -6,7 +6,7 @@ namespace ldplab
 {
     namespace rtscuda
     {
-
+        class 
     }
 }
 

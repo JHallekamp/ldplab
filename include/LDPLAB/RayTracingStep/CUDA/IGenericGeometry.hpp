@@ -84,6 +84,18 @@ namespace ldplab
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 bool& end_point_inside);
+        public:
+            virtual ~IGenericGeometry() = default;
+            /** 
+             * @brief Returns device pointer to the data. 
+             * @note The implementation instance has to manage the device
+             *       buffer itself.
+             */
+            virtual void* getDeviceData() = 0;
+            /** @brief Returns intersectRay device function pointer. */
+            virtual intersectRay getDeviceIntersectRayFunction() = 0;
+            /** @brief Returns intersectSegment device function pointer. */
+            virtual intersectSegment getDeviceIntersectSegmentFunction() = 0;
         };
     }
 }

@@ -72,6 +72,7 @@ namespace ldplab
              *          configuration turns out to be invalid).
              * @param[in] step_info The ray tracing step info that is used to
              *                      create the ray tracing step pipeline.
+             * @param[in] device_properties Properties of the cuda device.
              * @param[in] configuration The current complete configuration, for
              *                          which the pipeline stage may be
              *                          created, if all factories within the
@@ -89,6 +90,7 @@ namespace ldplab
              */
             virtual bool checkCompability(
                 const RayTracingStepCUDAInfo& step_info,
+                const GlobalData::DeviceProperties& device_properties,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping) = 0;
@@ -149,6 +151,38 @@ namespace ldplab
         };
 
         /** @brief Abstract baseclass for initial stage factories. */
+        class IBoundingVolumeIntersectionFactory : public IStageFactory
+        {
+        public:
+            virtual ~IBoundingVolumeIntersectionFactory() { }
+            /**
+             * @brief Creates the stage implementation instance.
+             * @param[in] global_data All pipeline resources present.
+             * @param[in] step_info The ray tracing step info that is used to
+             *                      create the ray tracing step pipeline.
+             * @param[in] configuration The current complete configuration, for
+             *                          which the pipeline stage may be
+             *                          created, if all factories within the
+             *                          configuration agree.
+             * @param[in] setup The experimental setup for which the ray
+             *                  tracing step is created.
+             * @param[in] interface_mapping The ray tracing step interface
+             *                              mapping to relate experimental
+             *                              setup and simulation state
+             *                              components given by their uid to
+             *                              the internal index based structure.
+             * @returns A shared pointer to the newly created stage or nullptr
+             *          if the instance creation failed.
+             */
+            virtual std::shared_ptr<IBoundingVolumeIntersection> create(
+                const GlobalData& global_data,
+                const RayTracingStepCUDAInfo& step_info,
+                const PipelineConfiguration& configuration,
+                const ExperimentalSetup& setup,
+                const InterfaceMapping& interface_mapping) = 0;
+        };
+
+        /** @brief Abstract baseclass for initial stage factories. */
         class IInitialStageFactory : public IStageFactory
         {
         public:
@@ -172,6 +206,7 @@ namespace ldplab
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IInitialStage> create(
+                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
@@ -205,6 +240,7 @@ namespace ldplab
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IInnerParticlePropagation> create(
+                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
@@ -238,6 +274,7 @@ namespace ldplab
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IParticleIntersection> create(
+                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
@@ -271,6 +308,7 @@ namespace ldplab
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<ISurfaceInteraction> create(
+                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
@@ -317,6 +355,7 @@ namespace ldplab
              *                          this factory instance.
              * @param[in] step_info The ray tracing step info that is used to
              *                      create the ray tracing step pipeline.
+             * @param[in] device_properties Properties of the cuda device.
              * @param[in] configuration The current complete configuration, for
              *                          which the pipeline stage may be
              *                          created, if all factories within the
@@ -335,6 +374,7 @@ namespace ldplab
             virtual bool checkCompability(
                 IParticleGeometry::Type geometry_type,
                 const RayTracingStepCUDAInfo& step_info,
+                const GlobalData::DeviceProperties& device_properties,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping) = 0;
@@ -345,6 +385,7 @@ namespace ldplab
             *                              created.
             * @param[in] step_info The ray tracing step info that is used to
             *                      create the ray tracing step pipeline.
+            * @param[in] device_properties Properties of the cuda device.
             * @param[in] configuration The current complete configuration, for
             *                          which the pipeline stage may be
             *                          created, if all factories within the
@@ -362,6 +403,7 @@ namespace ldplab
             virtual std::shared_ptr<IGenericGeometry> create(
                 const std::shared_ptr<IParticleGeometry>& particle_geometry,
                 const RayTracingStepCUDAInfo& step_info,
+                const GlobalData::DeviceProperties& device_properties,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping) = 0;
@@ -406,6 +448,7 @@ namespace ldplab
              *                          this factory instance.
              * @param[in] step_info The ray tracing step info that is used to
              *                      create the ray tracing step pipeline.
+             * @param[in] device_properties Properties of the cuda device.
              * @param[in] configuration The current complete configuration, for
              *                          which the pipeline stage may be
              *                          created, if all factories within the
@@ -424,6 +467,7 @@ namespace ldplab
             virtual bool checkCompability(
                 IParticleMaterial::Type material_type,
                 const RayTracingStepCUDAInfo& step_info,
+                const GlobalData::DeviceProperties& device_properties,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping) = 0;
@@ -434,6 +478,7 @@ namespace ldplab
              *                              created.
              * @param[in] step_info The ray tracing step info that is used to
              *                      create the ray tracing step pipeline.
+             * @param[in] device_properties Properties of the cuda device.
              * @param[in] configuration The current complete configuration, for
              *                          which the pipeline stage may be
              *                          created, if all factories within the
@@ -451,6 +496,7 @@ namespace ldplab
             virtual std::shared_ptr<IGenericMaterial> create(
                 const std::shared_ptr<IParticleMaterial>& particle_material,
                 const RayTracingStepCUDAInfo& step_info,
+                const GlobalData::DeviceProperties& device_properties,
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping) = 0;

@@ -158,6 +158,28 @@ namespace ldplab
                 std::vector<std::shared_ptr<IGenericGeometry>> geometry_instances;
                 std::vector<std::shared_ptr<IGenericMaterial>> material_instances;
             } particle_data_buffers;
+            /** @brief Device property data. */
+            struct DeviceProperties
+            {
+                /** @brief Maximum dimension size of a thread block. */
+                dim3 max_block_size;
+                /** @brief Maximum dimension size of a grid. */
+                dim3 max_grid_size;
+                /** @brief Maximum number of threads per thread block. */
+                unsigned int max_num_threads_per_block;
+                /** @brief Maximum number of threads per multiprocessor. */
+                unsigned int max_num_threads_per_mp;
+                /** @brief Total shared memory amount per block. */
+                unsigned int shared_mem_per_block;
+                /** @brief Total shared memory amount per multiprocessor. */
+                unsigned int shared_mem_per_mp;
+                /** @brief The total number of abailable of registers per block. */
+                unsigned int registers_per_block;
+                /** @brief Number of multiprocessors on the device. */
+                unsigned int num_mps;
+                /** @brief Number of threads in a warp. */
+                unsigned int warp_size;
+            } device_properties;
         };
     }
 }

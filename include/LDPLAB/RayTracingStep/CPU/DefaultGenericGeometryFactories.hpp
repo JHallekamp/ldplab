@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCPU_DEFAULT_GENERIC_GEOMETRY_FACTORIES_HPP
-#define WWU_LDPLAB_RTSCPU_DEFAULT_GENERIC_GEOMETRY_FACTORIES_HPP
+#ifndef WWU_LDPLAB_RTSCPU_default_factories_FACTORIES_HPP
+#define WWU_LDPLAB_RTSCPU_default_factories_FACTORIES_HPP
 
 #include "StageFactories.hpp"
 
@@ -7,7 +7,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        namespace default_generic_geometry
+        namespace default_factories
         {
             class GenericGeometryRodFactory : public IGenericGeometryFactory
             {

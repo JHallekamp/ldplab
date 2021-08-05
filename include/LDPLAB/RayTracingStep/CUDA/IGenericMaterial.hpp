@@ -21,6 +21,16 @@ namespace ldplab
             typedef double (*indexOfRefraction)(
                 const Vec3& position,
                 const void* particle_material);
+        public:
+            virtual ~IGenericMaterial() = default;
+            /**
+             * @brief Returns device pointer to the data.
+             * @note The implementation instance has to manage the device
+             *       buffer itself.
+             */
+            virtual void* getDeviceData() = 0;
+            /** @brief Returns indexOfRefraction device function pointer. */
+            virtual indexOfRefraction getDeviceIndexOfRefractionFunction() = 0;
         };
     }
 }

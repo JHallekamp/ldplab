@@ -9,7 +9,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        namespace default_stages
+        namespace default_factories
         {
             /** @brief Uses RK4 method to solve inner particle propagation. */
             class InnerParticlePropagationRK4Factory :

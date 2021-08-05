@@ -1,25 +1,25 @@
 #include <LDPLAB/RayTracingStep/CPU/DefaultGenericGeometryFactories.hpp>
 #include "ImplGenericGeometry.hpp"
 
-std::string ldplab::rtscpu::default_generic_geometry::
+std::string ldplab::rtscpu::default_factories::
     GenericGeometryRodFactory::name()
 {
     return "RodGeometry";
 }
 
-std::string ldplab::rtscpu::default_generic_geometry::
+std::string ldplab::rtscpu::default_factories::
     GenericGeometryRodFactory::implementationName() const
 {
     return name();
 }
 
-bool ldplab::rtscpu::default_generic_geometry::
+bool ldplab::rtscpu::default_factories::
     GenericGeometryRodFactory::userDefined() const
 {
     return false;
 }
 
-bool ldplab::rtscpu::default_generic_geometry::
+bool ldplab::rtscpu::default_factories::
     GenericGeometryRodFactory::checkCompability(
         IParticleGeometry::Type geometry_type, 
         const RayTracingStepCPUInfo& step_info, 
@@ -31,7 +31,7 @@ bool ldplab::rtscpu::default_generic_geometry::
 }
 
 std::shared_ptr<ldplab::rtscpu::IGenericGeometry> 
-    ldplab::rtscpu::default_generic_geometry::GenericGeometryRodFactory::create(
+    ldplab::rtscpu::default_factories::GenericGeometryRodFactory::create(
         const std::shared_ptr<IParticleGeometry>& particle_geometry, 
         const RayTracingStepCPUInfo& step_info, 
         const PipelineConfiguration& configuration, 
@@ -42,25 +42,25 @@ std::shared_ptr<ldplab::rtscpu::IGenericGeometry>
         static_cast<const RodParticleGeometry*>(particle_geometry.get()));
 }
 
-std::string ldplab::rtscpu::default_generic_geometry::
+std::string ldplab::rtscpu::default_factories::
     GenericGeometrySphereFactory::name()
 {
     return "SphericalGeometry";
 }
 
-std::string ldplab::rtscpu::default_generic_geometry::
+std::string ldplab::rtscpu::default_factories::
     GenericGeometrySphereFactory::implementationName() const
 {
     return name();
 }
 
-bool ldplab::rtscpu::default_generic_geometry::
+bool ldplab::rtscpu::default_factories::
     GenericGeometrySphereFactory::userDefined() const
 {
     return false;
 }
 
-bool ldplab::rtscpu::default_generic_geometry::
+bool ldplab::rtscpu::default_factories::
     GenericGeometrySphereFactory::checkCompability(
         IParticleGeometry::Type geometry_type, 
         const RayTracingStepCPUInfo& step_info, 
@@ -72,7 +72,7 @@ bool ldplab::rtscpu::default_generic_geometry::
 }
 
 std::shared_ptr<ldplab::rtscpu::IGenericGeometry> 
-    ldplab::rtscpu::default_generic_geometry::GenericGeometrySphereFactory::create(
+    ldplab::rtscpu::default_factories::GenericGeometrySphereFactory::create(
         const std::shared_ptr<IParticleGeometry>& particle_geometry, 
         const RayTracingStepCPUInfo& step_info, 
         const PipelineConfiguration& configuration, 

@@ -7,7 +7,7 @@ namespace ldplab
 {
     namespace rtscpu
     {
-        namespace default_stages
+        namespace default_factories
         {
             /** @brief Projects bounding spheres onto a homogenous light source. */
             class InitialStageHomogenousLightBoundingSphereProjectionFactory :

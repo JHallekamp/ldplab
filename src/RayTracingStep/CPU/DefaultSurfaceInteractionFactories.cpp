@@ -1,22 +1,22 @@
 #include <LDPLAB/RayTracingStep/CPU/DefaultSurfaceInteractionFactories.hpp>
 #include "ImplSurfaceInteraction.hpp"
 
-std::string ldplab::rtscpu::default_stages::SurfaceInteractionFactory::name()
+std::string ldplab::rtscpu::default_factories::SurfaceInteractionFactory::name()
 {
     return "SurfaceInteraction";
 }
 
-std::string ldplab::rtscpu::default_stages::SurfaceInteractionFactory::implementationName() const
+std::string ldplab::rtscpu::default_factories::SurfaceInteractionFactory::implementationName() const
 {
     return name();
 }
 
-bool ldplab::rtscpu::default_stages::SurfaceInteractionFactory::userDefined() const
+bool ldplab::rtscpu::default_factories::SurfaceInteractionFactory::userDefined() const
 {
     return false;
 }
 
-bool ldplab::rtscpu::default_stages::SurfaceInteractionFactory::checkCompability(
+bool ldplab::rtscpu::default_factories::SurfaceInteractionFactory::checkCompability(
     const RayTracingStepCPUInfo& step_info, 
     const PipelineConfiguration& configuration, 
     const ExperimentalSetup& setup, 
@@ -34,7 +34,7 @@ bool ldplab::rtscpu::default_stages::SurfaceInteractionFactory::checkCompability
 }
 
 std::shared_ptr<ldplab::rtscpu::ISurfaceInteraction> 
-    ldplab::rtscpu::default_stages::SurfaceInteractionFactory::create(
+    ldplab::rtscpu::default_factories::SurfaceInteractionFactory::create(
         const RayTracingStepCPUInfo& step_info, 
         const PipelineConfiguration& configuration, 
         const ExperimentalSetup& setup, 
