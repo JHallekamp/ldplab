@@ -3,9 +3,13 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <memory>
+#include <set>
 
 #include <LDPLAB/RayTracingStep/RayTracingStepCUDAInfo.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/Factories.hpp>
+
+#include "RayTracingStepCUDA.hpp"
+#include "IPipeline.hpp"
 
 namespace ldplab
 {

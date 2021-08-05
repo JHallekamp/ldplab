@@ -14,6 +14,8 @@ namespace ldplab
                 public IInitialStageFactory
             {
             public:
+                InitialStageHomogenousLightBoundingSphereProjectionFactory(
+                    double light_resolution_per_world_unit);
                 static std::string name();
                 std::string implementationName() const override;
                 bool userDefined() const override;

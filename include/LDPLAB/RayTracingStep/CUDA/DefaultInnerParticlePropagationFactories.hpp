@@ -14,6 +14,8 @@ namespace ldplab
                 public IInnerParticlePropagationFactory
             {
             public:
+                InnerParticlePropagationRK4Factory(
+                    const RK4Parameter& parameter);
                 static std::string name();
                 std::string implementationName() const override;
                 bool userDefined() const override;

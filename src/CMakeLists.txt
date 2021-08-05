@@ -137,6 +137,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/ImplInnerParticlePropagation.hpp
         RayTracingStep/CUDA/ImplParticleIntersection.hpp
         RayTracingStep/CUDA/ImplSurfaceInteraction.hpp
+        RayTracingStep/CUDA/IntersectionTests.hpp
         RayTracingStep/CUDA/IPipeline.hpp
         RayTracingStep/CUDA/PipelineDeviceBound.hpp
         RayTracingStep/CUDA/PipelineHostBound.hpp
@@ -161,6 +162,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/ImplInnerParticlePropagation.cu
         RayTracingStep/CUDA/ImplParticleIntersection.cu
         RayTracingStep/CUDA/ImplSurfaceInteraction.cu
+        RayTracingStep/CUDA/IntersectionTests.cu
         RayTracingStep/CUDA/IPipeline.cu
         RayTracingStep/CUDA/PipelineDeviceBound.cu
         RayTracingStep/CUDA/PipelineHostBound.cu

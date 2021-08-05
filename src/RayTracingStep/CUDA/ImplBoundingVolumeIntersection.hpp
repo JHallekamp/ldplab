@@ -2,11 +2,43 @@
 #define WWU_LDPLAB_RTSCUDA_IMPL_BOUNDING_VOLUME_INTERSECTION_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
+#include <LDPLAB/ExperimentalSetup/BoundingVolume.hpp>
+#include <LDPLAB/RayTracingStep/CUDA/IBoundingVolumeIntersection.hpp>
+
 namespace ldplab
 {
     namespace rtscuda
     {
-        class 
+        struct BoundingSphere
+        {
+            BoundingSphere(const BoundingVolumeSphere&);
+            Vec3 center;
+            double radius;
+        };
+
+        class BoundingSphereIntersectionBruteforce :
+            public IBoundingVolumeIntersection
+        {
+        public:
+            /**
+             * @brief Ctor
+             * @param[in] bounding_spheres Allocated buffer on host and device
+             *                             to contain bounding sphere data per
+             *                             particle.
+             */
+            BoundingSphereIntersectionBruteforce(
+                DeviceBuffer<BoundingSphere>&& bounding_spheres);
+            void stepSetup(
+                const ExperimentalSetup& setup,
+                const SimulationState& simulation_state,
+                const InterfaceMapping& interface_mapping,
+                const GlobalData& global_data) override;
+            size_t execute(const GlobalData& global_data,
+                BatchData& batch_data,
+                size_t ray_buffer_index) override;
+        private:
+            DeviceBuffer<BoundingSphere> m_bounding_spheres;
+        };
     }
 }
 
