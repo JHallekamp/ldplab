@@ -10,13 +10,15 @@ namespace ldplab
 {
     namespace rtscuda
     {
+        class Factory;
         class IPipeline
         {
         public:
-            void stepSetup(const SimulationState& sim_state);
-            void finalizeOutput(RayTracingStepOutput& output);
+            bool stepSetup(const SimulationState& sim_state);
+            bool finalizeOutput(RayTracingStepOutput& output);
             virtual void execute() = 0;
         private:
+            std::unique_ptr<GlobalData> m_context;
             ldplab::Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);
         };

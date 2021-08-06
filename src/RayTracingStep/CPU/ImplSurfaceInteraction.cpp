@@ -49,11 +49,15 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         // intersection normal is set to 0.
         if (intersection_data.normal[i] == Vec3(0, 0, 0))
         {
-            output_ray_data.index_data[i] = -1;
-            output_ray_data.index_data[i] = particle_id;
-            output_ray_data.ray_data[i] = input_ray_data.ray_data[i];
-            output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
-            output_ray_data.active_rays++;
+            if (pass_type == InteractionPassType::reflection)
+                output_ray_data.index_data[i] = -1;
+            else
+            {
+                output_ray_data.index_data[i] = particle_id;
+                output_ray_data.ray_data[i] = input_ray_data.ray_data[i];
+                output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
+                output_ray_data.active_rays++;
+            }
             continue;
         }
 
@@ -76,7 +80,7 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
             nr = nx / ny;
         }
 
-        double cos_a = -glm::dot(ray.direction, inter_normal);
+        const double cos_a = -glm::dot(ray.direction, inter_normal);
 
         if (1.0 - nr * nr * (1.0 - cos_a * cos_a) >= 0)
         {
@@ -117,6 +121,7 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
             }
             else if(pass_type == InteractionPassType::transmission)
             {
+                output_ray.intensity = ray.intensity * R;
                 if (output_ray.intensity > intensity_cutoff)
                 {
                     output_ray_data.index_data[i] = particle_id;
@@ -146,7 +151,7 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
                 }
             }
         }
-        else // total reflected ray
+        else if(pass_type == InteractionPassType::reflection) // total reflected ray
         {
             output_ray_data.index_data[i] = particle_id;
             output_ray_data.min_bounding_volume_distance_data[i] = 0.0;

@@ -51,11 +51,21 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     // Create the interface mapping
     InterfaceMapping interface_mapping = createInterfaceMapping(setup);
 
+    // Get device data
+    GlobalData::DeviceProperties device_props;
+    if (!getDeviceData(device_props))
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Failed to create "\
+            "RayTracingStepCPU");
+        return nullptr;
+    }
+
     // Find a viable pipeline configuration
     if (!createViableConfiguration(
         info,
         setup,
         interface_mapping,
+        device_props,
         present_geometry_types,
         pipeline_configuration,
         default_configuration,
@@ -77,6 +87,7 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     // Create pipeline
     if (!createPipeline(
         info,
+        std::move(device_props),
         std::move(interface_mapping),
         std::move(setup),
         pipeline_configuration,
@@ -246,6 +257,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
     const RayTracingStepCUDAInfo& info, 
     const ExperimentalSetup& setup, 
     const InterfaceMapping& interface_mapping, 
+    const GlobalData::DeviceProperties& device_properties,
     std::set<IParticleGeometry::Type>& geometry_types, 
     PipelineConfiguration& configuration, 
     PipelineConfiguration& default_configuration, 
@@ -258,6 +270,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
             info,
             setup,
             interface_mapping,
+            device_properties,
             configuration);
 
     // Check if compatible
@@ -388,6 +401,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                 info,
                 setup,
                 interface_mapping,
+                device_properties,
                 configuration);
 
             // Check if state is compatible
@@ -462,9 +476,58 @@ ldplab::rtscuda::Factory::PipelineConfigurationBooleanState
         const RayTracingStepCUDAInfo& info, 
         const ExperimentalSetup& setup, 
         const InterfaceMapping& interface_mapping, 
+        const GlobalData::DeviceProperties& device_properties,
         PipelineConfiguration& configuration)
 {
-    return PipelineConfigurationBooleanState();
+    PipelineConfigurationBooleanState state;
+    state.bounding_volume_intersection_state =
+        configuration.bounding_volume_intersection->checkCompability(
+            info,
+            device_properties,
+            configuration,
+            setup,
+            interface_mapping);
+    state.initial_stage_state =
+        configuration.initial_stage->checkCompability(
+            info,
+            device_properties,
+            configuration,
+            setup,
+            interface_mapping);
+    state.inner_particle_propagation_state =
+        configuration.inner_particle_propagation->checkCompability(
+            info,
+            device_properties,
+            configuration,
+            setup,
+            interface_mapping);
+    state.particle_intersection_state =
+        configuration.particle_intersection->checkCompability(
+            info,
+            device_properties,
+            configuration,
+            setup,
+            interface_mapping);
+    state.surface_interaction_state =
+        configuration.surface_interaction->checkCompability(
+            info,
+            device_properties,
+            configuration,
+            setup,
+            interface_mapping);
+    auto it = configuration.generic_geometries.begin();
+    for (; it != configuration.generic_geometries.end(); ++it)
+    {
+        state.generic_geometry_state.emplace(it->first,
+            it->second->checkCompability(
+                it->first,
+                info,
+                device_properties,
+                configuration,
+                setup,
+                interface_mapping));
+    }
+    return state;
 }
 
 ldplab::rtscuda::Factory::PipelineConfigurationBooleanState 
@@ -543,14 +606,315 @@ void ldplab::rtscuda::Factory::logViableConfiguration(
     }
 }
 
+bool ldplab::rtscuda::Factory::getDeviceData(
+    GlobalData::DeviceProperties& device_props)
+{
+    int device_count = 0;
+    cudaError_t error_id = cudaGetDeviceCount(&device_count);
+
+    if (error_id != cudaSuccess)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to get cuda device count, "\
+            "cudaGetDeviceCount returned error code %i: %s",
+            error_id,
+            cudaGetErrorString(error_id));
+        return false;
+    }
+
+    if (device_count == 0)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to find any cuda devices.");
+        return false;
+    }
+
+    cudaSetDevice(0);
+    cudaDeviceProp device_prop;
+    cudaGetDeviceProperties(&device_prop, 0);
+    LDPLAB_LOG_INFO("RTSCUDA factory: Using cuda device %s", device_prop.name);
+
+    device_props.max_block_size.x = device_prop.maxThreadsDim[0];
+    device_props.max_block_size.y = device_prop.maxThreadsDim[1];
+    device_props.max_block_size.z = device_prop.maxThreadsDim[2];
+    device_props.max_grid_size.x = device_prop.maxGridSize[0];
+    device_props.max_grid_size.y = device_prop.maxGridSize[1];
+    device_props.max_grid_size.z = device_prop.maxGridSize[2];
+    device_props.max_num_threads_per_block = device_prop.maxThreadsPerBlock;
+    device_props.max_num_threads_per_mp = device_prop.maxThreadsPerMultiProcessor;
+    device_props.num_mps = device_prop.multiProcessorCount;
+    device_props.registers_per_block = device_prop.regsPerBlock;
+    device_props.shared_mem_per_block = device_prop.sharedMemPerBlock;
+    device_props.shared_mem_per_mp = device_prop.sharedMemPerMultiprocessor;
+    device_props.warp_size = device_prop.warpSize;
+
+    return true;
+}
+
+bool ldplab::rtscuda::Factory::createGlobalData(
+    const RayTracingStepCUDAInfo& info, 
+    const ExperimentalSetup& setup, 
+    PipelineConfiguration& pipeline_config,
+    InterfaceMapping interface_mapping, 
+    GlobalData::DeviceProperties device_properties, 
+    std::unique_ptr<GlobalData>& global_data)
+{
+    // Create generic geometries and materials
+    bool error = false;
+    std::map<IParticleGeometry*, size_t> reusable_geometry;
+    std::map<IParticleMaterial*, size_t> reusable_material;
+    for (size_t i = 0; i < setup.particles.size(); ++i)
+    {
+        auto reusable_geometry_index_it = reusable_geometry.find(
+            setup.particles[i].geometry.get());
+        if (reusable_geometry_index_it == reusable_geometry.end())
+        {
+            // No reusable geometry present
+            auto geo_factory_it = pipeline_config.generic_geometries.find(
+                setup.particles[i].geometry->type());
+            if (geo_factory_it == pipeline_config.generic_geometries.end())
+            {
+                LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                    "Could not find generic geometry factory for particle "\
+                    "type \"%s\" in the given particle configuration",
+                    IParticleGeometry::typeToString(
+                        setup.particles[i].geometry->type()));
+                error = true;
+            }
+            else
+            {
+                std::shared_ptr<IGenericGeometry> generic_geometry =
+                    geo_factory_it->second->create(
+                        setup.particles[i].geometry,
+                        info,
+                        global_data->device_properties,
+                        pipeline_config,
+                        setup,
+                        interface_mapping);
+                if (generic_geometry == nullptr)
+                {
+                    LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                        "Could not create generic geometry for particle %i "\
+                        "of type \"%s\"",
+                        setup.particles[i].uid,
+                        IParticleGeometry::typeToString(
+                            setup.particles[i].geometry->type()));
+                    error = true;
+                }
+                else
+                {
+                    reusable_geometry.emplace(
+                        setup.particles[i].geometry.get(),
+                        global_data->particle_data_buffers.geometry_instances.size());
+                    global_data->particle_data_buffers.geometry_instances.
+                        emplace_back(std::move(generic_geometry));
+                }
+            }
+        }
+        else
+        {
+            // Reuse geometry
+            global_data->particle_data_buffers.geometry_instances.emplace_back(
+                global_data->particle_data_buffers.geometry_instances[
+                    reusable_geometry_index_it->second]);
+        }
+
+        auto reusable_material_index_it = reusable_material.find(
+            setup.particles[i].material.get());
+        if (reusable_material_index_it == reusable_material.end())
+        {
+            // No reusable geometry present
+            auto mat_factory_it = pipeline_config.generic_materials.find(
+                setup.particles[i].material->type());
+            if (mat_factory_it == pipeline_config.generic_materials.end())
+            {
+                LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                    "Could not find generic material factory for particle "\
+                    "type \"%s\" in the given particle configuration",
+                    IParticleMaterial::typeToString(
+                        setup.particles[i].material->type()));
+                error = true;
+            }
+            else
+            {
+                std::shared_ptr<IGenericMaterial> generic_material =
+                    mat_factory_it->second->create(
+                        setup.particles[i].material,
+                        info,
+                        global_data->device_properties,
+                        pipeline_config,
+                        setup,
+                        interface_mapping);
+                if (generic_material == nullptr)
+                {
+                    LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                        "Could not create generic material for particle %i "\
+                        "of type \"%s\"",
+                        setup.particles[i].uid,
+                        IParticleGeometry::typeToString(
+                            setup.particles[i].geometry->type()));
+                    error = true;
+                }
+                else
+                {
+                    reusable_geometry.emplace(
+                        setup.particles[i].material.get(),
+                        global_data->particle_data_buffers.material_instances.size());
+                    global_data->particle_data_buffers.material_instances.
+                        emplace_back(std::move(generic_material));
+                }
+            }
+        }
+        else
+        {
+            // Reuse material
+            global_data->particle_data_buffers.material_instances.emplace_back(
+                global_data->particle_data_buffers.material_instances[
+                    reusable_material_index_it->second]);
+        }
+    }
+
+    if (error)
+        return false;
+
+#error
+
+    return false;
+}
+
 bool ldplab::rtscuda::Factory::createPipeline(
     const RayTracingStepCUDAInfo& info, 
+    GlobalData::DeviceProperties&& device_properties,
     InterfaceMapping&& interface_mapping, 
     ExperimentalSetup&& setup, 
     PipelineConfiguration& pipeline_config,
     std::shared_ptr<RayTracingStepCUDA>& rts)
 {
-    return false;
+    std::unique_ptr<GlobalData> global_data;
+    if (!createGlobalData(
+        info,
+        setup,
+        pipeline_config,
+        interface_mapping,
+        device_properties,
+        global_data))
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+            "Failed to allocate pipeline device and host data");
+        return false;
+    }
+
+    // Create the pipeline stage instances
+    bool error = false;
+
+    std::shared_ptr<IInitialStage> is =
+        pipeline_config.initial_stage->create(
+            *global_data,
+            info,
+            pipeline_config,
+            setup,
+            interface_mapping);
+    if (is == nullptr)
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+            "Failed to create initial stage");
+        error = true;
+    }
+    else
+        is->m_parent_rts_uid = rts->uid();
+
+    std::shared_ptr<IBoundingVolumeIntersection> bvi =
+        pipeline_config.bounding_volume_intersection->create(
+            *global_data,
+            info,
+            pipeline_config,
+            setup,
+            interface_mapping);
+    if (bvi == nullptr)
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+            "Failed to create bounding volume intersection");
+        error = true;
+    }
+    else
+        bvi->m_parent_rts_uid = rts->uid();
+
+    std::shared_ptr<IParticleIntersection> pi =
+        pipeline_config.particle_intersection->create(
+            *global_data,
+            info,
+            pipeline_config,
+            setup,
+            interface_mapping);
+    if (pi == nullptr)
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+            "Failed to create particle intersection");
+        error = true;
+    }
+    else
+        pi->m_parent_rts_uid = rts->uid();
+
+    std::shared_ptr<ISurfaceInteraction> si =
+        pipeline_config.surface_interaction->create(
+            *global_data,
+            info,
+            pipeline_config,
+            setup,
+            interface_mapping);
+    if (si == nullptr)
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+            "Failed to create surface interaction");
+        error = true;
+    }
+    else
+        si->m_parent_rts_uid = rts->uid();
+
+    std::shared_ptr<IInnerParticlePropagation> ipp =
+        pipeline_config.inner_particle_propagation->create(
+            *global_data,
+            info,
+            pipeline_config,
+            setup,
+            interface_mapping);
+    if (ipp == nullptr)
+    {
+        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+            "Failed to create inner particle propagation");
+        error = true;
+    }
+    else
+        ipp->m_parent_rts_uid = rts->uid();
+
+    if (error)
+        return false;
+
+    // Collect particle data
+    std::vector<std::shared_ptr<IParticleMaterial>> particle_materials;
+    std::vector<Vec3> particle_center_of_mass;
+    for (size_t i = 0; i < setup.particles.size(); ++i)
+    {
+        particle_materials.push_back(setup.particles[i].material);
+        particle_center_of_mass.push_back(setup.particles[i].centre_of_mass);
+    }
+
+#error
+    //// Create the pipeline
+    //rts->m_pipeline = std::make_shared<Pipeline>(
+    //    *rts,
+    //    info,
+    //    sim_params,
+    //    std::move(interface_mapping),
+    //    std::move(setup),
+    //    std::move(memory_controls),
+    //    std::move(geometries),
+    //    std::move(particle_materials),
+    //    std::move(particle_center_of_mass),
+    //    std::move(bvi),
+    //    std::move(is),
+    //    std::move(ipp),
+    //    std::move(pi),
+    //    std::move(si));
+    //return (rts->m_pipeline != nullptr);
 }
 
 

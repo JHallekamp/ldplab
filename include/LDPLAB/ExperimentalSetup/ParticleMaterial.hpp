@@ -9,6 +9,15 @@ namespace ldplab
 	struct IParticleMaterial
 	{
 		enum class Type { homogenous, linear_one_directional };
+		static char* typeToString(Type type)
+		{
+			switch (type)
+			{
+			case Type::homogenous: return "homogenous";
+			case Type::linear_one_directional: return "linear_one_directional";
+			default: return "unknown_type";
+			}
+		}
 		/**
 		 * @brief The destructor is virtual since classes inherit from 
 		 *        IParticleMaterial.
@@ -26,12 +35,7 @@ namespace ldplab
         /** @brief Returns the type of the instance as string. */
         const char* typeString() const
         {
-            switch (type())
-            {
-            case Type::homogenous: return "homogeneous";
-            case Type::linear_one_directional: return "linear_one_directional";
-            default: return "unknown_type";
-            }
+			return typeToString(type());
         }
 	};
 

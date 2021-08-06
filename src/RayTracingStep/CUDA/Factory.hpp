@@ -54,6 +54,7 @@ namespace ldplab
                 const RayTracingStepCUDAInfo& info,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping,
+                const GlobalData::DeviceProperties& device_properties,
                 std::set<IParticleGeometry::Type>& geometry_types,
                 PipelineConfiguration& configuration,
                 PipelineConfiguration& default_configuration,
@@ -63,6 +64,7 @@ namespace ldplab
                 const RayTracingStepCUDAInfo& info,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping,
+                const GlobalData::DeviceProperties& device_properties,
                 PipelineConfiguration& configuration);
             PipelineConfigurationBooleanState checkConfigurationCast(
                 std::set<IParticleGeometry::Type>& geometry_types,
@@ -71,8 +73,17 @@ namespace ldplab
                 const PipelineConfigurationBooleanState& configuration_state,
                 bool desired_uniform_state);
             void logViableConfiguration(PipelineConfiguration& config);
+            bool getDeviceData(GlobalData::DeviceProperties& device_props);
+            bool createGlobalData(
+                const RayTracingStepCUDAInfo& info,
+                const ExperimentalSetup& setup,
+                PipelineConfiguration& pipeline_config,
+                InterfaceMapping interface_mapping,
+                GlobalData::DeviceProperties device_properties,
+                std::unique_ptr<GlobalData>& global_data);
             bool createPipeline(
                 const RayTracingStepCUDAInfo& info,
+                GlobalData::DeviceProperties&& device_properties,
                 InterfaceMapping&& interface_mapping,
                 ExperimentalSetup&& setup,
                 PipelineConfiguration& pipeline_config,

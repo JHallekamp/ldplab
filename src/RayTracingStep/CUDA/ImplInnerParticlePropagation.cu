@@ -4,6 +4,8 @@
 #include <LDPLAB/RayTracingStep/CUDA/IGenericGeometry.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/IGenericMaterial.hpp>
 
+#include "ImplGenericMaterial.hpp"
+
 namespace rk4
 {
     using namespace ldplab;
@@ -44,7 +46,7 @@ namespace rk4
         size_t num_particles);
     __device__ void rk4(
         IGenericMaterial::indexOfRefraction index_of_refraction,
-        void* material_data,
+        MaterialLinearOneDirectionalData* material_data,
         const Arg& x,
         const double h,
         Arg& x_new);
@@ -211,7 +213,7 @@ __global__ void rk4::innerParticlePropagationKernel(
 
 __device__ void rk4::rk4(
     IGenericMaterial::indexOfRefraction index_of_refraction, 
-    void* material_data, 
+    MaterialLinearOneDirectionalData* material_data,
     const Arg& x,
     const double h, 
     Arg& x_new)
@@ -231,10 +233,8 @@ __device__ void rk4::rk4(
             x_step.w += k[i - 1].w * hb;
             x_step.r += k[i - 1].r * hb;
         }
-        k[i].w = material->direction * material->gradient;
-        const double ior =
-            1.0 / index_of_refraction(x_step.r, material_data);
-        k[i].r = x_step.w * ior;
+        k[i].w = material_data->direction * material_data->gradient;
+        k[i].r = x_step.w / index_of_refraction(x_step.r, material_data);
         if (c[i] != 0.0)
         {
             x_new.w += k[i].w * c[i];

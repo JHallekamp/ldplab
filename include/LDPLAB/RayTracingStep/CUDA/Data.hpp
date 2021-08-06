@@ -125,8 +125,12 @@ namespace ldplab
          */
         struct GlobalData
         {
+            const UID<GlobalData> instance_uid;
             /** @brief Contains batch data instances for each parallel batch. */
             std::vector<BatchData> batch_data;
+            /** @brief Interface mapping between step and caller. */
+            InterfaceMapping interface_mapping;
+            /**  */
             /** @brief Information about the simulation. */
             struct SimulationParameter
             {
