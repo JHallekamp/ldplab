@@ -16,8 +16,8 @@ namespace ldplab
              *        that point.
              * @param[in] ray_origin Origin of the tested ray.
              * @param[in] ray_direction Direction of the tested ray.
-             * @param[in] particle_geometry Implementation specific particle
-             *                              geometry data.
+             * @param[in] geometry_data Implementation specific particle
+             *                          geometry data.
              * @param[out] intersection_point If ray intersects the geometry,
              *                                then intersection_point will
              *                                contain the point.
@@ -40,7 +40,7 @@ namespace ldplab
             typedef bool (*intersectRay)(
                 const Vec3& ray_origin,
                 const Vec3& ray_direction,
-                const void* particle_geometry,
+                const void* geometry_data,
                 Vec3& intersection_point,
                 Vec3& intersection_normal,
                 bool& intersects_outside);
@@ -51,8 +51,8 @@ namespace ldplab
              *        surface normal at such an intersection.
              * @param[in] segment_origin The origin point of the line segment.
              * @param[in] segment_end The end point of the line segment.
-             * @param[in] particle_geometry Implementation specific particle
-             *                              geometry data.
+             * @param[in] geometry_data Implementation specific particle
+             *                          geometry data.
              * @param[out] intersection_point If the line segment intersects
              *                                the geometry, then
              *                                intersection_point will contain

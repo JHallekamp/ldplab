@@ -94,60 +94,6 @@ namespace ldplab
                 const PipelineConfiguration& configuration,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping) = 0;
-            /**
-             * @brief Called to create the stage dependent thread-local data.
-             * @details The ray tracing step pipeline is meant to be executed
-             *          in parallel. Resources like ray buffers are
-             *          thread-local, so each thread only manages its own.
-             *          If a specific stage implementation requires to add
-             *          additional stage dependent data, for example to
-             *          individual rays, it can do so by managing this data
-             *          on its own and refer to it using the ray buffer and
-             *          individual ray index.
-             *          However, if done so, it cannot manage that data as
-             *          normal member data, since one pipeline stage instance
-             *          is shared across all pipeline threads.
-             *          The createStageDependentData method solves this, by
-             *          allocating stage implementation defined data for each
-             *          pipeline thread, which is then later passed to the
-             *          stages execution method.
-             *          The created data is always regarded as thread-local and
-             *          will only be passed to methods that are executed by the
-             *          thread for which it has originally been allocated.
-             * @param[in] global_data All pipeline resources present.
-             * @param[in] configuration The current complete configuration, for
-             *                          which the pipeline stage may be
-             *                          created, if all factories within the
-             *                          configuration agree.
-             * @param[in] setup The experimental setup for which the ray
-             *                  tracing step is created.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
-             * @param[out] stage_dependent_data Pointer to the allocated
-             *                                  thread-local data. Can be a
-             *                                  nullptr, if no data has to be
-             *                                  passed to the stage when
-             *                                  executed.
-             * @returns true, if the data creation has been successful or if
-             *          no data has to be created in the first place.
-             *          Otherwise false.
-             * @note Stage dependent data creation is always called some time
-             *       after the pipeline stage implementation instance has been
-             *       successfully created.
-             */
-            virtual bool createStageDependentData(
-                const GlobalData& global_data,
-                const RayTracingStepCUDAInfo& step_info,
-                const PipelineConfiguration& configuration,
-                const ExperimentalSetup& setup,
-                const InterfaceMapping& interface_mapping,
-                std::shared_ptr<void>& stage_dependent_data)
-            {
-                return true;
-            }
         };
 
         /** @brief Abstract baseclass for initial stage factories. */

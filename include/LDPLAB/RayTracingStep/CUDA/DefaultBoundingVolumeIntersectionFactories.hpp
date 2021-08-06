@@ -23,13 +23,6 @@ namespace ldplab
                     const PipelineConfiguration& configuration,
                     const ExperimentalSetup& setup,
                     const InterfaceMapping& interface_mapping) override;
-                bool createStageDependentData(
-                    const GlobalData& global_data,
-                    const RayTracingStepCUDAInfo& step_info,
-                    const PipelineConfiguration& configuration,
-                    const ExperimentalSetup& setup,
-                    const InterfaceMapping& interface_mapping,
-                    std::shared_ptr<void>& stage_dependent_data) override;
                 std::shared_ptr<IBoundingVolumeIntersection> create(
                     const GlobalData& global_data,
                     const RayTracingStepCUDAInfo& step_info,
