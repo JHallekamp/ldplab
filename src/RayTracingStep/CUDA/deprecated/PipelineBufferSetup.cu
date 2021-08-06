@@ -2,6 +2,7 @@
 #include "PipelineBufferSetup.hpp"
 
 #include "Context.hpp"
+#include "..\StageBufferSetup.hpp"
 
 ldplab::rtscuda::KernelLaunchParameter 
     ldplab::rtscuda::PipelineBufferSetup::getLaunchParameterInitialSetup()
