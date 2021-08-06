@@ -2,6 +2,8 @@
 #define WWU_LDPLAB_RTSCUDA_I_GENERIC_GEOMETRY_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
+#include <LDPLAB/Geometry.hpp>
+
 namespace ldplab
 {
     namespace rtscuda
