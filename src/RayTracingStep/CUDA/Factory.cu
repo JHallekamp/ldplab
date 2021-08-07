@@ -12,6 +12,9 @@
 #include <LDPLAB/RayTracingStep/CUDA/DefaultParticleIntersectionFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/DefaultSurfaceInteractionFactories.hpp>
 
+#include "PipelineDeviceBound.hpp"
+#include "PipelineHostBound.hpp"
+
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 
     ldplab::rtscuda::Factory::createRTS(
         const RayTracingStepCUDAInfo& info, 
@@ -43,7 +46,7 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         user_configuration,
         pipeline_configuration))
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Failed to create "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create "\
             "RayTracingStepCPU");
         return nullptr;
     }
@@ -55,7 +58,7 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     GlobalData::DeviceProperties device_props;
     if (!getDeviceData(device_props))
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Failed to create "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create "\
             "RayTracingStepCPU");
         return nullptr;
     }
@@ -72,7 +75,7 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         user_configuration,
         allow_default_stage_overwrite_on_compability_error))
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Failed to create "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create "\
             "RayTracingStepCPU");
         return nullptr;
     }
@@ -93,7 +96,7 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         pipeline_configuration,
         rts))
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Failed to create "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create "\
             "pipeline");
         return nullptr;
     }
@@ -195,31 +198,31 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
     bool error = false;
     if (combination.bounding_volume_intersection == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline configuration "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
             "is missing a suitable bounding volume interaction factory");
         error = true;
     }
     else if (combination.initial_stage == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline configuration "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
             "is missing a suitable initial stage factory");
         error = true;
     }
     else if (combination.inner_particle_propagation == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline configuration "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
             "is missing a suitable inner particle propagation factory");
         error = true;
     }
     else if (combination.particle_intersection == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline configuration "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
             "is missing a suitable particle intersection factory");
         error = true;
     }
     else if (combination.surface_interaction == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline configuration "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
             "is missing a suitable surface interaction factory");
         error = true;
     }
@@ -229,7 +232,7 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
         if (combination.generic_geometries.find(*types_it) ==
             combination.generic_geometries.end())
         {
-            LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline configuration "\
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
                 "is missing a suitable generic geometry factory for the "\
                 "particle geometry type \"%s\"",
                 IParticleGeometry::typeToString(*types_it));
@@ -295,7 +298,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     break;
                 else
                 {
-                    LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined bounding volume "\
                         "intersection \"%s\" with default \"%s\"",
                         configuration.bounding_volume_intersection->implementationName(),
@@ -311,7 +314,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     break;
                 else
                 {
-                    LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined initial stage "\
                         "\"%s\" with default \"%s\"",
                         configuration.initial_stage->implementationName(),
@@ -326,7 +329,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     break;
                 else
                 {
-                    LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined inner particle "\
                         "propagation \"%s\" with default \"%s\"",
                         configuration.inner_particle_propagation->implementationName(),
@@ -342,7 +345,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     break;
                 else
                 {
-                    LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined particle "\
                         "intersection \"%s\" with default \"%s\"",
                         configuration.particle_intersection->implementationName(),
@@ -358,7 +361,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     break;
                 else
                 {
-                    LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined surface "\
                         "interaction \"%s\" with default \"%s\"",
                         configuration.surface_interaction->implementationName(),
@@ -386,7 +389,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     if (config_stage == configuration.generic_geometries.end() ||
                         default_stage == default_configuration.generic_geometries.end())
                         break;
-                    LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible generic geometry \"%s\" with "\
                         "default implementation \"%s\"",
                         config_stage->second->implementationName(),
@@ -420,35 +423,35 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
     // Print errors
     if (!config_state.bounding_volume_intersection_state)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline bounding "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline bounding "\
             "volume intersection stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
             configuration.bounding_volume_intersection->implementationName());
     }
     if (!config_state.initial_stage_state)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline initial "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline initial "\
             "stage \"%s\" is incompatible with the given configuration or "\
             "experimental setup",
             configuration.initial_stage->implementationName());
     }
     if (!config_state.inner_particle_propagation_state)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline inner "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline inner "\
             "particle propagation stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
             configuration.inner_particle_propagation->implementationName());
     }
     if (!config_state.particle_intersection_state)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline particle "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline particle "\
             "intersection stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
             configuration.particle_intersection->implementationName());
     }
     if (!config_state.surface_interaction_state)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline surface "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline surface "\
             "interaction stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
             configuration.surface_interaction->implementationName());
@@ -460,7 +463,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
         if (!it->second)
         {
             auto geo = configuration.generic_geometries.find(it->first);
-            LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Generic "\
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Generic "\
                 "geometry implementation \"%s\" for geometry type \"%s\" is "\
                 "incompatible with the given configuration or "\
                 "experimental setup",
@@ -580,25 +583,25 @@ bool ldplab::rtscuda::Factory::checkForConfigurationStateUniformity(
 void ldplab::rtscuda::Factory::logViableConfiguration(
     PipelineConfiguration& config)
 {
-    LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
+    LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses initial stage \"%s\"",
         config.initial_stage->implementationName());
-    LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
+    LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses bounding volume intersection stage \"%s\"",
         config.bounding_volume_intersection->implementationName());
-    LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
+    LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses particle intersection stage \"%s\"",
         config.particle_intersection->implementationName());
-    LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
+    LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses surface interaction stage \"%s\"",
         config.surface_interaction->implementationName());
-    LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
+    LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses inner particle propagation stage \"%s\"",
         config.inner_particle_propagation->implementationName());
     auto it = config.generic_geometries.begin();
     for (; it != config.generic_geometries.end(); ++it)
     {
-        LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_INFO("RTSCUDA factory: "\
             "Pipeline configuration uses generic geometry \"%s\" for "\
             "geometry type \"%s\"",
             it->second->implementationName(),
@@ -651,12 +654,41 @@ bool ldplab::rtscuda::Factory::getDeviceData(
 
 bool ldplab::rtscuda::Factory::createGlobalData(
     const RayTracingStepCUDAInfo& info, 
-    const ExperimentalSetup& setup, 
     PipelineConfiguration& pipeline_config,
-    InterfaceMapping interface_mapping, 
-    GlobalData::DeviceProperties device_properties, 
+    ExperimentalSetup&& p_setup, 
+    InterfaceMapping&& p_interface_mapping, 
+    GlobalData::DeviceProperties&& p_device_properties, 
     std::unique_ptr<GlobalData>& global_data)
 {
+    // Create the instance
+    global_data = std::make_unique<GlobalData>();
+
+    // Move interface mapping and device properties
+    global_data->experimental_setup = std::move(p_setup);
+    global_data->interface_mapping = std::move(p_interface_mapping);
+    global_data->device_properties = std::move(p_device_properties);
+
+    // Helper for often used names in the following
+    const ExperimentalSetup& setup = global_data->experimental_setup;
+    const InterfaceMapping& interface_mapping = global_data->interface_mapping;
+
+    // Set simulation parameter
+    global_data->simulation_parameter.max_branching_depth = 
+        info.maximum_branching_depth;
+    global_data->simulation_parameter.num_particles = 
+        setup.particles.size();
+    global_data->simulation_parameter.num_rays_per_batch = 
+        info.number_rays_per_batch;
+    global_data->simulation_parameter.num_parallel_batches =
+        info.number_parallel_batches;
+    global_data->simulation_parameter.num_surface_interaction_reflection_passes = 
+        info.number_reflections;
+    global_data->simulation_parameter.num_surface_interaction_transmission_passes = 
+        info.number_transmissions;
+    global_data->simulation_parameter.ray_world_space_index = 
+        global_data->simulation_parameter.num_particles;
+    global_data->simulation_parameter.ray_invalid_index = -1;
+
     // Create generic geometries and materials
     bool error = false;
     std::map<IParticleGeometry*, size_t> reusable_geometry;
@@ -672,7 +704,7 @@ bool ldplab::rtscuda::Factory::createGlobalData(
                 setup.particles[i].geometry->type());
             if (geo_factory_it == pipeline_config.generic_geometries.end())
             {
-                LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                     "Could not find generic geometry factory for particle "\
                     "type \"%s\" in the given particle configuration",
                     IParticleGeometry::typeToString(
@@ -691,7 +723,7 @@ bool ldplab::rtscuda::Factory::createGlobalData(
                         interface_mapping);
                 if (generic_geometry == nullptr)
                 {
-                    LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                         "Could not create generic geometry for particle %i "\
                         "of type \"%s\"",
                         setup.particles[i].uid,
@@ -726,7 +758,7 @@ bool ldplab::rtscuda::Factory::createGlobalData(
                 setup.particles[i].material->type());
             if (mat_factory_it == pipeline_config.generic_materials.end())
             {
-                LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                     "Could not find generic material factory for particle "\
                     "type \"%s\" in the given particle configuration",
                     IParticleMaterial::typeToString(
@@ -745,7 +777,7 @@ bool ldplab::rtscuda::Factory::createGlobalData(
                         interface_mapping);
                 if (generic_material == nullptr)
                 {
-                    LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+                    LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                         "Could not create generic material for particle %i "\
                         "of type \"%s\"",
                         setup.particles[i].uid,
@@ -775,9 +807,149 @@ bool ldplab::rtscuda::Factory::createGlobalData(
     if (error)
         return false;
 
-#error
+    // Allocate particle data
+    auto& pd = global_data->particle_data_buffers;
+    
+    const size_t num_particles = setup.particles.size();
+    error = error || !pd.p2w_transformation_buffer.allocate(num_particles, true);
+    error = error || !pd.p2w_translation_buffer.allocate(num_particles, true);
+    error = error || !pd.w2p_transformation_buffer.allocate(num_particles, true);
+    error = error || !pd.w2p_translation_buffer.allocate(num_particles, true);
+    if (error)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create particle "\
+            "transformation device buffers.");
+        return false;
+    }
 
-    return false;
+    error = error || !pd.geometry_data_buffer.allocate(num_particles, true);
+    error = error || !pd.intersect_ray_fptr_buffer.allocate(num_particles, true);
+    error = error || !pd.intersect_segment_fptr_buffer.allocate(num_particles, true);
+    error = error || !pd.index_of_refraction_fptr_buffer.allocate(num_particles, true);
+    error = error || !pd.material_data_buffer.allocate(num_particles, true);
+    if (error)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create particle "\
+            "material and geometry device buffers.");
+        return false;
+    }
+
+    for (size_t i = 0; i < num_particles; ++i)
+    {
+        pd.geometry_data_buffer.getHostBuffer()[i] =
+            pd.geometry_instances[i]->getDeviceData();
+        pd.intersect_ray_fptr_buffer.getHostBuffer()[i] =
+            pd.geometry_instances[i]->getDeviceIntersectRayFunction();
+        pd.intersect_segment_fptr_buffer.getHostBuffer()[i] =
+            pd.geometry_instances[i]->getDeviceIntersectSegmentFunction();
+        pd.index_of_refraction_fptr_buffer.getHostBuffer()[i] =
+            pd.material_instances[i]->getDeviceIndexOfRefractionFunction();
+        pd.material_data_buffer.getHostBuffer()[i] =
+            pd.material_instances[i]->getDeviceData();
+        error = error || (pd.intersect_ray_fptr_buffer.getHostBuffer()[i] == nullptr);
+        error = error || (pd.intersect_segment_fptr_buffer.getHostBuffer()[i] == nullptr);
+        error = error || (pd.index_of_refraction_fptr_buffer.getHostBuffer()[i] == nullptr);
+    }
+    if (error)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to receive a device function "\
+            "pointer for generic geometry or material functions.");
+        return false;
+    }
+
+    error = error || !pd.geometry_data_buffer.upload();
+    error = error || !pd.intersect_ray_fptr_buffer.upload();
+    error = error || !pd.intersect_segment_fptr_buffer.upload();
+    error = error || !pd.index_of_refraction_fptr_buffer.upload();
+    error = error || !pd.material_data_buffer.upload();
+    if (error)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to upload buffers for "\
+            "generic geometry or material data.");
+        return false;
+    }
+
+    if (!pd.center_of_mass_buffer.allocate(num_particles, true))
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate "\
+            "particle center of mass device buffer.");
+        return false;
+    }
+    
+    for (size_t i = 0; i < num_particles; ++i)
+    {
+        pd.center_of_mass_buffer.getHostBuffer()[i] =
+            setup.particles[i].centre_of_mass;
+    }
+
+    if (!pd.center_of_mass_buffer.upload())
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to upload "\
+            "particle center of mass device buffer.");
+        return false;
+    }
+
+    // Create batches
+    const size_t num_rays = 
+        global_data->simulation_parameter.num_rays_per_batch;
+    const size_t branching_depth = 
+        global_data->simulation_parameter.max_branching_depth;
+    for (size_t i = 0; i < global_data->simulation_parameter.num_parallel_batches; ++i)
+    {
+        global_data->batch_data.emplace_back();
+        auto& bd = global_data->batch_data.back();
+        bd.batch_data_index = i;
+
+        // Create ray buffer
+        error = error || bd.ray_data_buffers.direction_buffers.allocate(
+            num_rays, branching_depth + 2, 0);
+        error = error || bd.ray_data_buffers.intensity_buffers.allocate(
+            num_rays, branching_depth + 2, 0);
+        error = error || bd.ray_data_buffers.min_bv_distance_buffers.allocate(
+            num_rays, branching_depth + 2, 0);
+        error = error || bd.ray_data_buffers.origin_buffers.allocate(
+            num_rays, branching_depth + 2, 0);
+        error = error || bd.ray_data_buffers.particle_index_buffers.allocate(
+            num_rays, branching_depth + 2, 0);
+        if (error)
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate ray data "\
+                "device buffers.");
+            return false;
+        }
+
+        // Create intersection buffer
+        error = error || bd.intersection_data_buffers.normal_buffers.allocate(
+            num_rays, branching_depth + 1, 0);
+        error = error || bd.intersection_data_buffers.particle_index_buffers.allocate(
+            num_rays, branching_depth + 1, 0);
+        error = error || bd.intersection_data_buffers.point_buffers.allocate(
+            num_rays, branching_depth + 1, 0);
+        if (error)
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate intersection "\
+                "data device buffers.");
+            return false;
+        }
+
+        // Create output buffer
+        error = error || bd.output_data_buffers.force_per_particle_buffer.allocate(
+            num_particles, true);
+        error = error || bd.output_data_buffers.torque_per_particle_buffer.allocate(
+            num_particles, true);
+        error = error || bd.output_data_buffers.force_per_ray_buffer.allocate(
+            num_rays, false);
+        error = error || bd.output_data_buffers.torque_per_ray_buffer.allocate(
+            num_rays, false);
+        if (error)
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate output "\
+                "data device buffers.");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool ldplab::rtscuda::Factory::createPipeline(
@@ -791,13 +963,13 @@ bool ldplab::rtscuda::Factory::createPipeline(
     std::unique_ptr<GlobalData> global_data;
     if (!createGlobalData(
         info,
-        setup,
         pipeline_config,
-        interface_mapping,
-        device_properties,
+        std::move(setup),
+        std::move(interface_mapping),
+        std::move(device_properties),
         global_data))
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Failed to allocate pipeline device and host data");
         return false;
     }
@@ -805,116 +977,99 @@ bool ldplab::rtscuda::Factory::createPipeline(
     // Create the pipeline stage instances
     bool error = false;
 
-    std::shared_ptr<IInitialStage> is =
+    std::shared_ptr<IInitialStage> stage_is =
         pipeline_config.initial_stage->create(
-            *global_data,
             info,
             pipeline_config,
-            setup,
-            interface_mapping);
-    if (is == nullptr)
+            *global_data);
+    if (stage_is == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Failed to create initial stage");
         error = true;
     }
     else
-        is->m_parent_rts_uid = rts->uid();
+        stage_is->m_parent_rts_uid = rts->uid();
 
-    std::shared_ptr<IBoundingVolumeIntersection> bvi =
+    std::shared_ptr<IBoundingVolumeIntersection> stage_bvi =
         pipeline_config.bounding_volume_intersection->create(
-            *global_data,
             info,
             pipeline_config,
-            setup,
-            interface_mapping);
-    if (bvi == nullptr)
+            *global_data);
+    if (stage_bvi == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Failed to create bounding volume intersection");
         error = true;
     }
     else
-        bvi->m_parent_rts_uid = rts->uid();
+        stage_bvi->m_parent_rts_uid = rts->uid();
 
-    std::shared_ptr<IParticleIntersection> pi =
+    std::shared_ptr<IParticleIntersection> stage_pi =
         pipeline_config.particle_intersection->create(
-            *global_data,
             info,
             pipeline_config,
-            setup,
-            interface_mapping);
-    if (pi == nullptr)
+            *global_data);
+    if (stage_pi == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Failed to create particle intersection");
         error = true;
     }
     else
-        pi->m_parent_rts_uid = rts->uid();
+        stage_pi->m_parent_rts_uid = rts->uid();
 
-    std::shared_ptr<ISurfaceInteraction> si =
+    std::shared_ptr<ISurfaceInteraction> stage_si =
         pipeline_config.surface_interaction->create(
-            *global_data,
             info,
             pipeline_config,
-            setup,
-            interface_mapping);
-    if (si == nullptr)
+            *global_data);
+    if (stage_si == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Failed to create surface interaction");
         error = true;
     }
     else
-        si->m_parent_rts_uid = rts->uid();
+        stage_si->m_parent_rts_uid = rts->uid();
 
-    std::shared_ptr<IInnerParticlePropagation> ipp =
+    std::shared_ptr<IInnerParticlePropagation> stage_ipp =
         pipeline_config.inner_particle_propagation->create(
-            *global_data,
             info,
             pipeline_config,
-            setup,
-            interface_mapping);
-    if (ipp == nullptr)
+            *global_data);
+    if (stage_ipp == nullptr)
     {
-        LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: "\
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Failed to create inner particle propagation");
         error = true;
     }
     else
-        ipp->m_parent_rts_uid = rts->uid();
+        stage_ipp->m_parent_rts_uid = rts->uid();
 
     if (error)
         return false;
 
-    // Collect particle data
-    std::vector<std::shared_ptr<IParticleMaterial>> particle_materials;
-    std::vector<Vec3> particle_center_of_mass;
-    for (size_t i = 0; i < setup.particles.size(); ++i)
+    std::unique_ptr<IPipeline> pipeline;
+    if (info.host_bound_pipeline)
     {
-        particle_materials.push_back(setup.particles[i].material);
-        particle_center_of_mass.push_back(setup.particles[i].centre_of_mass);
+        pipeline = std::make_unique<PipelineHostBound>();
+        pipeline->m_context = std::move(global_data);
+        pipeline->m_stage_bvi = std::move(stage_bvi);
+        pipeline->m_stage_is = std::move(stage_is);
+        pipeline->m_stage_ipp = std::move(stage_ipp);
+        pipeline->m_stage_pi = std::move(stage_pi);
+        pipeline->m_stage_si = std::move(stage_si);
+    }
+    else
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+            "Device bound pipeline is not implemented yet.");
+        return false;
     }
 
-#error
-    //// Create the pipeline
-    //rts->m_pipeline = std::make_shared<Pipeline>(
-    //    *rts,
-    //    info,
-    //    sim_params,
-    //    std::move(interface_mapping),
-    //    std::move(setup),
-    //    std::move(memory_controls),
-    //    std::move(geometries),
-    //    std::move(particle_materials),
-    //    std::move(particle_center_of_mass),
-    //    std::move(bvi),
-    //    std::move(is),
-    //    std::move(ipp),
-    //    std::move(pi),
-    //    std::move(si));
-    //return (rts->m_pipeline != nullptr);
+    rts = std::make_shared<RayTracingStepCUDA>(std::move(pipeline));
+    return true;
 }
 
 

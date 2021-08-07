@@ -24,22 +24,13 @@ namespace ldplab
             /**
              * @brief Called each time before the ray tracing step pipeline
              *        is executed.
-             * @param[in] setup The experimental setup with which the ray
-             *                  tracing step was created.
              * @param[in] simulation_state The current simulation state with
              *                             which the step execution has been
              *                             started.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
              * @param[in] global_data The global pipeline data.
              */
             virtual void stepSetup(
-                const ExperimentalSetup& setup,
                 const SimulationState& simulation_state,
-                const InterfaceMapping& interface_mapping,
                 const GlobalData& global_data) { };
             /**
              * @brief Called once each time before a ray batch is created.

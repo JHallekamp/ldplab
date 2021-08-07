@@ -14,44 +14,28 @@ namespace ldplab
      */
     struct RayTracingStepCUDAInfo
     {
-        RayTracingStepCUDAInfo()
-            :
-            host_bound_pipeline{ false },
-            intensity_cutoff{ 0 },
-            light_source_resolution_per_world_unit{ 0 },
-            maximum_branching_depth{ 0 },
-            number_rays_per_batch{ 0 },
-            number_threads_per_block{ 128 },
-            return_force_in_particle_coordinate_system{ false },
-            solver_parameters{ nullptr }
-        { }
-        /** 
-         * @brief Parameters for the particle accelerator structure.
-         * @details Determines the accelerator structure that is used.
-         * @note This is only relevant for mesh particles, you can pass a 
-         *       nullptr if no meshs are used.
-         */
-        std::shared_ptr<IAcceleratorStructureParameter> 
-            accelerator_structure_parameters;
-        /** @brief Only executes pipeline stages on device. */
-        bool host_bound_pipeline;
         /**  @brief Under this cutoff intensity rays are not further traced. */
-        double intensity_cutoff;
-        /** @brief Number of rays per world space unit on a light source plane. */
-        double light_source_resolution_per_world_unit;
+        double intensity_cutoff = 0.0;
         /** @brief Maximum number of times a ray can split. */
-        size_t maximum_branching_depth;
+        size_t maximum_branching_depth = 0;
         /** @brief Number of rays per batch. */
-        size_t number_rays_per_batch;
-        /** @brief Number of threads per block (between 1 and 512). */
-        size_t number_threads_per_block;
+        size_t number_rays_per_batch = 0;
+        /** @brief Maximum number of parallel batches. */
+        size_t number_parallel_batches = 1;
+        /** @brief Number of reflections per surface interaction per ray. */
+        size_t number_reflections = 1;
+        /** @brief Number of transmissions per surface interaction per ray. */
+        size_t number_transmissions = 1;
+        /** 
+         * @brief Determines whether the host or device bound pipeline 
+         *        implementation is used.
+         */
+        bool host_bound_pipeline = true;
         /**
          * @brief Determines if the finial particle force and torque is
          *        returned in particle coordinate system.
          */
-        bool return_force_in_particle_coordinate_system;
-        /** @brief Parameters for the Eikonal solver. */
-        std::shared_ptr<IEikonalSolverParameter> solver_parameters;
+        bool return_force_in_particle_coordinate_system = false;
     };
 }
 

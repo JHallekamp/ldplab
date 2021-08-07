@@ -55,21 +55,19 @@ ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 
 void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	stepSetup(
-		const ExperimentalSetup& setup, 
-		const SimulationState& simulation_state, 
-		const InterfaceMapping& interface_mapping, 
+		const SimulationState& simulation_state,
 		const GlobalData& global_data)
 {
 	BoundingSphere* spheres = m_bounding_spheres.getHostBuffer();
-	for (size_t i = 0; i < setup.particles.size(); ++i)
+	for (size_t i = 0; i < global_data.experimental_setup.particles.size(); ++i)
 	{
 		// Get the particle instance for particle i using the interface mapping
 		const ParticleInstance& particle_instance =
 			simulation_state.particle_instances.find(
-				interface_mapping.particle_index_to_uid.at(i))->second;
+				global_data.interface_mapping.particle_index_to_uid.at(i))->second;
 		// Get the bounding sphere in pspace
 		spheres[i] = *static_cast<BoundingVolumeSphere*>(
-			setup.particles[i].bounding_volume.get());
+			global_data.experimental_setup.particles[i].bounding_volume.get());
 		// Translate bounding volume center to world space
 		spheres[i].center += particle_instance.position;
 	}
@@ -81,11 +79,11 @@ void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	const size_t grid_size = m_projection_buffer.bufferSize();
 	const size_t block_size = m_light_source_buffer.bufferSize();
 	const size_t mem_size = block_size * sizeof(size_t);
-	projectParticlesKernel << <grid_size, block_size >> > (
+	projectParticlesKernel<<<grid_size, block_size>>> (
 		m_context.resources.bounding_volumes.bounding_volume_per_particle.get(),
 		m_context.parameters.light_source_resolution_per_world_unit);
-	countTotalRaysKernelFirst << <grid_size, block_size, mem_size >> > (grid_size);
-	countTotalRaysKernelSecond << <grid_size, block_size, mem_size >> > (
+	countTotalRaysKernelFirst<<<grid_size, block_size, mem_size>>> (grid_size);
+	countTotalRaysKernelSecond<<<grid_size, block_size, mem_size>>> (
 		grid_size,
 		m_context.parameters.num_rays_per_batch);
 	// Download the total number of rays

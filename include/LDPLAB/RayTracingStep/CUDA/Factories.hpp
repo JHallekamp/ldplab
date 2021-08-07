@@ -103,29 +103,20 @@ namespace ldplab
             virtual ~IBoundingVolumeIntersectionFactory() { }
             /**
              * @brief Creates the stage implementation instance.
-             * @param[in] global_data All pipeline resources present.
              * @param[in] step_info The ray tracing step info that is used to
              *                      create the ray tracing step pipeline.
              * @param[in] configuration The current complete configuration, for
              *                          which the pipeline stage may be
              *                          created, if all factories within the
              *                          configuration agree.
-             * @param[in] setup The experimental setup for which the ray
-             *                  tracing step is created.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
+             * @param[in] global_data All pipeline resources present.
              * @returns A shared pointer to the newly created stage or nullptr
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IBoundingVolumeIntersection> create(
-                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
-                const ExperimentalSetup& setup,
-                const InterfaceMapping& interface_mapping) = 0;
+                const GlobalData& global_data) = 0;
         };
 
         /** @brief Abstract baseclass for initial stage factories. */
@@ -141,22 +132,14 @@ namespace ldplab
              *                          which the pipeline stage may be
              *                          created, if all factories within the
              *                          configuration agree.
-             * @param[in] setup The experimental setup for which the ray
-             *                  tracing step is created.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
+             * @param[in] global_data All pipeline resources present.
              * @returns A shared pointer to the newly created stage or nullptr
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IInitialStage> create(
-                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
-                const ExperimentalSetup& setup,
-                const InterfaceMapping& interface_mapping) = 0;
+                const GlobalData& global_data) = 0;
         };
 
         /**
@@ -175,22 +158,14 @@ namespace ldplab
              *                          which the pipeline stage may be
              *                          created, if all factories within the
              *                          configuration agree.
-             * @param[in] setup The experimental setup for which the ray
-             *                  tracing step is created.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
+             * @param[in] global_data All pipeline resources present.
              * @returns A shared pointer to the newly created stage or nullptr
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IInnerParticlePropagation> create(
-                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
-                const ExperimentalSetup& setup,
-                const InterfaceMapping& interface_mapping) = 0;
+                const GlobalData& global_data) = 0;
         };
 
         /**
@@ -209,22 +184,14 @@ namespace ldplab
              *                          which the pipeline stage may be
              *                          created, if all factories within the
              *                          configuration agree.
-             * @param[in] setup The experimental setup for which the ray
-             *                  tracing step is created.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
+             * @param[in] global_data All pipeline resources present.
              * @returns A shared pointer to the newly created stage or nullptr
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<IParticleIntersection> create(
-                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
-                const ExperimentalSetup& setup,
-                const InterfaceMapping& interface_mapping) = 0;
+                const GlobalData& global_data) = 0;
         };
 
         /**
@@ -243,22 +210,14 @@ namespace ldplab
              *                          which the pipeline stage may be
              *                          created, if all factories within the
              *                          configuration agree.
-             * @param[in] setup The experimental setup for which the ray
-             *                  tracing step is created.
-             * @param[in] interface_mapping The ray tracing step interface
-             *                              mapping to relate experimental
-             *                              setup and simulation state
-             *                              components given by their uid to
-             *                              the internal index based structure.
+             * @param[in] global_data All pipeline resources present.
              * @returns A shared pointer to the newly created stage or nullptr
              *          if the instance creation failed.
              */
             virtual std::shared_ptr<ISurfaceInteraction> create(
-                const GlobalData& global_data,
                 const RayTracingStepCUDAInfo& step_info,
                 const PipelineConfiguration& configuration,
-                const ExperimentalSetup& setup,
-                const InterfaceMapping& interface_mapping) = 0;
+                const GlobalData& global_data) = 0;
         };
 
         /** @brief Abstract baseclass for generic geometry factories. */

@@ -29,9 +29,7 @@ namespace ldplab
             BoundingSphereIntersectionBruteforce(
                 DeviceBuffer<BoundingSphere>&& bounding_spheres);
             void stepSetup(
-                const ExperimentalSetup& setup,
                 const SimulationState& simulation_state,
-                const InterfaceMapping& interface_mapping,
                 const GlobalData& global_data) override;
             size_t execute(const GlobalData& global_data,
                 BatchData& batch_data,

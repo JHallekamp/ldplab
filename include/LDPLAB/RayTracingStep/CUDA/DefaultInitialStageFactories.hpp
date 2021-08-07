@@ -26,11 +26,9 @@ namespace ldplab
                     const ExperimentalSetup& setup,
                     const InterfaceMapping& interface_mapping) override;
                 std::shared_ptr<IInitialStage> create(
-                    const GlobalData& global_data,
                     const RayTracingStepCUDAInfo& step_info,
                     const PipelineConfiguration& configuration,
-                    const ExperimentalSetup& setup,
-                    const InterfaceMapping& interface_mapping) override;
+                    const GlobalData& global_data) override;
             };
         }
     }

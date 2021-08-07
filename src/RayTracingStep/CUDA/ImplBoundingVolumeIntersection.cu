@@ -34,21 +34,19 @@ ldplab::rtscuda::BoundingSphereIntersectionBruteforce::
 { }
 
 void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
-    const ExperimentalSetup& setup,
     const SimulationState& simulation_state,
-    const InterfaceMapping& interface_mapping,
     const GlobalData& global_data)
 {
     BoundingSphere* spheres = m_bounding_spheres.getHostBuffer();
-    for (size_t i = 0; i < setup.particles.size(); ++i)
+    for (size_t i = 0; i < global_data.experimental_setup.particles.size(); ++i)
     {
         // Get the particle instance for particle i using the interface mapping
         const ParticleInstance& particle_instance =
             simulation_state.particle_instances.find(
-                interface_mapping.particle_index_to_uid.at(i))->second;
+                global_data.interface_mapping.particle_index_to_uid.at(i))->second;
         // Get the bounding sphere in pspace
         spheres[i] = *static_cast<BoundingVolumeSphere*>(
-            setup.particles[i].bounding_volume.get());
+            global_data.experimental_setup.particles[i].bounding_volume.get());
         // Translate bounding volume center to world space
         spheres[i].center += particle_instance.position;
     }
@@ -62,6 +60,7 @@ size_t ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(
     BatchData& batch_data, 
     size_t ray_buffer_index)
 {
+#error
     return size_t();
 }
 

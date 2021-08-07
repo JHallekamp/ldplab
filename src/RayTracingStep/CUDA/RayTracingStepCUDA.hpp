@@ -12,14 +12,10 @@ namespace ldplab
 {
     namespace rtscuda
     {
-        // Prototype
-        class Factory;
-
         class RayTracingStepCUDA : public IRayTracingStep
         {
-            friend Factory;
         public:
-            RayTracingStepCUDA() { }
+            RayTracingStepCUDA(std::unique_ptr<IPipeline>&& pipeline);
             /**
              * @brief Inherited via IRayTracingStep. Starts the ray tracing
              *        simulation.
@@ -30,7 +26,7 @@ namespace ldplab
                 const SimulationState& input,
                 RayTracingStepOutput& output) override;
         private:
-            std::shared_ptr<IPipeline> m_pipeline;
+            std::unique_ptr<IPipeline> m_pipeline;
         };
     }
 }

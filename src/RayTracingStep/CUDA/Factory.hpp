@@ -76,10 +76,10 @@ namespace ldplab
             bool getDeviceData(GlobalData::DeviceProperties& device_props);
             bool createGlobalData(
                 const RayTracingStepCUDAInfo& info,
-                const ExperimentalSetup& setup,
                 PipelineConfiguration& pipeline_config,
-                InterfaceMapping interface_mapping,
-                GlobalData::DeviceProperties device_properties,
+                ExperimentalSetup&& setup,
+                InterfaceMapping&& interface_mapping,
+                GlobalData::DeviceProperties&& device_properties,
                 std::unique_ptr<GlobalData>& global_data);
             bool createPipeline(
                 const RayTracingStepCUDAInfo& info,

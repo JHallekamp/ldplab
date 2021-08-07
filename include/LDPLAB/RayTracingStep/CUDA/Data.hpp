@@ -106,15 +106,6 @@ namespace ldplab
                 DeviceBuffer<Vec3> torque_per_particle_buffer;
                 DeviceBuffer<Vec3> torque_per_ray_buffer;
             } output_data_buffers;
-            /** @brief Contains all stage dependent data. */
-            struct StageDependentData
-            {
-                std::shared_ptr<void> bounding_volume_intersection;
-                std::shared_ptr<void> initial_stage;
-                std::shared_ptr<void> inner_particle_propagation;
-                std::shared_ptr<void> particle_intersection;
-                std::shared_ptr<void> surface_interaction;
-            } stage_dependent_data;
         };
 
         /** 
@@ -128,9 +119,10 @@ namespace ldplab
             const UID<GlobalData> instance_uid;
             /** @brief Contains batch data instances for each parallel batch. */
             std::vector<BatchData> batch_data;
+            /** @brief The experimental setup used to create the rts. */
+            ExperimentalSetup experimental_setup;
             /** @brief Interface mapping between step and caller. */
             InterfaceMapping interface_mapping;
-            /**  */
             /** @brief Information about the simulation. */
             struct SimulationParameter
             {

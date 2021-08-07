@@ -49,6 +49,14 @@ bool ldplab::rtscuda::IPipeline::stepSetup(
         !m_context->particle_data_buffers.w2p_transformation_buffer.upload() ||
         !m_context->particle_data_buffers.w2p_translation_buffer.upload())
         return false;
+
+    // Call stepSetup on each pipeline stage.
+    m_bvi->stepSetup(sim_state, *m_context);
+    m_is->stepSetup(sim_state, *m_context);
+    m_ipp->stepSetup(sim_state, *m_context);
+    m_pi->stepSetup(sim_state, *m_context);
+    m_si->stepSetup(sim_state, *m_context);
+
     return true;
 }
 

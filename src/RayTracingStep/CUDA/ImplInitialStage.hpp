@@ -39,9 +39,7 @@ namespace ldplab
                 DeviceBuffer<size_t>&& num_rays_buffer,
                 DeviceBuffer<size_t>&& temp_num_rays_buffer);
             void stepSetup(
-                const ExperimentalSetup& setup,
                 const SimulationState& simulation_state,
-                const InterfaceMapping& interface_mapping,
                 const GlobalData& global_data) override;
             bool execute(
                 const GlobalData& global_data,
