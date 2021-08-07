@@ -126,6 +126,7 @@ namespace ldplab
             /** @brief Information about the simulation. */
             struct SimulationParameter
             {
+                double intensity_cutoff;
                 size_t max_branching_depth;
                 size_t num_parallel_batches;
                 size_t num_particles;

@@ -673,6 +673,8 @@ bool ldplab::rtscuda::Factory::createGlobalData(
     const InterfaceMapping& interface_mapping = global_data->interface_mapping;
 
     // Set simulation parameter
+    global_data->simulation_parameter.intensity_cutoff =
+        info.intensity_cutoff;
     global_data->simulation_parameter.max_branching_depth = 
         info.maximum_branching_depth;
     global_data->simulation_parameter.num_particles = 
@@ -1053,7 +1055,9 @@ bool ldplab::rtscuda::Factory::createPipeline(
     std::unique_ptr<IPipeline> pipeline;
     if (info.host_bound_pipeline)
     {
-        pipeline = std::make_unique<PipelineHostBound>();
+        std::shared_ptr<utils::ThreadPool> thread_pool =
+            std::make_shared<utils::ThreadPool>(info.number_parallel_batches);
+        pipeline = std::make_unique<PipelineHostBound>(thread_pool);
         pipeline->m_context = std::move(global_data);
         pipeline->m_stage_bvi = std::move(stage_bvi);
         pipeline->m_stage_is = std::move(stage_is);

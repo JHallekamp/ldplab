@@ -11,6 +11,8 @@
 #include <LDPLAB/RayTracingStep/CUDA/IParticleIntersection.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/ISurfaceInteraction.hpp>
 
+#include "../../Utils/ThreadPool.hpp"
+
 namespace ldplab
 {
     namespace rtscuda
@@ -18,7 +20,19 @@ namespace ldplab
         class PipelineHostBound : public IPipeline
         {
         public:
+            PipelineHostBound(std::shared_ptr<utils::ThreadPool> thread_pool);
             void execute() override;
+        private:
+            void createBatchJob(size_t process_id);
+            void setupBatch(BatchData& batch_data);
+            void executeBatch(
+                BatchData& batch_data,
+                size_t batch_no,
+                size_t depth,
+                size_t ray_buffer_index,
+                bool inside_particle);
+        private:
+            std::shared_ptr<utils::ThreadPool> m_thread_pool;
         };
     }
 }
