@@ -4,6 +4,8 @@
 
 #include <LDPLAB/RayTracingStep/CUDA/Data.hpp>
 
+#include "PipelineData.hpp"
+
 namespace ldplab
 {
     namespace rtscuda
@@ -14,8 +16,14 @@ namespace ldplab
             GatherOutput() = delete;
             /** @brief Host interface for output gather stage execution. */
             static void execute(
+                const GlobalData& global_data,
                 BatchData& batch_data,
+                PipelineData& data,
                 size_t ray_buffer_index);
+            /** @brief Creates the neccessary pipeline data. */
+            static bool allocateData(
+                const GlobalData& global_data,
+                PipelineData& data);
         };
     }
 }

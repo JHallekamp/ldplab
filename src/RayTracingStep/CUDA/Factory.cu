@@ -14,6 +14,9 @@
 
 #include "PipelineDeviceBound.hpp"
 #include "PipelineHostBound.hpp"
+#include "StageBufferSetup.hpp"
+#include "StageGatherOutput.hpp"
+#include "StageRayBufferReduce.hpp"
 
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 
     ldplab::rtscuda::Factory::createRTS(
@@ -690,6 +693,8 @@ bool ldplab::rtscuda::Factory::createGlobalData(
     global_data->simulation_parameter.ray_world_space_index = 
         global_data->simulation_parameter.num_particles;
     global_data->simulation_parameter.ray_invalid_index = -1;
+    global_data->simulation_parameter.output_in_particle_space =
+        info.return_force_in_particle_coordinate_system;
 
     // Create generic geometries and materials
     bool error = false;
@@ -1058,18 +1063,50 @@ bool ldplab::rtscuda::Factory::createPipeline(
         std::shared_ptr<utils::ThreadPool> thread_pool =
             std::make_shared<utils::ThreadPool>(info.number_parallel_batches);
         pipeline = std::make_unique<PipelineHostBound>(thread_pool);
-        pipeline->m_context = std::move(global_data);
-        pipeline->m_stage_bvi = std::move(stage_bvi);
-        pipeline->m_stage_is = std::move(stage_is);
-        pipeline->m_stage_ipp = std::move(stage_ipp);
-        pipeline->m_stage_pi = std::move(stage_pi);
-        pipeline->m_stage_si = std::move(stage_si);
     }
     else
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
             "Device bound pipeline is not implemented yet.");
         return false;
+    }
+
+    // Move context and stages to the pipeline
+    pipeline->m_context = std::move(global_data);
+    pipeline->m_stage_bvi = std::move(stage_bvi);
+    pipeline->m_stage_is = std::move(stage_is);
+    pipeline->m_stage_ipp = std::move(stage_ipp);
+    pipeline->m_stage_pi = std::move(stage_pi);
+    pipeline->m_stage_si = std::move(stage_si);
+    
+    // Allocate pipeline data
+    for (size_t i = 0; i < pipeline->m_context->batch_data.size(); ++i)
+    {
+        pipeline->m_pipeline_data.emplace_back();
+        if (!BufferSetup::allocateData(
+            *pipeline->m_context,
+            pipeline->m_pipeline_data.back()))
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+                "Failed to allocate buffer setup stage pipeline data.");
+            return false;
+        }
+        if (!GatherOutput::allocateData(
+            *pipeline->m_context,
+            pipeline->m_pipeline_data.back()))
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+                "Failed to allocate gather output stage pipeline data.");
+            return false;
+        }
+        if (!RayBufferReduce::allocateData(
+            *pipeline->m_context,
+            pipeline->m_pipeline_data.back()))
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+                "Failed to allocate ray buffer reduction stage pipeline data.");
+            return false;
+        }
     }
 
     rts = std::make_shared<RayTracingStepCUDA>(std::move(pipeline));

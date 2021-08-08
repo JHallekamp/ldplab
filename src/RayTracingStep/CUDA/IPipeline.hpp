@@ -11,6 +11,8 @@
 #include <LDPLAB/RayTracingStep/CUDA/IParticleIntersection.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/ISurfaceInteraction.hpp>
 
+#include "PipelineData.hpp"
+
 namespace ldplab
 {
     namespace rtscuda
@@ -28,6 +30,7 @@ namespace ldplab
                 double rx, double ry, double rz, RotationOrder order);
         protected:
             std::unique_ptr<GlobalData> m_context;
+            std::vector<PipelineData> m_pipeline_data;
             std::shared_ptr<IBoundingVolumeIntersection> m_stage_bvi;
             std::shared_ptr<IInitialStage> m_stage_is;
             std::shared_ptr<IInnerParticlePropagation> m_stage_ipp;

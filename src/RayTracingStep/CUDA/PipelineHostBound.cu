@@ -40,9 +40,10 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(size_t process_id)
 {
 	// Get batch data
 	BatchData& batch_data = m_context->batch_data[process_id];
+    PipelineData& pipeline_data = m_pipeline_data[process_id];
 
     // Initial buffer setup
-	BufferSetup::executeStepSetup(batch_data);
+	BufferSetup::executeStepSetup(*m_context, batch_data, pipeline_data);
 
     constexpr size_t initial_batch_buffer_index = 0;
     bool batches_left = false;
@@ -54,7 +55,9 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(size_t process_id)
 			batch_data, 
 			initial_batch_buffer_index);
 		setupBatch(batch_data);
-        executeBatch(batch_data,
+        executeBatch(
+            batch_data,
+            pipeline_data,
 			num_batches, 
 			0, 
 			initial_batch_buffer_index, 
@@ -74,17 +77,26 @@ void ldplab::rtscuda::PipelineHostBound::setupBatch(BatchData& batch_data)
 
 void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	BatchData& batch_data, 
+    PipelineData& pipeline_data,
 	size_t batch_no, 
 	size_t depth, 
 	size_t ray_buffer_index, 
 	bool inside_particle)
 {
     // Prepare buffer
-    BufferSetup::executeLayerSetup(batch_data, ray_buffer_index);
+    BufferSetup::executeLayerSetup(
+        *m_context,
+        batch_data, 
+        pipeline_data, 
+        ray_buffer_index);
 
     // Check if buffer contains rays
-    RayBufferReduceResult ray_state_count;
-    ray_state_count = RayBufferReduce::execute(batch_data, ray_buffer_index);
+    PipelineData::RayBufferReductionResult ray_state_count;
+    ray_state_count = RayBufferReduce::execute(
+        *m_context,
+        batch_data, 
+        pipeline_data, 
+        ray_buffer_index);
 
     if (ray_state_count.num_active_rays == 0)
         return;
@@ -98,7 +110,11 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         {
             m_stage_bvi->execute(*m_context, batch_data, ray_buffer_index);
             m_stage_pi->execute(*m_context, batch_data, ray_buffer_index, ray_buffer_index);
-            ray_state_count = RayBufferReduce::execute(batch_data, ray_buffer_index);
+            ray_state_count = RayBufferReduce::execute(
+                *m_context,
+                batch_data, 
+                pipeline_data,
+                ray_buffer_index);
         } while (ray_state_count.num_world_space_rays > 0);
     }
     // Perform surface interaction and ray branching
@@ -124,11 +140,16 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 m_context->experimental_setup.medium_reflection_index,
                 reflection_pass,
                 j);
-            GatherOutput::execute(batch_data, ray_buffer_index);
+            GatherOutput::execute(
+                *m_context, 
+                batch_data, 
+                pipeline_data, 
+                ray_buffer_index);
             if (depth < m_context->simulation_parameter.max_branching_depth)
             {
                 executeBatch(
                     batch_data, 
+                    pipeline_data,
                     batch_no,
                     depth + 1, 
                     ray_buffer_index + 1, 

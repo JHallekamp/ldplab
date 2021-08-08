@@ -27,6 +27,7 @@ namespace ldplab
             void setupBatch(BatchData& batch_data);
             void executeBatch(
                 BatchData& batch_data,
+                PipelineData& pipeline_data,
                 size_t batch_no,
                 size_t depth,
                 size_t ray_buffer_index,

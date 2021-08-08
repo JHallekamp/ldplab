@@ -135,6 +135,7 @@ namespace ldplab
                 size_t num_surface_interaction_transmission_passes;
                 int32_t ray_world_space_index;
                 int32_t ray_invalid_index = -1;
+                bool output_in_particle_space;
             } simulation_parameter;
             /** @brief Particle data. */
             struct ParticleDataBuffers

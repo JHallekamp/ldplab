@@ -31,25 +31,43 @@ namespace
 }
 
 void ldplab::rtscuda::BufferSetup::executeStepSetup(
-    BatchData& batch_data)
+    const GlobalData& global_data,
+    BatchData& batch_data,
+    PipelineData& data)
 {
-    const KernelLaunchParameter lp = getLaunchParameterInitialSetup();
-    initialSetupKernel<<<lp.grid_size, lp.block_size>>>(
-        m_context.resources.output_buffer.force_per_particle.get(),
-        m_context.resources.output_buffer.torque_per_particle.get(),
-        m_context.parameters.num_particles);
+    const PipelineData::KernelLaunchParameter& klp = data.buffer_setup_step_klp;
+    bufferStepSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size>>>(
+        batch_data.output_data_buffers.force_per_particle_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.torque_per_particle_buffer.getDeviceBuffer(),
+        global_data.simulation_parameter.num_particles);
 }
 
 void ldplab::rtscuda::BufferSetup::executeLayerSetup(
-    BatchData& batch_data, 
+    const GlobalData& global_data,
+    BatchData& batch_data,
+    PipelineData& data,
     size_t buffer_index)
 {
-    const KernelLaunchParameter lp = getLaunchParameterBufferSetup();
-    bufferSetupKernel<<<lp.grid_size, lp.block_size>>>(
-        m_context.resources.intersection_buffer.intersection_particle_index_buffer.get(),
-        m_context.resources.output_buffer.force_per_ray.get(),
-        m_context.resources.output_buffer.torque_per_ray.get(),
-        m_context.parameters.num_rays_per_batch);
+    const PipelineData::KernelLaunchParameter& klp = data.buffer_setup_layer_klp;
+    bufferLayerSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size>>>(
+        batch_data.intersection_data_buffers.particle_index_buffers.getDeviceBuffer(buffer_index),
+        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(),
+        global_data.simulation_parameter.num_rays_per_batch);
+}
+
+bool ldplab::rtscuda::BufferSetup::allocateData(
+    const GlobalData& global_data, 
+    PipelineData& data)
+{
+    constexpr size_t block_size = 128;
+    PipelineData::KernelLaunchParameter& klp1 = data.buffer_setup_step_klp;
+    klp1.block_size.x = block_size;
+    klp1.grid_size.x =
+        global_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x +
+        (global_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x ? 1 : 0);
+    data.buffer_setup_layer_klp = klp1;
+    return true;
 }
 
 #endif

@@ -79,23 +79,35 @@ namespace
 }
 
 void ldplab::rtscuda::GatherOutput::execute(
+    const GlobalData& global_data,
 	BatchData& batch_data, 
+    PipelineData& pipeline_data,
 	size_t ray_buffer_index)
 {
-    //const size_t grid_size = m_context.parameters.num_particles;
-    //const size_t block_size = m_context.parameters.num_threads_per_block;
-    //const size_t shared_memory_size = block_size * sizeof(Vec3) * 2;
-    const KernelLaunchParameter lp = getLaunchParameter();
-    gatherOutputKernel << <lp.grid_size, lp.block_size, lp.shared_memory_size >> > (
-        m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
-        m_context.resources.output_buffer.force_per_ray.get(),
-        m_context.resources.output_buffer.torque_per_ray.get(),
-        m_context.parameters.num_rays_per_batch,
-        m_context.resources.output_buffer.force_per_particle.get(),
-        m_context.resources.output_buffer.torque_per_particle.get(),
-        m_context.resources.transformations.p2w_transformation.get(),
-        m_context.parameters.num_particles,
-        m_context.parameters.output_in_particle_space);
+    const PipelineData::KernelLaunchParameter& klp = 
+        pipeline_data.gather_output_klp;
+    gatherOutputKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size>>>(
+        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(),
+        global_data.simulation_parameter.num_rays_per_batch,
+        batch_data.output_data_buffers.force_per_particle_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.torque_per_particle_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.p2w_transformation_buffer.getDeviceBuffer(),
+        global_data.simulation_parameter.num_particles,
+        global_data.simulation_parameter.output_in_particle_space);
+}
+
+bool ldplab::rtscuda::GatherOutput::allocateData(
+    const GlobalData& global_data, 
+    PipelineData& data)
+{
+    constexpr size_t block_size = 128;
+    PipelineData::KernelLaunchParameter& klp = data.gather_output_klp;
+    klp.block_size.x = block_size;
+    klp.grid_size.x = global_data.simulation_parameter.num_particles;
+    klp.shared_memory_size = klp.block_size.x * sizeof(Vec3) * 2;
+    return true;
 }
 
 #endif

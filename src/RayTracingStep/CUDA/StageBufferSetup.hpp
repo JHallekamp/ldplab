@@ -4,6 +4,8 @@
 
 #include <LDPLAB/RayTracingStep/CUDA/Data.hpp>
 
+#include "PipelineData.hpp"
+
 namespace ldplab
 {
     namespace rtscuda
@@ -14,11 +16,19 @@ namespace ldplab
             BufferSetup() = delete;
             /** @brief Sets up the initial batch buffers. */
             static void executeStepSetup(
-                BatchData& batch_data);
+                const GlobalData& global_data,
+                BatchData& batch_data,
+                PipelineData& data);
             /** @brief Sets up the buffers. */
             static void executeLayerSetup(
+                const GlobalData& global_data,
                 BatchData& batch_data,
+                PipelineData& data,
                 size_t buffer_index);
+            /** @brief Creates the neccessary pipeline data. */
+            static bool allocateData(
+                const GlobalData& global_data,
+                PipelineData& data);
         };
     }
 }
