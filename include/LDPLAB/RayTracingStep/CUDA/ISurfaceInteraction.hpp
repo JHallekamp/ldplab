@@ -20,6 +20,7 @@ namespace ldplab
                 size_t intersection_buffer_index,
                 double intensity_cutoff,
                 double medium_reflection_index,
+                bool input_inner_particle_rays,
                 bool reflection_pass,
                 size_t pass_no) = 0;
         };

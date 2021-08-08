@@ -37,9 +37,8 @@ namespace ldplab
              *                       batch.
              * @param[in] ray_buffer_index The index of the affected ray 
              *                             buffer.
-             * @returns The number of rays that hit a particle bounding volume.
              */
-            virtual size_t execute(
+            virtual void execute(
                 const GlobalData& global_data,
                 BatchData& batch_data,
                 size_t ray_buffer_index) = 0;

@@ -75,17 +75,26 @@ void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	// Upload data
 	m_bounding_spheres.upload();
 
+	// Execute setup kernel
 	using namespace homogenous_light_bounding_sphere_projection;
 	const size_t grid_size = m_projection_buffer.bufferSize();
 	const size_t block_size = m_light_source_buffer.bufferSize();
 	const size_t mem_size = block_size * sizeof(size_t);
 	projectParticlesKernel<<<grid_size, block_size>>> (
-		m_context.resources.bounding_volumes.bounding_volume_per_particle.get(),
-		m_context.parameters.light_source_resolution_per_world_unit);
-	countTotalRaysKernelFirst<<<grid_size, block_size, mem_size>>> (grid_size);
+		m_bounding_spheres.getDeviceBuffer(),
+		m_projection_buffer.getDeviceBuffer(),
+		m_light_source_buffer.getDeviceBuffer(),
+		m_temp_num_rays_buffer.getDeviceBuffer(),
+		m_light_resolution_per_world_unit);
+	countTotalRaysKernelFirst<<<grid_size, block_size, mem_size>>>(
+		m_temp_num_rays_buffer.getDeviceBuffer(),
+		grid_size);
 	countTotalRaysKernelSecond<<<grid_size, block_size, mem_size>>> (
+		m_temp_num_rays_buffer.getDeviceBuffer(),
+		m_num_rays_buffer.getDeviceBuffer(),
 		grid_size,
-		m_context.parameters.num_rays_per_batch);
+		global_data.simulation_parameter.num_rays_per_batch);
+
 	// Download the total number of rays
 	size_t total_rays;
 	if (cudaMemcpyFromSymbol(
@@ -108,7 +117,24 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		BatchData& batch_data, 
 		size_t initial_batch_buffer_index)
 {
-	return false;
+	using namespace homogenous_light_bounding_sphere_projection;
+	const size_t block_size = 128;
+	const size_t grid_size = 
+		global_data.simulation_parameter.num_rays_per_batch / block_size;
+	createBatchKernel<<<grid_size, block_size>>>(
+		batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(initial_batch_buffer_index),
+		batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(initial_batch_buffer_index),
+		batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(initial_batch_buffer_index),
+		batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(initial_batch_buffer_index),
+		batch_data.ray_data_buffers.min_bv_distance_buffers.getDeviceBuffer(initial_batch_buffer_index),
+		m_projection_buffer.getDeviceBuffer(),
+		m_light_source_buffer.getDeviceBuffer(),
+		m_num_rays_buffer.getDeviceBuffer(),
+		global_data.simulation_parameter.num_particles,
+		m_light_source_buffer.bufferSize(),
+		global_data.simulation_parameter.num_rays_per_batch,
+		m_batch_ctr++);
+	return m_batch_ctr < m_total_batch_count;
 }
 
 __global__ void homogenous_light_bounding_sphere_projection::

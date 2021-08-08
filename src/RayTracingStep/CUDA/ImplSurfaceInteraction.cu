@@ -45,11 +45,39 @@ void ldplab::rtscuda::SurfaceInteraction::execute(
     size_t intersection_buffer_index,
     double intensity_cutoff,
     double medium_reflection_index,
+    bool input_inner_particle_rays,
     bool reflection_pass,
     size_t pass_no)
 {
-    // TODO
-    return nullptr;
+    const size_t block_size = 128;
+    const size_t grid_size =
+        global_data.simulation_parameter.num_rays_per_batch / block_size +
+        (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
+    using namespace surface_interaction;
+    surfaceInteractionKernel(
+        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(input_ray_buffer_index),
+        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(input_ray_buffer_index),
+        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(input_ray_buffer_index),
+        batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(input_ray_buffer_index),
+        batch_data.intersection_data_buffers.particle_index_buffers.getDeviceBuffer(intersection_buffer_index),
+        batch_data.intersection_data_buffers.point_buffers.getDeviceBuffer(intersection_buffer_index),
+        batch_data.intersection_data_buffers.normal_buffers.getDeviceBuffer(intersection_buffer_index),
+        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(output_ray_buffer_index),
+        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(output_ray_buffer_index),
+        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(output_ray_buffer_index),
+        batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(output_ray_buffer_index),
+        batch_data.ray_data_buffers.min_bv_distance_buffers.getDeviceBuffer(output_ray_buffer_index),
+        intensity_cutoff,
+        medium_reflection_index,
+        global_data.particle_data_buffers.index_of_refraction_fptr_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.material_data_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.center_of_mass_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(),
+        input_inner_particle_rays,
+        reflection_pass,
+        global_data.simulation_parameter.num_rays_per_batch,
+        global_data.simulation_parameter.num_particles);
 }
 
 __global__ void surface_interaction::surfaceInteractionKernel(

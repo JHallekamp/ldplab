@@ -138,6 +138,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 ray_buffer_index,
                 m_context->simulation_parameter.intensity_cutoff,
                 m_context->experimental_setup.medium_reflection_index,
+                inside_particle,
                 reflection_pass,
                 j);
             GatherOutput::execute(

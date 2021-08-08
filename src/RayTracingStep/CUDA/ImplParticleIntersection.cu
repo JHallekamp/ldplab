@@ -28,22 +28,24 @@ void ldplab::rtscuda::ParticleIntersection::execute(
 	size_t ray_buffer_index, 
 	size_t intersection_buffer_index)
 {
-    using namespace generic_particle_geometry_cuda;
-    //const size_t block_size = m_context.parameters.num_threads_per_block;
-    //const size_t grid_size = m_context.parameters.num_rays_per_batch / block_size;
-    const KernelLaunchParameter lp = getLaunchParameter();
-    intersectionKernel<<<lp.grid_size, lp.block_size>>>(
-        m_context.resources.ray_buffer.index_buffers[ray_buffer_index].get(),
-        m_context.resources.ray_buffer.origin_buffers[ray_buffer_index].get(),
-        m_context.resources.ray_buffer.direction_buffers[ray_buffer_index].get(),
-        m_context.resources.intersection_buffer.intersection_particle_index_buffer.get(),
-        m_context.resources.intersection_buffer.intersection_point_buffer.get(),
-        m_context.resources.intersection_buffer.intersection_normal_buffer.get(),
-        m_context.parameters.num_rays_per_batch,
-        m_context.resources.particles.geometry_per_particle.get(),
-        m_context.resources.transformations.p2w_transformation.get(),
-        m_context.resources.transformations.p2w_translation.get(),
-        m_context.parameters.num_particles);
+    using namespace particle_intersection;
+    const size_t block_size = 128;
+    const size_t grid_size =
+        global_data.simulation_parameter.num_rays_per_batch / block_size +
+        (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
+    intersectionKernel(
+        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.intersection_data_buffers.particle_index_buffers.getDeviceBuffer(intersection_buffer_index),
+        batch_data.intersection_data_buffers.point_buffers.getDeviceBuffer(intersection_buffer_index),
+        batch_data.intersection_data_buffers.normal_buffers.getDeviceBuffer(intersection_buffer_index),
+        global_data.simulation_parameter.num_rays_per_batch,
+        global_data.particle_data_buffers.intersect_ray_fptr_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.geometry_data_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.p2w_transformation_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.p2w_translation_buffer.getDeviceBuffer(),
+        global_data.simulation_parameter.num_particles);
 }
 
 __global__ void particle_intersection::intersectionKernel(

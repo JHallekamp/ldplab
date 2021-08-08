@@ -31,7 +31,7 @@ namespace ldplab
             void stepSetup(
                 const SimulationState& simulation_state,
                 const GlobalData& global_data) override;
-            size_t execute(const GlobalData& global_data,
+            void execute(const GlobalData& global_data,
                 BatchData& batch_data,
                 size_t ray_buffer_index) override;
         private:

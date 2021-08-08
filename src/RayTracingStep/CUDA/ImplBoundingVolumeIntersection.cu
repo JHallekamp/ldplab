@@ -55,13 +55,26 @@ void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
     m_bounding_spheres.upload();
 }
 
-size_t ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(
+void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(
     const GlobalData& global_data, 
     BatchData& batch_data, 
     size_t ray_buffer_index)
 {
-#error
-    return size_t();
+    using namespace sphere_brutforce;
+    const size_t block_size = 128;
+    const size_t grid_size =
+        global_data.simulation_parameter.num_rays_per_batch / block_size +
+        (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
+    bvIntersectionKernel(
+        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_buffer_index),
+        batch_data.ray_data_buffers.min_bv_distance_buffers.getDeviceBuffer(ray_buffer_index),
+        global_data.simulation_parameter.num_rays_per_batch,
+        m_bounding_spheres.getDeviceBuffer(),
+        global_data.particle_data_buffers.w2p_transformation_buffer.getDeviceBuffer(),
+        global_data.particle_data_buffers.w2p_translation_buffer.getDeviceBuffer(),
+        global_data.simulation_parameter.num_particles);
 }
 
 __global__ void sphere_brutforce::bvIntersectionKernel(
