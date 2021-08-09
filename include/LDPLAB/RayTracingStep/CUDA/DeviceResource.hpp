@@ -105,7 +105,7 @@ namespace ldplab
              * @param[in] index The index of the requested host buffer.
              * @returns Host memory pointer to the requested buffer.
              */
-            basetype* getHostBuffer(size_t index) const;
+            basetype* getHostBuffer(size_t index);
             /**
              * @brief Provides the device buffer range pointer.
              * @details The device buffer range is an array in device memory,
@@ -113,7 +113,7 @@ namespace ldplab
              *          elements.
              * @returns Device memory pointer to the device buffer range.
              */
-            basetype** getDeviceBufferRange() const;
+            basetype** getDeviceBufferRange();
             /**
              * @brief Memsets a specific device buffer.
              * @param[in] val Value to which the memory is set. 
@@ -218,7 +218,7 @@ namespace ldplab
              */
             bool hasHostBuffer() const { return (baseclass::hostSize() > 0); }
             basetype* getDeviceBuffer() const { return baseclass::getDeviceBuffer(0); }
-            basetype* getHostBuffer() const { return baseclass::getHostBuffer(0); }
+            basetype* getHostBuffer() { return baseclass::getHostBuffer(0); }
             bool memset(int val) { return baseclass::memset(val); }
             bool upload() { return baseclass::upload(0, 0); }
             bool upload(size_t element_offset, size_t element_count);
@@ -318,8 +318,7 @@ namespace ldplab
                 }
             }
             m_device_buffer_ptr_range.clear();
-            if (m_host_buffer_ptr_range)
-                m_host_buffer_ptr_range.clear();
+            m_host_buffer_ptr_range.clear();
             m_buffer_size = 0;
             return ret;
         }
@@ -338,8 +337,8 @@ namespace ldplab
             {
                 m_device_buffer_ptr_range.emplace_back();
                 ret = ret && checkCudaAllocationError(
-                    cudaMalloc(&m_device_buffer_ptr_range.back(), byte_size),
-                    byte_size);
+                    cudaMalloc(&m_device_buffer_ptr_range.back(), buffer_byte_size),
+                    buffer_byte_size);
             }
             // Allocate device buffer range
             const size_t range_byte_size = num_device_buffers * sizeof(void*);
@@ -390,13 +389,13 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline basetype* DeviceBufferRange<basetype>::getHostBuffer(size_t index) const
+        inline basetype* DeviceBufferRange<basetype>::getHostBuffer(size_t index)
         {
             return m_host_buffer_ptr_range[index].data();
         }
 
         template<typename basetype>
-        inline basetype** DeviceBufferRange<basetype>::getDeviceBufferRange() const
+        inline basetype** DeviceBufferRange<basetype>::getDeviceBufferRange()
         {
             return static_cast<basetype*>(m_device_range_ptr);
         }

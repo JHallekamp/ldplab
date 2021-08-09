@@ -2,7 +2,7 @@
 
 #include "CPU/Factory.hpp"
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
-#   include "CUDA/deprecated/Factory.hpp"
+#   include "CUDA/Factory.hpp"
 #endif
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSOGL
 #   include "OpenGL/Factory.hpp"
@@ -37,13 +37,37 @@ std::shared_ptr<ldplab::IRayTracingStep>
 }
 
 std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
-    createRayTracingStepCUDA(
-        const ExperimentalSetup& setup, 
-        const RayTracingStepCUDAInfo& info)
+createRayTracingStepCUDA(
+    const RayTracingStepCUDAInfo& info,
+    ExperimentalSetup&& setup)
 {
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
     LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscuda);
-    return std::move(rtscuda::Factory::createRTS(setup, info));
+    rtscuda::Factory rts_factory;
+    return rts_factory.createRTS(info, std::move(setup));
+#else
+    LDPLAB_LOG_ERROR("RTS factory: Could not create ray tracing step CUDA "\
+        "because library has been build without "\
+        "LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA");
+    return nullptr;
+#endif
+}
+
+std::shared_ptr<ldplab::IRayTracingStep> ldplab::RayTracingStepFactory::
+createRayTracingStepCUDA(
+    const RayTracingStepCUDAInfo& info,
+    ExperimentalSetup&& setup, 
+    rtscuda::PipelineConfiguration& user_defined_configuration, 
+    bool allow_default_stage_overwrites)
+{
+#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+    LDPLAB_PROFILING_START(ray_tracing_step_factory_create_rtscuda);
+    rtscuda::Factory rts_factory;
+    return rts_factory.createRTS(
+        info, 
+        std::move(setup),
+        user_defined_configuration,
+        allow_default_stage_overwrites);
 #else
     LDPLAB_LOG_ERROR("RTS factory: Could not create ray tracing step CUDA "\
         "because library has been build without "\

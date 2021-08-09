@@ -112,7 +112,10 @@ void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)
     }
 }
 
-void ldplab::rtscpu::Pipeline::execute(size_t job_id, size_t batch_size)
+void ldplab::rtscpu::Pipeline::execute(
+    size_t job_id, 
+    size_t batch_size,
+    size_t thread_id)
 {
     LDPLAB_ASSERT(job_id < m_memory_controls.size());
     LDPLAB_LOG_DEBUG("RTSCPU %i: Ray tracing pipeline executes "\

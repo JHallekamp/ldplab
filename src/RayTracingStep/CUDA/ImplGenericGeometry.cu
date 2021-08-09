@@ -56,8 +56,8 @@ ldplab::rtscuda::IGenericGeometry::intersectRay
     intersectRay kernel_fp = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel_fp,
-        rod::intersectRayFp,
-        sizeof(rod::intersectRayFp))
+        sphere::intersectRayFp,
+        sizeof(sphere::intersectRayFp))
         != cudaSuccess)
         return nullptr;
     return kernel_fp;
@@ -69,8 +69,8 @@ ldplab::rtscuda::IGenericGeometry::intersectSegment
     intersectSegment kernel_fp = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel_fp,
-        rod::intersectSegmentFp,
-        sizeof(rod::intersectSegmentFp))
+        sphere::intersectSegmentFp,
+        sizeof(sphere::intersectSegmentFp))
         != cudaSuccess)
         return nullptr;
     return kernel_fp;

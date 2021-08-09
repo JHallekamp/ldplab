@@ -27,7 +27,9 @@ ldplab::utils::ThreadPool::BatchHandle::BatchHandle(
         m_uid, size);
 }
 
-void ldplab::utils::ThreadPool::BatchHandle::runJob(bool& remove_batch_from_queue)
+void ldplab::utils::ThreadPool::BatchHandle::runJob(
+    bool& remove_batch_from_queue, 
+    size_t thread_id)
 {
     size_t job_id;
     prepareJob(job_id, remove_batch_from_queue);
@@ -43,7 +45,7 @@ void ldplab::utils::ThreadPool::BatchHandle::runJob(bool& remove_batch_from_queu
         job_id + 1, 
         m_batch_size);
     
-    m_job->execute(job_id, m_batch_size);
+    m_job->execute(job_id, m_batch_size, thread_id);
     
     LDPLAB_LOG_TRACE("LDPLAB thread pool batch %i: Thread %s finished job execution "\
         "%i (%i of %i)",
@@ -311,7 +313,7 @@ void ldplab::utils::ThreadPool::terminate()
     LDPLAB_LOG_DEBUG("LDPLAB thread pool %i: Terminated", m_uid);
 }
 
-void ldplab::utils::ThreadPool::workerThread()
+void ldplab::utils::ThreadPool::workerThread(size_t thread_id)
 {
     LDPLAB_LOG_DEBUG("LDPLAB thread pool %i: Thread %s started", 
         m_uid, getThreadIDString(std::this_thread::get_id()).c_str());
@@ -328,7 +330,7 @@ void ldplab::utils::ThreadPool::workerThread()
                 batch_handle->m_uid);
 
             bool remove_from_queue;
-            batch_handle->runJob(remove_from_queue);
+            batch_handle->runJob(remove_from_queue, thread_id);
             if (remove_from_queue)
             {
                 LDPLAB_LOG_TRACE("LDPLAB thread pool %i: Thread %s had no job to "\
@@ -367,7 +369,7 @@ std::shared_ptr<ldplab::utils::ThreadPool::BatchHandle>
 void ldplab::utils::ThreadPool::startThreads()
 {
     for (size_t i = 0; i < m_worker_threads.size(); ++i)
-        m_worker_threads[i] = std::thread(&ThreadPool::workerThread, this);
+        m_worker_threads[i] = std::thread(&ThreadPool::workerThread, this, i);
     m_threads_state = State::threads_active;
 }
 

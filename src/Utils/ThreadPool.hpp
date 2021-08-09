@@ -34,8 +34,13 @@ namespace ldplab
                  *                   from 0 to batch size - 1).
                  * @param[in] batch_size The number of jobs inside the batch to
                  *                       which this job belongs.
+                 * @param[in] thread_id The number of the thread inside the 
+                 *                      thread pool.
                  */
-                virtual void execute(size_t job_id, size_t batch_size) = 0;
+                virtual void execute(
+                    size_t job_id, 
+                    size_t batch_size,
+                    size_t thread_id) = 0;
             };
             /**
              * @brief Used to manage a batch of jobs that were submitted to the
@@ -77,7 +82,7 @@ namespace ldplab
                 State state();
             private:
                 BatchHandle(std::shared_ptr<IJob> job, size_t size);
-                void runJob(bool& remove_batch_from_queue);
+                void runJob(bool& remove_batch_from_queue, size_t thread_id);
                 void prepareJob(
                     size_t& job_id, bool& remove_batch_from_queue);
                 void finishJob();
@@ -127,7 +132,7 @@ namespace ldplab
             void enqueueBatch(std::shared_ptr<BatchHandle> batch);
             std::shared_ptr<BatchHandle> getUnjoinedBatch();
             void startThreads();
-            void workerThread();
+            void workerThread(size_t thread_id);
             void workerThreadDequeueBatch(std::shared_ptr<BatchHandle> batch);
             std::shared_ptr<BatchHandle> workerThreadGetCurrentBatch();
             bool workerThreadRunning();

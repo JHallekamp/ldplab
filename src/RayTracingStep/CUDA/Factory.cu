@@ -17,6 +17,7 @@
 #include "StageBufferSetup.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
+#include "RayTracingStepCUDA.hpp"
 
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 
     ldplab::rtscuda::Factory::createRTS(
@@ -86,9 +87,8 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     // Log viable configuration
     logViableConfiguration(pipeline_configuration);
 
-    // With a viable configuration it is now time to actually 
-    std::shared_ptr<RayTracingStepCUDA> rts =
-        std::make_shared<RayTracingStepCUDA>();
+    // Declare the ray tracing step
+    std::shared_ptr<RayTracingStepCUDA> rts;
 
     // Create pipeline
     if (!createPipeline(
@@ -698,8 +698,8 @@ bool ldplab::rtscuda::Factory::createGlobalData(
 
     // Create generic geometries and materials
     bool error = false;
-    std::map<IParticleGeometry*, size_t> reusable_geometry;
-    std::map<IParticleMaterial*, size_t> reusable_material;
+    std::map<const IParticleGeometry*, size_t> reusable_geometry;
+    std::map<const IParticleMaterial*, size_t> reusable_material;
     for (size_t i = 0; i < setup.particles.size(); ++i)
     {
         auto reusable_geometry_index_it = reusable_geometry.find(
@@ -760,7 +760,7 @@ bool ldplab::rtscuda::Factory::createGlobalData(
             setup.particles[i].material.get());
         if (reusable_material_index_it == reusable_material.end())
         {
-            // No reusable geometry present
+            // No reusable material present
             auto mat_factory_it = pipeline_config.generic_materials.find(
                 setup.particles[i].material->type());
             if (mat_factory_it == pipeline_config.generic_materials.end())
@@ -788,13 +788,13 @@ bool ldplab::rtscuda::Factory::createGlobalData(
                         "Could not create generic material for particle %i "\
                         "of type \"%s\"",
                         setup.particles[i].uid,
-                        IParticleGeometry::typeToString(
-                            setup.particles[i].geometry->type()));
+                        IParticleMaterial::typeToString(
+                            setup.particles[i].material->type()));
                     error = true;
                 }
                 else
                 {
-                    reusable_geometry.emplace(
+                    reusable_material.emplace(
                         setup.particles[i].material.get(),
                         global_data->particle_data_buffers.material_instances.size());
                     global_data->particle_data_buffers.material_instances.

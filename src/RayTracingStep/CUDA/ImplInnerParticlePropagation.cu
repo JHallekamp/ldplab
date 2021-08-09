@@ -127,6 +127,7 @@ __global__ void rk4::innerParticlePropagationKernel(
         geometry_intersect_ray_functions[particle_index];
     IGenericGeometry::intersectSegment intersectSegment =
         geometry_intersect_segment_functions[particle_index];
+    void* const particle_material = material_data[particle_index];
     IGenericMaterial::indexOfRefraction indexOfRefraction =
         material_ior_functions[particle_index];
     bool intersected = false;
@@ -134,13 +135,18 @@ __global__ void rk4::innerParticlePropagationKernel(
     Vec3 inter_point;
     Vec3 inter_normal;
     Arg x{
-        ray_direction * indexOfRefraction(ray_origin, material_data),
+        ray_direction * indexOfRefraction(ray_origin, particle_material),
         ray_origin
     };
     Arg x_new{ };
     while (!intersected)
     {
-        rk4(indexOfRefraction, x, step_size, x_new);
+        rk4::rk4(
+            indexOfRefraction, 
+            static_cast<MaterialLinearOneDirectionalData*>(particle_material), 
+            x, 
+            step_size, 
+            x_new);
         intersected = intersectSegment(
             x.r,
             x_new.r,

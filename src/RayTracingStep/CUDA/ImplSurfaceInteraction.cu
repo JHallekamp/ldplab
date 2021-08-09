@@ -54,7 +54,7 @@ void ldplab::rtscuda::SurfaceInteraction::execute(
         global_data.simulation_parameter.num_rays_per_batch / block_size +
         (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
     using namespace surface_interaction;
-    surfaceInteractionKernel(
+    surfaceInteractionKernel<<<grid_size, block_size>>>(
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(input_ray_buffer_index),
         batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(input_ray_buffer_index),
         batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(input_ray_buffer_index),

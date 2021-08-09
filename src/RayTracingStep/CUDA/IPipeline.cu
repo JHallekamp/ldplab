@@ -51,11 +51,11 @@ bool ldplab::rtscuda::IPipeline::stepSetup(
         return false;
 
     // Call stepSetup on each pipeline stage.
-    m_bvi->stepSetup(sim_state, *m_context);
-    m_is->stepSetup(sim_state, *m_context);
-    m_ipp->stepSetup(sim_state, *m_context);
-    m_pi->stepSetup(sim_state, *m_context);
-    m_si->stepSetup(sim_state, *m_context);
+    m_stage_bvi->stepSetup(sim_state, *m_context);
+    m_stage_is->stepSetup(sim_state, *m_context);
+    m_stage_ipp->stepSetup(sim_state, *m_context);
+    m_stage_pi->stepSetup(sim_state, *m_context);
+    m_stage_si->stepSetup(sim_state, *m_context);
 
     return true;
 }

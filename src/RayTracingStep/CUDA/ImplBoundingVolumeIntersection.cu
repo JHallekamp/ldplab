@@ -19,6 +19,12 @@ namespace sphere_brutforce
         size_t num_particles);
 }
 
+ldplab::rtscuda::BoundingSphere::BoundingSphere()
+    :
+    center{ Vec3(0, 0, 0) },
+    radius{ 0 }
+{ }
+
 ldplab::rtscuda::BoundingSphere::BoundingSphere(
     const BoundingVolumeSphere& cpy)
     :
@@ -35,7 +41,7 @@ ldplab::rtscuda::BoundingSphereIntersectionBruteforce::
 
 void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
     const SimulationState& simulation_state,
-    const GlobalData& global_data)
+    GlobalData& global_data)
 {
     BoundingSphere* spheres = m_bounding_spheres.getHostBuffer();
     for (size_t i = 0; i < global_data.experimental_setup.particles.size(); ++i)
@@ -69,7 +75,7 @@ void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(
     const size_t grid_size =
         global_data.simulation_parameter.num_rays_per_batch / block_size +
         (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
-    bvIntersectionKernel(
+    bvIntersectionKernel<<<grid_size, block_size>>>(
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
         batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_buffer_index),
         batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_buffer_index),

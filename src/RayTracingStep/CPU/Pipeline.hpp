@@ -42,7 +42,10 @@ namespace ldplab
             void stepSetup(const SimulationState& sim_state);
             void finalizeOutput(RayTracingStepOutput& output);
             /** @brief Inherited via IJob */
-            void execute(size_t job_id, size_t batch_size) override;
+            void execute(
+                size_t job_id, 
+                size_t batch_size, 
+                size_t thread_id) override;
         private:
             ldplab::Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order); 

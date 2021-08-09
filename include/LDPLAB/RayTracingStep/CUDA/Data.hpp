@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-#include <LDPLAB/ExperimentalSetup/Particle.hpp>
+#include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 #include <LDPLAB/Geometry.hpp>
 #include <LDPLAB/UID.hpp>
 

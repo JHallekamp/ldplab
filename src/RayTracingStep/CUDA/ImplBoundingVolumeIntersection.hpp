@@ -11,6 +11,7 @@ namespace ldplab
     {
         struct BoundingSphere
         {
+            BoundingSphere();
             BoundingSphere(const BoundingVolumeSphere&);
             Vec3 center;
             double radius;
@@ -30,7 +31,7 @@ namespace ldplab
                 DeviceBuffer<BoundingSphere>&& bounding_spheres);
             void stepSetup(
                 const SimulationState& simulation_state,
-                const GlobalData& global_data) override;
+                GlobalData& global_data) override;
             void execute(const GlobalData& global_data,
                 BatchData& batch_data,
                 size_t ray_buffer_index) override;

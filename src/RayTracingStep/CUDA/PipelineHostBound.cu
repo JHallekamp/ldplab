@@ -15,7 +15,11 @@ class JobWrapper : public ldplab::utils::ThreadPool::IJob
 {
 public:
 	JobWrapper(std::function<void(size_t)> job) : m_job{ job } { }
-	void execute(size_t job_id, size_t batch_size) override { m_job(job_id); }
+	void execute(
+        size_t job_id, 
+        size_t batch_size, 
+        size_t thread_id) override 
+    { m_job(thread_id); }
 private:
 	std::function<void(size_t)> m_job;
 };
@@ -28,9 +32,10 @@ ldplab::rtscuda::PipelineHostBound::PipelineHostBound(
 
 void ldplab::rtscuda::PipelineHostBound::execute()
 {
+    using namespace std::placeholders;
 	const static std::shared_ptr<JobWrapper> job = 
 		std::make_shared<JobWrapper>(
-			std::bind(&createBatchJob, this, std::placeholders::_1));
+			std::bind(&PipelineHostBound::createBatchJob, this, _1));
 	m_thread_pool->executeJobBatch(
 		job, 
 		m_context->simulation_parameter.num_parallel_batches);

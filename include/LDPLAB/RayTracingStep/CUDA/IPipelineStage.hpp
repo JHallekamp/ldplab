@@ -31,7 +31,7 @@ namespace ldplab
              */
             virtual void stepSetup(
                 const SimulationState& simulation_state,
-                const GlobalData& global_data) { };
+                GlobalData& global_data) { };
             /**
              * @brief Called once each time before a ray batch is created.
              * @param[in] global_data The global pipeline data.

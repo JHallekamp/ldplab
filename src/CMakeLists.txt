@@ -130,6 +130,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/PipelineConfiguration.hpp"
     )
     set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
+        RayTracingStep/CUDA/Factory.hpp
         RayTracingStep/CUDA/ImplBoundingVolumeIntersection.hpp
         RayTracingStep/CUDA/ImplGenericGeometry.hpp
         RayTracingStep/CUDA/ImplGenericMaterial.hpp
@@ -139,6 +140,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/ImplSurfaceInteraction.hpp
         RayTracingStep/CUDA/IntersectionTests.hpp
         RayTracingStep/CUDA/IPipeline.hpp
+        RayTracingStep/CUDA/PipelineData.hpp
         RayTracingStep/CUDA/PipelineDeviceBound.hpp
         RayTracingStep/CUDA/PipelineHostBound.hpp
         RayTracingStep/CUDA/RayTracingStepCUDA.hpp
@@ -155,6 +157,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/DefaultParticleIntersectionFactories.cu
         RayTracingStep/CUDA/DefaultSurfaceInteractionFactories.cu
         RayTracingStep/CUDA/DeviceResource.cu
+        RayTracingStep/CUDA/Factory.cu
         RayTracingStep/CUDA/ImplBoundingVolumeIntersection.cu
         RayTracingStep/CUDA/ImplGenericGeometry.cu
         RayTracingStep/CUDA/ImplGenericMaterial.cu
@@ -170,45 +173,6 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/StageBufferSetup.cu
         RayTracingStep/CUDA/StageGatherOutput.cu
         RayTracingStep/CUDA/StageRayBufferReduce.cu
-    )
-    set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA_DEPRECATED
-		RayTracingStep/CUDA/deprecated/Context.hpp
-		RayTracingStep/CUDA/deprecated/CudaResource.hpp
-		RayTracingStep/CUDA/deprecated/Data.hpp
-		RayTracingStep/CUDA/deprecated/Factory.hpp
-		RayTracingStep/CUDA/deprecated/GenericBoundingVolume.hpp
-		RayTracingStep/CUDA/deprecated/GenericParticleGeometry.hpp
-		RayTracingStep/CUDA/deprecated/GenericParticleMaterial.hpp
-		RayTracingStep/CUDA/deprecated/IntersectionTests.hpp
-		RayTracingStep/CUDA/deprecated/Pipeline.hpp
-		RayTracingStep/CUDA/deprecated/PipelineBoundingVolumeIntersection.hpp
-		RayTracingStep/CUDA/deprecated/PipelineBufferSetup.hpp
-		RayTracingStep/CUDA/deprecated/PipelineGatherOutput.hpp
-		RayTracingStep/CUDA/deprecated/PipelineInitial.hpp
-		RayTracingStep/CUDA/deprecated/PipelineInnerParticlePropagation.hpp
-		RayTracingStep/CUDA/deprecated/PipelineParticleInteraction.hpp
-		RayTracingStep/CUDA/deprecated/PipelineParticleIntersection.hpp
-		RayTracingStep/CUDA/deprecated/PipelineRayBufferReduce.hpp
-		RayTracingStep/CUDA/deprecated/RayTracingStep.hpp
-    )
-    set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA_DEPRECATED
-		RayTracingStep/CUDA/deprecated/CudaResource.cu
-		RayTracingStep/CUDA/deprecated/Data.cu
-		RayTracingStep/CUDA/deprecated/Factory.cu
-		RayTracingStep/CUDA/deprecated/GenericBoundingVolume.cu
-		RayTracingStep/CUDA/deprecated/GenericParticleGeometry.cu
-		RayTracingStep/CUDA/deprecated/GenericParticleMaterial.cu
-		RayTracingStep/CUDA/deprecated/IntersectionTests.cu
-		RayTracingStep/CUDA/deprecated/Pipeline.cu
-		RayTracingStep/CUDA/deprecated/PipelineBoundingVolumeIntersection.cu
-		RayTracingStep/CUDA/deprecated/PipelineBufferSetup.cu
-		RayTracingStep/CUDA/deprecated/PipelineGatherOutput.cu
-		RayTracingStep/CUDA/deprecated/PipelineInitial.cu
-		RayTracingStep/CUDA/deprecated/PipelineInnerParticlePropagation.cu
-		RayTracingStep/CUDA/deprecated/PipelineParticleInteraction.cu
-		RayTracingStep/CUDA/deprecated/PipelineParticleIntersection.cu
-		RayTracingStep/CUDA/deprecated/PipelineRayBufferReduce.cu
-		RayTracingStep/CUDA/deprecated/RayTracingStep.cu
     )
 else()
     set(HEADER_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA)
@@ -285,8 +249,6 @@ add_library(ldplab STATIC
     ${HEADER_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA}
     ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA}
     ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA}
-    ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA_DEPRECATED}
-    ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA_DEPRECATED}
     ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL}
     ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL}
     ${HEADER_INTERN_UTILS}
@@ -311,8 +273,6 @@ if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
     source_group("include\\LDPLAB\\RayTracingStep\\CUDA\\" FILES ${HEADER_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA})
     source_group("src\\RayTracingStep\\CUDA" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA})
     source_group("src\\RayTracingStep\\CUDA" FILES ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA})
-    source_group("src\\RayTracingStep\\CUDA\\deprecated" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA_DEPRECATED})
-    source_group("src\\RayTracingStep\\CUDA\\deprecated" FILES ${SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA_DEPRECATED})
 endif()
 if (LDPLAB_BUILD_OPTION_ENABLE_RTSOGL)
     source_group("src\\RayTracingStep\\OpenGL" FILES ${HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_OPENGL})

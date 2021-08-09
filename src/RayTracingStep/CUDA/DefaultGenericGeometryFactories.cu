@@ -53,9 +53,7 @@ create(
 	geo_buffer.getHostBuffer()->radius = geo->radius;
 	if (!geo_buffer.upload())
 		return nullptr;
-	std::shared_ptr<GenericGeometrySphere> generic_geo =
-		std::make_shared<GenericGeometrySphere>(std::move(geo_buffer));
-	return generic_geo;
+	return std::make_shared<GenericGeometrySphere>(std::move(geo_buffer));
 }
 
 std::string ldplab::rtscuda::default_factories::GenericGeometryRodFactory::
@@ -121,9 +119,7 @@ create(
 		Vec3(0, 0, h - sphere_radius);
 	if (!geo_buffer.upload())
 		return nullptr;
-	std::shared_ptr<GenericGeometrySphere> generic_geo =
-		std::make_shared<GenericGeometrySphere>(std::move(geo_buffer));
-	return generic_geo;
+	return std::make_shared<GenericGeometryRod>(std::move(geo_buffer));
 }
 
 #endif

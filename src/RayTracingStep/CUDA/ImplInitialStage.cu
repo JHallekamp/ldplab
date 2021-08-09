@@ -56,7 +56,7 @@ ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	stepSetup(
 		const SimulationState& simulation_state,
-		const GlobalData& global_data)
+		GlobalData& global_data)
 {
 	BoundingSphere* spheres = m_bounding_spheres.getHostBuffer();
 	for (size_t i = 0; i < global_data.experimental_setup.particles.size(); ++i)
@@ -125,6 +125,7 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	const size_t block_size = 128;
 	const size_t grid_size = 
 		global_data.simulation_parameter.num_rays_per_batch / block_size;
+	size_t cur_batch = m_batch_ctr++;
 	createBatchKernel<<<grid_size, block_size>>>(
 		batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(initial_batch_buffer_index),
 		batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(initial_batch_buffer_index),
@@ -137,8 +138,8 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		global_data.simulation_parameter.num_particles,
 		m_light_source_buffer.bufferSize(),
 		global_data.simulation_parameter.num_rays_per_batch,
-		m_batch_ctr++);
-	return m_batch_ctr < m_total_batch_count;
+		cur_batch);
+	return (cur_batch + 1 < m_total_batch_count);
 }
 
 __global__ void homogenous_light_bounding_sphere_projection::
@@ -155,7 +156,7 @@ __global__ void homogenous_light_bounding_sphere_projection::
 	// Part 1: Project sphere to plane
 	InitialStageHomogenousLightBoundingSphereProjection::HomogenousLightSource light =
 		light_buffer[threadIdx.x];
-	BoundingSphere bs = *static_cast<BoundingSphere*>(bounding_spheres[blockIdx.x]);
+	BoundingSphere bs = bounding_spheres[blockIdx.x];
 
 	// Assuming ray direction is always orthogonal to light plane
 	const double t = glm::dot(light.ray_direction, light.origin - bs.center) /
