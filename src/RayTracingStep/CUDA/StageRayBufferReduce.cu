@@ -5,9 +5,6 @@
 
 namespace
 {
-    __device__ ldplab::rtscuda::PipelineData::RayBufferReductionResult 
-        global_ray_counter;
-
     __global__ void rayBufferReduceKernel(
         ldplab::rtscuda::PipelineData::RayBufferReductionResult* result_buffer,
         int32_t* ray_index_buffer,
@@ -100,7 +97,7 @@ namespace
         // ====================================================================
         // Final step: Write the result from shared buffer in result_buffer
         if (tid == 0)
-            global_ray_counter = sbuf[0];
+            result_buffer[0] = sbuf[0];
     }
 }
 
@@ -125,17 +122,13 @@ ldplab::rtscuda::PipelineData::RayBufferReductionResult
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
         klp1.grid_size.x);
 
-    PipelineData::RayBufferReductionResult result;
-    if (cudaMemcpyFromSymbol(
-        &result,
-        global_ray_counter,
-        sizeof(global_ray_counter)) != cudaSuccess)
+    if (!pipeline_data.ray_buffer_reduction_result_buffer.download(0, 1))
     {
         LDPLAB_LOG_ERROR("RTSCUDA context %i: Ray buffer reduce pipeline step "\
             "failed to download reduction results from device",
             global_data.instance_uid);
     }
-    return result;
+    return pipeline_data.ray_buffer_reduction_result_buffer.getHostBuffer()[0];
 }
 
 bool ldplab::rtscuda::RayBufferReduce::allocateData(

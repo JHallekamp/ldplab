@@ -48,7 +48,11 @@ void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
         spheres[i] = *static_cast<BoundingVolumeSphere*>(
             global_data.experimental_setup.particles[i].bounding_volume.get());
         // Translate bounding volume center to world space
-        spheres[i].center += particle_instance.position;
+        const auto& p2w_transformation =
+            global_data.particle_data_buffers.p2w_transformation_buffer.getHostBuffer()[i];
+        const auto& p2w_translation =
+            global_data.particle_data_buffers.p2w_translation_buffer.getHostBuffer()[i];
+        spheres[i].center = p2w_transformation * spheres[i].center + p2w_translation;
     }
 
     // Upload

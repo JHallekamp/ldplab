@@ -29,6 +29,8 @@ namespace ldplab
                     const RayTracingStepCUDAInfo& step_info,
                     const PipelineConfiguration& configuration,
                     const GlobalData& global_data) override;
+            private:
+                double m_light_resolution_per_world_unit;
             };
         }
     }

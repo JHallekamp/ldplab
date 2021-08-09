@@ -29,6 +29,8 @@ namespace ldplab
                     const RayTracingStepCUDAInfo& step_info,
                     const PipelineConfiguration& configuration,
                     const GlobalData& global_data) override;
+            private:
+                RK4Parameter m_parameter;
             };
         }
     }
