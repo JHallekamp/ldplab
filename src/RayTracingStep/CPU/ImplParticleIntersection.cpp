@@ -17,7 +17,7 @@ void ldplab::rtscpu::ParticleIntersection::execute(
     LDPLAB_LOG_TRACE("RTSCPU %i: Execute ray particle intersection"\
         " test on batch buffer %i",
         getParentRayTracingStepUID(),
-        rays.uid);
+        ray_data.uid);
     size_t num_hit_rays = 0;
     size_t num_missed_rays = 0;
     for (size_t i = 0; i < ray_data.size; i++)
@@ -60,7 +60,7 @@ void ldplab::rtscpu::ParticleIntersection::execute(
         "batch buffer %i completed, of %i tested rays %i rays hit particles "\
         "and %i rays missed",
         getParentRayTracingStepUID(),
-        rays.uid,
+        ray_data.uid,
         num_hit_rays + num_missed_rays,
         num_hit_rays,
         num_missed_rays);

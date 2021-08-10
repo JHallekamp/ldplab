@@ -7,6 +7,7 @@
 #include <LDPLAB/RayTracingStep/CUDA/Factories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/DefaultBoundingVolumeIntersectionFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/DefaultGenericGeometryFactories.hpp>
+#include <LDPLAB/RayTracingStep/CUDA/DefaultGenericMaterialFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/DefaultInitialStageFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/DefaultInnerParticlePropagationFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/DefaultParticleIntersectionFactories.hpp>
@@ -42,10 +43,15 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     std::set<IParticleGeometry::Type> present_geometry_types =
         std::move(getPresentGeometryTypes(setup));
 
+    // Get present material type set
+    std::set<IParticleMaterial::Type> present_material_types =
+        std::move(getPresentMaterialTypes(setup));
+
     // Now combine user given config and default configuration
     PipelineConfiguration pipeline_configuration;
     if (!combineConfigurations(
         present_geometry_types,
+        present_material_types,
         default_configuration,
         user_configuration,
         pipeline_configuration))
@@ -74,6 +80,7 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         interface_mapping,
         device_props,
         present_geometry_types,
+        present_material_types,
         pipeline_configuration,
         default_configuration,
         user_configuration,
@@ -88,7 +95,8 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     logViableConfiguration(pipeline_configuration);
 
     // Declare the ray tracing step
-    std::shared_ptr<RayTracingStepCUDA> rts;
+    std::shared_ptr<RayTracingStepCUDA> rts = 
+        std::make_shared<RayTracingStepCUDA>();
 
     // Create pipeline
     if (!createPipeline(
@@ -129,6 +137,9 @@ void ldplab::rtscuda::Factory::createDefaultConfiguration(
     default_config.generic_geometries.emplace(
         IParticleGeometry::Type::sphere,
         std::make_shared<default_factories::GenericGeometrySphereFactory>());
+    default_config.generic_materials.emplace(
+        IParticleMaterial::Type::linear_one_directional,
+        std::make_shared<default_factories::GenericMaterialLinearOneDirectionalFactory>());
 }
 
 std::set<ldplab::IParticleGeometry::Type> 
@@ -147,8 +158,25 @@ std::set<ldplab::IParticleGeometry::Type>
     return types;
 }
 
+std::set<ldplab::IParticleMaterial::Type> 
+    ldplab::rtscuda::Factory::getPresentMaterialTypes(
+        const ExperimentalSetup& setup)
+{
+    std::set<ldplab::IParticleMaterial::Type> types;
+    for (size_t i = 0; i < setup.particles.size(); ++i)
+    {
+        if (types.find(setup.particles[i].material->type()) ==
+            types.end())
+        {
+            types.insert(setup.particles[i].material->type());
+        }
+    }
+    return types;
+}
+
 bool ldplab::rtscuda::Factory::combineConfigurations(
     std::set<IParticleGeometry::Type>& geometry_types, 
+    std::set<IParticleMaterial::Type>& material_types,
     PipelineConfiguration& default_config, 
     PipelineConfiguration& user_config, 
     PipelineConfiguration& combination)
@@ -164,12 +192,21 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
         combination.particle_intersection = user_config.particle_intersection;
     if (user_config.surface_interaction != nullptr)
         combination.surface_interaction = user_config.surface_interaction;
-    auto it = user_config.generic_geometries.begin();
-    for (; it != user_config.generic_geometries.end(); it++)
+    for (auto it = user_config.generic_geometries.begin();
+        it != user_config.generic_geometries.end(); 
+        it++)
     {
         if (it->second != nullptr ||
             geometry_types.find(it->first) != geometry_types.end())
             combination.generic_geometries.emplace(it->first, it->second);
+    }
+    for (auto it = user_config.generic_materials.begin();
+        it != user_config.generic_materials.end();
+        it++)
+    {
+        if (it->second != nullptr ||
+            material_types.find(it->first) != material_types.end())
+            combination.generic_materials.emplace(it->first, it->second);
     }
 
     // Add default config for slots that aren't set by the user config
@@ -183,8 +220,9 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
         combination.particle_intersection = default_config.particle_intersection;
     if (combination.surface_interaction == nullptr)
         combination.surface_interaction = default_config.surface_interaction;
-    it = default_config.generic_geometries.begin();
-    for (; it != default_config.generic_geometries.end(); it++)
+    for (auto it = default_config.generic_geometries.begin();
+        it != default_config.generic_geometries.end(); 
+        it++)
     {
         if (it->second != nullptr &&
             geometry_types.find(it->first) != geometry_types.end())
@@ -193,6 +231,20 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
                 combination.generic_geometries.end())
             {
                 combination.generic_geometries.emplace(it->first, it->second);
+            }
+        }
+    }
+    for (auto it = default_config.generic_materials.begin();
+        it != default_config.generic_materials.end();
+        it++)
+    {
+        if (it->second != nullptr &&
+            material_types.find(it->first) != material_types.end())
+        {
+            if (combination.generic_materials.find(it->first) ==
+                combination.generic_materials.end())
+            {
+                combination.generic_materials.emplace(it->first, it->second);
             }
         }
     }
@@ -229,8 +281,9 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
             "is missing a suitable surface interaction factory");
         error = true;
     }
-    auto types_it = geometry_types.begin();
-    for (; types_it != geometry_types.end(); types_it++)
+    for (auto types_it = geometry_types.begin(); 
+        types_it != geometry_types.end(); 
+        types_it++)
     {
         if (combination.generic_geometries.find(*types_it) ==
             combination.generic_geometries.end())
@@ -239,6 +292,20 @@ bool ldplab::rtscuda::Factory::combineConfigurations(
                 "is missing a suitable generic geometry factory for the "\
                 "particle geometry type \"%s\"",
                 IParticleGeometry::typeToString(*types_it));
+            error = true;
+        }
+    }
+    for (auto types_it = material_types.begin();
+        types_it != material_types.end();
+        types_it++)
+    {
+        if (combination.generic_materials.find(*types_it) ==
+            combination.generic_materials.end())
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline configuration "\
+                "is missing a suitable generic material factory for the "\
+                "particle material type \"%s\"",
+                IParticleMaterial::typeToString(*types_it));
             error = true;
         }
     }
@@ -265,6 +332,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
     const InterfaceMapping& interface_mapping, 
     const GlobalData::DeviceProperties& device_properties,
     std::set<IParticleGeometry::Type>& geometry_types, 
+    std::set<IParticleMaterial::Type>& material_types,
     PipelineConfiguration& configuration, 
     PipelineConfiguration& default_configuration, 
     PipelineConfiguration& user_config, 
@@ -289,7 +357,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
     {
         // Begin to swap stages to default
         PipelineConfigurationBooleanState user_defined_stages =
-            checkConfigurationCast(geometry_types, user_config);
+            checkConfigurationCast(geometry_types, material_types, user_config);
         bool has_user_defined_stages =
             !checkForConfigurationStateUniformity(user_defined_stages, false);
         while (has_user_defined_stages)
@@ -304,8 +372,8 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined bounding volume "\
                         "intersection \"%s\" with default \"%s\"",
-                        configuration.bounding_volume_intersection->implementationName(),
-                        default_configuration.bounding_volume_intersection->implementationName());
+                        configuration.bounding_volume_intersection->implementationName().c_str(),
+                        default_configuration.bounding_volume_intersection->implementationName().c_str());
                     configuration.bounding_volume_intersection =
                         default_configuration.bounding_volume_intersection;
                     user_defined_stages.bounding_volume_intersection_state = false;
@@ -320,8 +388,8 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined initial stage "\
                         "\"%s\" with default \"%s\"",
-                        configuration.initial_stage->implementationName(),
-                        default_configuration.initial_stage->implementationName());
+                        configuration.initial_stage->implementationName().c_str(),
+                        default_configuration.initial_stage->implementationName().c_str());
                     configuration.initial_stage = default_configuration.initial_stage;
                     user_defined_stages.initial_stage_state = false;
                 }
@@ -335,8 +403,8 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined inner particle "\
                         "propagation \"%s\" with default \"%s\"",
-                        configuration.inner_particle_propagation->implementationName(),
-                        default_configuration.inner_particle_propagation->implementationName());
+                        configuration.inner_particle_propagation->implementationName().c_str(),
+                        default_configuration.inner_particle_propagation->implementationName().c_str());
                     configuration.inner_particle_propagation =
                         default_configuration.inner_particle_propagation;
                     user_defined_stages.inner_particle_propagation_state = false;
@@ -351,8 +419,8 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined particle "\
                         "intersection \"%s\" with default \"%s\"",
-                        configuration.particle_intersection->implementationName(),
-                        default_configuration.particle_intersection->implementationName());
+                        configuration.particle_intersection->implementationName().c_str(),
+                        default_configuration.particle_intersection->implementationName().c_str());
                     configuration.particle_intersection =
                         default_configuration.particle_intersection;
                     user_defined_stages.particle_intersection_state = false;
@@ -367,16 +435,17 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible user defined surface "\
                         "interaction \"%s\" with default \"%s\"",
-                        configuration.surface_interaction->implementationName(),
-                        default_configuration.surface_interaction->implementationName());
+                        configuration.surface_interaction->implementationName().c_str(),
+                        default_configuration.surface_interaction->implementationName().c_str());
                     configuration.surface_interaction =
                         default_configuration.surface_interaction;
                     user_defined_stages.surface_interaction_state = false;
                 }
             }
 
-            auto cs_it = config_state.generic_geometry_state.begin();
-            for (; cs_it != config_state.generic_geometry_state.end(); cs_it++)
+            for (auto cs_it = config_state.generic_geometry_state.begin(); 
+                cs_it != config_state.generic_geometry_state.end(); 
+                cs_it++)
             {
                 auto ud_geo_state =
                     user_defined_stages.generic_geometry_state.find(cs_it->first);
@@ -395,10 +464,38 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("RTSCUDA factory: "\
                         "Swapping incompatible generic geometry \"%s\" with "\
                         "default implementation \"%s\"",
-                        config_stage->second->implementationName(),
-                        default_stage->second->implementationName());
+                        config_stage->second->implementationName().c_str(),
+                        default_stage->second->implementationName().c_str());
                     config_stage->second = default_stage->second;
                     ud_geo_state->second = false;
+                }
+            }
+
+            for (auto cs_it = config_state.generic_material_state.begin();
+                cs_it != config_state.generic_material_state.end();
+                cs_it++)
+            {
+                auto ud_mat_state =
+                    user_defined_stages.generic_material_state.find(cs_it->first);
+                if (ud_mat_state == user_defined_stages.generic_material_state.end() ||
+                    ud_mat_state->second == false)
+                    break;
+                else
+                {
+                    auto config_stage =
+                        configuration.generic_materials.find(cs_it->first);
+                    auto default_stage =
+                        default_configuration.generic_materials.find(cs_it->first);
+                    if (config_stage == configuration.generic_materials.end() ||
+                        default_stage == default_configuration.generic_materials.end())
+                        break;
+                    LDPLAB_LOG_WARNING("RTSCUDA factory: "\
+                        "Swapping incompatible generic material \"%s\" with "\
+                        "default implementation \"%s\"",
+                        config_stage->second->implementationName().c_str(),
+                        default_stage->second->implementationName().c_str());
+                    config_stage->second = default_stage->second;
+                    ud_mat_state->second = false;
                 }
             }
 
@@ -429,35 +526,35 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
         LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline bounding "\
             "volume intersection stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.bounding_volume_intersection->implementationName());
+            configuration.bounding_volume_intersection->implementationName().c_str());
     }
     if (!config_state.initial_stage_state)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline initial "\
             "stage \"%s\" is incompatible with the given configuration or "\
             "experimental setup",
-            configuration.initial_stage->implementationName());
+            configuration.initial_stage->implementationName().c_str());
     }
     if (!config_state.inner_particle_propagation_state)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline inner "\
             "particle propagation stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.inner_particle_propagation->implementationName());
+            configuration.inner_particle_propagation->implementationName().c_str());
     }
     if (!config_state.particle_intersection_state)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline particle "\
             "intersection stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.particle_intersection->implementationName());
+            configuration.particle_intersection->implementationName().c_str());
     }
     if (!config_state.surface_interaction_state)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: Pipeline surface "\
             "interaction stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.surface_interaction->implementationName());
+            configuration.surface_interaction->implementationName().c_str());
     }
     for (auto it = config_state.generic_geometry_state.begin();
         it != config_state.generic_geometry_state.end();
@@ -470,8 +567,23 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                 "geometry implementation \"%s\" for geometry type \"%s\" is "\
                 "incompatible with the given configuration or "\
                 "experimental setup",
-                geo->second->implementationName(),
+                geo->second->implementationName().c_str(),
                 IParticleGeometry::typeToString(it->first));
+        }
+    }
+    for (auto it = config_state.generic_material_state.begin();
+        it != config_state.generic_material_state.end();
+        it++)
+    {
+        if (!it->second)
+        {
+            auto geo = configuration.generic_materials.find(it->first);
+            LDPLAB_LOG_ERROR("RTSCUDA factory: Generic "\
+                "material implementation \"%s\" for material type \"%s\" is "\
+                "incompatible with the given configuration or "\
+                "experimental setup",
+                geo->second->implementationName().c_str(),
+                IParticleMaterial::typeToString(it->first));
         }
     }
     return false;
@@ -539,6 +651,7 @@ ldplab::rtscuda::Factory::PipelineConfigurationBooleanState
 ldplab::rtscuda::Factory::PipelineConfigurationBooleanState 
     ldplab::rtscuda::Factory::checkConfigurationCast(
         std::set<IParticleGeometry::Type>& geometry_types, 
+        std::set<IParticleMaterial::Type>& material_types,
         PipelineConfiguration& configuration)
 {
     PipelineConfigurationBooleanState state;
@@ -560,6 +673,14 @@ ldplab::rtscuda::Factory::PipelineConfigurationBooleanState
         else
             state.generic_geometry_state.emplace(*it, geo->second != nullptr);
     }
+    for (auto it = material_types.begin(); it != material_types.end(); ++it)
+    {
+        auto mat = configuration.generic_materials.find(*it);
+        if (mat == configuration.generic_materials.end())
+            state.generic_material_state.emplace(*it, false);
+        else
+            state.generic_material_state.emplace(*it, mat->second != nullptr);
+    }
     return state;
 }
 
@@ -580,6 +701,13 @@ bool ldplab::rtscuda::Factory::checkForConfigurationStateUniformity(
         if (it->second != desired_uniform_state)
             return false;
     }
+    for (auto it = configuration_state.generic_material_state.begin();
+        it != configuration_state.generic_material_state.end();
+        it++)
+    {
+        if (it->second != desired_uniform_state)
+            return false;
+    }
     return true;
 }
 
@@ -588,27 +716,36 @@ void ldplab::rtscuda::Factory::logViableConfiguration(
 {
     LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses initial stage \"%s\"",
-        config.initial_stage->implementationName());
+        config.initial_stage->implementationName().c_str());
     LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses bounding volume intersection stage \"%s\"",
-        config.bounding_volume_intersection->implementationName());
+        config.bounding_volume_intersection->implementationName().c_str());
     LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses particle intersection stage \"%s\"",
-        config.particle_intersection->implementationName());
+        config.particle_intersection->implementationName().c_str());
     LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses surface interaction stage \"%s\"",
-        config.surface_interaction->implementationName());
+        config.surface_interaction->implementationName().c_str());
     LDPLAB_LOG_INFO("RTSCUDA factory: "\
         "Pipeline configuration uses inner particle propagation stage \"%s\"",
-        config.inner_particle_propagation->implementationName());
-    auto it = config.generic_geometries.begin();
-    for (; it != config.generic_geometries.end(); ++it)
+        config.inner_particle_propagation->implementationName().c_str());
+    auto git = config.generic_geometries.begin();
+    for (; git != config.generic_geometries.end(); ++git)
     {
         LDPLAB_LOG_INFO("RTSCUDA factory: "\
             "Pipeline configuration uses generic geometry \"%s\" for "\
             "geometry type \"%s\"",
-            it->second->implementationName(),
-            IParticleGeometry::typeToString(it->first));
+            git->second->implementationName().c_str(),
+            IParticleGeometry::typeToString(git->first));
+    }
+    auto mit = config.generic_materials.begin();
+    for (; mit != config.generic_materials.end(); ++mit)
+    {
+        LDPLAB_LOG_INFO("RTSCUDA factory: "\
+            "Pipeline configuration uses generic material \"%s\" for "\
+            "geometry type \"%s\"",
+            mit->second->implementationName().c_str(),
+            IParticleMaterial::typeToString(mit->first));
     }
 }
 
@@ -853,9 +990,11 @@ bool ldplab::rtscuda::Factory::createGlobalData(
             pd.material_instances[i]->getDeviceIndexOfRefractionFunction();
         pd.material_data_buffer.getHostBuffer()[i] =
             pd.material_instances[i]->getDeviceData();
+        error = error || (pd.geometry_data_buffer.getHostBuffer()[i] == nullptr);
         error = error || (pd.intersect_ray_fptr_buffer.getHostBuffer()[i] == nullptr);
         error = error || (pd.intersect_segment_fptr_buffer.getHostBuffer()[i] == nullptr);
         error = error || (pd.index_of_refraction_fptr_buffer.getHostBuffer()[i] == nullptr);
+        error = error || (pd.material_data_buffer.getHostBuffer()[i] == nullptr);
     }
     if (error)
     {
@@ -908,15 +1047,15 @@ bool ldplab::rtscuda::Factory::createGlobalData(
         bd.batch_data_index = i;
 
         // Create ray buffer
-        error = error || bd.ray_data_buffers.direction_buffers.allocate(
+        error = error || !bd.ray_data_buffers.direction_buffers.allocate(
             num_rays, branching_depth + 2, 0);
-        error = error || bd.ray_data_buffers.intensity_buffers.allocate(
+        error = error || !bd.ray_data_buffers.intensity_buffers.allocate(
             num_rays, branching_depth + 2, 0);
-        error = error || bd.ray_data_buffers.min_bv_distance_buffers.allocate(
+        error = error || !bd.ray_data_buffers.min_bv_distance_buffers.allocate(
             num_rays, branching_depth + 2, 0);
-        error = error || bd.ray_data_buffers.origin_buffers.allocate(
+        error = error || !bd.ray_data_buffers.origin_buffers.allocate(
             num_rays, branching_depth + 2, 0);
-        error = error || bd.ray_data_buffers.particle_index_buffers.allocate(
+        error = error || !bd.ray_data_buffers.particle_index_buffers.allocate(
             num_rays, branching_depth + 2, 0);
         if (error)
         {
@@ -926,11 +1065,11 @@ bool ldplab::rtscuda::Factory::createGlobalData(
         }
 
         // Create intersection buffer
-        error = error || bd.intersection_data_buffers.normal_buffers.allocate(
+        error = error || !bd.intersection_data_buffers.normal_buffers.allocate(
             num_rays, branching_depth + 1, 0);
-        error = error || bd.intersection_data_buffers.particle_index_buffers.allocate(
+        error = error || !bd.intersection_data_buffers.particle_index_buffers.allocate(
             num_rays, branching_depth + 1, 0);
-        error = error || bd.intersection_data_buffers.point_buffers.allocate(
+        error = error || !bd.intersection_data_buffers.point_buffers.allocate(
             num_rays, branching_depth + 1, 0);
         if (error)
         {
@@ -940,13 +1079,13 @@ bool ldplab::rtscuda::Factory::createGlobalData(
         }
 
         // Create output buffer
-        error = error || bd.output_data_buffers.force_per_particle_buffer.allocate(
+        error = error || !bd.output_data_buffers.force_per_particle_buffer.allocate(
             num_particles, true);
-        error = error || bd.output_data_buffers.torque_per_particle_buffer.allocate(
+        error = error || !bd.output_data_buffers.torque_per_particle_buffer.allocate(
             num_particles, true);
-        error = error || bd.output_data_buffers.force_per_ray_buffer.allocate(
+        error = error || !bd.output_data_buffers.force_per_ray_buffer.allocate(
             num_rays, false);
-        error = error || bd.output_data_buffers.torque_per_ray_buffer.allocate(
+        error = error || !bd.output_data_buffers.torque_per_ray_buffer.allocate(
             num_rays, false);
         if (error)
         {
@@ -1109,7 +1248,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
         }
     }
 
-    rts = std::make_shared<RayTracingStepCUDA>(std::move(pipeline));
+    rts->m_pipeline = std::move(pipeline);
     return true;
 }
 

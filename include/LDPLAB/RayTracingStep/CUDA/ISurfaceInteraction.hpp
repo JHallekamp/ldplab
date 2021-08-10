@@ -1,6 +1,5 @@
 #ifndef WWU_LDPLAB_RTSCUDA_I_SURFACE_INTERACTION_HPP
 #define WWU_LDPLAB_RTSCUDA_I_SURFACE_INTERACTION_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include "IPipelineStage.hpp"
 
@@ -27,5 +26,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

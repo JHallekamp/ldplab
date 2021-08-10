@@ -1,6 +1,5 @@
 #ifndef WWU_LDPLAB_RTSCUDA_I_GENERIC_MATERIAL_HPP
 #define WWU_LDPLAB_RTSCUDA_I_GENERIC_MATERIAL_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <LDPLAB/Geometry.hpp>
 
@@ -37,5 +36,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

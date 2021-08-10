@@ -35,7 +35,7 @@ size_t ldplab::rtscpu::BoundingSphereIntersectionBruteforce::execute(
     LDPLAB_LOG_TRACE("RTSCPU %i: Test bounding sphere intersections "\
         "for batch buffer %i",
         getParentRayTracingStepUID(),
-        buffer.uid);
+        ray_data.uid);
 
     size_t num_rays_exiting_scene = 0;
     size_t num_rays_hitting_boundary_sphere = 0;

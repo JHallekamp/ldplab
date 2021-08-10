@@ -288,8 +288,8 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
                         "Swapping incompatible user defined bounding volume "\
                         "intersection \"%s\" with default \"%s\"",
-                        configuration.bounding_volume_intersection->implementationName(),
-                        default_configuration.bounding_volume_intersection->implementationName());
+                        configuration.bounding_volume_intersection->implementationName().c_str(),
+                        default_configuration.bounding_volume_intersection->implementationName().c_str());
                     configuration.bounding_volume_intersection =
                         default_configuration.bounding_volume_intersection;
                     user_defined_stages.bounding_volume_intersection_state = false;
@@ -304,8 +304,8 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
                         "Swapping incompatible user defined initial stage "\
                         "\"%s\" with default \"%s\"",
-                        configuration.initial_stage->implementationName(),
-                        default_configuration.initial_stage->implementationName());
+                        configuration.initial_stage->implementationName().c_str(),
+                        default_configuration.initial_stage->implementationName().c_str());
                     configuration.initial_stage = default_configuration.initial_stage;
                     user_defined_stages.initial_stage_state = false;
                 }
@@ -319,8 +319,8 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
                         "Swapping incompatible user defined inner particle "\
                         "propagation \"%s\" with default \"%s\"",
-                        configuration.inner_particle_propagation->implementationName(),
-                        default_configuration.inner_particle_propagation->implementationName());
+                        configuration.inner_particle_propagation->implementationName().c_str(),
+                        default_configuration.inner_particle_propagation->implementationName().c_str());
                     configuration.inner_particle_propagation = 
                         default_configuration.inner_particle_propagation;
                     user_defined_stages.inner_particle_propagation_state = false;
@@ -335,8 +335,8 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
                         "Swapping incompatible user defined particle "\
                         "intersection \"%s\" with default \"%s\"",
-                        configuration.particle_intersection->implementationName(),
-                        default_configuration.particle_intersection->implementationName());
+                        configuration.particle_intersection->implementationName().c_str(),
+                        default_configuration.particle_intersection->implementationName().c_str());
                     configuration.particle_intersection =
                         default_configuration.particle_intersection;
                     user_defined_stages.particle_intersection_state = false;
@@ -351,8 +351,8 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
                         "Swapping incompatible user defined surface "\
                         "interaction \"%s\" with default \"%s\"",
-                        configuration.surface_interaction->implementationName(),
-                        default_configuration.surface_interaction->implementationName());
+                        configuration.surface_interaction->implementationName().c_str(),
+                        default_configuration.surface_interaction->implementationName().c_str());
                     configuration.surface_interaction =
                         default_configuration.surface_interaction;
                     user_defined_stages.surface_interaction_state = false;
@@ -379,8 +379,8 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                     LDPLAB_LOG_WARNING("Ray Tracing Step CPU Factory: "\
                         "Swapping incompatible generic geometry \"%s\" with "\
                         "default implementation \"%s\"",
-                        config_stage->second->implementationName(),
-                        default_stage->second->implementationName());
+                        config_stage->second->implementationName().c_str(),
+                        default_stage->second->implementationName().c_str());
                     config_stage->second = default_stage->second;
                     ud_geo_state->second = false;
                 }
@@ -412,35 +412,35 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
         LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline bounding "\
             "volume intersection stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.bounding_volume_intersection->implementationName());
+            configuration.bounding_volume_intersection->implementationName().c_str());
     }
     if (!config_state.initial_stage_state)
     {
         LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline initial "\
             "stage \"%s\" is incompatible with the given configuration or "\
             "experimental setup",
-            configuration.initial_stage->implementationName());
+            configuration.initial_stage->implementationName().c_str());
     }
     if (!config_state.inner_particle_propagation_state)
     {
         LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline inner "\
             "particle propagation stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.inner_particle_propagation->implementationName());
+            configuration.inner_particle_propagation->implementationName().c_str());
     }
     if (!config_state.particle_intersection_state)
     {
         LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline particle "\
             "intersection stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.particle_intersection->implementationName());
+            configuration.particle_intersection->implementationName().c_str());
     }
     if (!config_state.surface_interaction_state)
     {
         LDPLAB_LOG_ERROR("Ray Tracing Step CPU Factory: Pipeline surface "\
             "interaction stage \"%s\" is incompatible with the given "\
             "configuration or experimental setup",
-            configuration.surface_interaction->implementationName());
+            configuration.surface_interaction->implementationName().c_str());
     }
     for (auto it = config_state.generic_geometry_state.begin();
         it != config_state.generic_geometry_state.end();
@@ -453,7 +453,7 @@ bool ldplab::rtscpu::Factory::createViableConfiguration(
                 "geometry implementation \"%s\" for geometry type \"%s\" is "\
                 "incompatible with the given configuration or "\
                 "experimental setup",
-                geo->second->implementationName(),
+                geo->second->implementationName().c_str(),
                 IParticleGeometry::typeToString(it->first));
         }
     }
@@ -563,26 +563,26 @@ void ldplab::rtscpu::Factory::logViableConfiguration(PipelineConfiguration& conf
 {
     LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
         "Pipeline configuration uses initial stage \"%s\"",
-        config.initial_stage->implementationName());
+        config.initial_stage->implementationName().c_str());
     LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
         "Pipeline configuration uses bounding volume intersection stage \"%s\"",
-        config.bounding_volume_intersection->implementationName());
+        config.bounding_volume_intersection->implementationName().c_str());
     LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
         "Pipeline configuration uses particle intersection stage \"%s\"",
-        config.particle_intersection->implementationName());
+        config.particle_intersection->implementationName().c_str());
     LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
         "Pipeline configuration uses surface interaction stage \"%s\"",
-        config.surface_interaction->implementationName());
+        config.surface_interaction->implementationName().c_str());
     LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
         "Pipeline configuration uses inner particle propagation stage \"%s\"",
-        config.inner_particle_propagation->implementationName());
+        config.inner_particle_propagation->implementationName().c_str());
     auto it = config.generic_geometries.begin();
     for (; it != config.generic_geometries.end(); ++it)
     {
         LDPLAB_LOG_INFO("Ray Tracing Step CPU Factory: "\
             "Pipeline configuration uses generic geometry \"%s\" for "\
             "geometry type \"%s\"",
-            it->second->implementationName(),
+            it->second->implementationName().c_str(),
             IParticleGeometry::typeToString(it->first));
     }
     

@@ -14,8 +14,8 @@ namespace ldplab
     {
         class RayTracingStepCUDA : public IRayTracingStep
         {
+            friend class Factory;
         public:
-            RayTracingStepCUDA(std::unique_ptr<IPipeline>&& pipeline);
             /**
              * @brief Inherited via IRayTracingStep. Starts the ray tracing
              *        simulation.

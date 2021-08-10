@@ -24,7 +24,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::execute(
 {
     LDPLAB_LOG_TRACE("RTSCPU %i: Execute inner particle ray propagation "\
         "on batch buffer %i",
-        getParentRayTracingStepUID(), rays.uid);
+        getParentRayTracingStepUID(), ray_data.uid);
 
     for (size_t i = 0; i < ray_data.size; i++)
     {
@@ -47,7 +47,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::execute(
     LDPLAB_LOG_TRACE("RTSCPU %i: Inner particle ray propagation on "\
         "buffer %i completed",
         getParentRayTracingStepUID(),
-        rays.uid);
+        ray_data.uid);
 }
 
 void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::

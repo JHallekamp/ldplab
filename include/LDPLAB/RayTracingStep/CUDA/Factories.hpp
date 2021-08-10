@@ -1,6 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCUDA_STAGE_FACTORIES_HPP
-#define WWU_LDPLAB_RTSCUDA_STAGE_FACTORIES_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+#ifndef WWU_LDPLAB_RTSCUDA_FACTORIES_HPP
+#define WWU_LDPLAB_RTSCUDA_FACTORIES_HPP
 
 #include <memory>
 #include <string>
@@ -409,5 +408,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

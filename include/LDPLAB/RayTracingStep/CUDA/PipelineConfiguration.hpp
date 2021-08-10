@@ -1,6 +1,5 @@
 #ifndef WWU_LDPLAB_RTSCUDA_PIPELINE_CONFIGURATION_HPP
 #define WWU_LDPLAB_RTSCUDA_PIPELINE_CONFIGURATION_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <memory>
 #include <map>
@@ -70,5 +69,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

@@ -1,6 +1,5 @@
 #ifndef WWU_LDPLAB_RTSCUDA_I_PIPELINE_STAGE_HPP
 #define WWU_LDPLAB_RTSCUDA_I_PIPELINE_STAGE_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <LDPLAB/ExperimentalSetup/ExperimentalSetup.hpp>
 #include <LDPLAB/RayTracingStep/IRayTracingStep.hpp>
@@ -49,5 +48,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

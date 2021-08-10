@@ -1,6 +1,5 @@
 #ifndef WWU_LDPLAB_RTSCUDA_DEVICE_MEMORY_HPP
 #define WWU_LDPLAB_RTSCUDA_DEVICE_MEMORY_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <memory>
 #include <vector>
@@ -15,7 +14,7 @@ namespace ldplab
         class IDeviceResource
         {
         public:
-            virtual ~IDeviceResource();
+            virtual ~IDeviceResource() { }
             /** @brief Frees the resource. */
             virtual bool free() = 0;
             /** @brief Checks if the resource is allocated. */
@@ -66,6 +65,7 @@ namespace ldplab
             DeviceBufferRange();
             DeviceBufferRange(const DeviceBufferRange<basetype>& other) = delete;
             DeviceBufferRange(DeviceBufferRange<basetype>&& other);
+            virtual ~DeviceBufferRange() { free(); }
             bool allocated() override;
             bool free() override;
             /**
@@ -488,5 +488,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

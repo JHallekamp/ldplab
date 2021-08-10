@@ -2,6 +2,7 @@
 #include <LDPLAB/RayTracingStep/CUDA/DefaultInitialStageFactories.hpp>
 
 #include "ImplInitialStage.hpp"
+#include "../../Utils/Log.hpp"
 
 ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 InitialStageHomogenousLightBoundingSphereProjectionFactory(
@@ -41,6 +42,8 @@ checkCompability(
 		if (setup.particles[i].bounding_volume->type() !=
 			IBoundingVolume::Type::sphere)
 		{
+			LDPLAB_LOG_ERROR("RTSCUDA initial stage factory: Particle %i is "\
+				"incomaptible, only spherical particle geometries allowed", i);
 			return false;
 		}
 	}
@@ -49,9 +52,12 @@ checkCompability(
 		if (setup.light_sources[i].intensity_distribution->type() !=
 			ILightDistribution::Type::homogeneous)
 		{
+			LDPLAB_LOG_ERROR("RTSCUDA initial stage factory: Light source %i is "\
+				"incomaptible, only homogeneous light sources allowed", i);
 			return false;
 		}
 	}
+	return true;
 }
 
 std::shared_ptr<ldplab::rtscuda::IInitialStage>

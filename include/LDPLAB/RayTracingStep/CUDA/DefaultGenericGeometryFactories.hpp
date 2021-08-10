@@ -1,6 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCUDA_default_factories_FACTORIES_HPP
-#define WWU_LDPLAB_RTSCUDA_default_factories_FACTORIES_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
+#ifndef WWU_LDPLAB_RTSCUDA_DEFAULT_GENERIC_GEOMETRY_FACTORIES_HPP
+#define WWU_LDPLAB_RTSCUDA_DEFAULT_GENERIC_GEOMETRY_FACTORIES_HPP
 
 #include "Factories.hpp"
 
@@ -59,5 +58,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

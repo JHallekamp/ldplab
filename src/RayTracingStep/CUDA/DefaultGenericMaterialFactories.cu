@@ -1,6 +1,8 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include <LDPLAB/RayTracingStep/CUDA/DefaultGenericMaterialFactories.hpp>
 
+#include <LDPLAB/RayTracingStep/CUDA/DeviceResource.hpp>
+
 #include "ImplGenericMaterial.hpp"
 
 std::string ldplab::rtscuda::default_factories::GenericMaterialLinearOneDirectionalFactory::

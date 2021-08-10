@@ -1,14 +1,16 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include "ImplGenericMaterial.hpp"
 
+#include <LDPLAB/RayTracingStep/CUDA/DeviceResource.hpp>
+
 namespace linear_one_directional
 {
     using namespace ldplab;
     using namespace rtscuda;
-    double indexOfRefraction(
+    __device__ double indexOfRefraction(
         const Vec3& position,
         const void* particle_material);
-    IGenericMaterial::indexOfRefraction indexOfRefractionFp = indexOfRefraction;
+    __device__ IGenericMaterial::indexOfRefraction indexOfRefractionFp = indexOfRefraction;
 }
 
 ldplab::rtscuda::GenericMaterialLinearOneDirectional::
@@ -27,17 +29,18 @@ ldplab::rtscuda::IGenericMaterial::indexOfRefraction
 ldplab::rtscuda::GenericMaterialLinearOneDirectional::
 getDeviceIndexOfRefractionFunction()
 {
+    using namespace linear_one_directional;
     indexOfRefraction kernel_fp = nullptr;
     if (cudaMemcpyFromSymbol(
         &kernel_fp,
-        linear_one_directional::indexOfRefractionFp,
-        sizeof(linear_one_directional::indexOfRefractionFp))
+        indexOfRefractionFp,
+        sizeof(indexOfRefractionFp))
         != cudaSuccess)
         return nullptr;
     return kernel_fp;
 }
 
-double linear_one_directional::indexOfRefraction(
+__device__ double linear_one_directional::indexOfRefraction(
     const Vec3& position, 
     const void* particle_material)
 {

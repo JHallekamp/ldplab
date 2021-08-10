@@ -175,10 +175,10 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         "%i now holds %i refracted rays",
         getParentRayTracingStepUID(),
         input_ray_data.uid,
-        reflected_input_ray_data.uid,
-        reflected_input_ray_data.active_rays,
-        refracted_input_ray_data.uid,
-        refracted_input_ray_data.active_rays);
+        output_ray_data.uid,
+        output_ray_data.active_rays,
+        output_ray_data.uid,
+        output_ray_data.active_rays);
 }
 
 double ldplab::rtscpu::SurfaceInteraction::reflectance(

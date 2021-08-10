@@ -1,6 +1,5 @@
 #ifndef WWU_LDPLAB_RTSCUDA_DATA_HPP
 #define WWU_LDPLAB_RTSCUDA_DATA_HPP
-#ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <cstdint>
 #include <map>
@@ -182,5 +181,4 @@ namespace ldplab
     }
 }
 
-#endif
 #endif

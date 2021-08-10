@@ -1,6 +1,7 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include "ImplGenericGeometry.hpp"
 
+#include <LDPLAB/RayTracingStep/CUDA/DeviceResource.hpp>
 #include <LDPLAB/Constants.hpp>
 #include <cuda_runtime.h>
 

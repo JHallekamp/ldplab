@@ -50,7 +50,9 @@ bool ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSpher
 			return false;
 		}
 	}
+	return true;
 }
+
 std::shared_ptr<ldplab::rtscpu::IInitialStage> ldplab::rtscpu::default_factories::
 	InitialStageHomogenousLightBoundingSphereProjectionFactory::create(
 		const RayTracingStepCPUInfo& step_info,

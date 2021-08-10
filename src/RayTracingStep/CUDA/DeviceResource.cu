@@ -3,11 +3,6 @@
 
 #include "../../Utils/Log.hpp"
 
-ldplab::rtscuda::IDeviceResource::~IDeviceResource()
-{
-    free();
-}
-
 ldplab::UID<ldplab::rtscuda::IDeviceResource> 
     ldplab::rtscuda::IDeviceResource::uid() const
 {

@@ -35,6 +35,7 @@ namespace ldplab
                 bool particle_intersection_state;
                 bool surface_interaction_state;
                 std::map<IParticleGeometry::Type, bool> generic_geometry_state;
+                std::map<IParticleMaterial::Type, bool> generic_material_state;
             };
         private:
             void createDefaultConfiguration(
@@ -43,8 +44,11 @@ namespace ldplab
                 PipelineConfiguration& default_config);
             std::set<IParticleGeometry::Type> getPresentGeometryTypes(
                 const ExperimentalSetup& setup);
+            std::set<IParticleMaterial::Type> getPresentMaterialTypes (
+                const ExperimentalSetup& setup);
             bool combineConfigurations(
                 std::set<IParticleGeometry::Type>& geometry_types,
+                std::set<IParticleMaterial::Type>& material_types,
                 PipelineConfiguration& default_config,
                 PipelineConfiguration& user_config,
                 PipelineConfiguration& combination);
@@ -56,6 +60,7 @@ namespace ldplab
                 const InterfaceMapping& interface_mapping,
                 const GlobalData::DeviceProperties& device_properties,
                 std::set<IParticleGeometry::Type>& geometry_types,
+                std::set<IParticleMaterial::Type>& material_types,
                 PipelineConfiguration& configuration,
                 PipelineConfiguration& default_configuration,
                 PipelineConfiguration& user_config,
@@ -68,6 +73,7 @@ namespace ldplab
                 PipelineConfiguration& configuration);
             PipelineConfigurationBooleanState checkConfigurationCast(
                 std::set<IParticleGeometry::Type>& geometry_types,
+                std::set<IParticleMaterial::Type>& material_types,
                 PipelineConfiguration& configuration);
             bool checkForConfigurationStateUniformity(
                 const PipelineConfigurationBooleanState& configuration_state,

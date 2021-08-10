@@ -7,12 +7,6 @@
 
 #include <chrono>
 
-ldplab::rtscuda::RayTracingStepCUDA::RayTracingStepCUDA(
-    std::unique_ptr<IPipeline>&& pipeline)
-    :
-    m_pipeline{ std::move(pipeline) }
-{ }
-
 void ldplab::rtscuda::RayTracingStepCUDA::execute(
 	const SimulationState& input, 
 	RayTracingStepOutput& output)
