@@ -19,7 +19,8 @@ namespace ldplab
                 const GlobalData& global_data,
                 BatchData& batch_data,
                 size_t ray_buffer_index,
-                size_t intersection_buffer_index) override;
+                size_t intersection_buffer_index,
+                size_t output_buffer_index) override;
         private:
             const RK4Parameter m_parameter;
         };

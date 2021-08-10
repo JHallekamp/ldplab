@@ -15,7 +15,8 @@ namespace ldplab
                 const GlobalData& global_data,
                 BatchData& batch_data,
                 size_t ray_buffer_index,
-                size_t intersection_buffer_index) = 0;
+                size_t intersection_buffer_index,
+                size_t output_buffer_index) = 0;
         };
     }
 }

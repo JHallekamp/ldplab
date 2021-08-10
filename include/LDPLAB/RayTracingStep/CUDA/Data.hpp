@@ -101,9 +101,9 @@ namespace ldplab
             struct OutputDataBuffers
             {
                 DeviceBuffer<Vec3> force_per_particle_buffer;
-                DeviceBuffer<Vec3> force_per_ray_buffer;
+                DeviceBufferRange<Vec3> force_per_ray_buffer;
                 DeviceBuffer<Vec3> torque_per_particle_buffer;
-                DeviceBuffer<Vec3> torque_per_ray_buffer;
+                DeviceBufferRange<Vec3> torque_per_ray_buffer;
             } output_data_buffers;
         };
 

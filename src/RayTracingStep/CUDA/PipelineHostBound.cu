@@ -96,15 +96,6 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	size_t ray_buffer_index, 
 	bool inside_particle)
 {
-    // Prepare buffer
-    LDPLAB_PROFILING_START(pipeline_execute_layer_buffer_setup);
-    BufferSetup::executeLayerSetup(
-        *m_context,
-        batch_data, 
-        pipeline_data, 
-        ray_buffer_index);
-    LDPLAB_PROFILING_STOP(pipeline_execute_layer_buffer_setup);
-
     // Check if buffer contains rays
     LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce);
     PipelineData::RayBufferReductionResult ray_state_count;
@@ -118,11 +109,26 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
     if (ray_state_count.num_active_rays == 0)
         return;
 
+    // Prepare buffer
+    LDPLAB_PROFILING_START(pipeline_execute_layer_buffer_setup);
+    BufferSetup::executeLayerSetup(
+        *m_context,
+        batch_data, 
+        pipeline_data, 
+        ray_buffer_index,
+        ray_buffer_index);
+    LDPLAB_PROFILING_STOP(pipeline_execute_layer_buffer_setup);
+
     // Switch between inside and outside particle
     if (inside_particle)
     {
         LDPLAB_PROFILING_START(pipeline_inner_particle_propagation);
-        m_stage_ipp->execute(*m_context, batch_data, ray_buffer_index, ray_buffer_index);
+        m_stage_ipp->execute(
+            *m_context, 
+            batch_data, 
+            ray_buffer_index, 
+            ray_buffer_index, 
+            ray_buffer_index);
         LDPLAB_PROFILING_STOP(pipeline_inner_particle_propagation);
     }
     else
@@ -130,10 +136,17 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         do
         {
             LDPLAB_PROFILING_START(pipeline_bounding_volume_intersection);
-            m_stage_bvi->execute(*m_context, batch_data, ray_buffer_index);
+            m_stage_bvi->execute(
+                *m_context, 
+                batch_data, 
+                ray_buffer_index);
             LDPLAB_PROFILING_STOP(pipeline_bounding_volume_intersection);
             LDPLAB_PROFILING_START(pipeline_particle_intersection);
-            m_stage_pi->execute(*m_context, batch_data, ray_buffer_index, ray_buffer_index);
+            m_stage_pi->execute(
+                *m_context, 
+                batch_data, 
+                ray_buffer_index, 
+                ray_buffer_index);
             LDPLAB_PROFILING_STOP(pipeline_particle_intersection);
             LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce);
             ray_state_count = RayBufferReduce::execute(
@@ -142,20 +155,15 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 pipeline_data,
                 ray_buffer_index);
             LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce);
+            if (ray_state_count.num_active_rays == 0)
+                return;
         } while (ray_state_count.num_world_space_rays > 0);
     }
-    LDPLAB_PROFILING_START(pipeline_gather_output);
-    GatherOutput::execute(
-        *m_context,
-        batch_data,
-        pipeline_data,
-        ray_buffer_index);
-    LDPLAB_PROFILING_STOP(pipeline_gather_output);
     // Perform surface interaction and ray branching
-    constexpr size_t num_passes = 2;
-    for (size_t i = 0; i < num_passes; ++i)
+    constexpr std::array<bool, 2> passes{ true, false };
+    for (size_t i = 0; i < passes.size(); ++i)
     {
-        const bool reflection_pass = (i == 0);
+        const bool reflection_pass = passes[i];
         const bool result_inside_particle = reflection_pass ?
             inside_particle :
             !inside_particle;
@@ -171,26 +179,13 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 ray_buffer_index,
                 ray_buffer_index + 1,
                 ray_buffer_index,
+                ray_buffer_index,
                 m_context->simulation_parameter.intensity_cutoff,
                 m_context->experimental_setup.medium_reflection_index,
                 inside_particle,
                 reflection_pass,
                 j);
             LDPLAB_PROFILING_STOP(pipeline_surface_interaction);
-            LDPLAB_PROFILING_START(pipeline_execute_layer_setup);
-            BufferSetup::executeLayerSetup(
-                *m_context,
-                batch_data,
-                pipeline_data,
-                ray_buffer_index);
-            LDPLAB_PROFILING_STOP(pipeline_execute_layer_setup);
-            LDPLAB_PROFILING_START(pipeline_gather_output);
-            GatherOutput::execute(
-                *m_context, 
-                batch_data, 
-                pipeline_data, 
-                ray_buffer_index);
-            LDPLAB_PROFILING_STOP(pipeline_gather_output);
             if (depth < m_context->simulation_parameter.max_branching_depth)
             {
                 executeBatch(
@@ -203,6 +198,14 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
             }
         }
     }
+    LDPLAB_PROFILING_START(pipeline_gather_output);
+    GatherOutput::execute(
+        *m_context,
+        batch_data,
+        pipeline_data,
+        ray_buffer_index,
+        ray_buffer_index);
+    LDPLAB_PROFILING_STOP(pipeline_gather_output);
 }
 
 #endif

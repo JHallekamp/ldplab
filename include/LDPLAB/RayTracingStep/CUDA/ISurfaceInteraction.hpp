@@ -14,9 +14,10 @@ namespace ldplab
             virtual void execute(
                 const GlobalData& global_data,
                 BatchData& batch_data,
-                size_t input_ray_buffer_index,
-                size_t output_ray_buffer_index,
+                size_t ray_input_buffer_index,
+                size_t ray_output_buffer_index,
                 size_t intersection_buffer_index,
+                size_t output_buffer_index,
                 double intensity_cutoff,
                 double medium_reflection_index,
                 bool input_inner_particle_rays,

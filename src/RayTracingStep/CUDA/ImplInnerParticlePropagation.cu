@@ -62,7 +62,8 @@ void ldplab::rtscuda::InnerParticlePropagationRK4::execute(
 	const GlobalData& global_data, 
 	BatchData& batch_data, 
 	size_t ray_buffer_index, 
-	size_t intersection_buffer_index)
+	size_t intersection_buffer_index,
+    size_t output_buffer_index)
 {
     using namespace rk4;
     const size_t block_size = 192;
@@ -84,8 +85,8 @@ void ldplab::rtscuda::InnerParticlePropagationRK4::execute(
         global_data.particle_data_buffers.index_of_refraction_fptr_buffer.getDeviceBuffer(),
         global_data.particle_data_buffers.material_data_buffer.getDeviceBuffer(),
         global_data.particle_data_buffers.center_of_mass_buffer.getDeviceBuffer(),
-        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(),
-        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
         global_data.simulation_parameter.num_particles);
 }
 

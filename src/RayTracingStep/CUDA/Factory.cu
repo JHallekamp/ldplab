@@ -1084,9 +1084,9 @@ bool ldplab::rtscuda::Factory::createGlobalData(
         error = error || !bd.output_data_buffers.torque_per_particle_buffer.allocate(
             num_particles, true);
         error = error || !bd.output_data_buffers.force_per_ray_buffer.allocate(
-            num_rays, false);
+            num_rays, branching_depth + 1, 0);
         error = error || !bd.output_data_buffers.torque_per_ray_buffer.allocate(
-            num_rays, false);
+            num_rays, branching_depth + 1, 0);
         if (error)
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate output "\

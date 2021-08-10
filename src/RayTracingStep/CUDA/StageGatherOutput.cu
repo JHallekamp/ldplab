@@ -82,14 +82,15 @@ void ldplab::rtscuda::GatherOutput::execute(
     const GlobalData& global_data,
 	BatchData& batch_data, 
     PipelineData& pipeline_data,
-	size_t ray_buffer_index)
+	size_t ray_buffer_index,
+    size_t output_buffer_index)
 {
     const PipelineData::KernelLaunchParameter& klp = 
         pipeline_data.gather_output_klp;
     gatherOutputKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size>>>(
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(),
-        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(),
+        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
         global_data.simulation_parameter.num_rays_per_batch,
         batch_data.output_data_buffers.force_per_particle_buffer.getDeviceBuffer(),
         batch_data.output_data_buffers.torque_per_particle_buffer.getDeviceBuffer(),

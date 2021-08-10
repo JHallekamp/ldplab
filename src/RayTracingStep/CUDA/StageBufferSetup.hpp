@@ -24,7 +24,8 @@ namespace ldplab
                 const GlobalData& global_data,
                 BatchData& batch_data,
                 PipelineData& data,
-                size_t buffer_index);
+                size_t buffer_index,
+                size_t output_buffer_index);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
                 const GlobalData& global_data,
