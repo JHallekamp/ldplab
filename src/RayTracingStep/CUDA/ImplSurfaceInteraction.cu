@@ -170,7 +170,7 @@ __global__ void surface_interaction::surfaceInteractionKernel(
                 output_ray_min_bv_dist_buffer[ri] = 0.0;
                 output_ray_origin_buffer[ri] = intersection_point;
                 output_ray_direction_buffer[ri] =
-                    input_ray_direction_buffer[ri] + 
+                    input_ray_direction_buffer[ri] +
                     intersection_normal * 2.0 * cos_a;
                 delta_momentum = nx * (input_ray_direction_buffer[ri] -
                     output_ray_direction_buffer[ri]);
@@ -181,7 +181,7 @@ __global__ void surface_interaction::surfaceInteractionKernel(
                 delta_momentum = intersection_normal * (nx * -2.0 * cos_a);
             }
             output_force_per_ray_buffer[ri] += intensity * delta_momentum;
-            output_torque_per_ray_buffer[ri] += 
+            output_torque_per_ray_buffer[ri] +=
                 intensity * glm::cross(r, delta_momentum);
         }
         else
@@ -209,7 +209,7 @@ __global__ void surface_interaction::surfaceInteractionKernel(
                 intensity * glm::cross(r, delta_momentum);
         }
     }
-    else if(pass_reflection) // toal reflected ray
+    else if (pass_reflection) // toal reflected ray
     {
         output_ray_index_buffer[ri] = particle_index;
         output_ray_intensity_buffer[ri] = input_ray_intensity_buffer[ri];
@@ -225,6 +225,8 @@ __global__ void surface_interaction::surfaceInteractionKernel(
         output_torque_per_ray_buffer[ri] +=
             output_ray_intensity_buffer[ri] * glm::cross(r, delta_momentum);
     }
+    else
+        output_ray_index_buffer[ri] = -1;
 }
 
 __device__ double surface_interaction::reflectance(
