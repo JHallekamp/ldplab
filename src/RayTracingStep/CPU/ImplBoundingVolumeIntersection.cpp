@@ -8,21 +8,21 @@
 void ldplab::rtscpu::BoundingSphereIntersectionBruteforce::stepSetup(
     const ExperimentalSetup& setup, 
     const SimulationState& simulation_state, 
-    const InterfaceMapping& interface_mapping)
+    const InterfaceMapping& interface_mapping,
+    const std::vector<ParticleTransformation>& particle_transformation)
 {
     m_particle_bounding_spheres.resize(setup.particles.size(), 
         BoundingVolumeSphere(Vec3(0,0,0), 0));
     for (size_t i = 0; i < setup.particles.size(); ++i)
     {
-        // Get the particle instance for particle i using the interface mapping
-        const ParticleInstance& particle_instance = 
-            simulation_state.particle_instances.find(
-                interface_mapping.particle_index_to_uid.at(i))->second;
         // Get the bounding sphere in pspace
         m_particle_bounding_spheres[i] = *static_cast<BoundingVolumeSphere*>(
             setup.particles[i].bounding_volume.get());
         // Translate bounding volume center to world space
-        m_particle_bounding_spheres[i].center += particle_instance.position;
+        m_particle_bounding_spheres[i].center =
+            particle_transformation[i].p2w_scale_rotation *
+            m_particle_bounding_spheres[i].center +
+            particle_transformation[i].p2w_translation;
     }
 }
 

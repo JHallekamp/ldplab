@@ -48,7 +48,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 #ifdef _DEBUG
     const size_t NUM_RTS_THREADS = 1;
 #else
-    const size_t NUM_RTS_THREADS = 24;
+    const size_t NUM_RTS_THREADS = 48;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000;
@@ -96,7 +96,7 @@ int main()
         vec_kappa.push_back(0.3);
 
     std::vector<double> vec_nu = { 0.15 };
-    std::vector<size_t> vec_branching_depth = { 0, MAX_RTS_BRANCHING_DEPTH };
+    std::vector<size_t> vec_branching_depth = { /*0,*/ MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_nu.size(); ++j)
@@ -322,10 +322,12 @@ void runSimulation(
     rtscpu_info.return_force_in_particle_coordinate_system = true;
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
 
+    const double rays_per_unit = sqrt(
+        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
     ldplab::rtscpu::PipelineConfiguration pipeline_config;
     pipeline_config.initial_stage = std::make_shared<
         ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(
-            NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
+            rays_per_unit);
     pipeline_config.inner_particle_propagation = std::make_shared<
         ldplab::rtscpu::default_factories::InnerParticlePropagationRK4Factory>(
             ldplab::RK4Parameter(rts_step_size));

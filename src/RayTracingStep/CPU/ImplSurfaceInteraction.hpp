@@ -14,7 +14,8 @@ namespace ldplab
             virtual void stepSetup(
                 const ExperimentalSetup& setup, 
                 const SimulationState& simulation_state,
-                const InterfaceMapping& interface_mapping) override { }
+                const InterfaceMapping& interface_mapping,
+                const std::vector<ParticleTransformation>& particle_transformation) override { }
             virtual void execute(
                 const RayBuffer& input_ray_data,
                 const IntersectionBuffer& intersection_data,

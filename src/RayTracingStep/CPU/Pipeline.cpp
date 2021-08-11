@@ -78,11 +78,16 @@ void ldplab::rtscpu::Pipeline::stepSetup(const SimulationState& sim_state)
     }
 
     // Call stage setups
-    m_stage_bvi->stepSetup(m_setup, sim_state, m_interface_mapping);
-    m_stage_is->stepSetup(m_setup, sim_state, m_interface_mapping);
-    m_stage_ipp->stepSetup(m_setup, sim_state, m_interface_mapping);
-    m_stage_pi->stepSetup(m_setup, sim_state, m_interface_mapping);
-    m_stage_si->stepSetup(m_setup, sim_state, m_interface_mapping);
+    m_stage_bvi->stepSetup(
+        m_setup, sim_state, m_interface_mapping, m_particle_transformations);
+    m_stage_is->stepSetup(
+        m_setup, sim_state, m_interface_mapping, m_particle_transformations);
+    m_stage_ipp->stepSetup(
+        m_setup, sim_state, m_interface_mapping, m_particle_transformations);
+    m_stage_pi->stepSetup(
+        m_setup, sim_state, m_interface_mapping, m_particle_transformations);
+    m_stage_si->stepSetup(
+        m_setup, sim_state, m_interface_mapping, m_particle_transformations);
 }
 
 void ldplab::rtscpu::Pipeline::finalizeOutput(RayTracingStepOutput& output)

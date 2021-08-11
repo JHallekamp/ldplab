@@ -16,11 +16,11 @@ namespace ldplab
             InitialStageBoundingSpheresHomogenousLight(
                 std::vector<LightSource>&& light_sources,
                 double number_rays_per_unit);
-
             void stepSetup(
                 const ExperimentalSetup& setup,
                 const SimulationState& simulation_state,
-                const InterfaceMapping& interface_mapping) override;
+                const InterfaceMapping& interface_mapping,
+                const std::vector<ParticleTransformation>& particle_transformation) override;
             bool execute(
                 RayBuffer& initial_batch_buffer,
                 const SimulationParameter& simulation_parameter,

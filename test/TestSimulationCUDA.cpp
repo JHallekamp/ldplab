@@ -354,10 +354,12 @@ void runSimulation(
     const ldplab::ExperimentalSetup setup_copy = experimental_setup;
 
     // Create the user defined pipeline configuration
+    const double rays_per_unit = sqrt(
+        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
     ldplab::rtscuda::PipelineConfiguration pipeline_config;
     pipeline_config.initial_stage = 
         std::make_shared<ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(
-            (size_t)sqrt(NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi())));
+            rays_per_unit);
     pipeline_config.inner_particle_propagation =
         std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4Factory>(
             ldplab::RK4Parameter(rts_step_size));

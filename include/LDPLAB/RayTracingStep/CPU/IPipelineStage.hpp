@@ -35,7 +35,8 @@ namespace ldplab
             virtual void stepSetup(
                 const ExperimentalSetup& setup,
                 const SimulationState& simulation_state,
-                const InterfaceMapping& interface_mapping) = 0;
+                const InterfaceMapping& interface_mapping,
+                const std::vector<ParticleTransformation>& particle_transformation) = 0;
             /**
              * @brief Called once each time before a ray batch is created.
              * @param[in] stage_dependent_data A trhead-local pointer to a data
