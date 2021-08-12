@@ -31,7 +31,7 @@ namespace ldplab
                 void* stage_dependent_data) override;
         private:
             double reflectance(
-                double cos_alpha, double cos_beta, double n_r);
+                double cos_alpha, double cos_beta, double n_r) const;
         };
     }
 } 

@@ -33,10 +33,7 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         output_ray_data.index_data[i] = -1;
 
         if (particle_id < 0 || particle_id >= simulation_parameter.num_particles)
-        {
-            output_ray_data.index_data[i] = -1;
             continue;
-        }
 
         // Check if the intersection normal is 0, in which case the ray will 
         // be written into the transmission buffer without changes. This is
@@ -61,7 +58,6 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         Ray& output_ray = output_ray_data.ray_data[i];
         const Vec3& inter_point = intersection_data.point[i];
         const Vec3& inter_normal = intersection_data.normal[i];
-
         const double nx = input_ray_data.inner_particle_rays ?
             material_data[particle_id]->indexOfRefraction(inter_point) :
             medium_reflection_index;
@@ -90,7 +86,7 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
                 output_ray.origin = inter_point;
                 output_ray.direction = reflection_pass ?
                     ray.direction + inter_normal * 2.0 * cos_a :
-                    inter_normal * (-cos_b + nr * cos_a);
+                    nr * ray.direction + inter_normal * (-cos_b + nr * cos_a);
                 delta_momentum = reflection_pass ?
                     nx * (ray.direction - output_ray.direction) :
                     nx * ray.direction - ny * output_ray.direction;
@@ -109,12 +105,12 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         }
         else if(pass_type == InteractionPassType::reflection) // total reflected ray
         {
+            ++output_ray_data.active_rays;
             output_ray_data.index_data[i] = particle_id;
             output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
             output_ray.origin = inter_point;
             output_ray.direction = ray.direction + inter_normal * 2.0 * cos_a;
             output_ray.intensity = ray.intensity;
-            output_ray_data.active_rays++;
             const Vec3 delta_momentum = nx *
                 (ray.direction - output_ray.direction);
             const Vec3 r = inter_point - center_of_mass[particle_id];
@@ -125,22 +121,22 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         }
     }
 
-    LDPLAB_LOG_TRACE("RTSCPU %i: Ray particle interaction on batch "\
-        "buffer %i executed, buffer %i now holds %i reflected rays, buffer "\
-        "%i now holds %i refracted rays",
+    LDPLAB_LOG_TRACE("RTSCPU %i: Ray surface interaction on batch "\
+        "buffer %i executed, buffer %i now holds %i %s rays",
         getParentRayTracingStepUID(),
         input_ray_data.uid,
         output_ray_data.uid,
         output_ray_data.active_rays,
-        output_ray_data.uid,
-        output_ray_data.active_rays);
+        (pass_type == InteractionPassType::reflection ?
+            "reflected" :
+            "transmitted"));
 }
 
 double ldplab::rtscpu::SurfaceInteraction::reflectance(
-    double cos_alpha, double cos_beta, double n_r)
+    double cos_alpha, double cos_beta, double n_r) const
 {
-    double cos2_a = cos_alpha * cos_alpha;
-    double cos2_b = cos_beta * cos_beta;
+    const double cos2_a = cos_alpha * cos_alpha;
+    const double cos2_b = cos_beta * cos_beta;
     return (cos2_a - cos2_b) * (cos2_a - cos2_b) /
         (((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta) *
             ((cos2_a + cos2_b) + (n_r + 1 / n_r) * cos_alpha * cos_beta));

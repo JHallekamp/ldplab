@@ -160,7 +160,7 @@ __global__ void surface_interaction::surfaceInteractionKernel(
         const double cos_b = std::sqrt(1.0 - nr * nr * (1.0 - cos_a * cos_a));
         const double R = reflectance(cos_a, cos_b, nr);
 
-        if (pass_reflection)
+        if (!pass_reflection)
         {
             const double intensity = input_ray_intensity_buffer[ri] * (1.0 - R);
             if (intensity > intensity_cutoff)

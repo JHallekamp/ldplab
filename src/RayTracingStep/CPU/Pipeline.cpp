@@ -328,7 +328,7 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
         }
 
         for (size_t t = 0;
-            t < m_sim_params.num_surface_interaction_reflection_passes;
+            t < m_sim_params.num_surface_interaction_transmission_passes;
             ++t)
         {
             LDPLAB_PROFILING_START(pipeline_surface_interaction);

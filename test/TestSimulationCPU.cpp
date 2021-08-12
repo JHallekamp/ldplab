@@ -48,7 +48,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 #ifdef _DEBUG
     const size_t NUM_RTS_THREADS = 1;
 #else
-    const size_t NUM_RTS_THREADS = 48;
+    const size_t NUM_RTS_THREADS = 24;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000;

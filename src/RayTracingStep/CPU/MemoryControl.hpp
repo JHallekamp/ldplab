@@ -46,7 +46,7 @@ namespace ldplab
             RayBuffer& getRayBuffer(size_t depth)
             { return m_ray_buffers[depth]; }
             IntersectionBuffer& getIntersectionBuffer(size_t depth)
-            { return m_intersection_buffers[0]; }
+            { return m_intersection_buffers[depth]; }
             size_t getNumRayBuffers() 
             { return m_ray_buffers.size(); }
             size_t getNumIntersectionBuffers() 
