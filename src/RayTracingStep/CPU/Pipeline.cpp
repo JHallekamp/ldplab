@@ -1,5 +1,8 @@
 #include "Pipeline.hpp"
 
+#include <array>
+#include <LDPLAB/RayTracingStep/CPU/ISurfaceInteraction.hpp>
+
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Log.hpp"
 #include "../../Utils/Profiler.hpp"
@@ -303,11 +306,21 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
         }
     }
 
-    if (buffer.depth < m_sim_params.max_branching_depth)
+    struct SurfaceInteractionPass {
+        ISurfaceInteraction::InteractionPassType type;
+        size_t iterations;
+    };
+    std::array<SurfaceInteractionPass, 2> si_passes = {
+        SurfaceInteractionPass{ 
+            ISurfaceInteraction::InteractionPassType::reflection, 
+            m_sim_params.num_surface_interaction_reflection_passes },
+        SurfaceInteractionPass{
+            ISurfaceInteraction::InteractionPassType::transmission,
+            m_sim_params.num_surface_interaction_transmission_passes }
+    };
+    for (size_t pass = 0; pass < si_passes.size(); ++pass)
     {
-        for (size_t r = 0; 
-            r < m_sim_params.num_surface_interaction_reflection_passes; 
-            ++r)
+        for (size_t i = 0; i < si_passes[pass].iterations; ++i)
         {
             LDPLAB_PROFILING_START(pipeline_surface_interaction);
             m_stage_si->execute(
@@ -319,59 +332,38 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
                 m_setup.medium_reflection_index,
                 m_particle_materials,
                 m_particle_center_of_mass,
-                ISurfaceInteraction::InteractionPassType::reflection,
-                r,
+                si_passes[pass].type,
+                i,
                 m_sim_params,
                 sdd.surface_interaction_data.get());
             LDPLAB_PROFILING_STOP(pipeline_surface_interaction);
-            processBatch(output_ray_buffer, mem_control);
-        }
+            if (buffer.depth < m_sim_params.max_branching_depth)
+                processBatch(output_ray_buffer, mem_control);
+            else if (buffer.active_rays > 0 &&
+                m_info.emit_warning_on_maximum_branching_depth_discardment)
+            {
+                // Compute max and average length
+                double max_intensity = 0.0, avg_intensity = 0.0;
+                for (size_t i = 0; i < buffer.size; ++i)
+                {
+                    if (buffer.index_data[i] < 0)
+                        continue;
 
-        for (size_t t = 0;
-            t < m_sim_params.num_surface_interaction_transmission_passes;
-            ++t)
-        {
-            LDPLAB_PROFILING_START(pipeline_surface_interaction);
-            m_stage_si->execute(
-                buffer,
-                intersection_buffer,
-                output_ray_buffer,
-                output_buffer,
-                m_info.intensity_cutoff,
-                m_setup.medium_reflection_index,
-                m_particle_materials,
-                m_particle_center_of_mass,
-                ISurfaceInteraction::InteractionPassType::transmission,
-                t,
-                m_sim_params,
-                sdd.surface_interaction_data.get());
-            LDPLAB_PROFILING_STOP(pipeline_surface_interaction);
-            processBatch(output_ray_buffer, mem_control);
+                    double intensity = buffer.ray_data[i].intensity;
+                    avg_intensity += intensity;
+                    if (intensity > max_intensity)
+                        max_intensity = intensity;
+                }
+                avg_intensity /= static_cast<double>(buffer.active_rays);
+                LDPLAB_LOG_WARNING("RTSCPU %i: Pipeline reached max branching "\
+                    "depth %i with a total of %i still active rays, which include a "\
+                    "max intensity of %f and average intensity of %f",
+                    m_owner.uid(),
+                    m_sim_params.max_branching_depth,
+                    buffer.active_rays,
+                    max_intensity,
+                    avg_intensity);
+            }
         }
-    }
-    else if (buffer.active_rays > 0 &&
-        m_info.emit_warning_on_maximum_branching_depth_discardment)
-    {
-        // Compute max and average length
-        double max_intensity = 0.0, avg_intensity = 0.0;
-        for (size_t i = 0; i < buffer.size; ++i)
-        {
-            if (buffer.index_data[i] < 0)
-                continue;
-
-            double intensity = buffer.ray_data[i].intensity;
-            avg_intensity += intensity;
-            if (intensity > max_intensity)
-                max_intensity = intensity;
-        }
-        avg_intensity /= static_cast<double>(buffer.active_rays);
-        LDPLAB_LOG_WARNING("RTSCPU %i: Pipeline reached max branching "\
-            "depth %i with a total of %i still active rays, which include a "\
-            "max intensity of %f and average intensity of %f",
-            m_owner.uid(),
-            m_sim_params.max_branching_depth,
-            buffer.active_rays,
-            max_intensity,
-            avg_intensity);
     }
 }

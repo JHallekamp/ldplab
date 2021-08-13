@@ -17,15 +17,15 @@ void ldplab::rtscuda::RayTracingStepCUDA::execute(
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
     LDPLAB_LOG_DEBUG("RTSCPU %i: Setup ray tracing pipeline", uid());
-    LDPLAB_PROFILING_START(rtscpu_step_setup);
+    LDPLAB_PROFILING_START(rtscuda_step_setup);
     m_pipeline->stepSetup(input);
-    LDPLAB_PROFILING_STOP(rtscpu_step_setup);
+    LDPLAB_PROFILING_STOP(rtscuda_step_setup);
 
     LDPLAB_LOG_DEBUG("RTSCPU %i: Execute ray tracing pipeline", uid());
-    LDPLAB_PROFILING_START(rtscpu_execute_pipeline);
+    LDPLAB_PROFILING_START(rtscuda_execute_pipeline);
     m_pipeline->execute();
     m_pipeline->finalizeOutput(output);
-    LDPLAB_PROFILING_STOP(rtscpu_execute_pipeline);
+    LDPLAB_PROFILING_STOP(rtscuda_execute_pipeline);
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(end - start).count();
@@ -34,4 +34,3 @@ void ldplab::rtscuda::RayTracingStepCUDA::execute(
 }
 
 #endif
-

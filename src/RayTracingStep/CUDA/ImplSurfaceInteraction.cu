@@ -170,15 +170,16 @@ __global__ void surface_interaction::surfaceInteractionKernel(
                 output_ray_min_bv_dist_buffer[ri] = 0.0;
                 output_ray_origin_buffer[ri] = intersection_point;
                 output_ray_direction_buffer[ri] =
-                    input_ray_direction_buffer[ri] +
-                    intersection_normal * 2.0 * cos_a;
-                delta_momentum = nx * (input_ray_direction_buffer[ri] -
-                    output_ray_direction_buffer[ri]);
+                    nr * input_ray_direction_buffer[ri] +
+                    intersection_normal * (-cos_b + nr * cos_a);
+                delta_momentum =
+                    nx * input_ray_direction_buffer[ri] -
+                    ny * output_ray_direction_buffer[ri];
             }
             else
             {
                 output_ray_index_buffer[ri] = -1;
-                delta_momentum = intersection_normal * (nx * -2.0 * cos_a);
+                delta_momentum = intersection_normal * (ny * cos_b - nx * cos_a);
             }
             output_force_per_ray_buffer[ri] += intensity * delta_momentum;
             output_torque_per_ray_buffer[ri] +=
@@ -190,19 +191,19 @@ __global__ void surface_interaction::surfaceInteractionKernel(
             if (intensity > intensity_cutoff)
             {
                 output_ray_index_buffer[ri] = particle_index;
-                output_ray_min_bv_dist_buffer[ri] = 0;
+                output_ray_intensity_buffer[ri] = intensity;
+                output_ray_min_bv_dist_buffer[ri] = 0.0;
                 output_ray_origin_buffer[ri] = intersection_point;
                 output_ray_direction_buffer[ri] =
-                    nr * input_ray_direction_buffer[ri] +
-                    intersection_normal * (-cos_b + nr * cos_a);
-                delta_momentum =
-                    nx * input_ray_direction_buffer[ri] -
-                    ny * output_ray_direction_buffer[ri];
+                    input_ray_direction_buffer[ri] +
+                    intersection_normal * 2.0 * cos_a;                    
+                delta_momentum = nx * (input_ray_direction_buffer[ri] -
+                    output_ray_direction_buffer[ri]);
             }
             else
             {
                 output_ray_index_buffer[ri] = -1;
-                delta_momentum = intersection_normal * (ny * cos_b - nx * cos_a);
+                delta_momentum = intersection_normal * (nx * -2.0 * cos_a);
             }
             output_force_per_ray_buffer[ri] += intensity * delta_momentum;
             output_torque_per_ray_buffer[ri] +=

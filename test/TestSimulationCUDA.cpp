@@ -59,20 +59,21 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 16;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000 * 2;
-const size_t MAX_RTS_BRANCHING_DEPTH = 32;
+const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 32;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000 * 8;
+const size_t MAX_RTS_BRANCHING_DEPTH = 0;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
+const size_t NUM_SIM_ROTATION_STEPS = 314;
+const size_t NUM_PARALLEL_BATCHES = 1;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 32;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,
@@ -332,6 +333,7 @@ void runSimulation(
     //    (size_t)sqrt(NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
     rtscuda_info.maximum_branching_depth = branching_depth;
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
+    rtscuda_info.number_parallel_batches = NUM_PARALLEL_BATCHES;
     //rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
     rtscuda_info.return_force_in_particle_coordinate_system = true;
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
