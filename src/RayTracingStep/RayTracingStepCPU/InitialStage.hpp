@@ -65,12 +65,18 @@ namespace ldplab
                 // Pointers to overlapping projections
                 std::vector<Projection*> overlaps;
             };
+            enum class CreateRay
+            {
+                yes,
+                no_overlap,
+                no_outside_projection
+            };
         private:
             bool projLightOverlap(
                 const Vec2& center,
                 const double radius,
                 const LightSource& light_source) const;
-            bool hasToCreateRay(
+            CreateRay hasToCreateRay(
                 const Projection& projection,
                 const LightSource& light_source) const;
             void advBatchCreationLight(size_t& li);

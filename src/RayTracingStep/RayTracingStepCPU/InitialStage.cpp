@@ -215,7 +215,8 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::projLightOverla
     return true;
 }
 
-bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
+ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::CreateRay 
+    ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
     (const Projection& projection, const LightSource& light_source) const
 {
     const double ro_xxyy = m_rasterization_x * m_rasterization_x
@@ -230,7 +231,7 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
         + projection.center.x * projection.center.x
         + projection.center.y * projection.center.y;
     if (pr_rr < pr_dist)
-        return false;
+        return CreateRay::no_outside_projection;
 
     for (size_t i = 0; i < projection.overlaps.size(); ++i)
     {
@@ -242,10 +243,10 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::hasToCreateRay
             + t_pr->center.x * t_pr->center.x
             + t_pr->center.y * t_pr->center.y;
         if (t_dist <= t_rr)
-            return false;
+            return CreateRay::no_overlap;
     }
 
-    return true;
+    return CreateRay::yes;
 }
 
 void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::
@@ -327,12 +328,13 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                     // true
                     return true;
                 }
-
-                if (hasToCreateRay(projection, light))
+                const CreateRay create_ray = hasToCreateRay(projection, light);
+                if (create_ray != CreateRay::no_outside_projection)
                 {
                     if (m_rasterization_x >= 0 && m_rasterization_y >= 0 &&
                         m_rasterization_x <= light.horizontal_size &&
-                        m_rasterization_y <= light.vertical_size)
+                        m_rasterization_y <= light.vertical_size && 
+                        create_ray == CreateRay::yes)
                     {
                         // Create ray
                         // Set ray origin
@@ -405,12 +407,12 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::createBatch(
                     {
                         if (m_rasterization_up)
                         {
-                            while (!hasToCreateRay(projection, light))
+                            while (hasToCreateRay(projection, light) == CreateRay::no_outside_projection)
                                 m_rasterization_y += m_rasterization_step_size;
                         }
                         else
                         {
-                            while (!hasToCreateRay(projection, light))
+                            while (hasToCreateRay(projection, light) == CreateRay::no_outside_projection)
                                 m_rasterization_y -= m_rasterization_step_size;
                         }
                     }
