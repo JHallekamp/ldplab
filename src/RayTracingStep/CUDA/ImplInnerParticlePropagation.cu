@@ -69,7 +69,7 @@ void ldplab::rtscuda::InnerParticlePropagationRK4::execute(
     const size_t block_size = 192;
     const size_t grid_size =
         global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
+        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
     innerParticlePropagationKernel<<<grid_size, block_size>>>(
         m_parameter.step_size,
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
@@ -111,18 +111,18 @@ __global__ void rk4::innerParticlePropagationKernel(
 {
     using namespace ldplab;
     using namespace rtscuda;
-    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    size_t ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (ri >= num_rays_per_batch)
         return;
 
-    int32_t particle_index = ray_index_buffer[ri];
+    const int32_t particle_index = ray_index_buffer[ri];
     if (particle_index < 0 ||
-        particle_index >= num_particles)
+        particle_index >= static_cast<int32_t>(num_particles))
         return;
 
+    const double ray_intesity = ray_intensity_buffer[ri];
     const Vec3 ray_origin = ray_origin_buffer[ri];
     Vec3 ray_direction = ray_direction_buffer[ri];
-    const double ray_intesity = ray_intensity_buffer[ri];
     void* const particle_geometry = geometry_data[particle_index];
     IGenericGeometry::intersectRay intersectRay =
         geometry_intersect_ray_functions[particle_index];
@@ -207,8 +207,8 @@ __global__ void rk4::innerParticlePropagationKernel(
             else
             {
                 ray_direction = glm::normalize(x.w);
-                const double nx = indexOfRefraction(x.r, material_data);
-                const double ny = indexOfRefraction(inter_point, material_data);
+                const double nx = indexOfRefraction(x.r, particle_material);
+                const double ny = indexOfRefraction(inter_point, particle_material);
                 const Vec3 delta_momentum = (nx - ny) * ray_direction;
                 const Vec3 r = inter_point -
                     particle_center_of_mass[particle_index];
@@ -221,8 +221,10 @@ __global__ void rk4::innerParticlePropagationKernel(
         }
         else
         {
-            const double nx = indexOfRefraction(x.r, material_data);
-            const double ny = indexOfRefraction(x_new.r, material_data);
+            const double nx = indexOfRefraction(x.r, particle_material);
+            const double ny = indexOfRefraction(x_new.r, particle_material);
+            printf("nx %f | ny %f\n", nx, ny);
+
             const Vec3 t_old_direction = glm::normalize(x.w);
             const Vec3 t_new_direction = glm::normalize(x_new.w);
             const Vec3 delta_momentum =
@@ -263,7 +265,8 @@ __device__ void rk4::rk4(
             x_step.w += k[i - 1].w * hb;
             x_step.r += k[i - 1].r * hb;
         }
-        k[i].w = material_data->direction * material_data->gradient;
+        //k[i].w = material_data->direction * material_data->gradient;
+        k[i].w = material_data->direction_times_gradient;
         k[i].r = x_step.w / index_of_refraction(x_step.r, material_data);
         if (c[i] != 0.0)
         {

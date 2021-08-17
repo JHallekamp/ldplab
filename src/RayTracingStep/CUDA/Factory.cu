@@ -1048,15 +1048,15 @@ bool ldplab::rtscuda::Factory::createGlobalData(
 
         // Create ray buffer
         error = error || !bd.ray_data_buffers.direction_buffers.allocate(
-            num_rays, branching_depth + 2, 0);
+            num_rays, branching_depth + 2, 1);
         error = error || !bd.ray_data_buffers.intensity_buffers.allocate(
-            num_rays, branching_depth + 2, 0);
+            num_rays, branching_depth + 2, 1);
         error = error || !bd.ray_data_buffers.min_bv_distance_buffers.allocate(
-            num_rays, branching_depth + 2, 0);
+            num_rays, branching_depth + 2, 1);
         error = error || !bd.ray_data_buffers.origin_buffers.allocate(
-            num_rays, branching_depth + 2, 0);
+            num_rays, branching_depth + 2, 1);
         error = error || !bd.ray_data_buffers.particle_index_buffers.allocate(
-            num_rays, branching_depth + 2, 0);
+            num_rays, branching_depth + 2, 1);
         if (error)
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate ray data "\
@@ -1066,11 +1066,11 @@ bool ldplab::rtscuda::Factory::createGlobalData(
 
         // Create intersection buffer
         error = error || !bd.intersection_data_buffers.normal_buffers.allocate(
-            num_rays, branching_depth + 1, 0);
+            num_rays, branching_depth + 1, 1);
         error = error || !bd.intersection_data_buffers.particle_index_buffers.allocate(
-            num_rays, branching_depth + 1, 0);
+            num_rays, branching_depth + 1, 1);
         error = error || !bd.intersection_data_buffers.point_buffers.allocate(
-            num_rays, branching_depth + 1, 0);
+            num_rays, branching_depth + 1, 1);
         if (error)
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate intersection "\
@@ -1084,9 +1084,9 @@ bool ldplab::rtscuda::Factory::createGlobalData(
         error = error || !bd.output_data_buffers.torque_per_particle_buffer.allocate(
             num_particles, true);
         error = error || !bd.output_data_buffers.force_per_ray_buffer.allocate(
-            num_rays, branching_depth + 1, 0);
+            num_rays, branching_depth + 1, 1);
         error = error || !bd.output_data_buffers.torque_per_ray_buffer.allocate(
-            num_rays, branching_depth + 1, 0);
+            num_rays, branching_depth + 1, 1);
         if (error)
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate output "\

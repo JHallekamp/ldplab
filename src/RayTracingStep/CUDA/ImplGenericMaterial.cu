@@ -46,8 +46,10 @@ __device__ double linear_one_directional::indexOfRefraction(
 {
     MaterialLinearOneDirectionalData mt =
         *static_cast<const MaterialLinearOneDirectionalData*>(particle_material);
-    return mt.index_of_refraction + mt.gradient *
-        glm::dot(mt.direction, (position - mt.origin));
+    return mt.index_of_refraction_minus_partial_dot +
+        glm::dot(mt.direction_times_gradient, position);
+    //return mt.index_of_refraction + mt.gradient *
+    //    glm::dot(mt.direction, (position - mt.origin));
 }
 
 #endif

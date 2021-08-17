@@ -75,7 +75,7 @@ create(
 
 	if (!bounding_sphere_buffer.allocate(global_data.experimental_setup.particles.size(), true))
 		return nullptr;
-	if (!rect_buffer.allocate(global_data.experimental_setup.particles.size(), false))
+	if (!rect_buffer.allocate(global_data.experimental_setup.particles.size(), true))
 		return nullptr;
 	if (!light_buffer.allocate(global_data.experimental_setup.light_sources.size(), true))
 		return nullptr;
@@ -97,17 +97,17 @@ create(
 			(setup.light_sources[i].intensity_distribution.get())->intensity /
 			(m_light_resolution_per_world_unit * m_light_resolution_per_world_unit);
 		light.width =
-			setup.light_sources[i].horizontal_size *
-			m_light_resolution_per_world_unit;
+			ceil(setup.light_sources[i].horizontal_size *
+			m_light_resolution_per_world_unit);
 		light.x_axis =
-			glm::normalize(setup.light_sources[i].horizontal_direction) /
-			m_light_resolution_per_world_unit;
+			(glm::normalize(setup.light_sources[i].horizontal_direction) * 
+				setup.light_sources[i].horizontal_size) / light.width;
 		light.height =
-			setup.light_sources[i].vertical_size *
-			m_light_resolution_per_world_unit;
+			ceil(setup.light_sources[i].vertical_size *
+			m_light_resolution_per_world_unit);
 		light.y_axis =
-			glm::normalize(setup.light_sources[i].vertical_direction) /
-			m_light_resolution_per_world_unit;
+			(glm::normalize(setup.light_sources[i].vertical_direction) * 
+				setup.light_sources[i].vertical_size) / light.height;
 	}
 	if (!light_buffer.upload())
 		return nullptr;

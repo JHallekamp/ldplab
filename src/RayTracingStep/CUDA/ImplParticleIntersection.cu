@@ -32,7 +32,7 @@ void ldplab::rtscuda::ParticleIntersection::execute(
     const size_t block_size = 128;
     const size_t grid_size =
         global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
+        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
     intersectionKernel<<<grid_size, block_size>>>(
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
         batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_buffer_index),

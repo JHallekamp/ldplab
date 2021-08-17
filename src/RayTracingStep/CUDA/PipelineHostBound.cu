@@ -11,6 +11,8 @@
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
 
+#include <Debug.hpp>
+
 class JobWrapper : public ldplab::utils::ThreadPool::IJob
 {
 public:
@@ -96,6 +98,25 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	size_t ray_buffer_index, 
 	bool inside_particle)
 {
+    DebugContext dbx("logs/cuda_debug.log", [&]() {
+        std::vector<std::string> out;
+        std::stringstream ss;
+        ss << "buffer[" << ray_buffer_index << "] | depth = " << depth <<
+            " | inner particle rays = " << (inside_particle ? "true" : "false");
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "intersection_buffer[" << ray_buffer_index << "]";
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "output_ray_buffer[" << ray_buffer_index + 1 <<
+            "] | depth = " << depth + 1;
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "batch_no = " << batch_no;
+        out.push_back(ss.str());
+        return out;
+        });
+
     // Check if buffer contains rays
     LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce);
     PipelineData::RayBufferReductionResult ray_state_count;
@@ -118,6 +139,77 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         ray_buffer_index,
         ray_buffer_index);
     LDPLAB_PROFILING_STOP(pipeline_execute_layer_buffer_setup);
+
+    batch_data.ray_data_buffers.origin_buffers.download(0, ray_buffer_index);
+    batch_data.ray_data_buffers.direction_buffers.download(0, ray_buffer_index);
+    batch_data.ray_data_buffers.particle_index_buffers.download(0, ray_buffer_index);
+    batch_data.ray_data_buffers.intensity_buffers.download(0, ray_buffer_index);
+    batch_data.intersection_data_buffers.normal_buffers.download(0, ray_buffer_index);
+    batch_data.intersection_data_buffers.particle_index_buffers.download(0, ray_buffer_index);
+    batch_data.intersection_data_buffers.point_buffers.download(0, ray_buffer_index);
+    batch_data.output_data_buffers.force_per_particle_buffer.download();
+    batch_data.output_data_buffers.force_per_ray_buffer.download(0, ray_buffer_index);
+    batch_data.output_data_buffers.torque_per_particle_buffer.download();
+    batch_data.output_data_buffers.torque_per_ray_buffer.download(0, ray_buffer_index);
+    dbx.write([&]() {
+        std::vector<std::string> out;
+        out.push_back("BEFORE RAY HANDLING");
+        std::stringstream ss;
+        ss << "active rays: " << ray_state_count.num_active_rays;
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "world space rays: " << ray_state_count.num_world_space_rays;
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "output force: (" << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].x << ", "
+            << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].y << ", "
+            << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].z << ")";
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "output torque: (" << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].x << ", "
+            << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].y << ", "
+            << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].z << ")";
+        out.push_back(ss.str());
+
+        for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+        {
+            Vec3* ray_origin = batch_data.ray_data_buffers.origin_buffers.getHostBuffer(0);
+            Vec3* ray_direction = batch_data.ray_data_buffers.direction_buffers.getHostBuffer(0);
+            double* intensity = batch_data.ray_data_buffers.intensity_buffers.getHostBuffer(0);
+            int32_t* index = batch_data.ray_data_buffers.particle_index_buffers.getHostBuffer(0);
+
+            ss.str(std::string());
+            ss << "    ray[" << i << "]: pid = "
+                << index[i] << " | o = ("
+                << ray_origin[i].x << ", "
+                << ray_origin[i].y << ", "
+                << ray_origin[i].z << ") | d = ("
+                << ray_direction[i].x << ", "
+                << ray_direction[i].y << ", "
+                << ray_direction[i].z << ") | i = "
+                << intensity[i];
+            out.push_back(ss.str());
+        }
+
+        for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+        {
+            int32_t* pid = batch_data.intersection_data_buffers.particle_index_buffers.getHostBuffer(0);
+            Vec3* point = batch_data.intersection_data_buffers.point_buffers.getHostBuffer(0);
+            Vec3* normal = batch_data.intersection_data_buffers.normal_buffers.getHostBuffer(0);
+
+            ss.str(std::string());
+            ss << "    intersection[" << i << "]: pid = "
+                << pid[i] << " | p = ("
+                << point[i].x << ", "
+                << point[i].y << ", "
+                << point[i].z << ") | n = ("
+                << normal[i].x << ", "
+                << normal[i].y << ", "
+                << normal[i].z << ")";
+            out.push_back(ss.str());
+        }
+        return out;
+        });
 
     // Switch between inside and outside particle
     if (inside_particle)
@@ -159,14 +251,85 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 return;
         } while (ray_state_count.num_world_space_rays > 0);
     }
+
     // Perform surface interaction and ray branching
     constexpr std::array<bool, 2> passes{ true, false };
     for (size_t i = 0; i < passes.size(); ++i)
     {
+        batch_data.ray_data_buffers.origin_buffers.download(0, ray_buffer_index);
+        batch_data.ray_data_buffers.direction_buffers.download(0, ray_buffer_index);
+        batch_data.ray_data_buffers.particle_index_buffers.download(0, ray_buffer_index);
+        batch_data.ray_data_buffers.intensity_buffers.download(0, ray_buffer_index);
+        batch_data.intersection_data_buffers.normal_buffers.download(0, ray_buffer_index);
+        batch_data.intersection_data_buffers.particle_index_buffers.download(0, ray_buffer_index);
+        batch_data.intersection_data_buffers.point_buffers.download(0, ray_buffer_index);
+        batch_data.output_data_buffers.force_per_particle_buffer.download();
+        batch_data.output_data_buffers.force_per_ray_buffer.download(0, ray_buffer_index);
+        batch_data.output_data_buffers.torque_per_particle_buffer.download();
+        batch_data.output_data_buffers.torque_per_ray_buffer.download(0, ray_buffer_index);
+        dbx.write([&]() {
+            std::vector<std::string> out;
+            std::stringstream ss;
+            ss << "BEFORE SURFACE INTERACTION PASS " << i;
+            out.push_back(ss.str());
+            ss.str(std::string());
+            ss << "active rays: " << ray_state_count.num_active_rays;
+            out.push_back(ss.str());
+            ss.str(std::string());
+            ss << "world space rays: " << ray_state_count.num_world_space_rays;
+            out.push_back(ss.str());
+            ss.str(std::string());
+            ss << "output force: (" << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].x << ", "
+                << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].y << ", "
+                << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].z << ")";
+            out.push_back(ss.str());
+            ss.str(std::string());
+            ss << "output torque: (" << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].x << ", "
+                << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].y << ", "
+                << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].z << ")";
+            out.push_back(ss.str());
+
+            for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+            {
+                Vec3* ray_origin = batch_data.ray_data_buffers.origin_buffers.getHostBuffer(0);
+                Vec3* ray_direction = batch_data.ray_data_buffers.direction_buffers.getHostBuffer(0);
+                double* intensity = batch_data.ray_data_buffers.intensity_buffers.getHostBuffer(0);
+                int32_t* index = batch_data.ray_data_buffers.particle_index_buffers.getHostBuffer(0);
+
+                ss.str(std::string());
+                ss << "    ray[" << i << "]: pid = "
+                    << index[i] << " | o = ("
+                    << ray_origin[i].x << ", "
+                    << ray_origin[i].y << ", "
+                    << ray_origin[i].z << ") | d = ("
+                    << ray_direction[i].x << ", "
+                    << ray_direction[i].y << ", "
+                    << ray_direction[i].z << ") | i = "
+                    << intensity[i];
+                out.push_back(ss.str());
+            }
+
+            for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+            {
+                int32_t* pid = batch_data.intersection_data_buffers.particle_index_buffers.getHostBuffer(0);
+                Vec3* point = batch_data.intersection_data_buffers.point_buffers.getHostBuffer(0);
+                Vec3* normal = batch_data.intersection_data_buffers.normal_buffers.getHostBuffer(0);
+
+                ss.str(std::string());
+                ss << "    intersection[" << i << "]: pid = "
+                    << pid[i] << " | p = ("
+                    << point[i].x << ", "
+                    << point[i].y << ", "
+                    << point[i].z << ") | n = ("
+                    << normal[i].x << ", "
+                    << normal[i].y << ", "
+                    << normal[i].z << ")";
+                out.push_back(ss.str());
+            }
+            return out;
+            });
+
         const bool reflection_pass = passes[i];
-        const bool result_inside_particle = reflection_pass ?
-            inside_particle :
-            !inside_particle;
         const size_t pass_lim = reflection_pass ?
             m_context->simulation_parameter.num_surface_interaction_reflection_passes :
             m_context->simulation_parameter.num_surface_interaction_transmission_passes;
@@ -194,10 +357,108 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                     batch_no,
                     depth + 1, 
                     ray_buffer_index + 1, 
-                    result_inside_particle);
+                    reflection_pass ? inside_particle : !inside_particle);
             }
         }
     }
+
+    batch_data.ray_data_buffers.origin_buffers.download(0, ray_buffer_index);
+    batch_data.ray_data_buffers.direction_buffers.download(0, ray_buffer_index);
+    batch_data.ray_data_buffers.particle_index_buffers.download(0, ray_buffer_index);
+    batch_data.ray_data_buffers.intensity_buffers.download(0, ray_buffer_index);
+    batch_data.intersection_data_buffers.normal_buffers.download(0, ray_buffer_index);
+    batch_data.intersection_data_buffers.particle_index_buffers.download(0, ray_buffer_index);
+    batch_data.intersection_data_buffers.point_buffers.download(0, ray_buffer_index);
+    batch_data.output_data_buffers.force_per_particle_buffer.download();
+    batch_data.output_data_buffers.force_per_ray_buffer.download(0, ray_buffer_index);
+    batch_data.output_data_buffers.torque_per_particle_buffer.download();
+    batch_data.output_data_buffers.torque_per_ray_buffer.download(0, ray_buffer_index);
+    dbx.write([&]() {
+        std::vector<std::string> out;
+        out.push_back("BEFORE GATHERING OUTPUT");
+        std::stringstream ss;
+        ss << "active rays: " << ray_state_count.num_active_rays;
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "world space rays: " << ray_state_count.num_world_space_rays;
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "output force: (" << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].x << ", "
+            << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].y << ", "
+            << batch_data.output_data_buffers.force_per_particle_buffer.getHostBuffer()[0].z << ")";
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "output torque: (" << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].x << ", "
+            << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].y << ", "
+            << batch_data.output_data_buffers.torque_per_particle_buffer.getHostBuffer()[0].z << ")";
+        out.push_back(ss.str());
+
+        int32_t* index = batch_data.ray_data_buffers.particle_index_buffers.getHostBuffer(0);
+        Vec3* fpr = batch_data.output_data_buffers.force_per_ray_buffer.getHostBuffer(0);
+        Vec3* tpr = batch_data.output_data_buffers.torque_per_ray_buffer.getHostBuffer(0);
+        Vec3 fpp = Vec3(0, 0, 0);
+        Vec3 tpp = Vec3(0, 0, 0);
+        for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+        {
+            if (index[i] == 0)
+            {
+                fpp += fpr[i];
+                tpp += tpr[i];
+            }
+        }
+        ss.str(std::string());
+        ss << "accumulated ray output force: ("
+            << fpp.x << ", "
+            << fpp.y << ", "
+            << fpp.z << ")";
+        out.push_back(ss.str());
+        ss.str(std::string());
+        ss << "accumulated ray output torque: ("
+            << tpp.x << ", "
+            << tpp.y << ", "
+            << tpp.z << ")";
+        out.push_back(ss.str());
+
+        for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+        {
+            Vec3* ray_origin = batch_data.ray_data_buffers.origin_buffers.getHostBuffer(0);
+            Vec3* ray_direction = batch_data.ray_data_buffers.direction_buffers.getHostBuffer(0);
+            double* intensity = batch_data.ray_data_buffers.intensity_buffers.getHostBuffer(0);
+            int32_t* index = batch_data.ray_data_buffers.particle_index_buffers.getHostBuffer(0);
+
+            ss.str(std::string());
+            ss << "    ray[" << i << "]: pid = "
+                << index[i] << " | o = ("
+                << ray_origin[i].x << ", "
+                << ray_origin[i].y << ", "
+                << ray_origin[i].z << ") | d = ("
+                << ray_direction[i].x << ", "
+                << ray_direction[i].y << ", "
+                << ray_direction[i].z << ") | i = "
+                << intensity[i];
+            out.push_back(ss.str());
+        }
+
+        for (size_t i = 0; i < m_context->simulation_parameter.num_rays_per_batch; ++i)
+        {
+            int32_t* pid = batch_data.intersection_data_buffers.particle_index_buffers.getHostBuffer(0);
+            Vec3* point = batch_data.intersection_data_buffers.point_buffers.getHostBuffer(0);
+            Vec3* normal = batch_data.intersection_data_buffers.normal_buffers.getHostBuffer(0);
+
+            ss.str(std::string());
+            ss << "    intersection[" << i << "]: pid = "
+                << pid[i] << " | p = ("
+                << point[i].x << ", "
+                << point[i].y << ", "
+                << point[i].z << ") | n = ("
+                << normal[i].x << ", "
+                << normal[i].y << ", "
+                << normal[i].z << ")";
+            out.push_back(ss.str());
+        }
+        return out;
+        });
+
     LDPLAB_PROFILING_START(pipeline_gather_output);
     GatherOutput::execute(
         *m_context,

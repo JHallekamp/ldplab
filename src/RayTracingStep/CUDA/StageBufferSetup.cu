@@ -66,7 +66,7 @@ bool ldplab::rtscuda::BufferSetup::allocateData(
     klp1.block_size.x = block_size;
     klp1.grid_size.x =
         global_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x +
-        (global_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x ? 1 : 0);
+        (global_data.simulation_parameter.num_rays_per_batch % klp1.block_size.x ? 1 : 0);
     data.buffer_setup_layer_klp = klp1;
     return true;
 }

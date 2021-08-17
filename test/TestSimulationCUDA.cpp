@@ -59,17 +59,17 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 32;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 20000 * 8;
-const size_t MAX_RTS_BRANCHING_DEPTH = 0;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 128; //NUM_RAYS_PER_BLOCK * 13 * 32;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 16;
+const size_t MAX_RTS_BRANCHING_DEPTH = 1;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
-const size_t NUM_SIM_ROTATION_STEPS = 314;
+const size_t NUM_SIM_ROTATION_STEPS = 2; //314;
 const size_t NUM_PARALLEL_BATCHES = 1;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.05; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -106,7 +106,7 @@ int main()
         vec_kappa.push_back(0.3);
 
     std::vector<double> vec_nu = { 0.15 };
-    std::vector<size_t> vec_branching_depth = { /*0,*/ MAX_RTS_BRANCHING_DEPTH };
+    std::vector<size_t> vec_branching_depth = { MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_nu.size(); ++j)
@@ -275,14 +275,14 @@ void createExperimentalSetup(
     }
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
-    particle_world_extent = bs->center.z + bs->radius;
+    particle_world_extent = ceil(2.0 * bs->radius);
     // Create light source
-    const double LIGHT_GEOMETRY_PLANE_EXTENT = 10 * particle_world_extent;
+    const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * particle_world_extent;
     const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
         ldplab::Vec3(
-            -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
-            -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
-            2 * particle_world_extent);
+            floor(bs->center.x - LIGHT_GEOMETRY_PLANE_EXTENT / 2.0),
+            floor(bs->center.y - LIGHT_GEOMETRY_PLANE_EXTENT / 2.0),
+            ceil(bs->center.z + particle_world_extent  + 1.0));
     ldplab::LightSource light_source;
     light_source.orientation = ldplab::Vec3(0, 0, -1.0);
     light_source.horizontal_direction = glm::normalize(ldplab::Vec3(1.0, 0, 0));
@@ -335,7 +335,7 @@ void runSimulation(
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
     rtscuda_info.number_parallel_batches = NUM_PARALLEL_BATCHES;
     //rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
-    rtscuda_info.return_force_in_particle_coordinate_system = true;
+    rtscuda_info.return_force_in_particle_coordinate_system = false; //true;
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);
     //if (GEOMETRY_TYPE == GeometryType::triangle_mesh)
@@ -357,7 +357,7 @@ void runSimulation(
 
     // Create the user defined pipeline configuration
     const double rays_per_unit = sqrt(
-        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
+        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT);
     ldplab::rtscuda::PipelineConfiguration pipeline_config;
     pipeline_config.initial_stage = 
         std::make_shared<ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(

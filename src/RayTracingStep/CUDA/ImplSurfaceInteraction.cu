@@ -12,7 +12,6 @@ namespace surface_interaction
         const Vec3* input_ray_origin_buffer,
         const Vec3* input_ray_direction_buffer,
         const double* input_ray_intensity_buffer, 
-        const int32_t* intersection_particle_index_buffer,
         const Vec3* intersection_point_buffer,
         const Vec3* intersection_normal_buffer, 
         int32_t* output_ray_index_buffer,
@@ -53,14 +52,13 @@ void ldplab::rtscuda::SurfaceInteraction::execute(
     const size_t block_size = 128;
     const size_t grid_size =
         global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch / block_size ? 1 : 0);
+        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
     using namespace surface_interaction;
     surfaceInteractionKernel<<<grid_size, block_size>>>(
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_input_buffer_index),
         batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_input_buffer_index),
         batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_input_buffer_index),
         batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(ray_input_buffer_index),
-        batch_data.intersection_data_buffers.particle_index_buffers.getDeviceBuffer(intersection_buffer_index),
         batch_data.intersection_data_buffers.point_buffers.getDeviceBuffer(intersection_buffer_index),
         batch_data.intersection_data_buffers.normal_buffers.getDeviceBuffer(intersection_buffer_index),
         batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_output_buffer_index),
@@ -86,7 +84,6 @@ __global__ void surface_interaction::surfaceInteractionKernel(
     const Vec3* input_ray_origin_buffer, 
     const Vec3* input_ray_direction_buffer, 
     const double* input_ray_intensity_buffer, 
-    const int32_t* intersection_particle_index_buffer, 
     const Vec3* intersection_point_buffer, 
     const Vec3* intersection_normal_buffer, 
     int32_t* output_ray_index_buffer, 
@@ -106,11 +103,11 @@ __global__ void surface_interaction::surfaceInteractionKernel(
     size_t num_rays_per_batch,
     size_t num_particles)
 {
-    unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
     if (ri >= num_rays_per_batch)
         return;
 
-    int32_t particle_index = input_ray_index_buffer[ri];
+    const int32_t particle_index = input_ray_index_buffer[ri];
     if (particle_index < 0 || particle_index >= static_cast<int32_t>(num_particles))
     {
         output_ray_index_buffer[ri] = -1;
@@ -141,14 +138,14 @@ __global__ void surface_interaction::surfaceInteractionKernel(
     }
 
     const Vec3 intersection_point = intersection_point_buffer[ri];
-    const double nx = (pass_inner_particle_rays ?
+    const double nx = pass_inner_particle_rays ?
         material_index_of_refraction[particle_index](
             intersection_point, material_data[particle_index]) :
-        medium_reflection_index);
-    const double ny = (pass_inner_particle_rays ?
+        medium_reflection_index;
+    const double ny = pass_inner_particle_rays ?
         medium_reflection_index :
         material_index_of_refraction[particle_index](
-            intersection_point, material_data[particle_index]));
+            intersection_point, material_data[particle_index]);
     const double nr = nx / ny;
     const double cos_a = 
         -glm::dot(input_ray_direction_buffer[ri], intersection_normal);

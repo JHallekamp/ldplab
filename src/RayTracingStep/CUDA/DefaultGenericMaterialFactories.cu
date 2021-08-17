@@ -50,10 +50,16 @@ create(
 		return nullptr;
 	ParticleMaterialLinearOneDirectional* material =
 		static_cast<ParticleMaterialLinearOneDirectional*>(particle_material.get());
-	material_buffer.getHostBuffer()->direction = material->direction;
-	material_buffer.getHostBuffer()->gradient = material->gradient;
-	material_buffer.getHostBuffer()->index_of_refraction = material->index_of_refraction;
-	material_buffer.getHostBuffer()->origin = material->origin;
+	
+	MaterialLinearOneDirectionalData* md = material_buffer.getHostBuffer();
+	md->direction_times_gradient = material->direction * material->gradient;
+	md->index_of_refraction_minus_partial_dot =
+		material->index_of_refraction -
+		glm::dot(md->direction_times_gradient, material->origin);
+	//material_buffer.getHostBuffer()->direction = material->direction;
+	//material_buffer.getHostBuffer()->gradient = material->gradient;
+	//material_buffer.getHostBuffer()->index_of_refraction = material->index_of_refraction;
+	//material_buffer.getHostBuffer()->origin = material->origin;
 	if (!material_buffer.upload())
 		return nullptr;
 	std::shared_ptr<GenericMaterialLinearOneDirectional> generic_material =

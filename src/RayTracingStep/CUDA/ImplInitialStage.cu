@@ -113,9 +113,7 @@ void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	m_total_batch_count = 
 		total_rays / global_data.simulation_parameter.num_rays_per_batch +
 		(total_rays % global_data.simulation_parameter.num_rays_per_batch ? 1 : 0);
-  }
-
-#include <fstream>
+}
 
 bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	execute(
@@ -126,7 +124,8 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	using namespace homogenous_light_bounding_sphere_projection;
 	const size_t block_size = 128;
 	const size_t grid_size = 
-		global_data.simulation_parameter.num_rays_per_batch / block_size;
+		global_data.simulation_parameter.num_rays_per_batch / block_size +
+		(global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
 	size_t cur_batch = m_batch_ctr++;
 	createBatchKernel<<<grid_size, block_size>>>(
 		batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(initial_batch_buffer_index),
@@ -141,26 +140,6 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		m_light_source_buffer.bufferSize(),
 		global_data.simulation_parameter.num_rays_per_batch,
 		cur_batch);
-
-	m_projection_buffer.download();
-	m_light_source_buffer.download();
-	m_num_rays_buffer.download(0, 0);
-	batch_data.ray_data_buffers.particle_index_buffers.download(0, initial_batch_buffer_index);
-
-	std::ofstream f("out.txt");
-	for (size_t y = 0; y < m_projection_buffer.getHostBuffer()[0].height; ++y)
-	{
-		for (size_t x = 0; x < m_projection_buffer.getHostBuffer()[0].width; ++x)
-		{
-			const size_t ri = y * m_projection_buffer.getHostBuffer()[0].width + x;
-			if (batch_data.ray_data_buffers.particle_index_buffers.getHostBuffer(0)[ri] >= 0)
-				f << "O";
-			else
-				f << " ";
-		}
-		f << std::endl;
-	}
-	f.close();
 
 	return (cur_batch + 1 < m_total_batch_count);
 }
