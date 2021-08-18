@@ -59,17 +59,17 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_RTS_RAYS_PER_BUFFER = 128; //NUM_RAYS_PER_BLOCK * 13 * 32;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 16;
-const size_t MAX_RTS_BRANCHING_DEPTH = 1;
+const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * 32;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 256 * 256 * 4;
+const size_t MAX_RTS_BRANCHING_DEPTH = 32;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
-const size_t NUM_SIM_ROTATION_STEPS = 2; //314;
+const size_t NUM_SIM_ROTATION_STEPS = 314;
 const size_t NUM_PARALLEL_BATCHES = 1;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.05; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.01; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;

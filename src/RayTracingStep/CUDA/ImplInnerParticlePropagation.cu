@@ -223,8 +223,6 @@ __global__ void rk4::innerParticlePropagationKernel(
         {
             const double nx = indexOfRefraction(x.r, particle_material);
             const double ny = indexOfRefraction(x_new.r, particle_material);
-            printf("nx %f | ny %f\n", nx, ny);
-
             const Vec3 t_old_direction = glm::normalize(x.w);
             const Vec3 t_new_direction = glm::normalize(x_new.w);
             const Vec3 delta_momentum =

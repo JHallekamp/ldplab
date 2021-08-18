@@ -11,8 +11,6 @@
 
 #include <glm/ext.hpp>
 
-#include <Debug.hpp>
-
 ldplab::rtscpu::Pipeline::Pipeline(
     const RayTracingStepCPU& owner, 
     const RayTracingStepCPUInfo& info, 
@@ -245,73 +243,6 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
         intersection_buffer.particle_index[i] = -1;
     LDPLAB_PROFILING_STOP(pipeline_buffer_setup);
 
-    DebugContext dbx("logs/cpu_debug.log", [&]() {
-        std::vector<std::string> out;
-        std::stringstream ss;
-        ss << "buffer[" << buffer.buffer_index << "] | depth = " << buffer.depth <<
-            " | inner particle rays = " << (buffer.inner_particle_rays ? "true" : "false");
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "intersection_buffer[" << intersection_buffer.buffer_index << "]";
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "output_ray_buffer[" << output_ray_buffer.buffer_index <<
-            "] | depth = " << output_ray_buffer.depth;
-        out.push_back(ss.str());
-        return out;
-        });
-
-    dbx.write([&]() {
-        std::vector<std::string> out;
-        out.push_back("BEFORE RAY HANDLING");
-        std::stringstream ss;
-        ss << "active rays: " << buffer.active_rays;
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "world space rays: " << buffer.world_space_rays;
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "output force: (" << output_buffer.force[0].x << ", "
-            << output_buffer.force[0].y << ", "
-            << output_buffer.force[0].z << ")";
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "output torque: (" << output_buffer.torque[0].x << ", "
-            << output_buffer.torque[0].y << ", "
-            << output_buffer.torque[0].z << ")";
-        out.push_back(ss.str());
-
-        for (size_t i = 0; i < buffer.size; ++i)
-        {
-            ss.str(std::string());
-            ss << "    ray[" << i << "]: pid = "
-                << buffer.index_data[i] << " | o = ("
-                << buffer.ray_data[i].origin.x << ", "
-                << buffer.ray_data[i].origin.y << ", "
-                << buffer.ray_data[i].origin.z << ") | d = ("
-                << buffer.ray_data[i].direction.x << ", "
-                << buffer.ray_data[i].direction.y << ", "
-                << buffer.ray_data[i].direction.z << ") | i = "
-                << buffer.ray_data[i].intensity;
-            out.push_back(ss.str());
-        }
-
-        for (size_t i = 0; i < intersection_buffer.size; ++i)
-        {
-            ss.str(std::string());
-            ss << "    intersection[" << i << "]: pid = "
-                << intersection_buffer.particle_index[i] << " | p = ("
-                << intersection_buffer.point[i].x << ", "
-                << intersection_buffer.point[i].y << ", "
-                << intersection_buffer.point[i].z << ") | n = ("
-                << intersection_buffer.normal[i].x << ", "
-                << intersection_buffer.normal[i].y << ", "
-                << intersection_buffer.normal[i].z << ")";
-            out.push_back(ss.str());
-        }
-        return out;
-        });
-
     if (buffer.inner_particle_rays)
     {
         LDPLAB_PROFILING_START(pipeline_inner_particle_propagation);
@@ -389,59 +320,6 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
     };
     for (size_t pass = 0; pass < si_passes.size(); ++pass)
     {
-        dbx.write([&]() {
-            std::vector<std::string> out;
-            std::stringstream ss;
-            ss << "BEFORE SURFACE INTERACTION PASS " << pass;
-            out.push_back(ss.str());
-            ss.str(std::string());
-            ss << "active rays: " << buffer.active_rays;
-            out.push_back(ss.str());
-            ss.str(std::string());
-            ss << "world space rays: " << buffer.world_space_rays;
-            out.push_back(ss.str());
-            ss.str(std::string());
-            ss << "output force: (" << output_buffer.force[0].x << ", "
-                << output_buffer.force[0].y << ", "
-                << output_buffer.force[0].z << ")";
-            out.push_back(ss.str());
-            ss.str(std::string());
-            ss << "output torque: (" << output_buffer.torque[0].x << ", "
-                << output_buffer.torque[0].y << ", "
-                << output_buffer.torque[0].z << ")";
-            out.push_back(ss.str());
-
-            for (size_t i = 0; i < buffer.size; ++i)
-            {
-                ss.str(std::string());
-                ss << "    ray[" << i << "]: pid = "
-                    << buffer.index_data[i] << " | o = ("
-                    << buffer.ray_data[i].origin.x << ", "
-                    << buffer.ray_data[i].origin.y << ", "
-                    << buffer.ray_data[i].origin.z << ") | d = ("
-                    << buffer.ray_data[i].direction.x << ", "
-                    << buffer.ray_data[i].direction.y << ", "
-                    << buffer.ray_data[i].direction.z << ") | i = "
-                    << buffer.ray_data[i].intensity;
-                out.push_back(ss.str());
-            }
-
-            for (size_t i = 0; i < intersection_buffer.size; ++i)
-            {
-                ss.str(std::string());
-                ss << "    intersection[" << i << "]: pid = "
-                    << intersection_buffer.particle_index[i] << " | p = ("
-                    << intersection_buffer.point[i].x << ", "
-                    << intersection_buffer.point[i].y << ", "
-                    << intersection_buffer.point[i].z << ") | n = ("
-                    << intersection_buffer.normal[i].x << ", "
-                    << intersection_buffer.normal[i].y << ", "
-                    << intersection_buffer.normal[i].z << ")";
-                out.push_back(ss.str());
-            }
-            return out;
-            });
-
         for (size_t i = 0; i < si_passes[pass].iterations; ++i)
         {
             LDPLAB_PROFILING_START(pipeline_surface_interaction);
@@ -488,55 +366,4 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
             }
         }
     }
-
-    dbx.write([&]() {
-        std::vector<std::string> out;
-        out.push_back("BEFORE PPL RETURN");
-        std::stringstream ss;
-        ss << "active rays: " << buffer.active_rays;
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "world space rays: " << buffer.world_space_rays;
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "output force: (" << output_buffer.force[0].x << ", "
-            << output_buffer.force[0].y << ", "
-            << output_buffer.force[0].z << ")";
-        out.push_back(ss.str());
-        ss.str(std::string());
-        ss << "output torque: (" << output_buffer.torque[0].x << ", "
-            << output_buffer.torque[0].y << ", "
-            << output_buffer.torque[0].z << ")";
-        out.push_back(ss.str());
-
-        for (size_t i = 0; i < buffer.size; ++i)
-        {
-            ss.str(std::string());
-            ss << "    ray[" << i << "]: pid = "
-                << buffer.index_data[i] << " | o = ("
-                << buffer.ray_data[i].origin.x << ", "
-                << buffer.ray_data[i].origin.y << ", "
-                << buffer.ray_data[i].origin.z << ") | d = ("
-                << buffer.ray_data[i].direction.x << ", "
-                << buffer.ray_data[i].direction.y << ", "
-                << buffer.ray_data[i].direction.z << ") | i = "
-                << buffer.ray_data[i].intensity;
-            out.push_back(ss.str());
-        }
-
-        for (size_t i = 0; i < intersection_buffer.size; ++i)
-        {
-            ss.str(std::string());
-            ss << "    intersection[" << i << "]: pid = "
-                << intersection_buffer.particle_index[i] << " | p = ("
-                << intersection_buffer.point[i].x << ", "
-                << intersection_buffer.point[i].y << ", "
-                << intersection_buffer.point[i].z << ") | n = ("
-                << intersection_buffer.normal[i].x << ", "
-                << intersection_buffer.normal[i].y << ", "
-                << intersection_buffer.normal[i].z << ")";
-            out.push_back(ss.str());
-        }
-        return out;
-        });
 }
