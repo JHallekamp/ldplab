@@ -20,7 +20,9 @@ namespace ldplab
         /** @brief Queries whether profiling is enabled in the build. */
         static bool profilingEnabled();
         /** @brief Queries if the build supports RTS on GPU using OpenGL. */
-        static bool RTSGPUOpenGLEnabled();
+        static bool OpenGLRayTracingEnabled();
+        /** @brief Queries if the build supports RTS on GPU using Cuda. */
+        static bool CudaRayTracingEnabled();
     };
 }
 

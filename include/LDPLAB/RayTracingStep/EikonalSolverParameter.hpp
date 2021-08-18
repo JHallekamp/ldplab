@@ -45,6 +45,7 @@ namespace ldplab
 
     struct RK4Parameter : public IEikonalSolverParameter
     {
+        RK4Parameter() : step_size{ 1.0 } { }
         RK4Parameter(double step_size)
             :
             step_size{ step_size }

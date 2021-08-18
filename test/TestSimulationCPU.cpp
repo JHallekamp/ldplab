@@ -5,6 +5,10 @@
 #include <iostream>
 #include <sstream>
 
+#include <LDPLAB/RayTracingStep/CPU/PipelineConfiguration.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultInitialStageFactories.hpp>
+#include <LDPLAB/RayTracingStep/CPU/DefaultInnerParticlePropagationFactories.hpp>
+
 constexpr double const_pi()
 {
     return 3.14159265358979323846264338327950288419716939937510;
@@ -17,11 +21,11 @@ enum class GeometryType
     sphere,
     triangle_mesh
 };
-const GeometryType GEOMETRY_TYPE = GeometryType::triangle_mesh;
+const GeometryType GEOMETRY_TYPE = GeometryType::sphere;
 
 // Folder path
 const std::string OUTPUT_DIRECTORY = 
-    "SimData\\";
+    "results\\cpu_";
 const std::string OBJ_PATH = "sphere.obj";
 
 // Particle Geometry
@@ -44,17 +48,17 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 #ifdef _DEBUG
     const size_t NUM_RTS_THREADS = 1;
 #else
-    const size_t NUM_RTS_THREADS = 8;
+    const size_t NUM_RTS_THREADS = 24;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 2000; //500000;
-const size_t MAX_RTS_BRANCHING_DEPTH = 8;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 256 * 256 * 4;
+const size_t MAX_RTS_BRANCHING_DEPTH = 32;
 const double RTS_INTENSITY_CUTOFF =  0.01 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.05; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.01; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -71,7 +75,7 @@ void plotProgress(double progress);
 void createExperimentalSetup(ldplab::ExperimentalSetup& experimental_setup,
     double kappa,
     double gradient);
-void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
+void runSimulation(ldplab::ExperimentalSetup&& experimental_setup,
     double kappa,
     double nu,
     size_t branching_depth);
@@ -79,7 +83,7 @@ void runSimulation(const ldplab::ExperimentalSetup& experimental_setup,
 int main()
 {
     // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "test_simulation_cpu.log" };
+    ldplab::LogCallbackFileStream flog{ "logs/test_simulation_cpu.log" };
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
@@ -91,8 +95,8 @@ int main()
     if (GEOMETRY_TYPE == GeometryType::rod)
         vec_kappa.push_back(0.3);
 
-    std::vector<double> vec_nu = { 0.0, 0.15 };
-    std::vector<size_t> vec_branching_depth = { 0, 1, 2, 3, 4, MAX_RTS_BRANCHING_DEPTH };
+    std::vector<double> vec_nu = { 0.15 };
+    std::vector<size_t> vec_branching_depth = { MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
         for (size_t j = 0; j < vec_nu.size(); ++j)
@@ -107,7 +111,7 @@ int main()
                     vec_nu[j]);
                 // Run simulation
                 runSimulation(
-                    experimental_setup,
+                    std::move(experimental_setup),
                     vec_kappa[i],
                     vec_nu[j],
                     vec_branching_depth[k]);
@@ -217,6 +221,7 @@ void createExperimentalSetup(
             PARTICLE_VOLUME,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             nu,
+            1.0,
             ldplab::Vec3(0.0, 0.0, 0.0),
             ldplab::Vec3(0.0, 0.0, 0.0));
     }
@@ -229,6 +234,7 @@ void createExperimentalSetup(
             kappa,
             PARTICLE_MATERIAL_INDEX_OF_REFRACTION,
             nu,
+            1.0,
             ldplab::Vec3(0.0,0.0,0.0),
             ldplab::Vec3(0.0,0.0,0.0));
     }
@@ -259,14 +265,14 @@ void createExperimentalSetup(
     }
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
-    particle_world_extent = bs->center.z + bs->radius;
+    particle_world_extent = ceil(2.0 * bs->radius);
     // Create light source
-    const double LIGHT_GEOMETRY_PLANE_EXTENT = 10 * particle_world_extent;
+    const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * particle_world_extent;
     const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
         ldplab::Vec3(
-            -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
-            -LIGHT_GEOMETRY_PLANE_EXTENT / 2.0,
-            2 * particle_world_extent);
+            floor(bs->center.x - LIGHT_GEOMETRY_PLANE_EXTENT / 2.0),
+            floor(bs->center.y - LIGHT_GEOMETRY_PLANE_EXTENT / 2.0),
+            ceil(bs->center.z + particle_world_extent  + 1.0));
     ldplab::LightSource light_source;
     light_source.orientation = ldplab::Vec3(0, 0, -1.0);
     light_source.horizontal_direction = glm::normalize(ldplab::Vec3(1.0, 0, 0));
@@ -288,7 +294,7 @@ void createExperimentalSetup(
 }
 
 void runSimulation(
-    const ldplab::ExperimentalSetup& experimental_setup,
+    ldplab::ExperimentalSetup&& experimental_setup,
     double kappa,
     double nu,
     size_t branching_depth)
@@ -311,23 +317,30 @@ void runSimulation(
     rtscpu_info.number_rays_per_buffer = NUM_RTS_RAYS_PER_BUFFER;
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)experimental_setup.particles[0].bounding_volume.get();
-    rtscpu_info.light_source_ray_density_per_unit_area =
-        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi());
     rtscpu_info.maximum_branching_depth = branching_depth;
     rtscpu_info.intensity_cutoff = RTS_INTENSITY_CUTOFF;
-    rtscpu_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
-        rts_step_size);
+    rtscpu_info.return_force_in_particle_coordinate_system = false; //true;
     rtscpu_info.emit_warning_on_maximum_branching_depth_discardment = false;
-    if (GEOMETRY_TYPE == GeometryType::triangle_mesh)
-    {
-        rtscpu_info.accelerator_structure_parameters =
-            std::make_shared<ldplab::AcceleratorStructureOctreeParameter>(
-                OCTREE_DEPTH);
-    }
+
+    const double rays_per_unit = sqrt(
+        NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT);
+    ldplab::rtscpu::PipelineConfiguration pipeline_config;
+    pipeline_config.initial_stage = std::make_shared<
+        ldplab::rtscpu::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(
+            rays_per_unit);
+    pipeline_config.inner_particle_propagation = std::make_shared<
+        ldplab::rtscpu::default_factories::InnerParticlePropagationRK4Factory>(
+            ldplab::RK4Parameter(rts_step_size));
+
+    // Copy over the particle
+    const ldplab::ExperimentalSetup setup_copy = experimental_setup;
 
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCPU(
-            experimental_setup, rtscpu_info);
+            rtscpu_info,
+            std::move(experimental_setup),
+            pipeline_config,
+            false);
 
     if (ray_tracing_step == nullptr)
         return;
@@ -335,29 +348,29 @@ void runSimulation(
     // Output file
     ldplab::RayTracingStepOutput output;
     std::ofstream output_force = getFileStream(
-        experimental_setup.particles[0], 
+        setup_copy.particles[0],
         nu, 
         OUTPUT_DIRECTORY, 
         "force", 
         branching_depth);
     std::ofstream output_torque = getFileStream(
-        experimental_setup.particles[0], 
+        setup_copy.particles[0],
         nu, 
         OUTPUT_DIRECTORY, 
         "torque", 
         branching_depth);
 
     // Create simulation
-    ldplab::SimulationState state{ experimental_setup };
+    ldplab::SimulationState state{ setup_copy };
     constexpr double offset = 0;
     constexpr double lim = const_pi();
     constexpr double step_size = (lim - offset) /
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
 
-    ldplab::UID<ldplab::Particle> puid{ experimental_setup.particles[0].uid };
+    ldplab::UID<ldplab::Particle> puid{ setup_copy.particles[0].uid };
     
-    for (double rotation_x = offset + step_size;
+    for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
@@ -381,7 +394,7 @@ void runSimulation(
         "_k" << static_cast<int>(kappa * 100.0) <<
         "_l" << static_cast<int>(ROD_PARTICLE_L * 10.0) <<
         "_bd" << branching_depth <<
-        "_u" << rtscpu_info.light_source_ray_density_per_unit_area <<
+        "_u" << NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT <<
         "_rs" << NUM_SIM_ROTATION_STEPS;
 
     // Stop timing
@@ -389,9 +402,9 @@ void runSimulation(
         std::chrono::steady_clock::now();
     const double elapsed_time = std::chrono::duration<double>(
         end - start).count();
-    std::ofstream elapsed_time_file("cpu_simulation_time_" + identificator.str());
+    std::ofstream elapsed_time_file("logs/cpu_simulation_time_" + identificator.str() + ".txt");
     elapsed_time_file << elapsed_time << "s" << std::endl;
 
     // Profiling
-    ldplab::Profiling::printReports("cpu_profiling_report_" + identificator.str());
+    ldplab::Profiling::printReports("logs/cpu_profiling_report_" + identificator.str() + ".txt");
 }

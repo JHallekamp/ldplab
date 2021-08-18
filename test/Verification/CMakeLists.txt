@@ -37,6 +37,8 @@ source_group("Header Files\\UnitTests" FILES ${HEADER_VERIFICATION_UNIT_TESTS})
 source_group("Source Files\\" FILES ${SOURCE_VERIFICATION})
 source_group("Source Files\\UnitTests" FILES ${SOURCE_VERIFICATION_UNIT_TESTS})
 
+target_compile_features(ldplab_verification PUBLIC cxx_std_14)
+
 target_include_directories(ldplab_verification
 	PUBLIC
 		"${LDPLAB_SOURCE_DIR}/include"

@@ -9,6 +9,16 @@ namespace ldplab
     struct IParticleGeometry
     {
         enum class Type { sphere, rod_particle, triangle_mesh };
+        static char* typeToString(Type type)
+        {
+            switch (type)
+            {
+            case Type::sphere: return "sphere";
+            case Type::rod_particle: return "rod_particle";
+            case Type::triangle_mesh: return "triangle_mesh";
+            default: return "unknown_type";
+            }
+        }
         /**
          * @brief The destructor is virtual since classes inherit from
          *        IParticleGeometry.
@@ -18,15 +28,7 @@ namespace ldplab
         virtual Type type() const = 0;
         /** @brief Returns the type of the instance as string. */
         const char* typeString() const
-        {
-            switch (type())
-            {
-            case Type::sphere: return "sphere";
-            case Type::rod_particle: return "rod_particle";
-            case Type::triangle_mesh: return "triangle_mesh";
-            default: return "unknown_type";
-            }
-        }
+        { return typeToString(type()); }
     };
 
     /** 
