@@ -16,7 +16,8 @@ std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU>
         const RayTracingStepCPUInfo& info, 
         ExperimentalSetup&& setup)
 {
-    return createRTS(info, std::move(setup), PipelineConfiguration{ }, true);
+    PipelineConfiguration empty_config = PipelineConfiguration{ };
+    return createRTS(info, std::move(setup), empty_config, true);
 }
 
 std::shared_ptr<ldplab::rtscpu::RayTracingStepCPU> 
