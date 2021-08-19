@@ -3,7 +3,6 @@
 #include "Factory.hpp"
 #include "RayTracingStepCPU.hpp"
 #include "../../Utils/Log.hpp"
-#include "..\CUDA\ImplBoundingVolumeIntersection.hpp"
 
 void ldplab::rtscpu::BoundingSphereIntersectionBruteforce::stepSetup(
     const ExperimentalSetup& setup, 
