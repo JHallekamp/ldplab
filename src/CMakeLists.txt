@@ -118,6 +118,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/DefaultParticleIntersectionFactories.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/DefaultSurfaceInteractionFactories.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/DeviceResource.hpp"
+	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/ExecutionModelInfo.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/Factories.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/IBoundingVolumeIntersection.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/IGenericGeometry.hpp"
@@ -127,6 +128,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/IParticleIntersection.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/IPipelineStage.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/ISurfaceInteraction.hpp"
+	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/ParallelContext.hpp"
 	    "${LDPLAB_SOURCE_DIR}/include/LDPLAB/RayTracingStep/CUDA/PipelineConfiguration.hpp"
     )
     set(HEADER_INTERN_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
@@ -149,6 +151,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/StageRayBufferReduce.hpp
     )
     set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
+        RayTracingStep/CUDA/Data.cu
         RayTracingStep/CUDA/DefaultBoundingVolumeIntersectionFactories.cu
         RayTracingStep/CUDA/DefaultGenericGeometryFactories.cu
         RayTracingStep/CUDA/DefaultGenericMaterialFactories.cu
@@ -167,6 +170,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/ImplSurfaceInteraction.cu
         RayTracingStep/CUDA/IntersectionTests.cu
         RayTracingStep/CUDA/IPipeline.cu
+        RayTracingStep/CUDA/ParallelContext.cu
         RayTracingStep/CUDA/PipelineDeviceBound.cu
         RayTracingStep/CUDA/PipelineHostBound.cu
         RayTracingStep/CUDA/RayTracingStepCUDA.cu

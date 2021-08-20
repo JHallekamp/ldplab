@@ -12,8 +12,8 @@ namespace ldplab
         public:
             virtual ~IInitialStage() { }
             virtual bool execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
+                size_t batch_no,
                 size_t initial_batch_buffer_index) = 0;
         };
     }

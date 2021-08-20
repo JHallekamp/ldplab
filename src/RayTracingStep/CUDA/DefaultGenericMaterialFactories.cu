@@ -27,7 +27,7 @@ bool ldplab::rtscuda::default_factories::GenericMaterialLinearOneDirectionalFact
 checkCompability(
 	IParticleMaterial::Type material_type, 
 	const RayTracingStepCUDAInfo& step_info, 
-	const GlobalData::DeviceProperties& device_properties, 
+	const ExecutionModel& execution_model,
 	const PipelineConfiguration& configuration, 
 	const ExperimentalSetup& setup, 
 	const InterfaceMapping& interface_mapping)
@@ -40,7 +40,7 @@ GenericMaterialLinearOneDirectionalFactory::
 create(
 	const std::shared_ptr<IParticleMaterial>& particle_material, 
 	const RayTracingStepCUDAInfo& step_info, 
-	const GlobalData::DeviceProperties& device_properties, 
+	const DeviceProperties& device_properties, 
 	const PipelineConfiguration& configuration, 
 	const ExperimentalSetup& setup, 
 	const InterfaceMapping& interface_mapping)

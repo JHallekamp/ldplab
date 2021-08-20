@@ -4,6 +4,8 @@
 #include "AcceleratorStructureParameter.hpp"
 #include "EikonalSolverParameter.hpp"
 
+#include <LDPLAB/RayTracingStep/CUDA/ExecutionModelInfo.hpp>
+
 #include <memory>
 
 namespace ldplab
@@ -14,14 +16,19 @@ namespace ldplab
      */
     struct RayTracingStepCUDAInfo
     {
-        /**  @brief Under this cutoff intensity rays are not further traced. */
+        /** 
+         * @brief Description of the pipeline execution model. 
+         * @note If this is a nullptr, the factory automatically creates a
+         *       simulation with exactly one stream on exactly one device (the
+         *       one with the lowest id).
+         */
+        std::shared_ptr<rtscuda::IExecutionModelInfo> execution_model_info = nullptr;
+        /** @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff = 0.0;
         /** @brief Maximum number of times a ray can split. */
         size_t maximum_branching_depth = 0;
         /** @brief Number of rays per batch. */
         size_t number_rays_per_batch = 0;
-        /** @brief Maximum number of parallel batches. */
-        size_t number_parallel_batches = 1;
         /** @brief Number of reflections per surface interaction per ray. */
         size_t number_reflections = 1;
         /** @brief Number of transmissions per surface interaction per ray. */

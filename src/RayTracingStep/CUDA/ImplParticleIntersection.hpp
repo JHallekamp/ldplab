@@ -13,8 +13,7 @@ namespace ldplab
         {
         public:
             void execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 size_t ray_buffer_index,
                 size_t intersection_buffer_index) override;
         };

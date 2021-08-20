@@ -32,29 +32,29 @@ namespace ldplab
                 Vec3 ray_direction;
                 double ray_intensity;
             };
+            struct PerDeviceData
+            {
+                DeviceBuffer<BoundingSphere> bounding_spheres;
+                DeviceBuffer<Rect> projection_buffer;
+                DeviceBuffer<HomogenousLightSource> light_source_buffer;
+                DeviceBuffer<size_t> num_rays_buffer;
+                DeviceBuffer<size_t> temp_num_rays_buffer;
+            };
         public:
             InitialStageHomogenousLightBoundingSphereProjection(
                 double light_resolution_per_world_unit,
-                DeviceBuffer<BoundingSphere>&& bounding_spheres,
-                DeviceBuffer<Rect>&& projection_buffer,
-                DeviceBuffer<HomogenousLightSource>&& light_source_buffer,
-                DeviceBuffer<size_t>&& num_rays_buffer,
-                DeviceBuffer<size_t>&& temp_num_rays_buffer);
+                std::vector<PerDeviceData>&& per_device_data);
             void stepSetup(
                 const SimulationState& simulation_state,
-                GlobalData& global_data) override;
+                SharedStepData& shared_data,
+                DeviceContext& device_context) override;
             bool execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
+                size_t batch_no,
                 size_t initial_batch_buffer_index) override;
         private:
             double m_light_resolution_per_world_unit;
-            DeviceBuffer<BoundingSphere> m_bounding_spheres;
-            DeviceBuffer<Rect> m_projection_buffer;
-            DeviceBuffer<HomogenousLightSource> m_light_source_buffer;
-            DeviceBuffer<size_t> m_num_rays_buffer;
-            DeviceBuffer<size_t> m_temp_num_rays_buffer;
-            std::atomic_size_t m_batch_ctr;
+            std::vector<PerDeviceData> m_per_device_data;
             size_t m_total_batch_count;
         };
     }

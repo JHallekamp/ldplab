@@ -14,8 +14,7 @@ namespace ldplab
         public:
             SurfaceInteraction() = default;
             void execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 size_t ray_input_buffer_index,
                 size_t ray_output_buffer_index,
                 size_t intersection_buffer_index,

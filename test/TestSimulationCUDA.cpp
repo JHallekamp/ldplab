@@ -333,7 +333,6 @@ void runSimulation(
     //    (size_t)sqrt(NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT / (bs->radius * bs->radius * const_pi()));
     rtscuda_info.maximum_branching_depth = branching_depth;
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
-    rtscuda_info.number_parallel_batches = NUM_PARALLEL_BATCHES;
     //rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
     rtscuda_info.return_force_in_particle_coordinate_system = false; //true;
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(

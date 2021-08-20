@@ -52,7 +52,7 @@ namespace ldplab
             /** @brief Resource uid. */
             UID<IDeviceResource> m_resource_uid;
         };
-
+        
         /**
          * @brief Simple wrapper around multiple device buffers and potential
          *        host buffers used for up- and downloading data.
@@ -140,6 +140,16 @@ namespace ldplab
                 size_t target_device_buffer, 
                 size_t source_host_buffer);
             /**
+             * @brief Uploads data from a given host pointer to a device buffer.
+             * @param[in] target_device_buffer The buffer index of the target
+             *                                 buffer in device memory.
+             * @param[in] source_ptr Source buffer pointer on the host.
+             * @returns false, if an error occurred.
+             */
+            bool uploadExt(
+                size_t target_device_buffer,
+                basetype* source_ptr);
+            /**
              * @brief Uploads data from a host buffer to a device buffer.
              * @param[in] target_device_buffer The buffer index of the target
              *                                 buffer in device memory.
@@ -221,6 +231,7 @@ namespace ldplab
             basetype* getHostBuffer() { return baseclass::getHostBuffer(0); }
             bool memset(int val) { return baseclass::memset(val); }
             bool upload() { return baseclass::upload(0, 0); }
+            bool uploadExt(basetype* host_buffer) { return baseclass::uploadExt(0, host_buffer); }
             bool upload(size_t element_offset, size_t element_count);
             bool download() { return baseclass::download(0, 0); }
             bool download(size_t element_offset, size_t element_count);
@@ -238,6 +249,7 @@ namespace ldplab
             using baseclass::getDeviceBufferRange;
             using baseclass::memset;
             using baseclass::upload;
+            using baseclass::uploadExt;
             using baseclass::download;
         };
 
@@ -428,6 +440,25 @@ namespace ldplab
             size_t source_host_buffer)
         {
             return upload(target_device_buffer, source_host_buffer, 0, m_buffer_size);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRange<basetype>::uploadExt(
+            size_t target_device_buffer, 
+            basetype* source_ptr)
+        {
+            void* device_ptr = getDeviceBuffer(target_device_buffer);
+            const size_t num_bytes = sizeof(basetype) * m_buffer_size;
+            return checkCudaUploadError(
+                cudaMemcpy(
+                    device_ptr,
+                    (void*)source_ptr,
+                    num_bytes,
+                    cudaMemcpyHostToDevice),
+                device_ptr,
+                m_device_buffer_ptr_range[target_device_buffer],
+                source_ptr,
+                num_bytes);
         }
 
         template<typename basetype>

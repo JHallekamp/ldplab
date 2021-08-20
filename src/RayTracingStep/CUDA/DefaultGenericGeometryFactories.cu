@@ -27,7 +27,7 @@ bool ldplab::rtscuda::default_factories::GenericGeometrySphereFactory::
 checkCompability(
 	IParticleGeometry::Type geometry_type, 
 	const RayTracingStepCUDAInfo& step_info, 
-	const GlobalData::DeviceProperties& device_properties, 
+	const ExecutionModel& execution_model,
 	const PipelineConfiguration& configuration,
 	const ExperimentalSetup& setup, 
 	const InterfaceMapping& interface_mapping)
@@ -40,7 +40,7 @@ ldplab::rtscuda::default_factories::GenericGeometrySphereFactory::
 create(
 	const std::shared_ptr<IParticleGeometry>& particle_geometry, 
 	const RayTracingStepCUDAInfo& step_info, 
-	const GlobalData::DeviceProperties& device_properties, 
+	const DeviceProperties& device_properties, 
 	const PipelineConfiguration& configuration, 
 	const ExperimentalSetup& setup, 
 	const InterfaceMapping& interface_mapping)
@@ -78,7 +78,7 @@ bool ldplab::rtscuda::default_factories::GenericGeometryRodFactory::
 checkCompability(
 	IParticleGeometry::Type geometry_type,
 	const RayTracingStepCUDAInfo& step_info,
-	const GlobalData::DeviceProperties& device_properties,
+	const ExecutionModel& execution_model,
 	const PipelineConfiguration& configuration,
 	const ExperimentalSetup& setup,
 	const InterfaceMapping& interface_mapping)
@@ -91,7 +91,7 @@ ldplab::rtscuda::default_factories::GenericGeometryRodFactory::
 create(
 	const std::shared_ptr<IParticleGeometry>& particle_geometry,
 	const RayTracingStepCUDAInfo& step_info,
-	const GlobalData::DeviceProperties& device_properties,
+	const DeviceProperties& device_properties,
 	const PipelineConfiguration& configuration,
 	const ExperimentalSetup& setup,
 	const InterfaceMapping& interface_mapping)

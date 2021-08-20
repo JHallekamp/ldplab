@@ -31,42 +31,40 @@ namespace
 }
 
 void ldplab::rtscuda::BufferSetup::executeStepSetup(
-    const GlobalData& global_data,
-    BatchData& batch_data,
+    StreamContext& stream_context,
     PipelineData& data)
 {
     const PipelineData::KernelLaunchParameter& klp = data.buffer_setup_step_klp;
-    bufferStepSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size>>>(
-        batch_data.output_data_buffers.force_per_particle_buffer.getDeviceBuffer(),
-        batch_data.output_data_buffers.torque_per_particle_buffer.getDeviceBuffer(),
-        global_data.simulation_parameter.num_particles);
+    bufferStepSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size, stream_context.cudaStream()>>>(
+        stream_context.outputDataBuffers().force_per_particle_buffer.getDeviceBuffer(),
+        stream_context.outputDataBuffers().torque_per_particle_buffer.getDeviceBuffer(),
+        stream_context.simulationParameter().num_particles);
 }
 
 void ldplab::rtscuda::BufferSetup::executeLayerSetup(
-    const GlobalData& global_data,
-    BatchData& batch_data,
+    StreamContext& stream_context,
     PipelineData& data,
     size_t buffer_index,
     size_t output_buffer_index)
 {
     const PipelineData::KernelLaunchParameter& klp = data.buffer_setup_layer_klp;
-    bufferLayerSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size>>>(
-        batch_data.intersection_data_buffers.particle_index_buffers.getDeviceBuffer(buffer_index),
-        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        global_data.simulation_parameter.num_rays_per_batch);
+    bufferLayerSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size, stream_context.cudaStream()>>>(
+        stream_context.intersectionDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
+        stream_context.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        stream_context.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        stream_context.simulationParameter().num_rays_per_batch);
 }
 
 bool ldplab::rtscuda::BufferSetup::allocateData(
-    const GlobalData& global_data, 
+    const SharedStepData& shared_data, 
     PipelineData& data)
 {
     constexpr size_t block_size = 128;
     PipelineData::KernelLaunchParameter& klp1 = data.buffer_setup_step_klp;
     klp1.block_size.x = block_size;
     klp1.grid_size.x =
-        global_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x +
-        (global_data.simulation_parameter.num_rays_per_batch % klp1.block_size.x ? 1 : 0);
+        shared_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x +
+        (shared_data.simulation_parameter.num_rays_per_batch % klp1.block_size.x ? 1 : 0);
     data.buffer_setup_layer_klp = klp1;
     return true;
 }

@@ -16,13 +16,12 @@ namespace ldplab
             RayBufferReduce() = delete;
             /** @brief Reduces the given ray buffers indices. */
             static PipelineData::RayBufferReductionResult execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 PipelineData& pipeline_data,
                 size_t ray_buffer_index);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
-                const GlobalData& global_data,
+                const SharedStepData& shared_data,
                 PipelineData& data);
         };
     }

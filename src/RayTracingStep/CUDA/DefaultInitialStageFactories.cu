@@ -32,7 +32,7 @@ userDefined() const
 bool ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 checkCompability(
     const RayTracingStepCUDAInfo& step_info,
-    const GlobalData::DeviceProperties& device_properties,
+	const ExecutionModel& execution_model,
     const PipelineConfiguration& configuration,
     const ExperimentalSetup& setup,
     const InterfaceMapping& interface_mapping)
@@ -63,63 +63,71 @@ checkCompability(
 std::shared_ptr<ldplab::rtscuda::IInitialStage>
 ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory::
 create(
-    const RayTracingStepCUDAInfo& step_info,
-    const PipelineConfiguration& configuration,
-    const GlobalData& global_data)
+	const RayTracingStepCUDAInfo& step_info,
+	const PipelineConfiguration& configuration,
+	const SharedStepData& shared_data)
 {
-	DeviceBuffer<BoundingSphere> bounding_sphere_buffer;
-	DeviceBuffer<InitialStageHomogenousLightBoundingSphereProjection::Rect> rect_buffer;
-	DeviceBuffer<InitialStageHomogenousLightBoundingSphereProjection::HomogenousLightSource> light_buffer;
-	DeviceBuffer<size_t> num_rays_buffer;
-	DeviceBuffer<size_t> temp_num_rays_buffer;
+	std::vector<InitialStageHomogenousLightBoundingSphereProjection::PerDeviceData> 
+		per_device_data;
 
-	if (!bounding_sphere_buffer.allocate(global_data.experimental_setup.particles.size(), true))
-		return nullptr;
-	if (!rect_buffer.allocate(global_data.experimental_setup.particles.size(), true))
-		return nullptr;
-	if (!light_buffer.allocate(global_data.experimental_setup.light_sources.size(), true))
-		return nullptr;
-	const size_t num_pl = 
-		global_data.experimental_setup.particles.size() *
-		global_data.experimental_setup.light_sources.size();
-	if (!num_rays_buffer.allocate(num_pl, false))
-		return nullptr;
-	if (!temp_num_rays_buffer.allocate(num_pl, false))
-		return nullptr;
-
-	const auto& setup = global_data.experimental_setup;
-	for (size_t i = 0; i < global_data.experimental_setup.light_sources.size(); ++i)
+	for (size_t i = 0; i < shared_data.execution_model.device_contexts.size(); ++i)
 	{
-		auto& light = light_buffer.getHostBuffer()[i];
-		light.origin = setup.light_sources[i].origin_corner;
-		light.ray_direction = setup.light_sources[i].orientation;
-		light.ray_intensity = static_cast<LightDistributionHomogeneous*>
-			(setup.light_sources[i].intensity_distribution.get())->intensity /
-			(m_light_resolution_per_world_unit * m_light_resolution_per_world_unit);
-		light.width =
-			ceil(setup.light_sources[i].horizontal_size *
-			m_light_resolution_per_world_unit);
-		light.x_axis =
-			(glm::normalize(setup.light_sources[i].horizontal_direction) * 
-				setup.light_sources[i].horizontal_size) / light.width;
-		light.height =
-			ceil(setup.light_sources[i].vertical_size *
-			m_light_resolution_per_world_unit);
-		light.y_axis =
-			(glm::normalize(setup.light_sources[i].vertical_direction) * 
-				setup.light_sources[i].vertical_size) / light.height;
+		const DeviceContext& dvctx = shared_data.execution_model.device_contexts[i];
+		if (!dvctx.activateDevice())
+			return nullptr;
+		per_device_data.emplace_back();
+		auto& pdp = per_device_data.back();
+
+		const size_t num_particles = shared_data.experimental_setup.particles.size();
+		const size_t num_lights = shared_data.experimental_setup.light_sources.size();
+		const size_t num_pl = num_particles * num_lights;
+
+		if (!pdp.bounding_spheres.allocate(num_particles, i == 0))
+			return nullptr;
+		if (!pdp.projection_buffer.allocate(num_particles, false))
+			return nullptr;
+		if (!pdp.light_source_buffer.allocate(num_lights, i == 0))
+			return nullptr;
+		if (!pdp.num_rays_buffer.allocate(num_pl, false))
+			return nullptr;
+		if (!pdp.temp_num_rays_buffer.allocate(num_pl, false))
+			return nullptr;
+
+		if (i == 0)
+		{
+			const auto& setup = shared_data.experimental_setup;
+			for (size_t j = 0; j < num_lights; ++j)
+			{
+				auto& light = pdp.light_source_buffer.getHostBuffer()[j];
+				light.origin = setup.light_sources[j].origin_corner;
+				light.ray_direction = setup.light_sources[j].orientation;
+				light.ray_intensity = static_cast<LightDistributionHomogeneous*>
+					(setup.light_sources[j].intensity_distribution.get())->intensity /
+					(m_light_resolution_per_world_unit * m_light_resolution_per_world_unit);
+				light.width =
+					ceil(setup.light_sources[j].horizontal_size *
+						m_light_resolution_per_world_unit);
+				light.x_axis =
+					(glm::normalize(setup.light_sources[j].horizontal_direction) *
+						setup.light_sources[j].horizontal_size) / light.width;
+				light.height =
+					ceil(setup.light_sources[j].vertical_size *
+						m_light_resolution_per_world_unit);
+				light.y_axis =
+					(glm::normalize(setup.light_sources[j].vertical_direction) *
+						setup.light_sources[j].vertical_size) / light.height;
+			}
+		}
+
+		if (!pdp.light_source_buffer.uploadExt(
+			per_device_data[0].light_source_buffer.getHostBuffer()))
+			return nullptr;
 	}
-	if (!light_buffer.upload())
-		return nullptr;
 
 	std::shared_ptr<InitialStageHomogenousLightBoundingSphereProjection> initial_state =
 		std::make_shared<InitialStageHomogenousLightBoundingSphereProjection>(
 			m_light_resolution_per_world_unit,
-			std::move(bounding_sphere_buffer),
-			std::move(rect_buffer),
-			std::move(light_buffer),
-			std::move(num_rays_buffer),
-			std::move(temp_num_rays_buffer));
+			std::move(per_device_data));
 	return initial_state;
 }
 

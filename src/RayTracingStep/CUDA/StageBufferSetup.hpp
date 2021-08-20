@@ -16,19 +16,17 @@ namespace ldplab
             BufferSetup() = delete;
             /** @brief Sets up the initial batch buffers. */
             static void executeStepSetup(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 PipelineData& data);
             /** @brief Sets up the buffers. */
             static void executeLayerSetup(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 PipelineData& data,
                 size_t buffer_index,
                 size_t output_buffer_index);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
-                const GlobalData& global_data,
+                const SharedStepData& shared_data,
                 PipelineData& data);
         };
     }

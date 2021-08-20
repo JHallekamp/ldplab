@@ -103,44 +103,42 @@ namespace
 
 ldplab::rtscuda::PipelineData::RayBufferReductionResult 
 	ldplab::rtscuda::RayBufferReduce::execute(
-        const GlobalData& global_data,
-        BatchData& batch_data,
+        StreamContext& smctx,
         PipelineData& pipeline_data,
 		size_t ray_buffer_index)
 {
     const PipelineData::KernelLaunchParameter& klp1 = 
         pipeline_data.ray_buffer_reduction_1_klp;
-    rayBufferReduceKernel<<<klp1.grid_size, klp1.block_size, klp1.shared_memory_size>>>(
+    rayBufferReduceKernel<<<klp1.grid_size, klp1.block_size, klp1.shared_memory_size, smctx.cudaStream()>>>(
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
-        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
-        global_data.simulation_parameter.num_rays_per_batch,
-        global_data.simulation_parameter.num_particles);
+        smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.simulationParameter().num_rays_per_batch,
+        smctx.simulationParameter().num_particles);
 
     const PipelineData::KernelLaunchParameter& klp2 =
         pipeline_data.ray_buffer_reduction_2_klp;
-    rayBufferReduceKernelStep2<<<klp2.grid_size, klp2.block_size, klp2.shared_memory_size>>>(
+    rayBufferReduceKernelStep2<<<klp2.grid_size, klp2.block_size, klp2.shared_memory_size, smctx.cudaStream() >>>(
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
         klp1.grid_size.x);
 
     if (!pipeline_data.ray_buffer_reduction_result_buffer.download(0, 1))
     {
-        LDPLAB_LOG_ERROR("RTSCUDA context %i: Ray buffer reduce pipeline step "\
-            "failed to download reduction results from device",
-            global_data.instance_uid);
+        LDPLAB_LOG_ERROR("RTSCUDA: Ray buffer reduce pipeline step "\
+            "failed to download reduction results from device");
     }
     return pipeline_data.ray_buffer_reduction_result_buffer.getHostBuffer()[0];
 }
 
 bool ldplab::rtscuda::RayBufferReduce::allocateData(
-    const GlobalData& global_data,
+    const SharedStepData& shared_data,
     PipelineData& data)
 {
     constexpr size_t block_size = 128;
     PipelineData::KernelLaunchParameter& klp1 = data.ray_buffer_reduction_1_klp;
     klp1.block_size.x = block_size;
     klp1.grid_size.x =
-        global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
+        shared_data.simulation_parameter.num_rays_per_batch / block_size +
+        (shared_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
     klp1.shared_memory_size = 
         klp1.block_size.x * sizeof(PipelineData::RayBufferReductionResult);
 
@@ -153,7 +151,6 @@ bool ldplab::rtscuda::RayBufferReduce::allocateData(
             klp2.block_size.x * sizeof(PipelineData::RayBufferReductionResult);
     }
     klp2.grid_size.x = 1;
-
     return data.ray_buffer_reduction_result_buffer.allocate(klp1.grid_size.x, true);
 }
 

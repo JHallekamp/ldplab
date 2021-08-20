@@ -33,63 +33,71 @@ ldplab::rtscuda::PipelineHostBound::PipelineHostBound(
 void ldplab::rtscuda::PipelineHostBound::execute()
 {
     using namespace std::placeholders;
+    std::atomic_size_t batch_ctr;
 	const static std::shared_ptr<JobWrapper> job = 
 		std::make_shared<JobWrapper>(
-			std::bind(&PipelineHostBound::createBatchJob, this, _1));
+			std::bind(&PipelineHostBound::createBatchJob, this, _1, &batch_ctr));
 	m_thread_pool->executeJobBatch(
 		job, 
-		m_context->simulation_parameter.num_parallel_batches);
+		m_context->execution_model.stream_contexts.size());
 }
 
-void ldplab::rtscuda::PipelineHostBound::createBatchJob(size_t process_id)
+void ldplab::rtscuda::PipelineHostBound::createBatchJob(
+    size_t process_id, 
+    std::atomic_size_t* batch_no)
 {
+    // Receive GPU context
+    const int device_id = 0;
+    if (cudaSetDevice(device_id) != cudaSuccess)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA context %i: Failed to receive cuda context "\
+            "for device %i",
+            m_context->instance_uid,
+            device_id);
+        return;
+    }
+
 	// Get batch data
-	BatchData& batch_data = m_context->batch_data[process_id];
+	StreamContext& stream_context = m_context->execution_model.stream_contexts[process_id];
     PipelineData& pipeline_data = m_pipeline_data[process_id];
 
     // Initial buffer setup
-    LDPLAB_PROFILING_START(pipeline_execute_step_buffer_setup);
-    BufferSetup::executeStepSetup(*m_context, batch_data, pipeline_data);
-    LDPLAB_PROFILING_STOP(pipeline_execute_step_buffer_setup);
+    BufferSetup::executeStepSetup(stream_context, pipeline_data);
 
     constexpr size_t initial_batch_buffer_index = 0;
     bool batches_left = false;
-    size_t num_batches = 0;
     do
     {
-        LDPLAB_PROFILING_START(pipeline_create_batch);
-		batches_left = m_stage_is->execute(
-			*m_context, 
-			batch_data, 
-			initial_batch_buffer_index);
-        LDPLAB_PROFILING_STOP(pipeline_create_batch);
-        LDPLAB_PROFILING_START(pipeline_setup_batch);
-        setupBatch(batch_data);
-        LDPLAB_PROFILING_STOP(pipeline_setup_batch);
-        LDPLAB_PROFILING_START(pipeline_execute_batch);
+        const size_t current_batch = (*batch_no)++;
+        batches_left = m_stage_is->execute(
+            stream_context,
+            current_batch,
+            initial_batch_buffer_index);
+        setupBatch(
+            stream_context, 
+            current_batch);
         executeBatch(
-            batch_data,
+            stream_context,
             pipeline_data,
-			num_batches, 
-			0, 
-			initial_batch_buffer_index, 
-			false);
-        LDPLAB_PROFILING_STOP(pipeline_execute_batch);
-        ++num_batches;
+            current_batch,
+            0,
+            initial_batch_buffer_index,
+            false);
     } while (batches_left);
 }
 
-void ldplab::rtscuda::PipelineHostBound::setupBatch(BatchData& batch_data)
+void ldplab::rtscuda::PipelineHostBound::setupBatch(
+    StreamContext& stream_context, size_t batch_no)
 {
-	m_stage_bvi->batchSetup(*m_context, batch_data);
-	m_stage_is->batchSetup(*m_context, batch_data);
-	m_stage_ipp->batchSetup(*m_context, batch_data);
-	m_stage_pi->batchSetup(*m_context, batch_data);
-	m_stage_si->batchSetup(*m_context, batch_data);
+	m_stage_bvi->batchSetup(*m_context, stream_context, batch_no);
+	m_stage_is->batchSetup(*m_context, stream_context, batch_no);
+	m_stage_ipp->batchSetup(*m_context, stream_context, batch_no);
+	m_stage_pi->batchSetup(*m_context, stream_context, batch_no);
+	m_stage_si->batchSetup(*m_context, stream_context, batch_no);
 }
 
 void ldplab::rtscuda::PipelineHostBound::executeBatch(
-	BatchData& batch_data, 
+	StreamContext& stream_context, 
     PipelineData& pipeline_data,
 	size_t batch_no, 
 	size_t depth, 
@@ -97,64 +105,46 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	bool inside_particle)
 {
     // Check if buffer contains rays
-    LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce);
     PipelineData::RayBufferReductionResult ray_state_count;
     ray_state_count = RayBufferReduce::execute(
-        *m_context,
-        batch_data, 
+        stream_context,
         pipeline_data, 
         ray_buffer_index);
-    LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce);
 
     if (ray_state_count.num_active_rays == 0)
         return;
 
     // Prepare buffer
-    LDPLAB_PROFILING_START(pipeline_execute_layer_buffer_setup);
     BufferSetup::executeLayerSetup(
-        *m_context,
-        batch_data, 
+        stream_context,
         pipeline_data, 
         ray_buffer_index,
         ray_buffer_index);
-    LDPLAB_PROFILING_STOP(pipeline_execute_layer_buffer_setup);
 
     // Switch between inside and outside particle
     if (inside_particle)
     {
-        LDPLAB_PROFILING_START(pipeline_inner_particle_propagation);
         m_stage_ipp->execute(
-            *m_context, 
-            batch_data, 
+            stream_context,
             ray_buffer_index, 
             ray_buffer_index, 
             ray_buffer_index);
-        LDPLAB_PROFILING_STOP(pipeline_inner_particle_propagation);
     }
     else
     {
         do
         {
-            LDPLAB_PROFILING_START(pipeline_bounding_volume_intersection);
             m_stage_bvi->execute(
-                *m_context, 
-                batch_data, 
+                stream_context,
                 ray_buffer_index);
-            LDPLAB_PROFILING_STOP(pipeline_bounding_volume_intersection);
-            LDPLAB_PROFILING_START(pipeline_particle_intersection);
             m_stage_pi->execute(
-                *m_context, 
-                batch_data, 
+                stream_context,
                 ray_buffer_index, 
                 ray_buffer_index);
-            LDPLAB_PROFILING_STOP(pipeline_particle_intersection);
-            LDPLAB_PROFILING_START(pipeline_ray_buffer_reduce);
             ray_state_count = RayBufferReduce::execute(
-                *m_context,
-                batch_data, 
+                stream_context,
                 pipeline_data,
                 ray_buffer_index);
-            LDPLAB_PROFILING_STOP(pipeline_ray_buffer_reduce);
             if (ray_state_count.num_active_rays == 0)
                 return;
         } while (ray_state_count.num_world_space_rays > 0);
@@ -170,10 +160,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
             m_context->simulation_parameter.num_surface_interaction_transmission_passes;
         for (size_t j = 0; j < pass_lim; ++j)
         {
-            LDPLAB_PROFILING_START(pipeline_surface_interaction);
             m_stage_si->execute(
-                *m_context,
-                batch_data,
+                stream_context,
                 ray_buffer_index,
                 ray_buffer_index + 1,
                 ray_buffer_index,
@@ -183,11 +171,10 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 inside_particle,
                 reflection_pass,
                 j);
-            LDPLAB_PROFILING_STOP(pipeline_surface_interaction);
             if (depth < m_context->simulation_parameter.max_branching_depth)
             {
                 executeBatch(
-                    batch_data, 
+                    stream_context,
                     pipeline_data,
                     batch_no,
                     depth + 1, 
@@ -197,14 +184,11 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         }
     }
 
-    LDPLAB_PROFILING_START(pipeline_gather_output);
     GatherOutput::execute(
-        *m_context,
-        batch_data,
+        stream_context,
         pipeline_data,
         ray_buffer_index,
         ray_buffer_index);
-    LDPLAB_PROFILING_STOP(pipeline_gather_output);
 }
 
 #endif

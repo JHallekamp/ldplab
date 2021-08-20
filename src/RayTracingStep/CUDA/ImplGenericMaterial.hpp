@@ -13,10 +13,6 @@ namespace ldplab
         {
             Vec3 direction_times_gradient;
             double index_of_refraction_minus_partial_dot;
-            //double index_of_refraction;
-            //double gradient;
-            //Vec3 origin;
-            //Vec3 direction;
         };
 
         class GenericMaterialLinearOneDirectional :

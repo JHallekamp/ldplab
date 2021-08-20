@@ -24,7 +24,7 @@ userDefined() const
 bool ldplab::rtscuda::default_factories::ParticleIntersectionFactory::
 checkCompability(
     const RayTracingStepCUDAInfo& step_info,
-    const GlobalData::DeviceProperties& device_properties,
+    const ExecutionModel& execution_model,
     const PipelineConfiguration& configuration,
     const ExperimentalSetup& setup,
     const InterfaceMapping& interface_mapping)
@@ -37,7 +37,7 @@ ldplab::rtscuda::default_factories::ParticleIntersectionFactory::
 create(
     const RayTracingStepCUDAInfo& step_info,
     const PipelineConfiguration& configuration,
-    const GlobalData& global_data)
+    const SharedStepData& shared_data)
 {
     return std::make_shared<ParticleIntersection>();
 }
