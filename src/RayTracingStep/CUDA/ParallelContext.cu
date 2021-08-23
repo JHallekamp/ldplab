@@ -4,18 +4,13 @@
 
 #include "../../Utils/Log.hpp"
 
-ldplab::rtscuda::StreamContext::~StreamContext()
+ldplab::rtscuda::StreamContext::CudaStreamWrapper::~CudaStreamWrapper()
 {
-	if (m_cuda_stream != 0)
+	if (stream != 0)
 	{
-		cudaStreamDestroy(m_cuda_stream);
-		m_cuda_stream = 0;
+		cudaStreamDestroy(stream);
+		stream = 0;
 	}
-}
-
-bool ldplab::rtscuda::StreamContext::synchronizeOnStream()
-{
-	return cudaStreamSynchronize(m_cuda_stream) == cudaSuccess;
 }
 
 ldplab::rtscuda::StreamContext::StreamContext(
@@ -28,7 +23,6 @@ ldplab::rtscuda::StreamContext::StreamContext(
 	:
 	m_stream_id{ stream_data.associated_stream },
 	m_device_context{ device_ctx },
-	m_cuda_stream{ 0 },
 	m_ray_data_buffers{ stream_data.ray_data_buffers },
 	m_intersection_data_buffers{ stream_data.intersection_data_buffers },
 	m_output_data_buffers{ stream_data.output_data_buffers },
@@ -37,12 +31,19 @@ ldplab::rtscuda::StreamContext::StreamContext(
 	m_simulation_parameter{ simulation_parameter },
 	m_particle_transformation_buffers{ device_data.particle_transformation_buffers },
 	m_particle_data_buffers{ device_data.particle_data_buffers },
-	m_device_properties{ device_data.device_properties }
-{ }
+	m_device_properties{ device_data.device_properties },
+	m_cuda_stream{ new CudaStreamWrapper() }
+{ 
+}
+
+bool ldplab::rtscuda::StreamContext::synchronizeOnStream()
+{
+	return cudaStreamSynchronize(m_cuda_stream->stream) == cudaSuccess;
+}
 
 bool ldplab::rtscuda::StreamContext::allocate()
 {
-	cudaError_t err = cudaStreamCreate(&m_cuda_stream);
+	cudaError_t err = cudaStreamCreate(&m_cuda_stream->stream);
 	if (err != cudaSuccess)
 	{
 		LDPLAB_LOG_ERROR("RTSCUDA stream context %i: Failed to create "\

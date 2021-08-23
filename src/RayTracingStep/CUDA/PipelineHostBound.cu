@@ -11,6 +11,8 @@
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
 
+#include <iostream>
+
 class JobWrapper : public ldplab::utils::ThreadPool::IJob
 {
 public:
@@ -46,20 +48,12 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(
     size_t process_id, 
     std::atomic_size_t* batch_no)
 {
-    // Receive GPU context
-    const int device_id = 0;
-    if (cudaSetDevice(device_id) != cudaSuccess)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA context %i: Failed to receive cuda context "\
-            "for device %i",
-            m_context->instance_uid,
-            device_id);
-        return;
-    }
-
 	// Get batch data
 	StreamContext& stream_context = m_context->execution_model.stream_contexts[process_id];
     PipelineData& pipeline_data = m_pipeline_data[process_id];
+
+    // Set device id
+    stream_context.deviceContext().activateDevice();
 
     // Initial buffer setup
     BufferSetup::executeStepSetup(stream_context, pipeline_data);
@@ -73,17 +67,21 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(
             stream_context,
             current_batch,
             initial_batch_buffer_index);
-        setupBatch(
-            stream_context, 
-            current_batch);
-        executeBatch(
-            stream_context,
-            pipeline_data,
-            current_batch,
-            0,
-            initial_batch_buffer_index,
-            false);
+        if (batches_left)
+        {
+            setupBatch(
+                stream_context,
+                current_batch);
+            executeBatch(
+                stream_context,
+                pipeline_data,
+                current_batch,
+                0,
+                initial_batch_buffer_index,
+                false);
+        }
     } while (batches_left);
+    stream_context.synchronizeOnStream();
 }
 
 void ldplab::rtscuda::PipelineHostBound::setupBatch(

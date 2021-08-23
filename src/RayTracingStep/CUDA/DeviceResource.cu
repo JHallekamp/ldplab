@@ -16,11 +16,11 @@ bool ldplab::rtscuda::IDeviceResource::checkCudaAllocationError(
     if (cuda_return_value != cudaSuccess)
     {
         LDPLAB_LOG_ERROR("RTSCUDA resource %i (%s): Could not allocate %i "\
-            "bytes of device memory, cuda returned error code %i: %s",
+            "bytes of device memory, cuda returned error code %s: %s",
             m_resource_uid,
             resourceTypeName(),
             num_bytes,
-            cuda_return_value,
+            cudaGetErrorName(cuda_return_value),
             cudaGetErrorString(cuda_return_value));
         return false;
     }
@@ -41,12 +41,12 @@ bool ldplab::rtscuda::IDeviceResource::checkCudaFreeError(
     {
         LDPLAB_LOG_ERROR("RTSCUDA resource %i (%s): Could not free %i bytes "\
             "of device memory at device address %p, cuda returned error code "\
-            "%i: %s",
+            "%s: %s",
             m_resource_uid,
             resourceTypeName(),
             num_bytes,
             device_ptr,
-            cuda_return_value,
+            cudaGetErrorName(cuda_return_value),
             cudaGetErrorString(cuda_return_value));
         return false;
     }
@@ -70,13 +70,13 @@ bool ldplab::rtscuda::IDeviceResource::checkCudaMemsetError(
     {
         LDPLAB_LOG_ERROR("RTSCUDA resource %i (%s): Could not set %i bytes "\
             "of device memory at device address %p (resource base address "\
-            "%p) to value %i, cuda returned error code %i: %s",
+            "%p) to value %i, cuda returned error code %s: %s",
             m_resource_uid,
             resourceTypeName(),
             num_bytes,
             device_offset_ptr,
             value,
-            cuda_return_value,
+            cudaGetErrorName(cuda_return_value),
             cudaGetErrorString(cuda_return_value));
         return false;
     }
@@ -103,14 +103,14 @@ bool ldplab::rtscuda::IDeviceResource::checkCudaUploadError(
     {
         LDPLAB_LOG_ERROR("RTSCUDA resource %i (%s): Could not upload %i "\
             "bytes of memory from host address %p to device address %p ("\
-            "resource base address %p), cuda returned error code %i: %s",
+            "resource base address %p), cuda returned error code %s: %s",
             m_resource_uid,
             resourceTypeName(),
             num_bytes,
             host_address,
             device_offset_ptr,
             device_base_ptr,
-            cuda_return_value,
+            cudaGetErrorName(cuda_return_value),
             cudaGetErrorString(cuda_return_value));
         return false;
     }
@@ -137,14 +137,14 @@ bool ldplab::rtscuda::IDeviceResource::checkCudaDownloadError(
     {
         LDPLAB_LOG_ERROR("RTSCUDA resource %i (%s): Could not download %i "\
             "bytes of memory from device address %p (resource base address "\
-            "%p) to host address %p, cuda returned error code %i: %s",
+            "%p) to host address %p, cuda returned error code %s: %s",
             m_resource_uid,
             resourceTypeName(),
             num_bytes,
             device_offset_ptr,
             device_base_ptr,
             host_address,
-            cuda_return_value,
+            cudaGetErrorName(cuda_return_value),
             cudaGetErrorString(cuda_return_value));
         return false;
     }

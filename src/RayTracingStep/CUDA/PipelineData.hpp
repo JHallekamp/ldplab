@@ -33,7 +33,8 @@ namespace ldplab
                 size_t num_world_space_rays;
             };
 
-            DeviceBuffer<RayBufferReductionResult> ray_buffer_reduction_result_buffer;
+            DeviceBufferPinnend<RayBufferReductionResult> 
+                ray_buffer_reduction_result_buffer;
             KernelLaunchParameter ray_buffer_reduction_1_klp;
             KernelLaunchParameter ray_buffer_reduction_2_klp;
             

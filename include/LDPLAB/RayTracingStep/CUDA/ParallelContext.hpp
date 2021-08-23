@@ -2,6 +2,8 @@
 #define WWU_LDPLAB_RTSCUDA_PARALLEL_CONTEXT_HPP
 
 #include <cuda_runtime.h>
+#include <atomic>
+#include <memory>
 #include <vector>
 
 namespace ldplab
@@ -79,12 +81,14 @@ namespace ldplab
         {
             friend struct SharedStepData;
         public:
-            ~StreamContext();
+            StreamContext(const StreamContext&) = default;
+            StreamContext(StreamContext&&) = default;
+            ~StreamContext() = default;
             size_t streamId() const { return m_stream_id; }
             size_t deviceGroup() const { return m_device_context.groupId(); }
             const DeviceContext& deviceContext() const { return m_device_context; }
 
-            cudaStream_t cudaStream() const { return m_cuda_stream; }
+            cudaStream_t cudaStream() const { return m_cuda_stream->stream; }
             bool synchronizeOnStream();
 
             RayDataBuffers& rayDataBuffers() const { return m_ray_data_buffers; }
@@ -98,6 +102,12 @@ namespace ldplab
             const ParticleDataBuffers& particleDataBuffers() const { return m_particle_data_buffers; }
             const DeviceProperties& deviceProperties() const { return m_device_properties; }
         private:
+            struct CudaStreamWrapper
+            {
+                ~CudaStreamWrapper();
+                cudaStream_t stream = 0;
+            };
+        private:
             StreamContext(
                 const DeviceContext& device_ctx,
                 const DeviceData& device_data,
@@ -108,7 +118,7 @@ namespace ldplab
             bool allocate();
         private:
             size_t m_stream_id;
-            cudaStream_t m_cuda_stream;
+            std::shared_ptr<CudaStreamWrapper> m_cuda_stream;
 
             RayDataBuffers& m_ray_data_buffers;
             IntersectionDataBuffers& m_intersection_data_buffers;

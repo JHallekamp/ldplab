@@ -121,11 +121,12 @@ ldplab::rtscuda::PipelineData::RayBufferReductionResult
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
         klp1.grid_size.x);
 
-    if (!pipeline_data.ray_buffer_reduction_result_buffer.download(0, 1))
+    if (!pipeline_data.ray_buffer_reduction_result_buffer.downloadAsync(0, 1, smctx.cudaStream()))
     {
         LDPLAB_LOG_ERROR("RTSCUDA: Ray buffer reduce pipeline step "\
             "failed to download reduction results from device");
     }
+    smctx.synchronizeOnStream();
     return pipeline_data.ray_buffer_reduction_result_buffer.getHostBuffer()[0];
 }
 

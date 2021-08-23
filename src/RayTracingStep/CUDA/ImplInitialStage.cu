@@ -120,6 +120,9 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		size_t batch_no,
 		size_t initial_batch_buffer_index)
 {
+	if (batch_no >= m_total_batch_count)
+		return false;
+
 	using namespace homogenous_light_bounding_sphere_projection;
 	const size_t block_size = 128;
 	const size_t grid_size = 
@@ -139,7 +142,7 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		pdp.light_source_buffer.bufferSize(),
 		stream_context.simulationParameter().num_rays_per_batch,
 		batch_no);
-	return (batch_no + 1 < m_total_batch_count);
+	return true;
 }
 
 __global__ void homogenous_light_bounding_sphere_projection::

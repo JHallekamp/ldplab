@@ -427,15 +427,18 @@ bool ldplab::rtscuda::SharedStepData::createExecutionModel(
 			device_data->associated_device_group,
 			device_data->device_properties,
 			std::move(stream_ids))));
+		if (!execution_model.device_contexts.back().activateDevice())
+			return false;
 		for (size_t j = 0; j < device_data->per_stream_data.size(); ++j)
 		{
-			execution_model.stream_contexts.push_back(std::move(StreamContext(
+			auto smctx = StreamContext(
 				execution_model.device_contexts.back(),
 				*device_data,
 				experimental_setup,
 				interface_mapping,
 				simulation_parameter,
-				device_data->per_stream_data.back())));
+				device_data->per_stream_data[j]);
+			execution_model.stream_contexts.push_back(smctx);
 			if (!execution_model.stream_contexts.back().allocate())
 				return false;
 		}
