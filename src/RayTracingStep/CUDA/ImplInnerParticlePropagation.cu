@@ -62,13 +62,12 @@ void ldplab::rtscuda::InnerParticlePropagationRK4::execute(
     StreamContext& smctx,
 	size_t ray_buffer_index, 
 	size_t intersection_buffer_index,
-    size_t output_buffer_index)
+    size_t output_buffer_index,
+    size_t num_rays)
 {
     using namespace rk4;
     const size_t block_size = 192;
-    const size_t grid_size =
-        smctx.simulationParameter().num_rays_per_batch / block_size +
-        (smctx.simulationParameter().num_rays_per_batch % block_size ? 1 : 0);
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     innerParticlePropagationKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
         m_parameter.step_size,
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
@@ -77,7 +76,7 @@ void ldplab::rtscuda::InnerParticlePropagationRK4::execute(
         smctx.rayDataBuffers().intensity_buffers.getDeviceBuffer(ray_buffer_index),
         smctx.intersectionDataBuffers().point_buffers.getDeviceBuffer(intersection_buffer_index),
         smctx.intersectionDataBuffers().normal_buffers.getDeviceBuffer(intersection_buffer_index),
-        smctx.simulationParameter().num_rays_per_batch,
+        num_rays,
         smctx.particleDataBuffers().intersect_segment_fptr_buffer.getDeviceBuffer(),
         smctx.particleDataBuffers().intersect_ray_fptr_buffer.getDeviceBuffer(),
         smctx.particleDataBuffers().geometry_data_buffer.getDeviceBuffer(),

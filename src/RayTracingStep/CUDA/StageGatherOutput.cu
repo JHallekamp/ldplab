@@ -82,15 +82,19 @@ void ldplab::rtscuda::GatherOutput::execute(
     StreamContext& smctx,
     PipelineData& pipeline_data,
 	size_t ray_buffer_index,
-    size_t output_buffer_index)
+    size_t output_buffer_index,
+    size_t num_rays)
 {
-    const PipelineData::KernelLaunchParameter& klp = 
-        pipeline_data.gather_output_klp;
-    gatherOutputKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size, smctx.cudaStream()>>>(
+    //const PipelineData::KernelLaunchParameter& klp = 
+    //    pipeline_data.gather_output_klp;
+    constexpr size_t block_size = 128;
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
+    const size_t mem_size = block_size * sizeof(Vec3) * 2;
+    gatherOutputKernel<<<grid_size, block_size, mem_size, smctx.cudaStream()>>>(
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
         smctx.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
         smctx.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        smctx.simulationParameter().num_rays_per_batch,
+        num_rays,
         smctx.outputDataBuffers().force_per_particle_buffer.getDeviceBuffer(),
         smctx.outputDataBuffers().torque_per_particle_buffer.getDeviceBuffer(),
         smctx.particleTransformationBuffers().p2w_transformation_buffer.getDeviceBuffer(),
@@ -102,11 +106,6 @@ bool ldplab::rtscuda::GatherOutput::allocateData(
     const SharedStepData& shared_data,
     PipelineData& data)
 {
-    constexpr size_t block_size = 128;
-    PipelineData::KernelLaunchParameter& klp = data.gather_output_klp;
-    klp.block_size.x = block_size;
-    klp.grid_size.x = shared_data.simulation_parameter.num_particles;
-    klp.shared_memory_size = klp.block_size.x * sizeof(Vec3) * 2;
     return true;
 }
 

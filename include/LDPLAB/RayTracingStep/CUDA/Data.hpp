@@ -99,6 +99,8 @@ namespace ldplab
         /** @brief Information about the simulation. */
         struct SimulationParameter
         {
+            double buffer_reorder_threshold;
+            size_t buffer_min_size;
             double intensity_cutoff;
             size_t max_branching_depth;
             size_t num_particles;

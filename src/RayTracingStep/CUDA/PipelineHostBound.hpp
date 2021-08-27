@@ -32,6 +32,7 @@ namespace ldplab
                 size_t batch_no,
                 size_t depth,
                 size_t ray_buffer_index,
+                size_t num_rays,
                 bool inside_particle);
         private:
             std::shared_ptr<utils::ThreadPool> m_thread_pool;

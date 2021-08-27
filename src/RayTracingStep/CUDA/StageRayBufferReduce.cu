@@ -5,6 +5,8 @@
 
 namespace
 {
+    constexpr size_t rayBufferReduceKernelBlockSize = 128;
+
     __global__ void rayBufferReduceKernel(
         ldplab::rtscuda::PipelineData::RayBufferReductionResult* result_buffer,
         int32_t* ray_index_buffer,
@@ -31,9 +33,10 @@ namespace
 
         // ====================================================================
         // Reduce step: Loop over the buffer and reduce its content
-        for (unsigned int lim = blockDim.x; lim > 1; lim /= 2)
+        unsigned int ofs;
+        for (unsigned int lim = blockDim.x; lim > 1; lim = ofs)
         {
-            unsigned int ofs = lim / 2;
+            ofs = lim / 2 + lim % 2;
             if (tid + ofs < lim)
             {
                 sbuf[tid].num_active_rays += sbuf[tid + ofs].num_active_rays;
@@ -65,8 +68,8 @@ namespace
         // ====================================================================
         // Preperation step: Prepare shared buffer
         const unsigned int tid = threadIdx.x;
-        const unsigned int elem_count = buffer_size / blockDim.x +
-            (buffer_size % blockDim.x ? 1 : 0);
+        const unsigned int elem_count = 
+            buffer_size / blockDim.x + (buffer_size % blockDim.x ? 1 : 0);
 
         sbuf[tid].num_active_rays = 0;
         sbuf[tid].num_world_space_rays = 0;
@@ -83,9 +86,10 @@ namespace
 
         // ====================================================================
         // Reduction step: Reduce shared memory
-        for (unsigned int lim = blockDim.x; lim > 1; lim /= 2)
+        unsigned int ofs;
+        for (unsigned int lim = blockDim.x; lim > 1; lim = ofs)
         {
-            unsigned int ofs = lim / 2;
+            ofs = lim / 2 + lim % 2;
             if (tid + ofs < lim)
             {
                 sbuf[tid].num_active_rays += sbuf[tid + ofs].num_active_rays;
@@ -105,21 +109,31 @@ ldplab::rtscuda::PipelineData::RayBufferReductionResult
 	ldplab::rtscuda::RayBufferReduce::execute(
         StreamContext& smctx,
         PipelineData& pipeline_data,
-		size_t ray_buffer_index)
+		size_t ray_buffer_index,
+        size_t num_rays)
 {
-    const PipelineData::KernelLaunchParameter& klp1 = 
-        pipeline_data.ray_buffer_reduction_1_klp;
-    rayBufferReduceKernel<<<klp1.grid_size, klp1.block_size, klp1.shared_memory_size, smctx.cudaStream()>>>(
+    constexpr size_t block_size = rayBufferReduceKernelBlockSize;
+    const size_t k1_grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
+    const size_t k1_mem_size = block_size * sizeof(PipelineData::RayBufferReductionResult);
+
+    rayBufferReduceKernel<<<k1_grid_size, block_size, k1_mem_size, smctx.cudaStream()>>>(
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
-        smctx.simulationParameter().num_rays_per_batch,
+        num_rays,
         smctx.simulationParameter().num_particles);
 
-    const PipelineData::KernelLaunchParameter& klp2 =
-        pipeline_data.ray_buffer_reduction_2_klp;
-    rayBufferReduceKernelStep2<<<klp2.grid_size, klp2.block_size, klp2.shared_memory_size, smctx.cudaStream() >>>(
+    size_t k2_block_size = block_size;
+    size_t k2_grid_size = k1_grid_size;
+    size_t k2_mem_size = k1_mem_size;
+    if (k2_grid_size < k2_block_size)
+    {
+        k2_block_size = k2_grid_size;
+        k2_mem_size = k2_block_size * sizeof(PipelineData::RayBufferReductionResult);
+    }
+    k2_grid_size = 1;
+    rayBufferReduceKernelStep2<<<k2_grid_size, k2_block_size, k2_mem_size, smctx.cudaStream() >>>(
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
-        klp1.grid_size.x);
+        k1_grid_size);
 
     if (!pipeline_data.ray_buffer_reduction_result_buffer.downloadAsync(0, 1, smctx.cudaStream()))
     {
@@ -134,25 +148,11 @@ bool ldplab::rtscuda::RayBufferReduce::allocateData(
     const SharedStepData& shared_data,
     PipelineData& data)
 {
-    constexpr size_t block_size = 128;
-    PipelineData::KernelLaunchParameter& klp1 = data.ray_buffer_reduction_1_klp;
-    klp1.block_size.x = block_size;
-    klp1.grid_size.x =
+    constexpr size_t block_size = rayBufferReduceKernelBlockSize;
+    size_t grid_size = 
         shared_data.simulation_parameter.num_rays_per_batch / block_size +
         (shared_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
-    klp1.shared_memory_size = 
-        klp1.block_size.x * sizeof(PipelineData::RayBufferReductionResult);
-
-    PipelineData::KernelLaunchParameter& klp2 = data.ray_buffer_reduction_2_klp;
-    klp2 = klp1;
-    if (klp2.grid_size.x < klp2.block_size.x)
-    {
-        klp2.block_size.x = klp2.grid_size.x;
-        klp2.shared_memory_size = 
-            klp2.block_size.x * sizeof(PipelineData::RayBufferReductionResult);
-    }
-    klp2.grid_size.x = 1;
-    return data.ray_buffer_reduction_result_buffer.allocate(klp1.grid_size.x, true);
+    return data.ray_buffer_reduction_result_buffer.allocate(grid_size, true);
 }
 
 #endif

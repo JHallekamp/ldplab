@@ -19,7 +19,8 @@ namespace ldplab
                 StreamContext& stream_context,
                 size_t ray_buffer_index,
                 size_t intersection_buffer_index,
-                size_t output_buffer_index) override;
+                size_t output_buffer_index,
+                size_t num_rays) override;
         private:
             const RK4Parameter m_parameter;
         };

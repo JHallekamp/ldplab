@@ -16,6 +16,7 @@
 #include "PipelineDeviceBound.hpp"
 #include "PipelineHostBound.hpp"
 #include "StageBufferSetup.hpp"
+#include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
 #include "RayTracingStepCUDA.hpp"
@@ -917,6 +918,14 @@ bool ldplab::rtscuda::Factory::createPipeline(
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                 "Failed to allocate buffer setup stage pipeline data.");
+            return false;
+        }
+        if (!BufferSort::allocateData(
+            *pipeline->m_context,
+            pipeline->m_pipeline_data.back()))
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+                "Failed to allocate buffer sort stage pipeline data.");
             return false;
         }
         if (!GatherOutput::allocateData(

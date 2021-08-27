@@ -35,10 +35,12 @@ namespace ldplab
              * @param[in] stream_context
              * @param[in] ray_buffer_index The index of the affected ray 
              *                             buffer.
+             * @param[in] num_rays The number of rays inside the ray buffer.
              */
             virtual void execute(
                 StreamContext& stream_context,
-                size_t ray_buffer_index) = 0;
+                size_t ray_buffer_index,
+                size_t num_rays) = 0;
         };
     }
 }

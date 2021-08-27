@@ -15,7 +15,8 @@ namespace ldplab
             void execute(
                 StreamContext& stream_context,
                 size_t ray_buffer_index,
-                size_t intersection_buffer_index) override;
+                size_t intersection_buffer_index,
+                size_t num_rays) override;
         };
     }
 }

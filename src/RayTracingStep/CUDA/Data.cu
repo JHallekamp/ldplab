@@ -95,6 +95,8 @@ bool ldplab::rtscuda::SharedStepData::allocateResources(
 	simulation_parameter.ray_invalid_index = -1;
 	simulation_parameter.output_in_particle_space = 
 		info.return_force_in_particle_coordinate_system;
+	simulation_parameter.buffer_min_size = info.buffer_min_size;
+	simulation_parameter.buffer_reorder_threshold = info.buffer_reorder_threshold;
 
 	// Create device data
 	for (size_t i = 0; i < per_device_data.size(); ++i)
@@ -341,6 +343,12 @@ bool ldplab::rtscuda::SharedStepData::allocateDeviceData(
 bool ldplab::rtscuda::SharedStepData::allocateStreamData(
 	StreamData& stream_data)
 {
+#ifdef NDEBUG
+	constexpr size_t downloadable = 0;
+#else
+	constexpr size_t downloadable = 1;
+#endif
+
 	const size_t num_particles = simulation_parameter.num_particles;
 	const size_t num_rays = simulation_parameter.num_rays_per_batch;
 	const size_t branching_depth = simulation_parameter.max_branching_depth;
@@ -348,15 +356,15 @@ bool ldplab::rtscuda::SharedStepData::allocateStreamData(
 
 	// Create ray buffer
 	error = error || !stream_data.ray_data_buffers.direction_buffers.allocate(
-		num_rays, branching_depth + 2, 1);
+		num_rays, branching_depth + 2, downloadable);
 	error = error || !stream_data.ray_data_buffers.intensity_buffers.allocate(
-		num_rays, branching_depth + 2, 1);
+		num_rays, branching_depth + 2, downloadable);
 	error = error || !stream_data.ray_data_buffers.min_bv_distance_buffers.allocate(
-		num_rays, branching_depth + 2, 1);
+		num_rays, branching_depth + 2, downloadable);
 	error = error || !stream_data.ray_data_buffers.origin_buffers.allocate(
-		num_rays, branching_depth + 2, 1);
+		num_rays, branching_depth + 2, downloadable);
 	error = error || !stream_data.ray_data_buffers.particle_index_buffers.allocate(
-		num_rays, branching_depth + 2, 1);
+		num_rays, branching_depth + 2, downloadable);
 	if (error)
 	{
 		LDPLAB_LOG_ERROR("RTSCUDA shared step data: Failed to allocate ray data "\
@@ -366,11 +374,11 @@ bool ldplab::rtscuda::SharedStepData::allocateStreamData(
 
 	// Create intersection buffer
 	error = error || !stream_data.intersection_data_buffers.normal_buffers.allocate(
-		num_rays, branching_depth + 1, 1);
+		num_rays, branching_depth + 1, downloadable);
 	error = error || !stream_data.intersection_data_buffers.particle_index_buffers.allocate(
-		num_rays, branching_depth + 1, 1);
+		num_rays, branching_depth + 1, downloadable);
 	error = error || !stream_data.intersection_data_buffers.point_buffers.allocate(
-		num_rays, branching_depth + 1, 1);
+		num_rays, branching_depth + 1, downloadable);
 	if (error)
 	{
 		LDPLAB_LOG_ERROR("RTSCUDA shared step data: Failed to allocate intersection "\
@@ -384,9 +392,9 @@ bool ldplab::rtscuda::SharedStepData::allocateStreamData(
 	error = error || !stream_data.output_data_buffers.torque_per_particle_buffer.allocate(
 		num_particles, true);
 	error = error || !stream_data.output_data_buffers.force_per_ray_buffer.allocate(
-		num_rays, branching_depth + 1, 1);
+		num_rays, branching_depth + 1, downloadable);
 	error = error || !stream_data.output_data_buffers.torque_per_ray_buffer.allocate(
-		num_rays, branching_depth + 1, 1);
+		num_rays, branching_depth + 1, downloadable);
 	if (error)
 	{
 		LDPLAB_LOG_ERROR("RTSCUDA shared step data: Failed to allocate output "\

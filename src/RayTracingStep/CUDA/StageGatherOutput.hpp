@@ -19,7 +19,8 @@ namespace ldplab
                 StreamContext& stream_context,
                 PipelineData& data,
                 size_t ray_buffer_index,
-                size_t output_buffer_index);
+                size_t output_buffer_index,
+                size_t num_rays);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
                 const SharedStepData& shared_data,

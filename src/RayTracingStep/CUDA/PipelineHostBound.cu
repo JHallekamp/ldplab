@@ -8,10 +8,9 @@
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"
 #include "StageBufferSetup.hpp"
+#include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
-
-#include <iostream>
 
 class JobWrapper : public ldplab::utils::ThreadPool::IJob
 {
@@ -78,6 +77,7 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(
                 current_batch,
                 0,
                 initial_batch_buffer_index,
+                stream_context.simulationParameter().num_rays_per_batch,
                 false);
         }
     } while (batches_left);
@@ -100,6 +100,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	size_t batch_no, 
 	size_t depth, 
 	size_t ray_buffer_index, 
+    size_t num_rays,
 	bool inside_particle)
 {
     // Check if buffer contains rays
@@ -107,10 +108,25 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
     ray_state_count = RayBufferReduce::execute(
         stream_context,
         pipeline_data, 
-        ray_buffer_index);
+        ray_buffer_index,
+        num_rays);
 
     if (ray_state_count.num_active_rays == 0)
         return;
+
+    size_t threshold = static_cast<size_t>(
+        static_cast<double>(num_rays) * 
+        stream_context.simulationParameter().buffer_reorder_threshold);
+    if (ray_state_count.num_active_rays < threshold &&
+        num_rays > stream_context.simulationParameter().buffer_min_size)
+    {
+        num_rays = BufferSort::execute(
+            stream_context,
+            pipeline_data,
+            ray_buffer_index,
+            ray_state_count.num_active_rays,
+            num_rays);
+    }
 
     // Prepare buffer
     BufferSetup::executeLayerSetup(
@@ -126,7 +142,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
             stream_context,
             ray_buffer_index, 
             ray_buffer_index, 
-            ray_buffer_index);
+            ray_buffer_index,
+            num_rays);
     }
     else
     {
@@ -134,18 +151,35 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         {
             m_stage_bvi->execute(
                 stream_context,
-                ray_buffer_index);
+                ray_buffer_index,
+                num_rays);
             m_stage_pi->execute(
                 stream_context,
                 ray_buffer_index, 
-                ray_buffer_index);
+                ray_buffer_index,
+                num_rays);
             ray_state_count = RayBufferReduce::execute(
                 stream_context,
                 pipeline_data,
-                ray_buffer_index);
+                ray_buffer_index,
+                num_rays);
             if (ray_state_count.num_active_rays == 0)
                 return;
         } while (ray_state_count.num_world_space_rays > 0);
+
+        threshold = static_cast<size_t>(
+            static_cast<double>(num_rays) *
+            stream_context.simulationParameter().buffer_reorder_threshold);
+        if (ray_state_count.num_active_rays < threshold &&
+            num_rays > stream_context.simulationParameter().buffer_min_size)
+        {
+            num_rays = BufferSort::execute(
+                stream_context,
+                pipeline_data,
+                ray_buffer_index,
+                ray_state_count.num_active_rays,
+                num_rays);
+        }
     }
 
     // Perform surface interaction and ray branching
@@ -168,7 +202,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 m_context->experimental_setup.medium_reflection_index,
                 inside_particle,
                 reflection_pass,
-                j);
+                j,
+                num_rays);
             if (depth < m_context->simulation_parameter.max_branching_depth)
             {
                 executeBatch(
@@ -177,6 +212,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                     batch_no,
                     depth + 1, 
                     ray_buffer_index + 1, 
+                    num_rays,
                     reflection_pass ? inside_particle : !inside_particle);
             }
         }
@@ -186,7 +222,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         stream_context,
         pipeline_data,
         ray_buffer_index,
-        ray_buffer_index);
+        ray_buffer_index,
+        num_rays);
 }
 
 #endif

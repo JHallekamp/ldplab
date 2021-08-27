@@ -23,6 +23,17 @@ namespace ldplab
          *       one with the lowest id).
          */
         std::shared_ptr<rtscuda::IExecutionModelInfo> execution_model_info = nullptr;
+        /** 
+         * @brief Threshold for reordering buffers.
+         * @details The pipeline reorders all buffers for performance reasons.
+         *          The reordering is done when the number of active rays 
+         *          sinks below the buffer size times the threshold.
+         *          Use a threshold of 0.0 to never reorder and a threshold of 
+         *          1.0 to always reorder.
+         */
+        double buffer_reorder_threshold = 0.8;
+        /** @brief Minimum number of rays (valid or invalid) inside the buffers. */
+        size_t buffer_min_size = 2048;
         /** @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff = 0.0;
         /** @brief Maximum number of times a ray can split. */

@@ -21,7 +21,8 @@ namespace ldplab
                 double medium_reflection_index,
                 bool input_inner_particle_rays,
                 bool reflection_pass,
-                size_t pass_no) = 0;
+                size_t pass_no,
+                size_t num_rays) = 0;
         };
     }
 }

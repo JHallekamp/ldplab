@@ -25,13 +25,12 @@ namespace particle_intersection
 void ldplab::rtscuda::ParticleIntersection::execute(
     StreamContext& smctx,
 	size_t ray_buffer_index, 
-	size_t intersection_buffer_index)
+	size_t intersection_buffer_index,
+    size_t num_rays)
 {
     using namespace particle_intersection;
     const size_t block_size = 128;
-    const size_t grid_size =
-        smctx.simulationParameter().num_rays_per_batch / block_size +
-        (smctx.simulationParameter().num_rays_per_batch % block_size ? 1 : 0);
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     intersectionKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
         smctx.rayDataBuffers().origin_buffers.getDeviceBuffer(ray_buffer_index),
@@ -39,7 +38,7 @@ void ldplab::rtscuda::ParticleIntersection::execute(
         smctx.intersectionDataBuffers().particle_index_buffers.getDeviceBuffer(intersection_buffer_index),
         smctx.intersectionDataBuffers().point_buffers.getDeviceBuffer(intersection_buffer_index),
         smctx.intersectionDataBuffers().normal_buffers.getDeviceBuffer(intersection_buffer_index),
-        smctx.simulationParameter().num_rays_per_batch,
+        num_rays,
         smctx.particleDataBuffers().intersect_ray_fptr_buffer.getDeviceBuffer(),
         smctx.particleDataBuffers().geometry_data_buffer.getDeviceBuffer(),
         smctx.particleTransformationBuffers().p2w_transformation_buffer.getDeviceBuffer(),

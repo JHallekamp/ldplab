@@ -258,13 +258,13 @@ namespace ldplab
          *        memory on the host.
          */
         template<typename basetype>
-        class DeviceBufferRangePinnend : public IDeviceResource
+        class DeviceBufferRangePinned : public IDeviceResource
         {
         public:
-            DeviceBufferRangePinnend();
-            DeviceBufferRangePinnend(const DeviceBufferRangePinnend<basetype>& other) = delete;
-            DeviceBufferRangePinnend(DeviceBufferRangePinnend<basetype>&& other);
-            virtual ~DeviceBufferRangePinnend() { free(); }
+            DeviceBufferRangePinned();
+            DeviceBufferRangePinned(const DeviceBufferRangePinned<basetype>& other) = delete;
+            DeviceBufferRangePinned(DeviceBufferRangePinned<basetype>&& other);
+            virtual ~DeviceBufferRangePinned() { free(); }
             bool allocated() override { return m_device_buffer_ptr_range.size() > 0; }
             bool free() override;
             /**
@@ -379,7 +379,7 @@ namespace ldplab
         protected:
             virtual const char* resourceTypeName() const override
             {
-                return "DeviceBufferRangePinnend";
+                return "DeviceBufferRangePinned";
             }
         private:
             void** m_device_range_ptr;
@@ -393,10 +393,10 @@ namespace ldplab
          *        just a single buffer.
          */
         template <typename basetype>
-        class DeviceBufferPinnend : public DeviceBufferRangePinnend<basetype>
+        class DeviceBufferPinned : public DeviceBufferRangePinned<basetype>
         {
         private:
-            using baseclass = DeviceBufferRangePinnend<basetype>;
+            using baseclass = DeviceBufferRangePinned<basetype>;
         public:
             /**
              * @brief Allocates the buffer on device memory.
@@ -422,7 +422,7 @@ namespace ldplab
         protected:
             virtual const char* resourceTypeName() const override
             {
-                return "DeviceBufferPinnend";
+                return "DeviceBufferPinned";
             }
         private:
             using baseclass::allocate;
@@ -700,7 +700,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline DeviceBufferRangePinnend<basetype>::DeviceBufferRangePinnend()
+        inline DeviceBufferRangePinned<basetype>::DeviceBufferRangePinned()
             :
             m_buffer_size{ 0 },
             m_device_buffer_ptr_range{ },
@@ -709,8 +709,8 @@ namespace ldplab
         { }
 
         template<typename basetype>
-        inline DeviceBufferRangePinnend<basetype>::DeviceBufferRangePinnend(
-            DeviceBufferRangePinnend<basetype>&& other)
+        inline DeviceBufferRangePinned<basetype>::DeviceBufferRangePinned(
+            DeviceBufferRangePinned<basetype>&& other)
         {
             if (allocated())
                 free();
@@ -725,7 +725,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferRangePinnend<basetype>::free()
+        inline bool DeviceBufferRangePinned<basetype>::free()
         {
             bool ret = true;
             if (m_device_range_ptr)
@@ -764,7 +764,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferRangePinnend<basetype>::allocate(
+        inline bool DeviceBufferRangePinned<basetype>::allocate(
             size_t buffer_size, 
             size_t num_device_buffers, 
             size_t num_host_buffers)
@@ -808,7 +808,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferRangePinnend<basetype>::uploadAsync(
+        inline bool DeviceBufferRangePinned<basetype>::uploadAsync(
             size_t target_device_buffer, 
             size_t source_host_buffer, 
             cudaStream_t stream)
@@ -822,7 +822,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferRangePinnend<basetype>::uploadAsync(
+        inline bool DeviceBufferRangePinned<basetype>::uploadAsync(
             size_t target_device_buffer, 
             size_t source_host_buffer, 
             size_t element_offset, 
@@ -848,7 +848,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferRangePinnend<basetype>::downloadAsync(
+        inline bool DeviceBufferRangePinned<basetype>::downloadAsync(
             size_t target_host_buffer, 
             size_t source_device_buffer, 
             cudaStream_t stream)
@@ -862,7 +862,7 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferRangePinnend<basetype>::downloadAsync(
+        inline bool DeviceBufferRangePinned<basetype>::downloadAsync(
             size_t target_host_buffer, 
             size_t source_device_buffer, 
             size_t element_offset, 
@@ -888,7 +888,7 @@ namespace ldplab
         }
         
         template<typename basetype>
-        inline bool DeviceBufferPinnend<basetype>::allocate(
+        inline bool DeviceBufferPinned<basetype>::allocate(
             size_t buffer_size, 
             bool host_buffer)
         {
@@ -896,12 +896,12 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferPinnend<basetype>::uploadAsync(cudaStream_t stream)
+        inline bool DeviceBufferPinned<basetype>::uploadAsync(cudaStream_t stream)
         {
             return baseclass::uploadAsync(0, 0, stream);
         }
         template<typename basetype>
-        inline bool DeviceBufferPinnend<basetype>::uploadAsync(
+        inline bool DeviceBufferPinned<basetype>::uploadAsync(
             size_t element_offset, 
             size_t element_count, 
             cudaStream_t stream)
@@ -910,13 +910,13 @@ namespace ldplab
         }
 
         template<typename basetype>
-        inline bool DeviceBufferPinnend<basetype>::downloadAsync(cudaStream_t stream)
+        inline bool DeviceBufferPinned<basetype>::downloadAsync(cudaStream_t stream)
         {
             return baseclass::downloadAsync(0, 0, stream);
         }
 
         template<typename basetype>
-        inline bool DeviceBufferPinnend<basetype>::downloadAsync(
+        inline bool DeviceBufferPinned<basetype>::downloadAsync(
             size_t element_offset, 
             size_t element_count, 
             cudaStream_t stream)

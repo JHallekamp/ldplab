@@ -46,12 +46,11 @@ void ldplab::rtscuda::SurfaceInteraction::execute(
     double medium_reflection_index,
     bool input_inner_particle_rays,
     bool reflection_pass,
-    size_t pass_no)
+    size_t pass_no,
+    size_t num_rays)
 {
     const size_t block_size = 128;
-    const size_t grid_size =
-        smctx.simulationParameter().num_rays_per_batch / block_size +
-        (smctx.simulationParameter().num_rays_per_batch % block_size ? 1 : 0);
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     using namespace surface_interaction;
     surfaceInteractionKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_input_buffer_index),
@@ -74,7 +73,7 @@ void ldplab::rtscuda::SurfaceInteraction::execute(
         smctx.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
         input_inner_particle_rays,
         reflection_pass,
-        smctx.simulationParameter().num_rays_per_batch,
+        num_rays,
         smctx.simulationParameter().num_particles);
 }
 

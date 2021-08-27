@@ -35,7 +35,8 @@ namespace ldplab
                 DeviceContext& device_context) override;
             void execute(
                 StreamContext& stream_context,
-                size_t ray_buffer_index) override;
+                size_t ray_buffer_index,
+                size_t num_rays) override;
         private:
             std::vector<DeviceBuffer<BoundingSphere>> m_bounding_spheres_per_device;
         };

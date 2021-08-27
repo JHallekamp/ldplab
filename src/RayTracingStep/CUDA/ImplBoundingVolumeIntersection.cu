@@ -77,19 +77,18 @@ void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
 
 void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(
     StreamContext& smctx,
-    size_t ray_buffer_index)
+    size_t ray_buffer_index,
+    size_t num_rays)
 {
     using namespace sphere_brutforce;
     const size_t block_size = 128;
-    const size_t grid_size =
-        smctx.simulationParameter().num_rays_per_batch / block_size +
-        (smctx.simulationParameter().num_rays_per_batch % block_size ? 1 : 0);
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     bvIntersectionKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
         smctx.rayDataBuffers().origin_buffers.getDeviceBuffer(ray_buffer_index),
         smctx.rayDataBuffers().direction_buffers.getDeviceBuffer(ray_buffer_index),
         smctx.rayDataBuffers().min_bv_distance_buffers.getDeviceBuffer(ray_buffer_index),
-        smctx.simulationParameter().num_rays_per_batch,
+        num_rays,
         m_bounding_spheres_per_device[smctx.deviceGroup()].getDeviceBuffer(),
         smctx.particleTransformationBuffers().w2p_transformation_buffer.getDeviceBuffer(),
         smctx.particleTransformationBuffers().w2p_translation_buffer.getDeviceBuffer(),
