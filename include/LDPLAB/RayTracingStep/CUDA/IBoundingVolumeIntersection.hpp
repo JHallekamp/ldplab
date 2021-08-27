@@ -32,15 +32,15 @@ namespace ldplab
              *          to be set to invalid by settings its corresponding
              *          particle index to a negative value.
              * @param[in] global_data All shared pipeline data.
-             * @param[in] batch_data All data associated with the current
-             *                       batch.
+             * @param[in] stream_context
              * @param[in] ray_buffer_index The index of the affected ray 
              *                             buffer.
+             * @param[in] num_rays The number of rays inside the ray buffer.
              */
             virtual void execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
-                size_t ray_buffer_index) = 0;
+                StreamContext& stream_context,
+                size_t ray_buffer_index,
+                size_t num_rays) = 0;
         };
     }
 }

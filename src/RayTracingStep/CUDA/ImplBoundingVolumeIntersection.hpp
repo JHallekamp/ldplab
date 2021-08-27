@@ -28,15 +28,17 @@ namespace ldplab
              *                             particle.
              */
             BoundingSphereIntersectionBruteforce(
-                DeviceBuffer<BoundingSphere>&& bounding_spheres);
+                std::vector<DeviceBuffer<BoundingSphere>>&& bounding_spheres_per_device);
             void stepSetup(
                 const SimulationState& simulation_state,
-                GlobalData& global_data) override;
-            void execute(const GlobalData& global_data,
-                BatchData& batch_data,
-                size_t ray_buffer_index) override;
+                SharedStepData& shared_data,
+                DeviceContext& device_context) override;
+            void execute(
+                StreamContext& stream_context,
+                size_t ray_buffer_index,
+                size_t num_rays) override;
         private:
-            DeviceBuffer<BoundingSphere> m_bounding_spheres;
+            std::vector<DeviceBuffer<BoundingSphere>> m_bounding_spheres_per_device;
         };
     }
 }

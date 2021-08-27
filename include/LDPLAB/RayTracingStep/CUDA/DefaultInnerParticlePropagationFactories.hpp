@@ -20,14 +20,14 @@ namespace ldplab
                 bool userDefined() const override;
                 bool checkCompability(
                     const RayTracingStepCUDAInfo& step_info,
-                    const GlobalData::DeviceProperties& device_properties,
+                    const ExecutionModel& execution_model,
                     const PipelineConfiguration& configuration,
                     const ExperimentalSetup& setup,
                     const InterfaceMapping& interface_mapping) override;
                 std::shared_ptr<IInnerParticlePropagation> create(
                     const RayTracingStepCUDAInfo& step_info,
                     const PipelineConfiguration& configuration,
-                    const GlobalData& global_data) override;
+                    const SharedStepData& shared_data) override;
             private:
                 RK4Parameter m_parameter;
             };

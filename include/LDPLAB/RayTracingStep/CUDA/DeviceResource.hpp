@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCUDA_DEVICE_MEMORY_HPP
-#define WWU_LDPLAB_RTSCUDA_DEVICE_MEMORY_HPP
+#ifndef WWU_LDPLAB_RTSCUDA_DEVICE_RESOURCE_HPP
+#define WWU_LDPLAB_RTSCUDA_DEVICE_RESOURCE_HPP
 
 #include <memory>
 #include <vector>
@@ -52,7 +52,7 @@ namespace ldplab
             /** @brief Resource uid. */
             UID<IDeviceResource> m_resource_uid;
         };
-
+        
         /**
          * @brief Simple wrapper around multiple device buffers and potential
          *        host buffers used for up- and downloading data.
@@ -140,6 +140,16 @@ namespace ldplab
                 size_t target_device_buffer, 
                 size_t source_host_buffer);
             /**
+             * @brief Uploads data from a given host pointer to a device buffer.
+             * @param[in] target_device_buffer The buffer index of the target
+             *                                 buffer in device memory.
+             * @param[in] source_ptr Source buffer pointer on the host.
+             * @returns false, if an error occurred.
+             */
+            bool uploadExt(
+                size_t target_device_buffer,
+                basetype* source_ptr);
+            /**
              * @brief Uploads data from a host buffer to a device buffer.
              * @param[in] target_device_buffer The buffer index of the target
              *                                 buffer in device memory.
@@ -221,6 +231,7 @@ namespace ldplab
             basetype* getHostBuffer() { return baseclass::getHostBuffer(0); }
             bool memset(int val) { return baseclass::memset(val); }
             bool upload() { return baseclass::upload(0, 0); }
+            bool uploadExt(basetype* host_buffer) { return baseclass::uploadExt(0, host_buffer); }
             bool upload(size_t element_offset, size_t element_count);
             bool download() { return baseclass::download(0, 0); }
             bool download(size_t element_offset, size_t element_count);
@@ -238,7 +249,190 @@ namespace ldplab
             using baseclass::getDeviceBufferRange;
             using baseclass::memset;
             using baseclass::upload;
+            using baseclass::uploadExt;
             using baseclass::download;
+        };
+
+        /**
+         * @brief Simple wrapper around multiple device buffers using pinnend
+         *        memory on the host.
+         */
+        template<typename basetype>
+        class DeviceBufferRangePinned : public IDeviceResource
+        {
+        public:
+            DeviceBufferRangePinned();
+            DeviceBufferRangePinned(const DeviceBufferRangePinned<basetype>& other) = delete;
+            DeviceBufferRangePinned(DeviceBufferRangePinned<basetype>&& other);
+            virtual ~DeviceBufferRangePinned() { free(); }
+            bool allocated() override { return m_device_buffer_ptr_range.size() > 0; }
+            bool free() override;
+            /**
+             * @brief Allocates memory.
+             * @details Allocates num_device_buffers on the device and
+             *          additionally num_host_buffers in host memory (used for
+             *          host-device data exchange), each measuring buffer_size
+             *          basetype elements.
+             * @param[in] buffer_size The number of basetype elements per
+             *                        allocated buffer.
+             * @param[in] num_device_buffers Number of buffers allocated in
+             *                               device memory.
+             * @param[in] num_host_buffers Number of buffers allocated in
+             *                             host memory.
+             * @returns false, if an error occurred.
+             */
+            bool allocate(
+                size_t buffer_size,
+                size_t num_device_buffers,
+                size_t num_host_buffers);
+            /** @brief Provides the number of buffers in the device memory. */
+            size_t deviceSize() const { return m_device_buffer_ptr_range.size(); }
+            /** @brief Provides the number of buffers in the host memory. */
+            size_t hostSize() const { return m_pinnend_host_buffer_ptr_range.size(); }
+            /** @brief Provides the number of elements inside each buffer. */
+            size_t bufferSize() const { return m_buffer_size; }
+            /**
+             * @brief Provides a pointer into device memory that points to the
+             *        specified device buffer.
+             * @param[in] index The index of the requested device buffer.
+             * @returns Device memory pointer to the requested buffer.
+             */
+            basetype* getDeviceBuffer(size_t index) const 
+            { return static_cast<basetype*>(m_device_buffer_ptr_range[index]); }
+            /**
+             * @brief Provides a pointer into host memory that points to the
+             *        specified host buffer.
+             * @param[in] index The index of the requested host buffer.
+             * @returns Host memory pointer to the requested buffer.
+             */
+            basetype* getHostBuffer(size_t index)
+            { return static_cast<basetype*>(m_pinnend_host_buffer_ptr_range[index]); }
+            /**
+             * @brief Provides the device buffer range pointer.
+             * @details The device buffer range is an array in device memory,
+             *          which contains the pointer to the device buffers as
+             *          elements.
+             * @returns Device memory pointer to the device buffer range.
+             */
+            basetype** getDeviceBufferRange() 
+            { return static_cast<basetype*>(m_device_range_ptr); }
+            /**
+             * @brief Uploads data from a host buffer to a device buffer.
+             * @param[in] target_device_buffer The buffer index of the target
+             *                                 buffer in device memory.
+             * @param[in] source_host_buffer The buffer index of the source
+             *                               buffer in host memory.
+             * @param[in] stream The stream used for the async call.
+             * @returns false, if an error occurred.
+             */
+            bool uploadAsync(
+                size_t target_device_buffer,
+                size_t source_host_buffer,
+                cudaStream_t stream);
+            /**
+             * @brief Uploads data from a host buffer to a device buffer.
+             * @param[in] target_device_buffer The buffer index of the target
+             *                                 buffer in device memory.
+             * @param[in] source_host_buffer The buffer index of the source
+             *                               buffer in host memory.
+             * @param[in] element_offset Element offset inside both buffers.
+             * @param[in] element_count Number of uploaded elements.
+             * @param[in] stream The stream used for the async call.
+             * @returns false, if an error occurred.
+             */
+            bool uploadAsync(
+                size_t target_device_buffer,
+                size_t source_host_buffer,
+                size_t element_offset,
+                size_t element_count,
+                cudaStream_t stream);
+            /**
+             * @brief Downloads data from a device buffer to a host buffer.
+             * @param[in] target_host_buffer The buffer index of the target
+             *                               buffer in host memory.
+             * @param[in] source_device_buffer The buffer index of the source
+             *                                 buffer in device memory.
+             * @param[in] stream The stream used for the async call.
+             * @returns false, if an error occurred.
+             */
+            bool downloadAsync(
+                size_t target_host_buffer,
+                size_t source_device_buffer,
+                cudaStream_t stream);
+            /**
+             * @brief Downloads data from a device buffer to a host buffer.
+             * @param[in] target_host_buffer The buffer index of the target
+             *                               buffer in host memory.
+             * @param[in] source_device_buffer The buffer index of the source
+             *                                 buffer in device memory.
+             * @param[in] element_offset Element offset inside both buffers.
+             * @param[in] element_count Number of downloaded elements.
+             * @param[in] stream The stream used for the async call.
+             * @returns false, if an error occurred.
+             */
+            bool downloadAsync(
+                size_t target_host_buffer,
+                size_t source_device_buffer,
+                size_t element_offset,
+                size_t element_count,
+                cudaStream_t stream);
+        protected:
+            virtual const char* resourceTypeName() const override
+            {
+                return "DeviceBufferRangePinned";
+            }
+        private:
+            void** m_device_range_ptr;
+            std::vector<void*> m_device_buffer_ptr_range;
+            std::vector<void*> m_pinnend_host_buffer_ptr_range;
+            size_t m_buffer_size;
+        };
+
+        /**
+         * @brief Simple implementation of a device buffer range containing
+         *        just a single buffer.
+         */
+        template <typename basetype>
+        class DeviceBufferPinned : public DeviceBufferRangePinned<basetype>
+        {
+        private:
+            using baseclass = DeviceBufferRangePinned<basetype>;
+        public:
+            /**
+             * @brief Allocates the buffer on device memory.
+             * @param[in] buffer_size The size of the allocated buffer in
+             *                        elements.
+             * @param[in] host_buffer Indicates whether an equivalent buffer
+             *                        is allocated in host memory (required for
+             *                        up- and download capability).
+             * @returns false, if an error occurred.
+             */
+            bool allocate(size_t buffer_size, bool host_buffer = true);
+            /**
+             * @brief Returns true, if the device buffer as an equivalent in
+             *        host memory.
+             */
+            bool hasHostBuffer() const { return (baseclass::hostSize() > 0); }
+            basetype* getDeviceBuffer() const { return baseclass::getDeviceBuffer(0); }
+            basetype* getHostBuffer() { return baseclass::getHostBuffer(0); }
+            bool uploadAsync(cudaStream_t stream);
+            bool uploadAsync(size_t element_offset, size_t element_count, cudaStream_t stream);
+            bool downloadAsync(cudaStream_t stream);
+            bool downloadAsync(size_t element_offset, size_t element_count, cudaStream_t stream);
+        protected:
+            virtual const char* resourceTypeName() const override
+            {
+                return "DeviceBufferPinned";
+            }
+        private:
+            using baseclass::allocate;
+            using baseclass::deviceSize;
+            using baseclass::hostSize;
+            using baseclass::getDeviceBuffer;
+            using baseclass::getHostBuffer;
+            using baseclass::getDeviceBufferRange;
+            using baseclass::uploadAsync;
+            using baseclass::downloadAsync;
         };
 
         template<typename basetype>
@@ -431,6 +625,25 @@ namespace ldplab
         }
 
         template<typename basetype>
+        inline bool DeviceBufferRange<basetype>::uploadExt(
+            size_t target_device_buffer, 
+            basetype* source_ptr)
+        {
+            void* device_ptr = getDeviceBuffer(target_device_buffer);
+            const size_t num_bytes = sizeof(basetype) * m_buffer_size;
+            return checkCudaUploadError(
+                cudaMemcpy(
+                    device_ptr,
+                    (void*)source_ptr,
+                    num_bytes,
+                    cudaMemcpyHostToDevice),
+                device_ptr,
+                m_device_buffer_ptr_range[target_device_buffer],
+                source_ptr,
+                num_bytes);
+        }
+
+        template<typename basetype>
         inline bool DeviceBufferRange<basetype>::upload(
             size_t target_device_buffer, 
             size_t source_host_buffer, 
@@ -484,6 +697,231 @@ namespace ldplab
                 m_device_buffer_ptr_range[source_device_buffer],
                 host_ptr,
                 num_bytes);
+        }
+
+        template<typename basetype>
+        inline DeviceBufferRangePinned<basetype>::DeviceBufferRangePinned()
+            :
+            m_buffer_size{ 0 },
+            m_device_buffer_ptr_range{ },
+            m_pinnend_host_buffer_ptr_range{ },
+            m_device_range_ptr{ nullptr }
+        { }
+
+        template<typename basetype>
+        inline DeviceBufferRangePinned<basetype>::DeviceBufferRangePinned(
+            DeviceBufferRangePinned<basetype>&& other)
+        {
+            if (allocated())
+                free();
+            m_device_buffer_ptr_range = 
+                std::move(other.m_device_buffer_ptr_range);
+            m_pinnend_host_buffer_ptr_range = 
+                std::move(other.m_pinnend_host_buffer_ptr_range);
+            m_device_range_ptr = other.m_device_range_ptr;
+            m_buffer_size = other.m_buffer_size;
+            other.m_device_range_ptr = nullptr;
+            other.m_buffer_size = 0;
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRangePinned<basetype>::free()
+        {
+            bool ret = true;
+            if (m_device_range_ptr)
+            {
+                ret = ret && checkCudaFreeError(
+                    cudaFree(m_device_range_ptr),
+                    m_device_range_ptr,
+                    m_device_buffer_ptr_range.size() * sizeof(void*));
+                m_device_range_ptr = nullptr;
+            }
+            for (size_t i = 0; i < m_device_buffer_ptr_range.size(); ++i)
+            {
+                if (m_device_buffer_ptr_range[i] != nullptr)
+                {
+                    ret = ret && checkCudaFreeError(
+                        cudaFree(m_device_buffer_ptr_range[i]),
+                        m_device_buffer_ptr_range[i],
+                        m_buffer_size * sizeof(basetype));
+                    m_device_buffer_ptr_range[i] = nullptr;
+                }
+            }
+            m_device_buffer_ptr_range.clear();
+            for (size_t i = 0; i < m_pinnend_host_buffer_ptr_range.size(); ++i)
+            {
+                if (m_pinnend_host_buffer_ptr_range[i] != nullptr)
+                {
+                    if (cudaFreeHost(m_pinnend_host_buffer_ptr_range[i]) !=
+                        cudaSuccess)
+                        ret = false;
+                    m_pinnend_host_buffer_ptr_range[i] = nullptr;
+                }
+            }
+            m_pinnend_host_buffer_ptr_range.clear();
+            m_buffer_size = 0;
+            return ret;
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRangePinned<basetype>::allocate(
+            size_t buffer_size, 
+            size_t num_device_buffers, 
+            size_t num_host_buffers)
+        {
+            m_buffer_size = buffer_size;
+            // Allocate device buffers
+            bool ret = true;
+            const size_t buffer_byte_size = buffer_size * sizeof(basetype);
+            for (size_t i = 0; i < num_device_buffers; ++i)
+            {
+                m_device_buffer_ptr_range.emplace_back();
+                ret = ret && checkCudaAllocationError(
+                    cudaMalloc(&m_device_buffer_ptr_range.back(), buffer_byte_size),
+                    buffer_byte_size);
+            }
+            // Allocate device buffer range
+            const size_t range_byte_size = num_device_buffers * sizeof(void*);
+            ret = ret && checkCudaAllocationError(
+                cudaMalloc(&m_device_range_ptr, range_byte_size),
+                range_byte_size);
+            ret = ret && checkCudaUploadError(
+                cudaMemcpy(
+                    m_device_range_ptr,
+                    m_device_buffer_ptr_range.data(),
+                    num_device_buffers,
+                    cudaMemcpyHostToDevice),
+                m_device_range_ptr,
+                m_device_range_ptr,
+                m_device_buffer_ptr_range.data(),
+                range_byte_size);
+            // Allocate host mem
+            for (size_t i = 0; i < num_host_buffers; ++i)
+            {
+                void* temp_ptr; 
+                if (cudaMallocHost(&temp_ptr, buffer_byte_size) != cudaSuccess)
+                    ret = false;
+                else
+                    m_pinnend_host_buffer_ptr_range.push_back(temp_ptr);
+            }
+            return ret;
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRangePinned<basetype>::uploadAsync(
+            size_t target_device_buffer, 
+            size_t source_host_buffer, 
+            cudaStream_t stream)
+        {
+            return uploadAsync(
+                target_device_buffer,
+                source_host_buffer,
+                0,
+                m_buffer_size,
+                stream);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRangePinned<basetype>::uploadAsync(
+            size_t target_device_buffer, 
+            size_t source_host_buffer, 
+            size_t element_offset, 
+            size_t element_count, 
+            cudaStream_t stream)
+        {
+            void* device_ptr = static_cast<void*>(
+                getDeviceBuffer(target_device_buffer) + element_offset);
+            void* host_ptr = static_cast<void*>(
+                getHostBuffer(source_host_buffer) + element_offset);
+            const size_t num_bytes = sizeof(basetype) * element_count;
+            return checkCudaUploadError(
+                cudaMemcpyAsync(
+                    device_ptr,
+                    host_ptr,
+                    num_bytes,
+                    cudaMemcpyHostToDevice,
+                    stream),
+                device_ptr,
+                m_device_buffer_ptr_range[target_device_buffer],
+                host_ptr,
+                num_bytes);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRangePinned<basetype>::downloadAsync(
+            size_t target_host_buffer, 
+            size_t source_device_buffer, 
+            cudaStream_t stream)
+        {
+            return downloadAsync(
+                target_host_buffer,
+                source_device_buffer,
+                0,
+                m_buffer_size,
+                stream);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferRangePinned<basetype>::downloadAsync(
+            size_t target_host_buffer, 
+            size_t source_device_buffer, 
+            size_t element_offset, 
+            size_t element_count, 
+            cudaStream_t stream)
+        {
+            void* host_ptr = static_cast<void*>(
+                getHostBuffer(target_host_buffer) + element_offset);
+            void* device_ptr = static_cast<void*>(
+                getDeviceBuffer(source_device_buffer) + element_offset);
+            const size_t num_bytes = sizeof(basetype) * element_count;
+            return checkCudaDownloadError(
+                cudaMemcpyAsync(
+                    host_ptr,
+                    device_ptr,
+                    num_bytes,
+                    cudaMemcpyDeviceToHost,
+                    stream),
+                device_ptr,
+                m_device_buffer_ptr_range[source_device_buffer],
+                host_ptr,
+                num_bytes);
+        }
+        
+        template<typename basetype>
+        inline bool DeviceBufferPinned<basetype>::allocate(
+            size_t buffer_size, 
+            bool host_buffer)
+        {
+            return baseclass::allocate(buffer_size, 1, host_buffer ? 1 : 0);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferPinned<basetype>::uploadAsync(cudaStream_t stream)
+        {
+            return baseclass::uploadAsync(0, 0, stream);
+        }
+        template<typename basetype>
+        inline bool DeviceBufferPinned<basetype>::uploadAsync(
+            size_t element_offset, 
+            size_t element_count, 
+            cudaStream_t stream)
+        {
+            return baseclass::uploadAsync(0, 0, element_offset, element_count, stream);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferPinned<basetype>::downloadAsync(cudaStream_t stream)
+        {
+            return baseclass::downloadAsync(0, 0, stream);
+        }
+
+        template<typename basetype>
+        inline bool DeviceBufferPinned<basetype>::downloadAsync(
+            size_t element_offset, 
+            size_t element_count, 
+            cudaStream_t stream)
+        {
+            return baseclass::downloadAsync(0, 0, element_offset, element_count, stream);
         }
     }
 }

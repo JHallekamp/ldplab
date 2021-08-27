@@ -56,9 +56,9 @@ namespace ldplab
                 const ExperimentalSetup& setup);
             bool createViableConfiguration(
                 const RayTracingStepCUDAInfo& info,
+                const ExecutionModel& execution_model,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping,
-                const GlobalData::DeviceProperties& device_properties,
                 std::set<IParticleGeometry::Type>& geometry_types,
                 std::set<IParticleMaterial::Type>& material_types,
                 PipelineConfiguration& configuration,
@@ -69,7 +69,7 @@ namespace ldplab
                 const RayTracingStepCUDAInfo& info,
                 const ExperimentalSetup& setup,
                 const InterfaceMapping& interface_mapping,
-                const GlobalData::DeviceProperties& device_properties,
+                const ExecutionModel& execution_model,
                 PipelineConfiguration& configuration);
             PipelineConfigurationBooleanState checkConfigurationCast(
                 std::set<IParticleGeometry::Type>& geometry_types,
@@ -79,20 +79,12 @@ namespace ldplab
                 const PipelineConfigurationBooleanState& configuration_state,
                 bool desired_uniform_state);
             void logViableConfiguration(PipelineConfiguration& config);
-            bool getDeviceData(GlobalData::DeviceProperties& device_props);
-            bool createGlobalData(
-                const RayTracingStepCUDAInfo& info,
-                PipelineConfiguration& pipeline_config,
-                ExperimentalSetup&& setup,
-                InterfaceMapping&& interface_mapping,
-                GlobalData::DeviceProperties&& device_properties,
-                std::unique_ptr<GlobalData>& global_data);
             bool createPipeline(
                 const RayTracingStepCUDAInfo& info,
-                GlobalData::DeviceProperties&& device_properties,
                 InterfaceMapping&& interface_mapping,
                 ExperimentalSetup&& setup,
                 PipelineConfiguration& pipeline_config,
+                std::unique_ptr<SharedStepData>&& shared_data,
                 std::shared_ptr<RayTracingStepCUDA>& rts);
         };
     }

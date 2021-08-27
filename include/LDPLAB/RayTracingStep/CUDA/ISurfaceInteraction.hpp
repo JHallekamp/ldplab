@@ -12,8 +12,7 @@ namespace ldplab
         public:
             virtual ~ISurfaceInteraction() { }
             virtual void execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 size_t ray_input_buffer_index,
                 size_t ray_output_buffer_index,
                 size_t intersection_buffer_index,
@@ -22,7 +21,8 @@ namespace ldplab
                 double medium_reflection_index,
                 bool input_inner_particle_rays,
                 bool reflection_pass,
-                size_t pass_no) = 0;
+                size_t pass_no,
+                size_t num_rays) = 0;
         };
     }
 }

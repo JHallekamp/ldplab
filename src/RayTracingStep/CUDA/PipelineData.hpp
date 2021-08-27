@@ -33,14 +33,17 @@ namespace ldplab
                 size_t num_world_space_rays;
             };
 
-            DeviceBuffer<RayBufferReductionResult> ray_buffer_reduction_result_buffer;
+            DeviceBuffer<uint32_t> buffer_sort_local_rank;
+            DeviceBuffer<uint32_t> buffer_sort_block_size;
+            DeviceBuffer<uint32_t> buffer_sort_rank_index_range;
+
+            DeviceBufferPinned<RayBufferReductionResult> 
+                ray_buffer_reduction_result_buffer;
             KernelLaunchParameter ray_buffer_reduction_1_klp;
             KernelLaunchParameter ray_buffer_reduction_2_klp;
             
             KernelLaunchParameter buffer_setup_step_klp;
             KernelLaunchParameter buffer_setup_layer_klp;
-            
-            KernelLaunchParameter gather_output_klp;
         };
     }
 }

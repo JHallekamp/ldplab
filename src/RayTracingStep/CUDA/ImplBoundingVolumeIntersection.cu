@@ -34,57 +34,65 @@ ldplab::rtscuda::BoundingSphere::BoundingSphere(
 
 ldplab::rtscuda::BoundingSphereIntersectionBruteforce::
     BoundingSphereIntersectionBruteforce(
-        DeviceBuffer<BoundingSphere>&& bounding_spheres)
+        std::vector<DeviceBuffer<BoundingSphere>>&& bounding_spheres_per_device)
     :
-    m_bounding_spheres{ std::move(bounding_spheres) }
+    m_bounding_spheres_per_device{ std::move(bounding_spheres_per_device) }
 { }
 
 void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
     const SimulationState& simulation_state,
-    GlobalData& global_data)
+    SharedStepData& shared_data,
+    DeviceContext& device_context)
 {
-    BoundingSphere* spheres = m_bounding_spheres.getHostBuffer();
-    for (size_t i = 0; i < global_data.experimental_setup.particles.size(); ++i)
+    const size_t device_id = device_context.groupId();
+    if (device_id > 0)
+    {
+        m_bounding_spheres_per_device[device_id].uploadExt(
+            m_bounding_spheres_per_device[0].getHostBuffer());
+    }
+
+    BoundingSphere* spheres = m_bounding_spheres_per_device[device_id].getHostBuffer();
+    for (size_t i = 0; i < shared_data.experimental_setup.particles.size(); ++i)
     {
         // Get the particle instance for particle i using the interface mapping
         const ParticleInstance& particle_instance =
             simulation_state.particle_instances.find(
-                global_data.interface_mapping.particle_index_to_uid.at(i))->second;
+                shared_data.interface_mapping.particle_index_to_uid.at(i))->second;
         // Get the bounding sphere in pspace
         spheres[i] = *static_cast<BoundingVolumeSphere*>(
-            global_data.experimental_setup.particles[i].bounding_volume.get());
+            shared_data.experimental_setup.particles[i].bounding_volume.get());
         // Translate bounding volume center to world space
         const auto& p2w_transformation =
-            global_data.particle_data_buffers.p2w_transformation_buffer.getHostBuffer()[i];
+            shared_data.per_device_data[device_id].particle_transformation_buffers.
+            p2w_transformation_buffer.getHostBuffer()[i];
         const auto& p2w_translation =
-            global_data.particle_data_buffers.p2w_translation_buffer.getHostBuffer()[i];
+            shared_data.per_device_data[device_id].particle_transformation_buffers.
+            p2w_translation_buffer.getHostBuffer()[i];
         spheres[i].center = p2w_transformation * spheres[i].center + p2w_translation;
     }
 
     // Upload
-    m_bounding_spheres.upload();
+    m_bounding_spheres_per_device[0].upload();
 }
 
 void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(
-    const GlobalData& global_data, 
-    BatchData& batch_data, 
-    size_t ray_buffer_index)
+    StreamContext& smctx,
+    size_t ray_buffer_index,
+    size_t num_rays)
 {
     using namespace sphere_brutforce;
     const size_t block_size = 128;
-    const size_t grid_size =
-        global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
-    bvIntersectionKernel<<<grid_size, block_size>>>(
-        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.ray_data_buffers.min_bv_distance_buffers.getDeviceBuffer(ray_buffer_index),
-        global_data.simulation_parameter.num_rays_per_batch,
-        m_bounding_spheres.getDeviceBuffer(),
-        global_data.particle_data_buffers.w2p_transformation_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.w2p_translation_buffer.getDeviceBuffer(),
-        global_data.simulation_parameter.num_particles);
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
+    bvIntersectionKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
+        smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.rayDataBuffers().origin_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.rayDataBuffers().direction_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.rayDataBuffers().min_bv_distance_buffers.getDeviceBuffer(ray_buffer_index),
+        num_rays,
+        m_bounding_spheres_per_device[smctx.deviceGroup()].getDeviceBuffer(),
+        smctx.particleTransformationBuffers().w2p_transformation_buffer.getDeviceBuffer(),
+        smctx.particleTransformationBuffers().w2p_translation_buffer.getDeviceBuffer(),
+        smctx.simulationParameter().num_particles);
 }
 
 __global__ void sphere_brutforce::bvIntersectionKernel(

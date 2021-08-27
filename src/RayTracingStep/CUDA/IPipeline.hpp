@@ -29,7 +29,7 @@ namespace ldplab
             ldplab::Mat3 getRotationMatrix(
                 double rx, double ry, double rz, RotationOrder order);
         protected:
-            std::unique_ptr<GlobalData> m_context;
+            std::unique_ptr<SharedStepData> m_context;
             std::vector<PipelineData> m_pipeline_data;
             std::shared_ptr<IBoundingVolumeIntersection> m_stage_bvi;
             std::shared_ptr<IInitialStage> m_stage_is;

@@ -16,6 +16,7 @@
 #include "PipelineDeviceBound.hpp"
 #include "PipelineHostBound.hpp"
 #include "StageBufferSetup.hpp"
+#include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
 #include "RayTracingStepCUDA.hpp"
@@ -35,6 +36,15 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         PipelineConfiguration& user_configuration,
         bool allow_default_stage_overwrite_on_compability_error)
 {
+    // Retreive GPU context
+    const int device_id = 0;
+    if (cudaSetDevice(device_id) != cudaSuccess)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to receive "\
+            "cuda context for device %i", device_id);
+        return nullptr;
+    }
+
     // First, retrieve the default configuration
     PipelineConfiguration default_configuration;
     createDefaultConfiguration(info, setup, default_configuration);
@@ -64,21 +74,34 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     // Create the interface mapping
     InterfaceMapping interface_mapping = createInterfaceMapping(setup);
 
-    // Get device data
-    GlobalData::DeviceProperties device_props;
-    if (!getDeviceData(device_props))
+    // Create execution model
+    std::unique_ptr<SharedStepData> shared_data = std::make_unique<SharedStepData>();
+    bool execution_model_creation_return = false;
+    if (info.execution_model_info == nullptr)
     {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create "\
-            "RayTracingStepCPU");
+        execution_model_creation_return = shared_data->createExecutionModel(
+            std::make_shared<ExecutionModelAutoConstructionInfo>(
+                1, 
+                ExecutionModelAutoConstructionInfo::DeviceModel::single_device));
+    }
+    else
+    {
+        execution_model_creation_return = shared_data->createExecutionModel(
+            info.execution_model_info);
+    }
+    if (!execution_model_creation_return)
+    {
+        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create pipeline "\
+            "execution model");
         return nullptr;
     }
 
     // Find a viable pipeline configuration
     if (!createViableConfiguration(
         info,
+        shared_data->execution_model,
         setup,
         interface_mapping,
-        device_props,
         present_geometry_types,
         present_material_types,
         pipeline_configuration,
@@ -101,10 +124,10 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
     // Create pipeline
     if (!createPipeline(
         info,
-        std::move(device_props),
         std::move(interface_mapping),
         std::move(setup),
         pipeline_configuration,
+        std::move(shared_data),
         rts))
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create "\
@@ -327,10 +350,10 @@ ldplab::rtscuda::InterfaceMapping
 }
 
 bool ldplab::rtscuda::Factory::createViableConfiguration(
-    const RayTracingStepCUDAInfo& info, 
+    const RayTracingStepCUDAInfo& info,
+    const ExecutionModel& execution_model,
     const ExperimentalSetup& setup, 
     const InterfaceMapping& interface_mapping, 
-    const GlobalData::DeviceProperties& device_properties,
     std::set<IParticleGeometry::Type>& geometry_types, 
     std::set<IParticleMaterial::Type>& material_types,
     PipelineConfiguration& configuration, 
@@ -344,7 +367,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
             info,
             setup,
             interface_mapping,
-            device_properties,
+            execution_model,
             configuration);
 
     // Check if compatible
@@ -504,7 +527,7 @@ bool ldplab::rtscuda::Factory::createViableConfiguration(
                 info,
                 setup,
                 interface_mapping,
-                device_properties,
+                execution_model,
                 configuration);
 
             // Check if state is compatible
@@ -594,53 +617,67 @@ ldplab::rtscuda::Factory::PipelineConfigurationBooleanState
         const RayTracingStepCUDAInfo& info, 
         const ExperimentalSetup& setup, 
         const InterfaceMapping& interface_mapping, 
-        const GlobalData::DeviceProperties& device_properties,
+        const ExecutionModel& execution_model,
         PipelineConfiguration& configuration)
 {
     PipelineConfigurationBooleanState state;
     state.bounding_volume_intersection_state =
         configuration.bounding_volume_intersection->checkCompability(
             info,
-            device_properties,
+            execution_model,
             configuration,
             setup,
             interface_mapping);
     state.initial_stage_state =
         configuration.initial_stage->checkCompability(
             info,
-            device_properties,
+            execution_model,
             configuration,
             setup,
             interface_mapping);
     state.inner_particle_propagation_state =
         configuration.inner_particle_propagation->checkCompability(
             info,
-            device_properties,
+            execution_model,
             configuration,
             setup,
             interface_mapping);
     state.particle_intersection_state =
         configuration.particle_intersection->checkCompability(
             info,
-            device_properties,
+            execution_model,
             configuration,
             setup,
             interface_mapping);
     state.surface_interaction_state =
         configuration.surface_interaction->checkCompability(
             info,
-            device_properties,
+            execution_model,
             configuration,
             setup,
             interface_mapping);
-    auto it = configuration.generic_geometries.begin();
-    for (; it != configuration.generic_geometries.end(); ++it)
+    for (auto it = configuration.generic_geometries.begin();
+        it != configuration.generic_geometries.end(); 
+        ++it)
     {
         state.generic_geometry_state.emplace(it->first,
             it->second->checkCompability(
                 it->first,
                 info,
-                device_properties,
+                execution_model,
+                configuration,
+                setup,
+                interface_mapping));
+    }
+    for (auto it = configuration.generic_materials.begin();
+        it != configuration.generic_materials.end();
+        ++it)
+    {
+        state.generic_material_state.emplace(it->first,
+            it->second->checkCompability(
+                it->first,
+                info,
+                execution_model,
                 configuration,
                 setup,
                 interface_mapping));
@@ -749,374 +786,22 @@ void ldplab::rtscuda::Factory::logViableConfiguration(
     }
 }
 
-bool ldplab::rtscuda::Factory::getDeviceData(
-    GlobalData::DeviceProperties& device_props)
-{
-    int device_count = 0;
-    cudaError_t error_id = cudaGetDeviceCount(&device_count);
-
-    if (error_id != cudaSuccess)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to get cuda device count, "\
-            "cudaGetDeviceCount returned error code %i: %s",
-            error_id,
-            cudaGetErrorString(error_id));
-        return false;
-    }
-
-    if (device_count == 0)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to find any cuda devices.");
-        return false;
-    }
-
-    cudaSetDevice(0);
-    cudaDeviceProp device_prop;
-    cudaGetDeviceProperties(&device_prop, 0);
-    LDPLAB_LOG_INFO("RTSCUDA factory: Using cuda device %s", device_prop.name);
-
-    device_props.max_block_size.x = device_prop.maxThreadsDim[0];
-    device_props.max_block_size.y = device_prop.maxThreadsDim[1];
-    device_props.max_block_size.z = device_prop.maxThreadsDim[2];
-    device_props.max_grid_size.x = device_prop.maxGridSize[0];
-    device_props.max_grid_size.y = device_prop.maxGridSize[1];
-    device_props.max_grid_size.z = device_prop.maxGridSize[2];
-    device_props.max_num_threads_per_block = device_prop.maxThreadsPerBlock;
-    device_props.max_num_threads_per_mp = device_prop.maxThreadsPerMultiProcessor;
-    device_props.num_mps = device_prop.multiProcessorCount;
-    device_props.registers_per_block = device_prop.regsPerBlock;
-    device_props.shared_mem_per_block = device_prop.sharedMemPerBlock;
-    device_props.shared_mem_per_mp = device_prop.sharedMemPerMultiprocessor;
-    device_props.warp_size = device_prop.warpSize;
-
-    return true;
-}
-
-bool ldplab::rtscuda::Factory::createGlobalData(
-    const RayTracingStepCUDAInfo& info, 
-    PipelineConfiguration& pipeline_config,
-    ExperimentalSetup&& p_setup, 
-    InterfaceMapping&& p_interface_mapping, 
-    GlobalData::DeviceProperties&& p_device_properties, 
-    std::unique_ptr<GlobalData>& global_data)
-{
-    // Create the instance
-    global_data = std::make_unique<GlobalData>();
-
-    // Move interface mapping and device properties
-    global_data->experimental_setup = std::move(p_setup);
-    global_data->interface_mapping = std::move(p_interface_mapping);
-    global_data->device_properties = std::move(p_device_properties);
-
-    // Helper for often used names in the following
-    const ExperimentalSetup& setup = global_data->experimental_setup;
-    const InterfaceMapping& interface_mapping = global_data->interface_mapping;
-
-    // Set simulation parameter
-    global_data->simulation_parameter.intensity_cutoff =
-        info.intensity_cutoff;
-    global_data->simulation_parameter.max_branching_depth = 
-        info.maximum_branching_depth;
-    global_data->simulation_parameter.num_particles = 
-        setup.particles.size();
-    global_data->simulation_parameter.num_rays_per_batch = 
-        info.number_rays_per_batch;
-    global_data->simulation_parameter.num_parallel_batches =
-        info.number_parallel_batches;
-    global_data->simulation_parameter.num_surface_interaction_reflection_passes = 
-        info.number_reflections;
-    global_data->simulation_parameter.num_surface_interaction_transmission_passes = 
-        info.number_transmissions;
-    global_data->simulation_parameter.ray_world_space_index = 
-        global_data->simulation_parameter.num_particles;
-    global_data->simulation_parameter.ray_invalid_index = -1;
-    global_data->simulation_parameter.output_in_particle_space =
-        info.return_force_in_particle_coordinate_system;
-
-    // Create generic geometries and materials
-    bool error = false;
-    std::map<const IParticleGeometry*, size_t> reusable_geometry;
-    std::map<const IParticleMaterial*, size_t> reusable_material;
-    for (size_t i = 0; i < setup.particles.size(); ++i)
-    {
-        auto reusable_geometry_index_it = reusable_geometry.find(
-            setup.particles[i].geometry.get());
-        if (reusable_geometry_index_it == reusable_geometry.end())
-        {
-            // No reusable geometry present
-            auto geo_factory_it = pipeline_config.generic_geometries.find(
-                setup.particles[i].geometry->type());
-            if (geo_factory_it == pipeline_config.generic_geometries.end())
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA factory: "\
-                    "Could not find generic geometry factory for particle "\
-                    "type \"%s\" in the given particle configuration",
-                    IParticleGeometry::typeToString(
-                        setup.particles[i].geometry->type()));
-                error = true;
-            }
-            else
-            {
-                std::shared_ptr<IGenericGeometry> generic_geometry =
-                    geo_factory_it->second->create(
-                        setup.particles[i].geometry,
-                        info,
-                        global_data->device_properties,
-                        pipeline_config,
-                        setup,
-                        interface_mapping);
-                if (generic_geometry == nullptr)
-                {
-                    LDPLAB_LOG_ERROR("RTSCUDA factory: "\
-                        "Could not create generic geometry for particle %i "\
-                        "of type \"%s\"",
-                        setup.particles[i].uid,
-                        IParticleGeometry::typeToString(
-                            setup.particles[i].geometry->type()));
-                    error = true;
-                }
-                else
-                {
-                    reusable_geometry.emplace(
-                        setup.particles[i].geometry.get(),
-                        global_data->particle_data_buffers.geometry_instances.size());
-                    global_data->particle_data_buffers.geometry_instances.
-                        emplace_back(std::move(generic_geometry));
-                }
-            }
-        }
-        else
-        {
-            // Reuse geometry
-            global_data->particle_data_buffers.geometry_instances.emplace_back(
-                global_data->particle_data_buffers.geometry_instances[
-                    reusable_geometry_index_it->second]);
-        }
-
-        auto reusable_material_index_it = reusable_material.find(
-            setup.particles[i].material.get());
-        if (reusable_material_index_it == reusable_material.end())
-        {
-            // No reusable material present
-            auto mat_factory_it = pipeline_config.generic_materials.find(
-                setup.particles[i].material->type());
-            if (mat_factory_it == pipeline_config.generic_materials.end())
-            {
-                LDPLAB_LOG_ERROR("RTSCUDA factory: "\
-                    "Could not find generic material factory for particle "\
-                    "type \"%s\" in the given particle configuration",
-                    IParticleMaterial::typeToString(
-                        setup.particles[i].material->type()));
-                error = true;
-            }
-            else
-            {
-                std::shared_ptr<IGenericMaterial> generic_material =
-                    mat_factory_it->second->create(
-                        setup.particles[i].material,
-                        info,
-                        global_data->device_properties,
-                        pipeline_config,
-                        setup,
-                        interface_mapping);
-                if (generic_material == nullptr)
-                {
-                    LDPLAB_LOG_ERROR("RTSCUDA factory: "\
-                        "Could not create generic material for particle %i "\
-                        "of type \"%s\"",
-                        setup.particles[i].uid,
-                        IParticleMaterial::typeToString(
-                            setup.particles[i].material->type()));
-                    error = true;
-                }
-                else
-                {
-                    reusable_material.emplace(
-                        setup.particles[i].material.get(),
-                        global_data->particle_data_buffers.material_instances.size());
-                    global_data->particle_data_buffers.material_instances.
-                        emplace_back(std::move(generic_material));
-                }
-            }
-        }
-        else
-        {
-            // Reuse material
-            global_data->particle_data_buffers.material_instances.emplace_back(
-                global_data->particle_data_buffers.material_instances[
-                    reusable_material_index_it->second]);
-        }
-    }
-
-    if (error)
-        return false;
-
-    // Allocate particle data
-    auto& pd = global_data->particle_data_buffers;
-    
-    const size_t num_particles = setup.particles.size();
-    error = error || !pd.p2w_transformation_buffer.allocate(num_particles, true);
-    error = error || !pd.p2w_translation_buffer.allocate(num_particles, true);
-    error = error || !pd.w2p_transformation_buffer.allocate(num_particles, true);
-    error = error || !pd.w2p_translation_buffer.allocate(num_particles, true);
-    if (error)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create particle "\
-            "transformation device buffers.");
-        return false;
-    }
-
-    error = error || !pd.geometry_data_buffer.allocate(num_particles, true);
-    error = error || !pd.intersect_ray_fptr_buffer.allocate(num_particles, true);
-    error = error || !pd.intersect_segment_fptr_buffer.allocate(num_particles, true);
-    error = error || !pd.index_of_refraction_fptr_buffer.allocate(num_particles, true);
-    error = error || !pd.material_data_buffer.allocate(num_particles, true);
-    if (error)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to create particle "\
-            "material and geometry device buffers.");
-        return false;
-    }
-
-    for (size_t i = 0; i < num_particles; ++i)
-    {
-        pd.geometry_data_buffer.getHostBuffer()[i] =
-            pd.geometry_instances[i]->getDeviceData();
-        pd.intersect_ray_fptr_buffer.getHostBuffer()[i] =
-            pd.geometry_instances[i]->getDeviceIntersectRayFunction();
-        pd.intersect_segment_fptr_buffer.getHostBuffer()[i] =
-            pd.geometry_instances[i]->getDeviceIntersectSegmentFunction();
-        pd.index_of_refraction_fptr_buffer.getHostBuffer()[i] =
-            pd.material_instances[i]->getDeviceIndexOfRefractionFunction();
-        pd.material_data_buffer.getHostBuffer()[i] =
-            pd.material_instances[i]->getDeviceData();
-        error = error || (pd.geometry_data_buffer.getHostBuffer()[i] == nullptr);
-        error = error || (pd.intersect_ray_fptr_buffer.getHostBuffer()[i] == nullptr);
-        error = error || (pd.intersect_segment_fptr_buffer.getHostBuffer()[i] == nullptr);
-        error = error || (pd.index_of_refraction_fptr_buffer.getHostBuffer()[i] == nullptr);
-        error = error || (pd.material_data_buffer.getHostBuffer()[i] == nullptr);
-    }
-    if (error)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to receive a device function "\
-            "pointer for generic geometry or material functions.");
-        return false;
-    }
-
-    error = error || !pd.geometry_data_buffer.upload();
-    error = error || !pd.intersect_ray_fptr_buffer.upload();
-    error = error || !pd.intersect_segment_fptr_buffer.upload();
-    error = error || !pd.index_of_refraction_fptr_buffer.upload();
-    error = error || !pd.material_data_buffer.upload();
-    if (error)
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to upload buffers for "\
-            "generic geometry or material data.");
-        return false;
-    }
-
-    if (!pd.center_of_mass_buffer.allocate(num_particles, true))
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate "\
-            "particle center of mass device buffer.");
-        return false;
-    }
-    
-    for (size_t i = 0; i < num_particles; ++i)
-    {
-        pd.center_of_mass_buffer.getHostBuffer()[i] =
-            setup.particles[i].centre_of_mass;
-    }
-
-    if (!pd.center_of_mass_buffer.upload())
-    {
-        LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to upload "\
-            "particle center of mass device buffer.");
-        return false;
-    }
-
-    // Create batches
-    const size_t num_rays = 
-        global_data->simulation_parameter.num_rays_per_batch;
-    const size_t branching_depth = 
-        global_data->simulation_parameter.max_branching_depth;
-    for (size_t i = 0; i < global_data->simulation_parameter.num_parallel_batches; ++i)
-    {
-        global_data->batch_data.emplace_back();
-        auto& bd = global_data->batch_data.back();
-        bd.batch_data_index = i;
-
-        // Create ray buffer
-        error = error || !bd.ray_data_buffers.direction_buffers.allocate(
-            num_rays, branching_depth + 2, 1);
-        error = error || !bd.ray_data_buffers.intensity_buffers.allocate(
-            num_rays, branching_depth + 2, 1);
-        error = error || !bd.ray_data_buffers.min_bv_distance_buffers.allocate(
-            num_rays, branching_depth + 2, 1);
-        error = error || !bd.ray_data_buffers.origin_buffers.allocate(
-            num_rays, branching_depth + 2, 1);
-        error = error || !bd.ray_data_buffers.particle_index_buffers.allocate(
-            num_rays, branching_depth + 2, 1);
-        if (error)
-        {
-            LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate ray data "\
-                "device buffers.");
-            return false;
-        }
-
-        // Create intersection buffer
-        error = error || !bd.intersection_data_buffers.normal_buffers.allocate(
-            num_rays, branching_depth + 1, 1);
-        error = error || !bd.intersection_data_buffers.particle_index_buffers.allocate(
-            num_rays, branching_depth + 1, 1);
-        error = error || !bd.intersection_data_buffers.point_buffers.allocate(
-            num_rays, branching_depth + 1, 1);
-        if (error)
-        {
-            LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate intersection "\
-                "data device buffers.");
-            return false;
-        }
-
-        // Create output buffer
-        error = error || !bd.output_data_buffers.force_per_particle_buffer.allocate(
-            num_particles, true);
-        error = error || !bd.output_data_buffers.torque_per_particle_buffer.allocate(
-            num_particles, true);
-        error = error || !bd.output_data_buffers.force_per_ray_buffer.allocate(
-            num_rays, branching_depth + 1, 1);
-        error = error || !bd.output_data_buffers.torque_per_ray_buffer.allocate(
-            num_rays, branching_depth + 1, 1);
-        if (error)
-        {
-            LDPLAB_LOG_ERROR("RTSCUDA factory: Failed to allocate output "\
-                "data device buffers.");
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool ldplab::rtscuda::Factory::createPipeline(
     const RayTracingStepCUDAInfo& info, 
-    GlobalData::DeviceProperties&& device_properties,
     InterfaceMapping&& interface_mapping, 
     ExperimentalSetup&& setup, 
     PipelineConfiguration& pipeline_config,
+    std::unique_ptr<SharedStepData>&& shared_data,
     std::shared_ptr<RayTracingStepCUDA>& rts)
 {
-    std::unique_ptr<GlobalData> global_data;
-    if (!createGlobalData(
+    if (!shared_data->allocateResources(
         info,
         pipeline_config,
         std::move(setup),
-        std::move(interface_mapping),
-        std::move(device_properties),
-        global_data))
+        std::move(interface_mapping)))
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
-            "Failed to allocate pipeline device and host data");
+            "Failed to allocate shared pipeline data");
         return false;
     }
 
@@ -1127,7 +812,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
         pipeline_config.initial_stage->create(
             info,
             pipeline_config,
-            *global_data);
+            *shared_data);
     if (stage_is == nullptr)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
@@ -1141,7 +826,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
         pipeline_config.bounding_volume_intersection->create(
             info,
             pipeline_config,
-            *global_data);
+            *shared_data);
     if (stage_bvi == nullptr)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
@@ -1155,7 +840,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
         pipeline_config.particle_intersection->create(
             info,
             pipeline_config,
-            *global_data);
+            *shared_data);
     if (stage_pi == nullptr)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
@@ -1169,7 +854,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
         pipeline_config.surface_interaction->create(
             info,
             pipeline_config,
-            *global_data);
+            *shared_data);
     if (stage_si == nullptr)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
@@ -1183,7 +868,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
         pipeline_config.inner_particle_propagation->create(
             info,
             pipeline_config,
-            *global_data);
+            *shared_data);
     if (stage_ipp == nullptr)
     {
         LDPLAB_LOG_ERROR("RTSCUDA factory: "\
@@ -1200,7 +885,8 @@ bool ldplab::rtscuda::Factory::createPipeline(
     if (info.host_bound_pipeline)
     {
         std::shared_ptr<utils::ThreadPool> thread_pool =
-            std::make_shared<utils::ThreadPool>(info.number_parallel_batches);
+            std::make_shared<utils::ThreadPool>(
+                shared_data->execution_model.stream_contexts.size());
         pipeline = std::make_unique<PipelineHostBound>(thread_pool);
     }
     else
@@ -1211,7 +897,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
     }
 
     // Move context and stages to the pipeline
-    pipeline->m_context = std::move(global_data);
+    pipeline->m_context = std::move(shared_data);
     pipeline->m_stage_bvi = std::move(stage_bvi);
     pipeline->m_stage_is = std::move(stage_is);
     pipeline->m_stage_ipp = std::move(stage_ipp);
@@ -1219,8 +905,12 @@ bool ldplab::rtscuda::Factory::createPipeline(
     pipeline->m_stage_si = std::move(stage_si);
     
     // Allocate pipeline data
-    for (size_t i = 0; i < pipeline->m_context->batch_data.size(); ++i)
+    for (size_t i = 0; 
+        i < pipeline->m_context->execution_model.stream_contexts.size(); 
+        ++i)
     {
+        if (!pipeline->m_context->execution_model.stream_contexts[i].deviceContext().activateDevice())
+            return false;
         pipeline->m_pipeline_data.emplace_back();
         if (!BufferSetup::allocateData(
             *pipeline->m_context,
@@ -1228,6 +918,14 @@ bool ldplab::rtscuda::Factory::createPipeline(
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                 "Failed to allocate buffer setup stage pipeline data.");
+            return false;
+        }
+        if (!BufferSort::allocateData(
+            *pipeline->m_context,
+            pipeline->m_pipeline_data.back()))
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+                "Failed to allocate buffer sort stage pipeline data.");
             return false;
         }
         if (!GatherOutput::allocateData(

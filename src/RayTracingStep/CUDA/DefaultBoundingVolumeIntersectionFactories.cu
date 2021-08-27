@@ -24,7 +24,7 @@ userDefined() const
 bool ldplab::rtscuda::default_factories::BoundingSphereIntersectionBruteforceFactory::
 checkCompability(
     const RayTracingStepCUDAInfo& step_info,
-    const GlobalData::DeviceProperties& device_properties,
+    const ExecutionModel& execution_model,
     const PipelineConfiguration& configuration,
     const ExperimentalSetup& setup,
     const InterfaceMapping& interface_mapping)
@@ -42,12 +42,22 @@ ldplab::rtscuda::default_factories::BoundingSphereIntersectionBruteforceFactory:
 create(
     const RayTracingStepCUDAInfo& step_info,
     const PipelineConfiguration& configuration,
-    const GlobalData& global_data)
+    const SharedStepData& shared_data)
 {
-    DeviceBuffer<BoundingSphere> bounding_spheres;
-    if (!bounding_spheres.allocate(global_data.experimental_setup.particles.size(), true))
-        return nullptr;
-    return std::make_shared<BoundingSphereIntersectionBruteforce>(std::move(bounding_spheres));
+    std::vector<DeviceBuffer<BoundingSphere>> bounding_spheres_per_device;
+    for (size_t i = 0; i < shared_data.execution_model.device_contexts.size(); ++i)
+    {
+        const DeviceContext& dvctx = shared_data.execution_model.device_contexts[i];
+        if (!dvctx.activateDevice())
+            return nullptr;
+        bounding_spheres_per_device.emplace_back();
+        if (!bounding_spheres_per_device.back().allocate(
+            shared_data.experimental_setup.particles.size(),
+            i == 0))
+            return false;
+    }
+   return std::make_shared<BoundingSphereIntersectionBruteforce>(
+       std::move(bounding_spheres_per_device));
 }
 
 #endif

@@ -16,14 +16,14 @@ namespace ldplab
             GatherOutput() = delete;
             /** @brief Host interface for output gather stage execution. */
             static void execute(
-                const GlobalData& global_data,
-                BatchData& batch_data,
+                StreamContext& stream_context,
                 PipelineData& data,
                 size_t ray_buffer_index,
-                size_t output_buffer_index);
+                size_t output_buffer_index,
+                size_t num_rays);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
-                const GlobalData& global_data,
+                const SharedStepData& shared_data,
                 PipelineData& data);
         };
     }

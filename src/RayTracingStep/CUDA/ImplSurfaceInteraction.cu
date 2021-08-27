@@ -37,8 +37,7 @@ namespace surface_interaction
 }
 
 void ldplab::rtscuda::SurfaceInteraction::execute(
-    const GlobalData& global_data,
-    BatchData& batch_data,
+    StreamContext& smctx,
     size_t ray_input_buffer_index,
     size_t ray_output_buffer_index,
     size_t intersection_buffer_index,
@@ -47,36 +46,35 @@ void ldplab::rtscuda::SurfaceInteraction::execute(
     double medium_reflection_index,
     bool input_inner_particle_rays,
     bool reflection_pass,
-    size_t pass_no)
+    size_t pass_no,
+    size_t num_rays)
 {
     const size_t block_size = 128;
-    const size_t grid_size =
-        global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     using namespace surface_interaction;
-    surfaceInteractionKernel<<<grid_size, block_size>>>(
-        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_input_buffer_index),
-        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_input_buffer_index),
-        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_input_buffer_index),
-        batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(ray_input_buffer_index),
-        batch_data.intersection_data_buffers.point_buffers.getDeviceBuffer(intersection_buffer_index),
-        batch_data.intersection_data_buffers.normal_buffers.getDeviceBuffer(intersection_buffer_index),
-        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_output_buffer_index),
-        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_output_buffer_index),
-        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_output_buffer_index),
-        batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(ray_output_buffer_index),
-        batch_data.ray_data_buffers.min_bv_distance_buffers.getDeviceBuffer(ray_output_buffer_index),
+    surfaceInteractionKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
+        smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_input_buffer_index),
+        smctx.rayDataBuffers().origin_buffers.getDeviceBuffer(ray_input_buffer_index),
+        smctx.rayDataBuffers().direction_buffers.getDeviceBuffer(ray_input_buffer_index),
+        smctx.rayDataBuffers().intensity_buffers.getDeviceBuffer(ray_input_buffer_index),
+        smctx.intersectionDataBuffers().point_buffers.getDeviceBuffer(intersection_buffer_index),
+        smctx.intersectionDataBuffers().normal_buffers.getDeviceBuffer(intersection_buffer_index),
+        smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_output_buffer_index),
+        smctx.rayDataBuffers().origin_buffers.getDeviceBuffer(ray_output_buffer_index),
+        smctx.rayDataBuffers().direction_buffers.getDeviceBuffer(ray_output_buffer_index),
+        smctx.rayDataBuffers().intensity_buffers.getDeviceBuffer(ray_output_buffer_index),
+        smctx.rayDataBuffers().min_bv_distance_buffers.getDeviceBuffer(ray_output_buffer_index),
         intensity_cutoff,
         medium_reflection_index,
-        global_data.particle_data_buffers.index_of_refraction_fptr_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.material_data_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.center_of_mass_buffer.getDeviceBuffer(),
-        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        smctx.particleDataBuffers().index_of_refraction_fptr_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().material_data_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().center_of_mass_buffer.getDeviceBuffer(),
+        smctx.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        smctx.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
         input_inner_particle_rays,
         reflection_pass,
-        global_data.simulation_parameter.num_rays_per_batch,
-        global_data.simulation_parameter.num_particles);
+        num_rays,
+        smctx.simulationParameter().num_particles);
 }
 
 __global__ void surface_interaction::surfaceInteractionKernel(

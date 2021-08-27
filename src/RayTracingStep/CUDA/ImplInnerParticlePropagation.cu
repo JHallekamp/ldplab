@@ -59,35 +59,33 @@ ldplab::rtscuda::InnerParticlePropagationRK4::InnerParticlePropagationRK4(
 { }
 
 void ldplab::rtscuda::InnerParticlePropagationRK4::execute(
-	const GlobalData& global_data, 
-	BatchData& batch_data, 
+    StreamContext& smctx,
 	size_t ray_buffer_index, 
 	size_t intersection_buffer_index,
-    size_t output_buffer_index)
+    size_t output_buffer_index,
+    size_t num_rays)
 {
     using namespace rk4;
     const size_t block_size = 192;
-    const size_t grid_size =
-        global_data.simulation_parameter.num_rays_per_batch / block_size +
-        (global_data.simulation_parameter.num_rays_per_batch % block_size ? 1 : 0);
-    innerParticlePropagationKernel<<<grid_size, block_size>>>(
+    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
+    innerParticlePropagationKernel<<<grid_size, block_size, 0, smctx.cudaStream()>>>(
         m_parameter.step_size,
-        batch_data.ray_data_buffers.particle_index_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.ray_data_buffers.origin_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.ray_data_buffers.direction_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.ray_data_buffers.intensity_buffers.getDeviceBuffer(ray_buffer_index),
-        batch_data.intersection_data_buffers.point_buffers.getDeviceBuffer(intersection_buffer_index),
-        batch_data.intersection_data_buffers.normal_buffers.getDeviceBuffer(intersection_buffer_index),
-        global_data.simulation_parameter.num_rays_per_batch,
-        global_data.particle_data_buffers.intersect_segment_fptr_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.intersect_ray_fptr_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.geometry_data_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.index_of_refraction_fptr_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.material_data_buffer.getDeviceBuffer(),
-        global_data.particle_data_buffers.center_of_mass_buffer.getDeviceBuffer(),
-        batch_data.output_data_buffers.force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        batch_data.output_data_buffers.torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        global_data.simulation_parameter.num_particles);
+        smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.rayDataBuffers().origin_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.rayDataBuffers().direction_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.rayDataBuffers().intensity_buffers.getDeviceBuffer(ray_buffer_index),
+        smctx.intersectionDataBuffers().point_buffers.getDeviceBuffer(intersection_buffer_index),
+        smctx.intersectionDataBuffers().normal_buffers.getDeviceBuffer(intersection_buffer_index),
+        num_rays,
+        smctx.particleDataBuffers().intersect_segment_fptr_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().intersect_ray_fptr_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().geometry_data_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().index_of_refraction_fptr_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().material_data_buffer.getDeviceBuffer(),
+        smctx.particleDataBuffers().center_of_mass_buffer.getDeviceBuffer(),
+        smctx.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        smctx.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
+        smctx.simulationParameter().num_particles);
 }
 
 __global__ void rk4::innerParticlePropagationKernel(
