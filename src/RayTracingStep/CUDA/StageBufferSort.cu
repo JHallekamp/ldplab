@@ -160,28 +160,6 @@ size_t ldplab::rtscuda::BufferSort::execute(
 		active_rays,
 		prev_active_rays);
 	
-	//pipeline_data.buffer_sort_block_size.download();
-	//pipeline_data.buffer_sort_local_rank.download();
-	//pipeline_data.buffer_sort_rank_index_range.download();
-	//stream_context.rayDataBuffers().particle_index_buffers.download(0, buffer_index);
-	//stream_context.rayDataBuffers().origin_buffers.download(0, buffer_index);
-	//stream_context.intersectionDataBuffers().point_buffers.download(0, buffer_index);
-	//stream_context.outputDataBuffers().force_per_ray_buffer.download(0, buffer_index);
-	//bool breakp1 = true;
-	//auto vec3_to_string = [&](const Vec3& v) {
-	//	std::string ret;
-	//	const char* bytes = reinterpret_cast<const char*>(&v);
-	//	for (size_t i = 0; i < sizeof(Vec3); ++i)
-	//		ret += bytes[i];
-	//	return ret;
-	//};
-	//std::unordered_set <std::string> known_origins;
-	//for (size_t i = 0; i < prev_active_rays; ++i)
-	//{
-	//	if (stream_context.rayDataBuffers().particle_index_buffers.getHostBuffer(0)[i] >= 0)
-	//		known_origins.insert(vec3_to_string(stream_context.rayDataBuffers().origin_buffers.getHostBuffer(0)[i]));
-	//}
-	
 	const size_t inactive_region_sz = prev_active_rays - active_rays;
 	const size_t grid_size2 = 
 		inactive_region_sz / block_size + (inactive_region_sz % block_size ? 1 : 0);
@@ -199,36 +177,6 @@ size_t ldplab::rtscuda::BufferSort::execute(
 		stream_context.intersectionDataBuffers().normal_buffers.getDeviceBuffer(buffer_index),
 		stream_context.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(buffer_index),
 		stream_context.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(buffer_index));
-	
-	//pipeline_data.buffer_sort_block_size.download();
-	//pipeline_data.buffer_sort_local_rank.download();
-	//pipeline_data.buffer_sort_rank_index_range.download();
-	//stream_context.rayDataBuffers().particle_index_buffers.download(0, buffer_index);
-	//stream_context.rayDataBuffers().origin_buffers.download(0, buffer_index);
-	//stream_context.intersectionDataBuffers().point_buffers.download(0, buffer_index);
-	//stream_context.outputDataBuffers().force_per_ray_buffer.download(0, buffer_index);
-	//bool breakp2 = true;
-	//for (size_t i = 0; i < active_rays; ++i)
-	//{
-	//	if (stream_context.rayDataBuffers().particle_index_buffers.getHostBuffer(0)[i] >= 0)
-	//	{
-	//		auto it = known_origins.find(
-	//			vec3_to_string(stream_context.rayDataBuffers().origin_buffers.getHostBuffer(0)[i]));
-	//		if (it == known_origins.end())
-	//			printf("UNKNOWN ORIGIN!!!!!!!\n");
-	//	}
-	//}
-	//for (auto it = known_origins.begin(); it != known_origins.end(); ++it)
-	//{
-	//	size_t found = 0;
-	//	for (size_t i = 0; i < active_rays; ++i)
-	//	{
-	//		if (vec3_to_string(stream_context.rayDataBuffers().origin_buffers.getHostBuffer(0)[i]) == *it)
-	//			++found;
-	//	}
-	//	if (found != 1)
-	//		printf("SOMETHING WENT WRONG!!!!!! found: %i\n", found);
-	//}
 	
 	return active_rays;
 }
