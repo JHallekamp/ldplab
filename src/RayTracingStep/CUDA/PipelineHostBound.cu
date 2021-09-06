@@ -34,8 +34,8 @@ ldplab::rtscuda::PipelineHostBound::PipelineHostBound(
 void ldplab::rtscuda::PipelineHostBound::execute()
 {
     using namespace std::placeholders;
-    std::atomic_size_t batch_ctr;
-	const static std::shared_ptr<JobWrapper> job = 
+    std::atomic_size_t batch_ctr = 0;
+	const std::shared_ptr<JobWrapper> job = 
 		std::make_shared<JobWrapper>(
 			std::bind(&PipelineHostBound::createBatchJob, this, _1, &batch_ctr));
 	m_thread_pool->executeJobBatch(

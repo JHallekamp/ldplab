@@ -261,7 +261,6 @@ __device__ void rk4::rk4(
             x_step.w += k[i - 1].w * hb;
             x_step.r += k[i - 1].r * hb;
         }
-        //k[i].w = material_data->direction * material_data->gradient;
         k[i].w = material_data->direction_times_gradient;
         k[i].r = x_step.w / index_of_refraction(x_step.r, material_data);
         if (c[i] != 0.0)
