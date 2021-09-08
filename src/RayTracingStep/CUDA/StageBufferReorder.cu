@@ -1,5 +1,5 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
-#include "StageBufferSort.hpp"
+#include "StageBufferReorder.hpp"
 
 #include <unordered_set>
 
@@ -136,7 +136,7 @@ namespace
 	}
 }
 
-size_t ldplab::rtscuda::BufferSort::execute(
+size_t ldplab::rtscuda::BufferReorder::execute(
 	StreamContext& stream_context, 
 	PipelineData& pipeline_data,
 	size_t buffer_index,
@@ -181,7 +181,7 @@ size_t ldplab::rtscuda::BufferSort::execute(
 	return active_rays;
 }
 
-bool ldplab::rtscuda::BufferSort::allocateData(
+bool ldplab::rtscuda::BufferReorder::allocateData(
 	const SharedStepData& shared_data, 
 	PipelineData& data)
 {

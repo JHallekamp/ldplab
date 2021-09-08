@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCUDA_STAGE_SORT_HPP
-#define WWU_LDPLAB_RTSCUDA_STAGE_SORT_HPP
+#ifndef WWU_LDPLAB_RTSCUDA_STAGE_BUFFER_REORDER_HPP
+#define WWU_LDPLAB_RTSCUDA_STAGE_BUFFER_REORDER_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <LDPLAB/RayTracingStep/CUDA/Data.hpp>
@@ -10,10 +10,10 @@ namespace ldplab
 {
     namespace rtscuda
     {
-        class BufferSort
+        class BufferReorder
         {
         public:
-            BufferSort() = delete;
+            BufferReorder() = delete;
             /** @brief Reduces the given ray buffers indices. */
             static size_t execute(
                 StreamContext& stream_context,

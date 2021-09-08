@@ -8,7 +8,7 @@
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"
 #include "StageBufferSetup.hpp"
-#include "StageBufferSort.hpp"
+#include "StageBufferReorder.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
 
@@ -120,7 +120,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
     if (ray_state_count.num_active_rays < threshold &&
         num_rays > stream_context.simulationParameter().buffer_min_size)
     {
-        num_rays = BufferSort::execute(
+        num_rays = BufferReorder::execute(
             stream_context,
             pipeline_data,
             ray_buffer_index,
@@ -173,7 +173,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         if (ray_state_count.num_active_rays < threshold &&
             num_rays > stream_context.simulationParameter().buffer_min_size)
         {
-            num_rays = BufferSort::execute(
+            num_rays = BufferReorder::execute(
                 stream_context,
                 pipeline_data,
                 ray_buffer_index,
