@@ -51,19 +51,19 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
     const size_t NUM_RTS_THREADS = 24;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 8192;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 128 * 128;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 128 * 128 * 4;
 const size_t MAX_RTS_BRANCHING_DEPTH = 32;
 const double RTS_INTENSITY_CUTOFF = 0.0001 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 314;
+const size_t NUM_SIM_ROTATION_STEPS = 5; //314;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,

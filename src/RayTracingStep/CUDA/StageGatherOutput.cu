@@ -87,7 +87,7 @@ void ldplab::rtscuda::GatherOutput::execute(
 {
     //const PipelineData::KernelLaunchParameter& klp = 
     //    pipeline_data.gather_output_klp;
-    constexpr size_t block_size = 128;
+    constexpr size_t block_size = 256;
     const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     const size_t mem_size = block_size * sizeof(Vec3) * 2;
     gatherOutputKernel<<<grid_size, block_size, mem_size, smctx.cudaStream()>>>(
