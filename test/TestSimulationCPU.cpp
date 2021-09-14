@@ -63,7 +63,7 @@ const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
 const double RTS_SOLVER_SAFETY_FACTOR = 0.84;
-const size_t NUM_SIM_ROTATION_STEPS = 314; //314;
+const size_t NUM_SIM_ROTATION_STEPS = 16; //314;
 
 // Prototypes
 std::ofstream getFileStream(const ldplab::Particle& particle,
@@ -206,6 +206,23 @@ std::ofstream getFileStream(
     return file;
 }
 
+ldplab::Particle createSecondParticle(const ldplab::Particle& original)
+{
+    ldplab::Particle copy;
+    
+    double R = static_cast<ldplab::SphericalParticleGeometry*>(original.geometry.get())->radius;
+    copy.bounding_volume = 
+        std::make_shared<ldplab::BoundingVolumeSphere>(
+            ldplab::Vec3(0, 0, 0),
+            R + R * 1e-4);
+    copy.centre_of_mass = original.centre_of_mass;
+    copy.material = original.material;
+    copy.geometry = original.geometry;
+    copy.orientation = original.orientation;
+    copy.position = original.position;
+    return copy;
+}
+
 void createExperimentalSetup(
     ldplab::ExperimentalSetup& experimental_setup,
     double kappa,
@@ -265,7 +282,7 @@ void createExperimentalSetup(
     }
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
-    particle_world_extent = ceil(2.0 * bs->radius);
+    particle_world_extent = ceil(4.0 * bs->radius);
     // Create light source
     const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * particle_world_extent;
     const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
@@ -287,7 +304,7 @@ void createExperimentalSetup(
     light_source.intensity_distribution =
         std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
-
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
     experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
@@ -347,17 +364,29 @@ void runSimulation(
 
     // Output file
     ldplab::RayTracingStepOutput output;
-    std::ofstream output_force = getFileStream(
+    std::ofstream output_force1 = getFileStream(
         setup_copy.particles[0],
         nu, 
         OUTPUT_DIRECTORY, 
-        "force", 
+        "force_p1", 
         branching_depth);
-    std::ofstream output_torque = getFileStream(
+    std::ofstream output_torque1 = getFileStream(
         setup_copy.particles[0],
         nu, 
         OUTPUT_DIRECTORY, 
-        "torque", 
+        "torque_p1", 
+        branching_depth);
+    std::ofstream output_force2 = getFileStream(
+        setup_copy.particles[0],
+        nu,
+        OUTPUT_DIRECTORY,
+        "force_p2",
+        branching_depth);
+    std::ofstream output_torque2 = getFileStream(
+        setup_copy.particles[0],
+        nu,
+        OUTPUT_DIRECTORY,
+        "torque_p2",
         branching_depth);
 
     // Create simulation
@@ -368,25 +397,37 @@ void runSimulation(
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
 
-    ldplab::UID<ldplab::Particle> puid{ setup_copy.particles[0].uid };
+    ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
+    ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
     
+    state.particle_instances[puid2].position = ldplab::Vec3(0, 1, -2);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
-        state.particle_instances[puid].orientation.x = rotation_x;
+        state.particle_instances[puid1].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_force << rotation_x <<
-            "\t" << output.force_per_particle[puid].x <<
-            "\t" << output.force_per_particle[puid].y <<
-            "\t" << output.force_per_particle[puid].z <<
+        output_force1 << rotation_x <<
+            "\t" << output.force_per_particle[puid1].x <<
+            "\t" << output.force_per_particle[puid1].y <<
+            "\t" << output.force_per_particle[puid1].z <<
             std::endl;
-        output_torque << rotation_x <<
-            "\t" << output.torque_per_particle[puid].x <<
-            "\t" << output.torque_per_particle[puid].y <<
-            "\t" << output.torque_per_particle[puid].z <<
+        output_torque1 << rotation_x <<
+            "\t" << output.torque_per_particle[puid1].x <<
+            "\t" << output.torque_per_particle[puid1].y <<
+            "\t" << output.torque_per_particle[puid1].z <<
             std::endl;
-        plotProgress((rotation_x - offset) / (lim - offset));
+        output_force2 << rotation_x <<
+            "\t" << output.force_per_particle[puid2].x <<
+            "\t" << output.force_per_particle[puid2].y <<
+            "\t" << output.force_per_particle[puid2].z <<
+            std::endl;
+        output_torque2 << rotation_x <<
+            "\t" << output.torque_per_particle[puid2].x <<
+            "\t" << output.torque_per_particle[puid2].y <<
+            "\t" << output.torque_per_particle[puid2].z <<
+            std::endl;
+        plotProgress((rotation_x - offset + step_size) / (lim - offset + step_size));
     }
 
     std::stringstream identificator;

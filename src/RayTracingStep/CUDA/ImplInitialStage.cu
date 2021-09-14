@@ -33,7 +33,6 @@ namespace homogenous_light_bounding_sphere_projection
 		size_t num_rays_per_batch,
 		size_t batch_no);
 	__device__ size_t total_num_rays;
-	__device__ size_t total_batch_count;
 }
 
 ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
@@ -108,6 +107,8 @@ void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 	{
 		total_rays = 0;
 	}
+	else
+		bool breakpoint = true;
 	// Calculate the number of batches
 	m_total_batch_count = 
 		total_rays / shared_data.simulation_parameter.num_rays_per_batch +
@@ -247,25 +248,21 @@ __global__ void homogenous_light_bounding_sphere_projection::
 	const unsigned int tid = threadIdx.x;
 	const unsigned int gid = blockIdx.x * blockDim.x + tid;
 	sbuf[tid] = temp_num_rays_buffer_ptr[gid];
-	__syncthreads();
+	//__syncthreads();
 
 	// ========================================================================
 	// Part 2: Compute sums for each block up until this one
 	for (unsigned int i = 0; i < blockIdx.x; ++i)
 	{
 		sbuf[tid] += temp_num_rays_buffer_ptr[(i + 1) * blockDim.x - 1];
-		__syncthreads();
+		//__syncthreads();
 	}
 
 	// ========================================================================
 	// Part 3: Write back results
 	num_rays_buffer_ptr[gid] = sbuf[tid];
-	if (blockIdx.x == num_blocks - 1 && tid + 1 == blockDim.x)
-	{
+	if (blockIdx.x + 1== num_blocks && tid + 1 == blockDim.x)
 		total_num_rays = sbuf[tid];
-		total_batch_count = sbuf[tid] / num_rays_per_batch +
-			(sbuf[tid] % num_rays_per_batch ? 1 : 0);
-	}
 }
 
 __global__ void homogenous_light_bounding_sphere_projection::
@@ -304,8 +301,10 @@ __global__ void homogenous_light_bounding_sphere_projection::
 			break;
 		else if (gid < nr)
 			high = proj_idx;
-		else
+		else if (low < proj_idx)
 			low = proj_idx;
+		else
+			low = proj_idx + 1;
 	} while (low < high);
 
 	// ========================================================================
@@ -318,8 +317,22 @@ __global__ void homogenous_light_bounding_sphere_projection::
 		return;
 	else
 	{
+		// ====================================================================
+		// Part 3: Check if ray is overlapped by other projection
+		const size_t light_index = proj_idx % num_light_sources;
+		for (size_t i = light_index; i < proj_idx; i += num_particles)
+		{
+			const auto tproj = projection_buffer[i];
+			if (proj.x + xid >= tproj.x &&
+				proj.x + xid < tproj.x + tproj.width &&
+				proj.y + yid >= tproj.y &&
+				proj.y + yid < tproj.y + tproj.height)
+				return;
+		}
+
+		// Create ray
 		InitialStageHomogenousLightBoundingSphereProjection::HomogenousLightSource
-			light = light_buffer[proj_idx % num_particles];
+			light = light_buffer[light_index];
 		ray_index_buffer[ri] = static_cast<int32_t>(num_particles);
 		ray_origin_buffer[ri] = light.origin +
 			static_cast<double>(proj.x + xid) * light.x_axis +
