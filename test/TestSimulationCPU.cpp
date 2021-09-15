@@ -282,7 +282,7 @@ void createExperimentalSetup(
     }
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
-    particle_world_extent = ceil(4.0 * bs->radius);
+    particle_world_extent = ceil(6.0 * bs->radius);
     // Create light source
     const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * particle_world_extent;
     const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
@@ -400,7 +400,7 @@ void runSimulation(
     ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
     
-    state.particle_instances[puid2].position = ldplab::Vec3(0, 1, -2);
+    state.particle_instances[puid2].position = ldplab::Vec3(2.5, 2.5, 0);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)

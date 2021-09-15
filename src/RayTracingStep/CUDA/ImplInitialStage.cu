@@ -1,6 +1,8 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include "ImplInitialStage.hpp"
 
+#include <fstream>
+
 namespace homogenous_light_bounding_sphere_projection
 {
 	using namespace ldplab;
@@ -80,19 +82,20 @@ void ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 
 	// Execute setup kernel
 	using namespace homogenous_light_bounding_sphere_projection;
-	const size_t grid_size = pdp.projection_buffer.bufferSize();
+	const size_t grid_size = pdp.bounding_spheres.bufferSize();
 	const size_t block_size = pdp.light_source_buffer.bufferSize();
 	const size_t mem_size = block_size * sizeof(size_t);
+	const size_t mem_size2 = mem_size * 2;
 	projectParticlesKernel<<<grid_size, block_size>>> (
 		pdp.bounding_spheres.getDeviceBuffer(),
 		pdp.projection_buffer.getDeviceBuffer(),
 		pdp.light_source_buffer.getDeviceBuffer(),
 		pdp.temp_num_rays_buffer.getDeviceBuffer(),
 		m_light_resolution_per_world_unit);
-	countTotalRaysKernelFirst<<<grid_size, block_size, mem_size>>>(
+	countTotalRaysKernelFirst<<<grid_size, block_size, mem_size2>>>(
 		pdp.temp_num_rays_buffer.getDeviceBuffer(),
 		grid_size);
-	countTotalRaysKernelSecond<<<grid_size, block_size, mem_size>>> (
+	countTotalRaysKernelSecond<<<grid_size, block_size, mem_size >>> (
 		pdp.temp_num_rays_buffer.getDeviceBuffer(),
 		pdp.num_rays_buffer.getDeviceBuffer(),
 		grid_size,
@@ -143,6 +146,8 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		pdp.light_source_buffer.bufferSize(),
 		stream_context.simulationParameter().num_rays_per_batch,
 		batch_no);
+
+	stream_context.rayDataBuffers().origin_buffers.download(0, initial_batch_buffer_index);
 	return true;
 }
 
@@ -214,16 +219,12 @@ __global__ void homogenous_light_bounding_sphere_projection::
 	const unsigned int tid = threadIdx.x;
 	const unsigned int gid = blockIdx.x * blockDim.x + tid;
 	sbuf[tid] = temp_num_rays_buffer_ptr[gid];
-	__syncthreads();
+	sbuf[tid + blockDim.x] = sbuf[tid];
 
 	// ========================================================================
 	// Part 2: Compute sums
-	for (unsigned int i = 1; i < blockDim.x; ++i)
-	{
-		if (i == tid)
-			sbuf[tid] += sbuf[tid - 1];
-		__syncthreads();
-	}
+	for (unsigned int i = 1; i < tid; ++i)
+		sbuf[tid] += sbuf[i + blockDim.x];
 
 	// ========================================================================
 	// Part 3: Write back results
@@ -248,21 +249,20 @@ __global__ void homogenous_light_bounding_sphere_projection::
 	const unsigned int tid = threadIdx.x;
 	const unsigned int gid = blockIdx.x * blockDim.x + tid;
 	sbuf[tid] = temp_num_rays_buffer_ptr[gid];
-	//__syncthreads();
 
 	// ========================================================================
 	// Part 2: Compute sums for each block up until this one
 	for (unsigned int i = 0; i < blockIdx.x; ++i)
-	{
 		sbuf[tid] += temp_num_rays_buffer_ptr[(i + 1) * blockDim.x - 1];
-		//__syncthreads();
-	}
 
 	// ========================================================================
 	// Part 3: Write back results
-	num_rays_buffer_ptr[gid] = sbuf[tid];
-	if (blockIdx.x + 1== num_blocks && tid + 1 == blockDim.x)
+	num_rays_buffer_ptr[gid + 1] = sbuf[tid];
+	if (blockIdx.x + 1 == num_blocks && tid + 1 == blockDim.x)
+	{
+		num_rays_buffer_ptr[0] = 0;
 		total_num_rays = sbuf[tid];
+	}
 }
 
 __global__ void homogenous_light_bounding_sphere_projection::
@@ -282,45 +282,50 @@ __global__ void homogenous_light_bounding_sphere_projection::
 {
 	// ========================================================================
 	// Part 1: Find which projection to use for this instance using binary search
-	const unsigned int gid =
-		batch_no * num_rays_per_batch + blockIdx.x * blockDim.x + threadIdx.x;
 	const unsigned int ri = blockIdx.x * blockDim.x + threadIdx.x;
+	const unsigned int gid = batch_no * num_rays_per_batch + ri;
 	ray_index_buffer[ri] = -1;
 	if (gid >= total_num_rays)
 		return;
+
 	size_t low = 0;
-	size_t high = (num_particles * num_light_sources) - 1;
-	size_t proj_idx, nr;
-	InitialStageHomogenousLightBoundingSphereProjection::Rect proj;
-	do
+	size_t high = num_particles * num_light_sources;
+	size_t proj_idx = (low + high) / 2;
+	size_t nr = num_rays_buffer[proj_idx + 1];
+	size_t ofs = num_rays_buffer[proj_idx];
+	auto proj = projection_buffer[proj_idx];
+
+	while(low < high)
 	{
-		proj_idx = (high - low) / 2;
-		nr = num_rays_buffer[proj_idx];
-		proj = projection_buffer[proj_idx];
-		if (gid < nr && gid >= nr - proj.width * proj.height)
-			break;
-		else if (gid < nr)
-			high = proj_idx;
-		else if (low < proj_idx)
-			low = proj_idx;
-		else
+		if (gid >= nr)
 			low = proj_idx + 1;
-	} while (low < high);
+		else if (gid < ofs || nr == ofs)
+			high = proj_idx;
+		else 
+			break;
+		proj_idx = (low + high) / 2;
+		nr = num_rays_buffer[proj_idx + 1];
+		ofs = num_rays_buffer[proj_idx];
+		proj = projection_buffer[proj_idx];
+	}
 
 	// ========================================================================
 	// Part 2: Find which ray to create
+	const size_t light_index = proj_idx % num_light_sources;
+	const auto light = light_buffer[light_index];
 	const unsigned int lid = gid - (nr - proj.width * proj.height);
 	const int xid = static_cast<int>(lid) % proj.width;
 	const int yid = static_cast<int>(lid) / proj.width;
 	if (proj.x + xid < 0 ||
-		proj.y + yid < 0)
+		proj.x + xid >= light.width ||
+		proj.y + yid < 0 ||
+		proj.y + yid >= light.height)
 		return;
 	else
 	{
 		// ====================================================================
 		// Part 3: Check if ray is overlapped by other projection
-		const size_t light_index = proj_idx % num_light_sources;
-		for (size_t i = light_index; i < proj_idx; i += num_particles)
+		for (size_t i = light_index; i < proj_idx; i += num_light_sources)
 		{
 			const auto tproj = projection_buffer[i];
 			if (proj.x + xid >= tproj.x &&
@@ -328,11 +333,9 @@ __global__ void homogenous_light_bounding_sphere_projection::
 				proj.y + yid >= tproj.y &&
 				proj.y + yid < tproj.y + tproj.height)
 				return;
-		}
+		} 
 
 		// Create ray
-		InitialStageHomogenousLightBoundingSphereProjection::HomogenousLightSource
-			light = light_buffer[light_index];
 		ray_index_buffer[ri] = static_cast<int32_t>(num_particles);
 		ray_origin_buffer[ri] = light.origin +
 			static_cast<double>(proj.x + xid) * light.x_axis +
