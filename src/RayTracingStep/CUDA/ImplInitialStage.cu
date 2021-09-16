@@ -146,8 +146,6 @@ bool ldplab::rtscuda::InitialStageHomogenousLightBoundingSphereProjection::
 		pdp.light_source_buffer.bufferSize(),
 		stream_context.simulationParameter().num_rays_per_batch,
 		batch_no);
-
-	stream_context.rayDataBuffers().origin_buffers.download(0, initial_batch_buffer_index);
 	return true;
 }
 
