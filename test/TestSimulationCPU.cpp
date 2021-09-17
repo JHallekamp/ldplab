@@ -400,7 +400,7 @@ void runSimulation(
     ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
     
-    state.particle_instances[puid2].position = ldplab::Vec3(0.5, 0.5, -2);
+    state.particle_instances[puid2].position = ldplab::Vec3(-0.5, -0.5, -2);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)

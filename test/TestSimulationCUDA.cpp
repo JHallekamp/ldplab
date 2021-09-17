@@ -358,10 +358,12 @@ void runSimulation(
     rtscuda_info.execution_model_info = 
         std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
             NUM_PARALLEL_STREAMS);
+
     rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
+    rtscuda_info.buffer_min_size = 0;
 
     rtscuda_info.sort_buffer_after_outer_particle_reorder = false;
-    rtscuda_info.sort_buffer_before_inner_particle_pass = false;
+    rtscuda_info.sort_buffer_before_inner_particle_pass = true;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);
@@ -437,7 +439,7 @@ void runSimulation(
     ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
     
-    state.particle_instances[puid2].position = ldplab::Vec3(0.5, 0.5, -2);
+    state.particle_instances[puid2].position = ldplab::Vec3(-0.5, -0.5, -2);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)

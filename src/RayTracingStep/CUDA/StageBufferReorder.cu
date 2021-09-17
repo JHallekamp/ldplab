@@ -154,14 +154,14 @@ size_t ldplab::rtscuda::BufferReorder::execute(
 	const size_t mem_size = block_size * sizeof(uint32_t);
 	buildLocalRank<<<grid_size, block_size, mem_size, stream_context.cudaStream()>>>(
 		stream_context.rayDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
-		pipeline_data.buffer_sort_local_rank.getDeviceBuffer(),
-		pipeline_data.buffer_sort_block_size.getDeviceBuffer(),
+		pipeline_data.buffer_reorder_local_.getDeviceBuffer(),
+		pipeline_data.buffer_rorder_block_sizes.getDeviceBuffer(),
 		active_rays,
 		prev_active_rays);
 	buildGlobalRank<<<grid_size, block_size, 0, stream_context.cudaStream()>>>(
-		pipeline_data.buffer_sort_local_rank.getDeviceBuffer(),
-		pipeline_data.buffer_sort_block_size.getDeviceBuffer(),
-		pipeline_data.buffer_sort_rank_index_range.getDeviceBuffer(),
+		pipeline_data.buffer_reorder_local_.getDeviceBuffer(),
+		pipeline_data.buffer_rorder_block_sizes.getDeviceBuffer(),
+		pipeline_data.buffer_reorder_rank_index_range.getDeviceBuffer(),
 		active_rays,
 		prev_active_rays);
 	
@@ -169,7 +169,7 @@ size_t ldplab::rtscuda::BufferReorder::execute(
 	const size_t grid_size2 = 
 		inactive_region_sz / block_size + (inactive_region_sz % block_size ? 1 : 0);
 	sortBuffer<<<grid_size2, block_size, 0, stream_context.cudaStream()>>>(
-		pipeline_data.buffer_sort_rank_index_range.getDeviceBuffer(),
+		pipeline_data.buffer_reorder_rank_index_range.getDeviceBuffer(),
 		active_rays,
 		prev_active_rays,
 		stream_context.rayDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
@@ -199,11 +199,11 @@ bool ldplab::rtscuda::BufferReorder::allocateData(
 	bool result = true;
 
 	const size_t bufsz = shared_data.simulation_parameter.num_rays_per_batch;
-	result = result && data.buffer_sort_local_rank.allocate(bufsz, downloadable);
-	result = result && data.buffer_sort_rank_index_range.allocate(bufsz, downloadable);
+	result = result && data.buffer_reorder_local_.allocate(bufsz, downloadable);
+	result = result && data.buffer_reorder_rank_index_range.allocate(bufsz, downloadable);
 
 	const size_t num_blocks = bufsz / 256 + (bufsz % 256 ? 1 : 0) + 1;
-	result = result && data.buffer_sort_block_size.allocate(num_blocks, downloadable);
+	result = result && data.buffer_rorder_block_sizes.allocate(num_blocks, downloadable);
 
 	return result;
 }

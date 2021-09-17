@@ -4,9 +4,8 @@
 namespace
 {
     constexpr size_t block_size = 256;
-
-    __device__ size_t num_rays;
     __global__ void countPivotLocal(
+        size_t* num_rays_num_pivots,
         int32_t pivot_element,
         int32_t* ray_particle_index,
         uint32_t* local_rank,
@@ -18,10 +17,10 @@ namespace
         const uint32_t tid = threadIdx.x;
         const uint32_t gi = blockIdx.x * blockDim.x + tid;
 
-        if (gi >= num_rays)
-            return;
-
-        sbuf[tid] = (ray_particle_index[gi] >= pivot_element ? 1 : 0);
+        if (gi >= num_rays_num_pivots[0])
+            sbuf[tid] = 0;
+        else
+            sbuf[tid] = (ray_particle_index[gi] >= pivot_element ? 1 : 0);
         __syncthreads();
 
         // Count local pivot elements
@@ -30,16 +29,19 @@ namespace
             rank += sbuf[i];
 
         // Write back results
-        local_rank[gi] = sbuf[tid] * rank;
+        if (gi < num_rays_num_pivots[0])
+            local_rank[gi] = sbuf[tid] * rank;
         if (tid + 1 == blockDim.x)
             block_sizes[blockIdx.x] = rank;
     }
 
-    __device__ uint32_t num_pivot_elements;
-    __global__ void countPivotSum(uint32_t* block_sizes)
+    __global__ void countPivotSum(
+        size_t* num_rays_num_pivots,
+        uint32_t* block_sizes)
     {
         const size_t num_blocks =
-            num_rays / block_size + (num_rays % block_size ? 1 : 0);
+            num_rays_num_pivots[0] / block_size + 
+            (num_rays_num_pivots[0] % block_size ? 1 : 0);
         uint32_t ctr = 0;
         for (size_t i = 0; i < num_blocks; ++i)
         {
@@ -47,10 +49,11 @@ namespace
             block_sizes[i] = ctr;
             ctr += t;
         }
-        num_pivot_elements = ctr;
+        num_rays_num_pivots[1] = ctr;
     }
 
     __global__ void buildRanks(
+        size_t* num_rays_num_pivots,
         uint32_t* local_rank,
         uint32_t* block_sizes,
         uint32_t* rank_index_range)
@@ -58,21 +61,24 @@ namespace
         // Shared memory
         extern __shared__ uint32_t sbuf[];
 
-        const uint32_t sz = num_rays - num_pivot_elements;
+        const uint32_t sz = num_rays_num_pivots[0] - num_rays_num_pivots[1];
         const uint32_t tid = threadIdx.x;
         const uint32_t gi = blockIdx.x * blockDim.x + tid;
 
-        if (gi >= num_rays)
-            return;
-
-        sbuf[tid] = (local_rank[gi] > 0 ? 0 : 1);
+        if (gi >= num_rays_num_pivots[0])
+            sbuf[tid] = 0;
+        else
+            sbuf[tid] = (local_rank[gi] == 0 ? 1 : 0);
         __syncthreads();
 
         if (gi >= sz)
         {
             // Build local rank
             uint32_t rank = sbuf[tid];
-            for (uint32_t i = 0; i < tid; ++i)
+            uint32_t offset = 0;
+            if (sz / block_size == blockIdx.x)
+                offset = sz - blockIdx.x * blockDim.x;
+            for (uint32_t i = offset; i < tid; ++i)
                 rank += sbuf[i];
 
             // Save results
@@ -89,6 +95,7 @@ namespace
     }
 
     __global__ void swapBuffer(
+        size_t* num_rays_num_pivots,
         uint32_t* rank_index_range,
         uint32_t* block_sizes,
         int32_t* ray_buffer_particle_index,
@@ -103,10 +110,10 @@ namespace
         ldplab::Vec3* output_buffer_torque_per_ray,
         bool swap_isec_and_output_data)
     {
-        const uint32_t sz = num_rays - num_pivot_elements;
+        const uint32_t sz = num_rays_num_pivots[0] - num_rays_num_pivots[1];
         const uint32_t gi = blockIdx.x * blockDim.x + threadIdx.x;
 
-        if (gi < sz || gi >= num_rays)
+        if (gi < sz || gi >= num_rays_num_pivots[0])
             return;
 
         uint32_t rank = rank_index_range[gi];
@@ -180,30 +187,29 @@ void ldplab::rtscuda::BufferSort::execute(
     const size_t num_particles = stream_context.simulationParameter().num_particles;
     if (num_particles > 1)
     {
-        cudaMemcpyToSymbolAsync(
-            num_rays,
-            &active_rays,
-            sizeof(active_rays),
-            0,
-            cudaMemcpyKind::cudaMemcpyHostToDevice,
-            stream_context.cudaStream());
+        pipeline_data.buffer_sort_num_rays_num_pivots.getHostBuffer()[0] = active_rays;
+        pipeline_data.buffer_sort_num_rays_num_pivots.uploadAsync(stream_context.cudaStream());
         for (size_t p = num_particles; p > 1; --p)
         {
             const int32_t pivot = static_cast<int32_t>(p) - 1;
             countPivotLocal<<<gridsz, blksz, memsz, stream_context.cudaStream()>>>(
+                pipeline_data.buffer_sort_num_rays_num_pivots.getDeviceBuffer(),
                 pivot,
                 stream_context.rayDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
-                pipeline_data.buffer_sort_local_rank.getDeviceBuffer(),
-                pipeline_data.buffer_sort_block_size.getDeviceBuffer());
+                pipeline_data.buffer_reorder_local_.getDeviceBuffer(),
+                pipeline_data.buffer_rorder_block_sizes.getDeviceBuffer());
             countPivotSum<<<1, 1, 0, stream_context.cudaStream()>>>(
-                pipeline_data.buffer_sort_block_size.getDeviceBuffer());
+                pipeline_data.buffer_sort_num_rays_num_pivots.getDeviceBuffer(),
+                pipeline_data.buffer_rorder_block_sizes.getDeviceBuffer());
             buildRanks<<<gridsz, blksz, memsz, stream_context.cudaStream()>>>(
-                pipeline_data.buffer_sort_local_rank.getDeviceBuffer(),
-                pipeline_data.buffer_sort_block_size.getDeviceBuffer(),
-                pipeline_data.buffer_sort_rank_index_range.getDeviceBuffer());
+                pipeline_data.buffer_sort_num_rays_num_pivots.getDeviceBuffer(),
+                pipeline_data.buffer_reorder_local_.getDeviceBuffer(),
+                pipeline_data.buffer_rorder_block_sizes.getDeviceBuffer(),
+                pipeline_data.buffer_reorder_rank_index_range.getDeviceBuffer());
             swapBuffer<<<gridsz, blksz, 0, stream_context.cudaStream()>>>(
-		        pipeline_data.buffer_sort_rank_index_range.getDeviceBuffer(),
-                pipeline_data.buffer_sort_block_size.getDeviceBuffer(),
+                pipeline_data.buffer_sort_num_rays_num_pivots.getDeviceBuffer(),
+		        pipeline_data.buffer_reorder_rank_index_range.getDeviceBuffer(),
+                pipeline_data.buffer_rorder_block_sizes.getDeviceBuffer(),
 		        stream_context.rayDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
 		        stream_context.rayDataBuffers().origin_buffers.getDeviceBuffer(buffer_index),
 		        stream_context.rayDataBuffers().direction_buffers.getDeviceBuffer(buffer_index),
@@ -223,7 +229,7 @@ bool ldplab::rtscuda::BufferSort::allocateData(
     const SharedStepData& shared_data, 
     PipelineData& data)
 {
-    return true;
+    return(data.buffer_sort_num_rays_num_pivots.allocate(2, true));
 }
 
 #endif

@@ -33,9 +33,11 @@ namespace ldplab
                 size_t num_world_space_rays;
             };
 
-            DeviceBuffer<uint32_t> buffer_sort_local_rank;
-            DeviceBuffer<uint32_t> buffer_sort_block_size;
-            DeviceBuffer<uint32_t> buffer_sort_rank_index_range;
+            DeviceBuffer<uint32_t> buffer_reorder_local_;
+            DeviceBuffer<uint32_t> buffer_rorder_block_sizes;
+            DeviceBuffer<uint32_t> buffer_reorder_rank_index_range;
+            
+            DeviceBufferPinned<size_t> buffer_sort_num_rays_num_pivots;
 
             DeviceBufferPinned<RayBufferReductionResult> 
                 ray_buffer_reduction_result_buffer;
