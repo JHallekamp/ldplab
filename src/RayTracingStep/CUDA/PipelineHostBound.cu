@@ -9,6 +9,7 @@
 #include "../../Utils/Profiler.hpp"
 #include "StageBufferSetup.hpp"
 #include "StageBufferReorder.hpp"
+#include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayBufferReduce.hpp"
 
@@ -125,7 +126,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
             pipeline_data,
             ray_buffer_index,
             ray_state_count.num_active_rays,
-            num_rays);
+            num_rays,
+            false);
     }
 
     // Prepare buffer
@@ -138,6 +140,15 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
     // Switch between inside and outside particle
     if (inside_particle)
     {
+        if (stream_context.simulationParameter().sort_buffer_inner_particle_pass)
+        {
+            BufferSort::execute(
+                stream_context,
+                pipeline_data,
+                ray_buffer_index,
+                num_rays,
+                false);
+        }
         m_stage_ipp->execute(
             stream_context,
             ray_buffer_index, 
@@ -178,7 +189,17 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 pipeline_data,
                 ray_buffer_index,
                 ray_state_count.num_active_rays,
-                num_rays);
+                num_rays,
+                true);
+            if (stream_context.simulationParameter().sort_buffer_outer_particle_pass)
+            {
+                BufferSort::execute(
+                    stream_context,
+                    pipeline_data,
+                    ray_buffer_index,
+                    num_rays,
+                    true);
+            }
         }
     }
 

@@ -107,7 +107,8 @@ namespace
 		ldplab::Vec3* intersection_buffer_point,
 		ldplab::Vec3* intersection_buffer_normal,
 		ldplab::Vec3* output_buffer_force_per_ray,
-		ldplab::Vec3* output_buffer_torque_per_ray)
+		ldplab::Vec3* output_buffer_torque_per_ray,
+		bool sort_isec_and_output_data)
 	{
 		using namespace ldplab;
 		using namespace rtscuda;
@@ -117,10 +118,10 @@ namespace
 
 		if (gi >= num_rays)
 			return;
-		const int32_t rank = rank_index_range[gi];
+		const uint32_t rank = rank_index_range[gi];
 		if (rank == 0)
 			return;
-		const int32_t target_idx = rank_index_range[rank - 1];
+		const uint32_t target_idx = rank_index_range[rank - 1];
 
 		// Move everything except output buffer
 		ray_buffer_particle_index[target_idx] = ray_buffer_particle_index[gi];
@@ -128,11 +129,14 @@ namespace
 		ray_buffer_direction[target_idx] = ray_buffer_direction[gi];
 		ray_buffer_intensity[target_idx] = ray_buffer_intensity[gi];
 		ray_buffer_min_bv_dist[target_idx] = ray_buffer_min_bv_dist[gi];
-		intersection_buffer_index[target_idx] = intersection_buffer_index[gi];
-		intersection_buffer_point[target_idx] = intersection_buffer_point[gi];
-		intersection_buffer_normal[target_idx] = intersection_buffer_normal[gi];
-		output_buffer_force_per_ray[target_idx] = output_buffer_force_per_ray[gi];
-		output_buffer_torque_per_ray[target_idx] = output_buffer_torque_per_ray[gi];
+		if (sort_isec_and_output_data)
+		{
+			intersection_buffer_index[target_idx] = intersection_buffer_index[gi];
+			intersection_buffer_point[target_idx] = intersection_buffer_point[gi];
+			intersection_buffer_normal[target_idx] = intersection_buffer_normal[gi];
+			output_buffer_force_per_ray[target_idx] = output_buffer_force_per_ray[gi];
+			output_buffer_torque_per_ray[target_idx] = output_buffer_torque_per_ray[gi];
+		}
 	}
 }
 
@@ -141,7 +145,8 @@ size_t ldplab::rtscuda::BufferReorder::execute(
 	PipelineData& pipeline_data,
 	size_t buffer_index,
 	size_t active_rays,
-	size_t prev_active_rays)
+	size_t prev_active_rays,
+	bool isec_or_output_contains_data)
 {
 	const size_t block_size = 256;
 	const size_t grid_size =
@@ -176,7 +181,8 @@ size_t ldplab::rtscuda::BufferReorder::execute(
 		stream_context.intersectionDataBuffers().point_buffers.getDeviceBuffer(buffer_index),
 		stream_context.intersectionDataBuffers().normal_buffers.getDeviceBuffer(buffer_index),
 		stream_context.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(buffer_index),
-		stream_context.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(buffer_index));
+		stream_context.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(buffer_index),
+		isec_or_output_contains_data);
 	
 	return active_rays;
 }

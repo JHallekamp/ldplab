@@ -110,6 +110,8 @@ namespace ldplab
             int32_t ray_world_space_index;
             int32_t ray_invalid_index = -1;
             bool output_in_particle_space;
+            bool sort_buffer_inner_particle_pass;
+            bool sort_buffer_outer_particle_pass;
         };
 
         /** @brief Particle transformations. */
