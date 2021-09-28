@@ -7,11 +7,10 @@ namespace
         int32_t* ray_index_buffer,
         ldplab::Vec3* force_per_ray,
         ldplab::Vec3* torque_per_ray,
-        size_t num_rays_per_batch,
+        size_t num_rays,
         ldplab::Vec3* force_per_particle,
         ldplab::Vec3* torque_per_particle,
         ldplab::Mat3* p2w_transformations,
-        size_t num_particles,
         bool particle_space_output)
     {
         using namespace ldplab;
@@ -26,15 +25,14 @@ namespace
         const unsigned int pi = blockIdx.x;
         const unsigned int force_idx = tid;
         const unsigned int torque_idx = tid + blockDim.x;
-        size_t ray_count = num_rays_per_batch / blockDim.x;
-        if (num_rays_per_batch % blockDim.x != 0)
-            ++ray_count;
-        sbuf[force_idx] = Vec3(0, 0, 0);
-        sbuf[torque_idx] = Vec3(0, 0, 0);
+        size_t ray_count = num_rays / blockDim.x +
+            (num_rays % blockDim.x ? 1 : 0);
+        sbuf[force_idx] = Vec3(0);
+        sbuf[torque_idx] = Vec3(0);
         unsigned int ri = tid;
         for (size_t i = 0; i <= ray_count; ++i)
         {
-            if (ri < num_rays_per_batch)
+            if (ri < num_rays)
             {
                 if (ray_index_buffer[ri] == static_cast<int32_t>(pi))
                 {
@@ -52,14 +50,10 @@ namespace
         {
             unsigned int ofs = lim / 2;
             if (tid + ofs < lim)
+            {
                 sbuf[tid] += sbuf[tid + ofs];
-            __syncthreads();
-        }
-        for (unsigned int lim = blockDim.x; lim > 1; lim /= 2)
-        {
-            unsigned int ofs = lim / 2;
-            if (tid + ofs < lim)
                 sbuf[tid + blockDim.x] += sbuf[tid + blockDim.x + ofs];
+            }
             __syncthreads();
         }
 
@@ -88,7 +82,7 @@ void ldplab::rtscuda::GatherOutput::execute(
     //const PipelineData::KernelLaunchParameter& klp = 
     //    pipeline_data.gather_output_klp;
     constexpr size_t block_size = 256;
-    const size_t grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
+    const size_t grid_size = smctx.simulationParameter().num_particles;
     const size_t mem_size = block_size * sizeof(Vec3) * 2;
     gatherOutputKernel<<<grid_size, block_size, mem_size, smctx.cudaStream()>>>(
         smctx.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
@@ -98,7 +92,6 @@ void ldplab::rtscuda::GatherOutput::execute(
         smctx.outputDataBuffers().force_per_particle_buffer.getDeviceBuffer(),
         smctx.outputDataBuffers().torque_per_particle_buffer.getDeviceBuffer(),
         smctx.particleTransformationBuffers().p2w_transformation_buffer.getDeviceBuffer(),
-        smctx.simulationParameter().num_particles,
         smctx.simulationParameter().output_in_particle_space);
 }
 

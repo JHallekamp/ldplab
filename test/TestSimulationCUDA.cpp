@@ -59,10 +59,10 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_PARALLEL_STREAMS = 6;
-const size_t BUFFER_MULTIPLIER = 32; // / NUM_PARALLEL_STREAMS;
-const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 128 * 128 * 4;
+const size_t NUM_PARALLEL_STREAMS = 1; //2;
+const size_t BUFFER_MULTIPLIER = 64; // / NUM_PARALLEL_STREAMS;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 512; //NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 128; //128 * 128 * 4;
 const size_t MAX_RTS_BRANCHING_DEPTH = 32;
 const double RTS_INTENSITY_CUTOFF =  0.0001 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
@@ -362,7 +362,7 @@ void runSimulation(
     rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
     rtscuda_info.buffer_min_size = 0;
 
-    rtscuda_info.sort_buffer_after_outer_particle_reorder = false;
+    rtscuda_info.sort_buffer_after_outer_particle_reorder = true;
     rtscuda_info.sort_buffer_before_inner_particle_pass = true;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
@@ -392,7 +392,8 @@ void runSimulation(
         std::make_shared<ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(
             rays_per_unit);
     pipeline_config.inner_particle_propagation =
-        std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4Factory>(
+        std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4QueueFillFactory>(
+        //std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4Factory>(
             ldplab::RK4Parameter(rts_step_size));
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCUDA(

@@ -31,6 +31,29 @@ namespace ldplab
             private:
                 RK4Parameter m_parameter;
             };
+
+            class InnerParticlePropagationRK4QueueFillFactory :
+                public IInnerParticlePropagationFactory
+            {
+            public:
+                InnerParticlePropagationRK4QueueFillFactory(
+                    const RK4Parameter& parameter);
+                static std::string name();
+                std::string implementationName() const override;
+                bool userDefined() const override;
+                bool checkCompability(
+                    const RayTracingStepCUDAInfo& step_info,
+                    const ExecutionModel& execution_model,
+                    const PipelineConfiguration& configuration,
+                    const ExperimentalSetup& setup,
+                    const InterfaceMapping& interface_mapping) override;
+                std::shared_ptr<IInnerParticlePropagation> create(
+                    const RayTracingStepCUDAInfo& step_info,
+                    const PipelineConfiguration& configuration,
+                    const SharedStepData& shared_data) override;
+            private:
+                RK4Parameter m_parameter;
+            };
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "../../Utils/Log.hpp"
 
 #include <LDPLAB/RayTracingStep/CPU/IGenericGeometry.hpp>
+#include "..\CUDA\ImplInnerParticlePropagation.hpp"
 
 ldplab::rtscpu::EikonalSolverRK4LinearIndexGradient::EikonalSolverRK4LinearIndexGradient(
     RK4Parameter parameters)

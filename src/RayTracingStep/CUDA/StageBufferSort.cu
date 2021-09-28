@@ -110,14 +110,10 @@ namespace
         ldplab::Vec3* output_buffer_torque_per_ray,
         bool swap_isec_and_output_data)
     {
-        const uint32_t num_rays = num_rays_num_pivots[0];
-        const uint32_t sz = num_rays - num_rays_num_pivots[1];
+        const uint32_t sz = num_rays_num_pivots[0] - num_rays_num_pivots[1];
         const uint32_t gi = blockIdx.x * blockDim.x + threadIdx.x;
 
-        if (gi == 0)
-            num_rays_num_pivots[0] = sz;
-
-        if (gi < sz || gi >= num_rays)
+        if (gi < sz || gi >= num_rays_num_pivots[0])
             return;
 
         uint32_t rank = rank_index_range[gi];
