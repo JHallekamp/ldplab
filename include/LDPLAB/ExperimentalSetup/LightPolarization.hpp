@@ -1,6 +1,8 @@
 #ifndef WWU_LDPLAB_ILIGHT_POLARIZATION_HPP
 #define WWU_LDPLAB_ILIGHT_POLARIZATION_HPP
 
+#include <LDPLAB/Geometry.hpp>
+
 namespace ldplab
 {
     /**
@@ -9,7 +11,7 @@ namespace ldplab
      */
     struct ILightPolarisation
     {
-        enum class Type { unpolarized };
+        enum class Type { unpolarized, polarized };
         /**
          * @brief The destructor is virtual since classes inherit from
          *        ILightPolarisation.
@@ -23,6 +25,7 @@ namespace ldplab
             switch (type())
             {
             case Type::unpolarized: return "unpolarized";
+            case Type::polarized: return "polarized";
             default: return "unknown_type";
             }
         }
@@ -35,6 +38,20 @@ namespace ldplab
     {
         Type type() const override { return Type::unpolarized; }
     };
+    /**
+     * @brief Polarized light described with the Stokes parameter.
+     */
+    struct LightPolarisationPolarized : public ILightPolarisation
+    {
+        LightPolarisationPolarized(Vec4 stokes_parameter)
+            : stokes_parameter{ stokes_parameter }
+        {
+          
+        }
+        Type type() const override { return Type::polarized; }
+        Vec4 stokes_parameter;
+    };
+
 }
 
 #endif

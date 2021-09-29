@@ -25,7 +25,7 @@ namespace ldplab
                 const std::vector<ParticleTransformation>& transformation_data, 
                 const SimulationParameter& simulation_parameter, 
                 void* stage_dependent_data) override;
-        private:
+        protected:
             std::vector<BoundingVolumeSphere> m_particle_bounding_spheres;
         };
     }
