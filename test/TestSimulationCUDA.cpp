@@ -59,15 +59,15 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_PARALLEL_STREAMS = 1; //2;
-const size_t BUFFER_MULTIPLIER = 64; // / NUM_PARALLEL_STREAMS;
-const size_t NUM_RTS_RAYS_PER_BUFFER = 512; //NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 128; //128 * 128 * 4;
+const size_t NUM_PARALLEL_STREAMS = 3;
+const size_t BUFFER_MULTIPLIER = 48; // / NUM_PARALLEL_STREAMS;
+const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 24576;
 const size_t MAX_RTS_BRANCHING_DEPTH = 32;
-const double RTS_INTENSITY_CUTOFF =  0.0001 * LIGHT_INTENSITY /
+const double RTS_INTENSITY_CUTOFF = 0.0005 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
-const size_t NUM_SIM_ROTATION_STEPS = 16; // 314
+const size_t NUM_SIM_ROTATION_STEPS = 32; // 314
 
 const double REORDER_THRESHOLD = 1.0;
 
@@ -254,6 +254,13 @@ void createExperimentalSetup(
             1.0,
             ldplab::Vec3(0.0, 0.0, 0.0),
             ldplab::Vec3(0.0, 0.0, 0.0));
+        auto& mat = *static_cast<ldplab::ParticleMaterialLinearOneDirectional*>(
+            particle.material.get());
+        mat.gradient = 0.1;
+        mat.index_of_refraction = 1.25;
+        mat.direction_times_gradient = mat.direction * mat.gradient;
+        mat.index_of_refraction_minus_partial_dot = mat.index_of_refraction - 
+            glm::dot(mat.direction_times_gradient, mat.origin);
     }
     else if (GEOMETRY_TYPE == GeometryType::rod)
     {
@@ -318,6 +325,8 @@ void createExperimentalSetup(
         std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
     experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
@@ -362,8 +371,7 @@ void runSimulation(
     rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
     rtscuda_info.buffer_min_size = 0;
 
-    rtscuda_info.sort_buffer_after_outer_particle_reorder = true;
-    rtscuda_info.sort_buffer_before_inner_particle_pass = true;
+    rtscuda_info.sort_ray_buffer = false;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);
@@ -392,8 +400,8 @@ void runSimulation(
         std::make_shared<ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(
             rays_per_unit);
     pipeline_config.inner_particle_propagation =
-        std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4QueueFillFactory>(
-        //std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4Factory>(
+        //std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4QueueFillFactory>(
+        std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4Factory>(
             ldplab::RK4Parameter(rts_step_size));
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
         ldplab::RayTracingStepFactory::createRayTracingStepCUDA(
@@ -439,8 +447,12 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
+    ldplab::UID<ldplab::Particle> puid3{ setup_copy.particles[2].uid };
+    ldplab::UID<ldplab::Particle> puid4{ setup_copy.particles[3].uid };
     
-    state.particle_instances[puid2].position = ldplab::Vec3(-0.5, -0.5, -2);
+    state.particle_instances[puid2].position = ldplab::Vec3(1, 0, -1);
+    state.particle_instances[puid3].position = ldplab::Vec3(-0.7071, 0.7071, -2);
+    state.particle_instances[puid4].position = ldplab::Vec3(-0.7071, -0.7071, -3);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)

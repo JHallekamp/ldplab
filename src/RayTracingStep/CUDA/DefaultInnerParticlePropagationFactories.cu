@@ -121,5 +121,4 @@ create(
         std::move(queue_ctr_per_stream));
 }
 
-
 #endif

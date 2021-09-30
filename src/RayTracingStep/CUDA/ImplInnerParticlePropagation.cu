@@ -6,6 +6,8 @@
 
 #include "ImplGenericMaterial.hpp"
 
+#include <iostream>
+
 namespace rk4
 {
     using namespace ldplab;
@@ -284,7 +286,8 @@ namespace rk4_queue
     using namespace ldplab::rtscuda;
     using Arg = rk4::Arg;
     constexpr size_t block_size = 32;
-    constexpr size_t reload_threshold = block_size / 4 - 1;
+    constexpr size_t reload_threshold = 0;
+    constexpr size_t steps_per_reload = 6;
     struct RayData
     {
         Vec3 origin;
@@ -383,8 +386,8 @@ void ldplab::rtscuda::InnerParticlePropagationRK4QueueFill::execute(
     stream_context.synchronizeOnStream();
 
     size_t grid_size = stream_context.deviceProperties().num_mps * 16;
-    if (grid_size > num_rays / block_size)
-        grid_size = num_rays / block_size;
+    if (grid_size > num_rays / block_size + (num_rays % block_size ? 1 : 0))
+        grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
     executeKernel<<<grid_size, block_size, 0, stream_context.cudaStream()>>>(
         m_parameter.step_size,
         stream_context.rayDataBuffers().particle_index_buffers.getDeviceBuffer(ray_buffer_index),
@@ -468,21 +471,22 @@ __global__ void rk4_queue::executeKernel(
                 running_threads,
                 queue_empty);
         }
-        step(
-            ray_data,
-            rt_data,
-            step_size,
-            geometry_intersect_ray_functions,
-            ray_index_buffer,
-            ray_direction_buffer,
-            intersection_point_buffer,
-            intersection_normal_buffer,
-            output_force_per_ray,
-            output_torque_per_ray,
-            running_flag,
-            load_offset,
-            temp_output_force,
-            temp_output_torque);
+        for (uint32_t i = 0; i < steps_per_reload; ++i)
+            step(
+                ray_data,
+                rt_data,
+                step_size,
+                geometry_intersect_ray_functions,
+                ray_index_buffer,
+                ray_direction_buffer,
+                intersection_point_buffer,
+                intersection_normal_buffer,
+                output_force_per_ray,
+                output_torque_per_ray,
+                running_flag,
+                load_offset,
+                temp_output_force,
+                temp_output_torque);
         countRunningThreads(running_flag, load_offset, running_threads);
     }
 

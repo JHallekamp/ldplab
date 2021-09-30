@@ -56,16 +56,9 @@ namespace ldplab
         bool return_force_in_particle_coordinate_system = false;
         /** 
          * @brief Tells the pipeline to sort buffer contents based on the 
-         *        particle index before handling inner particle rays 
-         *        (e.g. before inner particle intersection)
+         *        particle index.
          */
-        bool sort_buffer_before_inner_particle_pass = true;
-        /**
-         * @brief Tells the pipeline to sort buffer contents based on the
-         *        particle index after buffer contents have been reordered in
-         *        the outer particle pass.
-         */
-        bool sort_buffer_after_outer_particle_reorder = false;
+        bool sort_ray_buffer = true;
     };
 }
 

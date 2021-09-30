@@ -35,7 +35,7 @@ ldplab::rtscuda::PipelineHostBound::PipelineHostBound(
 void ldplab::rtscuda::PipelineHostBound::execute()
 {
     using namespace std::placeholders;
-    std::atomic_size_t batch_ctr = 0;
+    std::atomic_size_t batch_ctr{ 0 };
 	const std::shared_ptr<JobWrapper> job = 
 		std::make_shared<JobWrapper>(
 			std::bind(&PipelineHostBound::createBatchJob, this, _1, &batch_ctr));
@@ -140,15 +140,6 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
     // Switch between inside and outside particle
     if (inside_particle)
     {
-        if (stream_context.simulationParameter().sort_buffer_inner_particle_pass)
-        {
-            BufferSort::execute(
-                stream_context,
-                pipeline_data,
-                ray_buffer_index,
-                num_rays,
-                false);
-        }
         m_stage_ipp->execute(
             stream_context,
             ray_buffer_index, 
@@ -191,15 +182,16 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 ray_state_count.num_active_rays,
                 num_rays,
                 true);
-            if (stream_context.simulationParameter().sort_buffer_outer_particle_pass)
-            {
-                BufferSort::execute(
-                    stream_context,
-                    pipeline_data,
-                    ray_buffer_index,
-                    num_rays,
-                    true);
-            }
+        }
+        
+        if (stream_context.simulationParameter().sort_ray_buffer)
+        {
+            BufferSort::execute(
+                stream_context,
+                pipeline_data,
+                ray_buffer_index,
+                num_rays,
+                true);
         }
     }
 

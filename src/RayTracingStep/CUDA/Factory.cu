@@ -27,7 +27,8 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         const RayTracingStepCUDAInfo& info, 
         ExperimentalSetup&& setup)
 {
-    return createRTS(info, std::move(setup), PipelineConfiguration{ }, true);
+    PipelineConfiguration tmp_config{ };
+    return createRTS(info, std::move(setup), tmp_config, true);
 }
 
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 

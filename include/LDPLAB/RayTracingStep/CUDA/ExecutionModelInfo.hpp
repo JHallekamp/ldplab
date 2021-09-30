@@ -1,7 +1,6 @@
 #ifndef WWU_LDPLAB_RTSCUDA_PARALLEL_INFO_HPP
 #define WWU_LDPLAB_RTSCUDA_PARALLEL_INFO_HPP
 
-#include <cuda_runtime.h>
 #include <map>
 
 namespace ldplab
