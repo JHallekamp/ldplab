@@ -70,7 +70,8 @@ size_t ldplab::rtscpu::BoundingSphereIntersectionBruteforce::execute(
             const double dist = -p - d_root;
 
             double t = ray_data.min_bounding_volume_distance_data[i];
-            if (dist <= ray_data.min_bounding_volume_distance_data[i])
+            if (dist <= ray_data.min_bounding_volume_distance_data[i] + 
+                    constant::intersection_tests::epsilon)
                 continue;
 
             if (dist < min_d || min_d < 0)
