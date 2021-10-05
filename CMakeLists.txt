@@ -7,7 +7,7 @@ option (BUILD_LDPLAB_VERIFICATION_PROJECT "Builds the LDPLAB verification projec
 option (BUILD_LDPLAB_TEST_PROJECTS "Builds the LDPLAB test projects" OFF)
 
 if(LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
-	cmake_minimum_required (VERSION 3.18)
+	cmake_minimum_required (VERSION 3.15)
 	project(LDPLAB
 		VERSION 0.1
 		LANGUAGES CXX CUDA
