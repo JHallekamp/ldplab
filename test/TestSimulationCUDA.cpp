@@ -62,7 +62,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
 const size_t NUM_PARALLEL_STREAMS = 12;
-const size_t BUFFER_MULTIPLIER = 48; // / NUM_PARALLEL_STREAMS;
+const size_t BUFFER_MULTIPLIER = 24; // / NUM_PARALLEL_STREAMS;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 24576;
 const size_t MAX_RTS_BRANCHING_DEPTH = 32;
@@ -372,9 +372,10 @@ void runSimulation(
     
     
     
-    rtscuda_info.execution_model_info;
-    //    std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
-    //        NUM_PARALLEL_STREAMS);
+    rtscuda_info.execution_model_info =
+        std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
+            NUM_PARALLEL_STREAMS,
+            ldplab::rtscuda::ExecutionModelAutoConstructionInfo::DeviceModel::single_device);
 
     rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
     rtscuda_info.buffer_min_size = 0;
