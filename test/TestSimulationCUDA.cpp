@@ -31,15 +31,15 @@ constexpr bool HOST_PIPELINE = true;
 // Folder path
 constexpr const char* OUTPUT_DIRECTORY() {
     if (HOST_PIPELINE)
-        return "results\\cuda_host_";
+        return "/scratch/tmp/a_gerw03/cuda_host_";
     else
-        return "results\\cuda_device_";
+        return "/scratch/tmp/a_gerw03/cuda_device_";
 }
 constexpr const char* LOG_DIRECTORY() {
     if (HOST_PIPELINE)
-        return "logs\\cuda_host_";
+        return "/scratch/tmp/a_gerw03/cuda_host_";
     else
-        return "logs\\cuda_device_";
+        return "/scratch/tmp/a_gerw03/cuda_device_";
 }
 const std::string OBJ_PATH = "sphere.obj";
 
@@ -61,7 +61,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_PARALLEL_STREAMS = 2;
+const size_t NUM_PARALLEL_STREAMS = 12;
 const size_t BUFFER_MULTIPLIER = 48; // / NUM_PARALLEL_STREAMS;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 24576;
@@ -98,7 +98,7 @@ void runSimulation(ldplab::ExperimentalSetup&& experimental_setup,
 int main()
 {
     // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "logs/test_simulation_cuda.log" };
+    ldplab::LogCallbackFileStream flog{ "/scratch/tmp/a_gerw03/test_simulation_cuda.log" };
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);

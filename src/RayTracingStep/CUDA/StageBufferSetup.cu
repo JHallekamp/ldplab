@@ -68,8 +68,8 @@ bool ldplab::rtscuda::BufferSetup::allocateData(
     PipelineData::KernelLaunchParameter& klp2 = data.buffer_setup_step_klp;
     klp2.block_size.x = block_size;
     klp2.grid_size =
-        shared_data.simulation_parameter.num_particles / klp1.block_size.x +
-        (shared_data.simulation_parameter.num_particles % klp1.block_size.x ? 1 : 0);
+        shared_data.simulation_parameter.num_particles / klp2.block_size.x +
+        (shared_data.simulation_parameter.num_particles % klp2.block_size.x ? 1 : 0);
     return true;
 }
 
