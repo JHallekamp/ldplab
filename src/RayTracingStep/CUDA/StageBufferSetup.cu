@@ -60,12 +60,16 @@ bool ldplab::rtscuda::BufferSetup::allocateData(
     PipelineData& data)
 {
     constexpr size_t block_size = 128;
-    PipelineData::KernelLaunchParameter& klp1 = data.buffer_setup_step_klp;
+    PipelineData::KernelLaunchParameter& klp1 = data.buffer_setup_layer_klp;
     klp1.block_size.x = block_size;
     klp1.grid_size.x =
         shared_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x +
         (shared_data.simulation_parameter.num_rays_per_batch % klp1.block_size.x ? 1 : 0);
-    data.buffer_setup_layer_klp = klp1;
+    PipelineData::KernelLaunchParameter& klp2 = data.buffer_setup_step_klp;
+    klp2.block_size.x = block_size;
+    klp2.grid_size =
+        shared_data.simulation_parameter.num_particles / klp1.block_size.x +
+        (shared_data.simulation_parameter.num_particles % klp1.block_size.x ? 1 : 0);
     return true;
 }
 
