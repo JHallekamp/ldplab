@@ -319,14 +319,14 @@ endif()
 
 if(LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
-else()
-    if (LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING)
-        target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
-    endif()
+endif()
+    
+if (LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING)
+   target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
 endif()
 
 if (TINYOBJLOADER_USE_DOUBLE)
 	target_compile_definitions(ldplab PRIVATE TINYOBJLOADER_USE_DOUBLE)
 endif()
 
-target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")
+#target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")
