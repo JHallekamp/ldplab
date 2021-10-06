@@ -44,8 +44,8 @@ namespace /*helper*/
 			if (error_id != cudaSuccess)
 			{
 				LDPLAB_LOG_ERROR("RTSCUDA execution model: Failed to get "\
-					"properties of cuda device %, cudaGetDeviceProperties "\
-					"returned error code % i: % s",
+					"properties of cuda device %i, cudaGetDeviceProperties "\
+					"returned error code %i: %s",
 					i,
 					error_id,
 					cudaGetErrorString(error_id));
@@ -67,6 +67,10 @@ namespace /*helper*/
 			device_properties.back().shared_mem_per_block = props.sharedMemPerBlock;
 			device_properties.back().shared_mem_per_mp = props.sharedMemPerMultiprocessor;
 			device_properties.back().warp_size = props.warpSize;
+			LDPLAB_LOG_DEBUG("RTSCUDA execution model: Found cuda device "\
+				"\"%s\" (device id %i)",
+				device_properties.back().name.c_str(),
+				device_properties.back().id);
 		}
 		return device_properties;
 	}
@@ -452,6 +456,13 @@ bool ldplab::rtscuda::SharedStepData::createExecutionModel(
 			if (!execution_model.stream_contexts.back().allocate())
 				return false;
 		}
+		LDPLAB_LOG_INFO("RTSCUDA execution model: LDPLAB is now using cuda "\
+			"device %i \"%s\" in device group %i with %i streams",
+			device_data->device_properties.id,
+			device_data->device_properties.name.c_str(),
+			device_data->associated_device_group,
+			device_data->per_stream_data.size());
+
 	}
 	return true;
 }
