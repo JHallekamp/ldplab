@@ -14,7 +14,8 @@ ldplab::rtscuda::StreamContext::CudaStreamWrapper::~CudaStreamWrapper()
 }
 
 ldplab::rtscuda::StreamContext::StreamContext(
-	const DeviceContext& device_ctx,
+	std::vector<DeviceContext>* device_ctx,
+	const size_t device_group_id,
 	const DeviceData& device_data,
 	const ExperimentalSetup& experimental_setup,
 	const InterfaceMapping& interface_mapping,
@@ -22,7 +23,8 @@ ldplab::rtscuda::StreamContext::StreamContext(
 	StreamData& stream_data)
 	:
 	m_stream_id{ stream_data.associated_stream },
-	m_device_context{ device_ctx },
+	m_device_contexts{ device_ctx },
+	m_device_group_id{ device_group_id },
 	m_ray_data_buffers{ stream_data.ray_data_buffers },
 	m_intersection_data_buffers{ stream_data.intersection_data_buffers },
 	m_output_data_buffers{ stream_data.output_data_buffers },

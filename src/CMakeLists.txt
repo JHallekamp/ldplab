@@ -329,4 +329,4 @@ if (TINYOBJLOADER_USE_DOUBLE)
 	target_compile_definitions(ldplab PRIVATE TINYOBJLOADER_USE_DOUBLE)
 endif()
 
-#target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")
+target_compile_definitions(ldplab PRIVATE "$<$<CONFIG:Debug>:LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING>")

@@ -446,7 +446,8 @@ bool ldplab::rtscuda::SharedStepData::createExecutionModel(
 		for (size_t j = 0; j < device_data->per_stream_data.size(); ++j)
 		{
 			auto smctx = StreamContext(
-				execution_model.device_contexts.back(),
+				&execution_model.device_contexts,
+				device_data->associated_device_group,
 				*device_data,
 				experimental_setup,
 				interface_mapping,
