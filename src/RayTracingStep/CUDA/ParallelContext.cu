@@ -58,6 +58,9 @@ bool ldplab::rtscuda::StreamContext::allocate()
 
 bool ldplab::rtscuda::DeviceContext::activateDevice() const
 {
+	LDPLAB_LOG_DEBUG("RTSCUDA device context %i: Set cuda device to %i",
+		m_group_id,
+		m_device_id);
 	cudaError_t err = cudaSetDevice(m_device_id);
 	if (err != cudaSuccess)
 	{
