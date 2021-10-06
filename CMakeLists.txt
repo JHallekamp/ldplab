@@ -3,6 +3,7 @@ option (LDPLAB_BUILD_OPTION_ENABLE_RTSOGL "Use OpenGL for Graphic card processin
 option (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA "Use CUDA for Graphic card processing" OFF)
 option (LDPLAB_BUILD_OPTION_ENABLE_PROFILING "Enable LDPLAB internal profiling code" OFF)
 option (LDPLAB_BUILD_OPTION_DISABLE_LOGGING "Disable LDPLAB logging" OFF)
+option (LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING "Enables debug logging" OFF)
 option (BUILD_LDPLAB_VERIFICATION_PROJECT "Builds the LDPLAB verification project" OFF)
 option (BUILD_LDPLAB_TEST_PROJECTS "Builds the LDPLAB test projects" OFF)
 
