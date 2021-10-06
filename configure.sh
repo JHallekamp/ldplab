@@ -1,3 +1,3 @@
 #!/bin/sh
 
-cmake -S . -B out/build
+cmake -DLDPLAB_BUILD_OPTION_ENABLE_PROFILING=ON -DLDPLAB_BUILD_OPTION_ENABLE_RTSCUDA=ON -S . -B out/build
