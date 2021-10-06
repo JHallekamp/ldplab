@@ -88,7 +88,7 @@ namespace ldplab
             size_t deviceGroup() const { return m_device_context.groupId(); }
             const DeviceContext& deviceContext() const { return m_device_context; }
 
-            cudaStream_t cudaStream() const { return m_cuda_stream->stream; }
+            const cudaStream_t cudaStream() const { return m_cuda_stream->stream; }
             bool synchronizeOnStream();
 
             RayDataBuffers& rayDataBuffers() const { return m_ray_data_buffers; }

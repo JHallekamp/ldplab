@@ -9,6 +9,8 @@
 #include <LDPLAB/RayTracingStep/CUDA/DefaultInnerParticlePropagationFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/PipelineConfiguration.hpp>
 
+#include <cuda_runtime.h>
+
 constexpr double const_pi()
 {
     return 3.14159265358979323846264338327950288419716939937510;
@@ -59,7 +61,7 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_PARALLEL_STREAMS = 3;
+const size_t NUM_PARALLEL_STREAMS = 2;
 const size_t BUFFER_MULTIPLIER = 48; // / NUM_PARALLEL_STREAMS;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
 const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 24576;
@@ -72,7 +74,7 @@ const size_t NUM_SIM_ROTATION_STEPS = 32; // 314
 const double REORDER_THRESHOLD = 1.0;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -364,9 +366,15 @@ void runSimulation(
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
     //rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
     rtscuda_info.return_force_in_particle_coordinate_system = false; //true;
-    rtscuda_info.execution_model_info = 
-        std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
-            NUM_PARALLEL_STREAMS);
+    
+    
+    ldplab::rtscuda::ExecutionModelExplicitConfigInfo execution_info;
+    
+    
+    
+    rtscuda_info.execution_model_info;
+    //    std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
+    //        NUM_PARALLEL_STREAMS);
 
     rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
     rtscuda_info.buffer_min_size = 0;
