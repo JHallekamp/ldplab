@@ -21,7 +21,7 @@ public:
         size_t job_id, 
         size_t batch_size, 
         size_t thread_id) override 
-    { m_job(thread_id); }
+    { m_job(job_id); }
 private:
 	std::function<void(size_t)> m_job;
 };
@@ -45,12 +45,12 @@ void ldplab::rtscuda::PipelineHostBound::execute()
 }
 
 void ldplab::rtscuda::PipelineHostBound::createBatchJob(
-    size_t process_id, 
+    size_t job_id, 
     std::atomic_size_t* batch_no)
 {
 	// Get batch data
-	StreamContext& stream_context = m_context->execution_model.stream_contexts[process_id];
-    PipelineData& pipeline_data = m_pipeline_data[process_id];
+	StreamContext& stream_context = m_context->execution_model.stream_contexts[job_id];
+    PipelineData& pipeline_data = m_pipeline_data[job_id];
 
     // Set device id
     stream_context.deviceContext().activateDevice();
@@ -83,6 +83,7 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(
         }
     } while (batches_left);
     stream_context.synchronizeOnStream();
+    stream_context.deviceContext().synchronizeOnDevice();
 }
 
 void ldplab::rtscuda::PipelineHostBound::setupBatch(
