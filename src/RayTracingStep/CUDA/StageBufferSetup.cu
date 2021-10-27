@@ -34,42 +34,35 @@ void ldplab::rtscuda::BufferSetup::executeStepSetup(
     StreamContext& stream_context,
     PipelineData& data)
 {
-    const PipelineData::KernelLaunchParameter& klp = data.buffer_setup_step_klp;
-    bufferStepSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size, stream_context.cudaStream()>>>(
+    constexpr size_t block_size = 256;
+    const size_t num_particles = stream_context.simulationParameter().num_particles;
+    const size_t grid_size = (num_particles / block_size) + (num_particles % block_size ? 1 : 0);
+    bufferStepSetupKernel<<<grid_size, block_size, 0, stream_context.cudaStream()>>>(
         stream_context.outputDataBuffers().force_per_particle_buffer.getDeviceBuffer(),
         stream_context.outputDataBuffers().torque_per_particle_buffer.getDeviceBuffer(),
-        stream_context.simulationParameter().num_particles);
+        num_particles);
 }
 
 void ldplab::rtscuda::BufferSetup::executeLayerSetup(
     StreamContext& stream_context,
     PipelineData& data,
     size_t buffer_index,
-    size_t output_buffer_index)
+    size_t output_buffer_index,
+    size_t active_rays)
 {
-    const PipelineData::KernelLaunchParameter& klp = data.buffer_setup_layer_klp;
-    bufferLayerSetupKernel<<<klp.grid_size, klp.block_size, klp.shared_memory_size, stream_context.cudaStream()>>>(
+    constexpr size_t block_size = 256;
+    const size_t grid_size = (active_rays / block_size) + (active_rays % block_size ? 1 : 0);
+    bufferLayerSetupKernel<<<grid_size, block_size, 0, stream_context.cudaStream()>>>(
         stream_context.intersectionDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
         stream_context.outputDataBuffers().force_per_ray_buffer.getDeviceBuffer(output_buffer_index),
         stream_context.outputDataBuffers().torque_per_ray_buffer.getDeviceBuffer(output_buffer_index),
-        stream_context.simulationParameter().num_rays_per_batch);
+        active_rays);
 }
 
 bool ldplab::rtscuda::BufferSetup::allocateData(
     const SharedStepData& shared_data, 
     PipelineData& data)
 {
-    constexpr size_t block_size = 128;
-    PipelineData::KernelLaunchParameter& klp1 = data.buffer_setup_layer_klp;
-    klp1.block_size.x = block_size;
-    klp1.grid_size.x =
-        shared_data.simulation_parameter.num_rays_per_batch / klp1.block_size.x +
-        (shared_data.simulation_parameter.num_rays_per_batch % klp1.block_size.x ? 1 : 0);
-    PipelineData::KernelLaunchParameter& klp2 = data.buffer_setup_step_klp;
-    klp2.block_size.x = block_size;
-    klp2.grid_size =
-        shared_data.simulation_parameter.num_particles / klp2.block_size.x +
-        (shared_data.simulation_parameter.num_particles % klp2.block_size.x ? 1 : 0);
     return true;
 }
 

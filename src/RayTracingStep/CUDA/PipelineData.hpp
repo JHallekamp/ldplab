@@ -11,21 +11,8 @@ namespace ldplab
         /** @brief Data used internally during the pipeline exectuion. */
         struct PipelineData
         {
-            /** @brief Contains kernel launch parameters. */
-            struct KernelLaunchParameter
-            {
-                KernelLaunchParameter() :
-                    grid_size{ 1, 1, 1 },
-                    block_size{ 1, 1, 1 },
-                    shared_memory_size{ 0 }
-                { }
-                dim3 grid_size;
-                dim3 block_size;
-                unsigned int shared_memory_size;
-            };
-
             /** @brief Return value for ray buffer reduce kernel. */
-            struct RayBufferReductionResult
+            struct RayStateCountingResult
             {
                 /** @brief Number of active rays inside the buffer. */
                 size_t num_active_rays;
@@ -33,19 +20,25 @@ namespace ldplab
                 size_t num_world_space_rays;
             };
 
-            DeviceBuffer<uint32_t> buffer_reorder_local_;
+            DeviceBuffer<uint32_t> buffer_reorder_local;
             DeviceBuffer<uint32_t> buffer_rorder_block_sizes;
             DeviceBuffer<uint32_t> buffer_reorder_rank_index_range;
             
-            DeviceBufferPinned<size_t> buffer_sort_num_rays_num_pivots;
+            //DeviceBufferPinned<size_t> buffer_sort_num_rays_num_pivots;
+            struct BufferSortLocalRank { int32_t particle_index; uint32_t rank; };
+            DeviceBuffer<BufferSortLocalRank> buffer_sort_block_local_rank_per_ray;
+            DeviceBuffer<size_t> buffer_sort_global_offset_per_particle;
+            DeviceBuffer<int32_t> buffer_sort_swap_ray_pi;
+            DeviceBuffer<Vec3> buffer_sort_swap_ray_origin;
+            DeviceBuffer<Vec3> buffer_sort_swap_ray_direction;
+            DeviceBuffer<double> buffer_sort_swap_ray_intensity;
+            DeviceBuffer<double> buffer_sort_swap_ray_min_bv_distance;
+            DeviceBuffer<Vec3> buffer_sort_swap_isec_point;
+            DeviceBuffer<Vec3> buffer_sort_swap_isec_normal;
+            DeviceBuffer<int32_t> buffer_sort_swap_isec_pi;
 
-            DeviceBufferPinned<RayBufferReductionResult> 
+            DeviceBufferPinned<RayStateCountingResult>
                 ray_buffer_reduction_result_buffer;
-            KernelLaunchParameter ray_buffer_reduction_1_klp;
-            KernelLaunchParameter ray_buffer_reduction_2_klp;
-            
-            KernelLaunchParameter buffer_setup_step_klp;
-            KernelLaunchParameter buffer_setup_layer_klp;
         };
     }
 }

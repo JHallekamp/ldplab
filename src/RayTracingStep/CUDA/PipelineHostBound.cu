@@ -106,8 +106,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	bool inside_particle)
 {
     // Check if buffer contains rays
-    PipelineData::RayBufferReductionResult ray_state_count;
-    ray_state_count = RayBufferReduce::execute(
+    PipelineData::RayStateCountingResult ray_state_count;
+    ray_state_count = RayStateCounting::execute(
         stream_context,
         pipeline_data, 
         ray_buffer_index,
@@ -136,7 +136,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         stream_context,
         pipeline_data, 
         ray_buffer_index,
-        ray_buffer_index);
+        ray_buffer_index,
+        num_rays);
 
     // Switch between inside and outside particle
     if (inside_particle)
@@ -161,7 +162,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 ray_buffer_index, 
                 ray_buffer_index,
                 num_rays);
-            ray_state_count = RayBufferReduce::execute(
+            ray_state_count = RayStateCounting::execute(
                 stream_context,
                 pipeline_data,
                 ray_buffer_index,

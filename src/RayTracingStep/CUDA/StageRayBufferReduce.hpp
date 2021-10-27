@@ -10,12 +10,12 @@ namespace ldplab
 {
     namespace rtscuda
     {
-        class RayBufferReduce
+        class RayStateCounting
         {
         public:
-            RayBufferReduce() = delete;
+            RayStateCounting() = delete;
             /** @brief Reduces the given ray buffers indices. */
-            static PipelineData::RayBufferReductionResult execute(
+            static PipelineData::RayStateCountingResult execute(
                 StreamContext& stream_context,
                 PipelineData& pipeline_data,
                 size_t ray_buffer_index,

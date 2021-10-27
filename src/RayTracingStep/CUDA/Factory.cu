@@ -938,7 +938,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
                 "Failed to allocate gather output stage pipeline data.");
             return false;
         }
-        if (!RayBufferReduce::allocateData(
+        if (!RayStateCounting::allocateData(
             *pipeline->m_context,
             pipeline->m_pipeline_data.back()))
         {
