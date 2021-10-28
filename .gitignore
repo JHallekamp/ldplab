@@ -1,6 +1,9 @@
 ## Build
 out/*
 
+## Docs
+docs/*
+
 ## CMake
 CMakeLists.txt.user
 CMakeCache.txt
