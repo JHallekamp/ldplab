@@ -61,17 +61,18 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_PARALLEL_STREAMS = 12;
-const size_t BUFFER_MULTIPLIER = 24; // / NUM_PARALLEL_STREAMS;
-const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 24576;
-const size_t MAX_RTS_BRANCHING_DEPTH = 32;
+const size_t NUM_PARALLEL_STREAMS = 2; // 2;
+const size_t BUFFER_MULTIPLIER = 32; // / NUM_PARALLEL_STREAMS;
+const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 16 * BUFFER_MULTIPLIER;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 4 * 8192;
+const size_t MAX_RTS_BRANCHING_DEPTH = 6 * 8;
 const double RTS_INTENSITY_CUTOFF = 0.0005 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
-const size_t NUM_SIM_ROTATION_STEPS = 32; // 314
+const size_t NUM_SIM_ROTATION_STEPS = 32; // 32; // 314
 
-const double REORDER_THRESHOLD = 1.0;
+const double REORDER_THRESHOLD = 0.75;
+const bool BUFFER_SORT = true;
 
 // RK4
 const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
@@ -329,6 +330,8 @@ void createExperimentalSetup(
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
     experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
@@ -365,22 +368,19 @@ void runSimulation(
     rtscuda_info.maximum_branching_depth = branching_depth;
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
     //rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
-    rtscuda_info.return_force_in_particle_coordinate_system = false; //true;
+    rtscuda_info.return_force_in_particle_coordinate_system = false; //true;    
     
-    
-    ldplab::rtscuda::ExecutionModelExplicitConfigInfo execution_info;
-    
-    
+    ldplab::rtscuda::ExecutionModelExplicitConfigInfo execution_info;    
     
     rtscuda_info.execution_model_info =
         std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
             NUM_PARALLEL_STREAMS,
-            ldplab::rtscuda::ExecutionModelAutoConstructionInfo::DeviceModel::single_device);
+            ldplab::rtscuda::ExecutionModelAutoConstructionInfo::DeviceModel::distribute_equally);
 
     rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
     rtscuda_info.buffer_min_size = 0;
 
-    rtscuda_info.sort_ray_buffer = false;
+    rtscuda_info.sort_ray_buffer = BUFFER_SORT;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);
@@ -458,10 +458,14 @@ void runSimulation(
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
     ldplab::UID<ldplab::Particle> puid3{ setup_copy.particles[2].uid };
     ldplab::UID<ldplab::Particle> puid4{ setup_copy.particles[3].uid };
+    ldplab::UID<ldplab::Particle> puid5{ setup_copy.particles[4].uid };
+    ldplab::UID<ldplab::Particle> puid6{ setup_copy.particles[5].uid };
     
     state.particle_instances[puid2].position = ldplab::Vec3(1, 0, -1);
     state.particle_instances[puid3].position = ldplab::Vec3(-0.7071, 0.7071, -2);
     state.particle_instances[puid4].position = ldplab::Vec3(-0.7071, -0.7071, -3);
+    state.particle_instances[puid5].position = ldplab::Vec3(0, -1, -4);
+    state.particle_instances[puid6].position = ldplab::Vec3(0, 1, -5);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)

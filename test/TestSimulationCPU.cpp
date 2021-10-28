@@ -51,14 +51,14 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
     const size_t NUM_RTS_THREADS = 24;
 #endif
 const size_t NUM_RTS_RAYS_PER_BUFFER = 512 * 5;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 24576;
-const size_t MAX_RTS_BRANCHING_DEPTH = 32;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 4 * 8192;
+const size_t MAX_RTS_BRANCHING_DEPTH = 6 * 8;
 const double RTS_INTENSITY_CUTOFF = 0.0005 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 
 // RK4
-const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
+const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
 // RK45
 const double RTS_SOLVER_EPSILON = 0.0000001;
 const double RTS_SOLVER_INITIAL_STEP_SIZE = 2.0;
@@ -314,6 +314,8 @@ void createExperimentalSetup(
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
     experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
@@ -410,10 +412,14 @@ void runSimulation(
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
     ldplab::UID<ldplab::Particle> puid3{ setup_copy.particles[2].uid };
     ldplab::UID<ldplab::Particle> puid4{ setup_copy.particles[3].uid };
+    ldplab::UID<ldplab::Particle> puid5{ setup_copy.particles[4].uid };
+    ldplab::UID<ldplab::Particle> puid6{ setup_copy.particles[5].uid };
 
     state.particle_instances[puid2].position = ldplab::Vec3(1, 0, -1);
     state.particle_instances[puid3].position = ldplab::Vec3(-0.7071, 0.7071, -2);
     state.particle_instances[puid4].position = ldplab::Vec3(-0.7071, -0.7071, -3);
+    state.particle_instances[puid5].position = ldplab::Vec3(0, -1, -4);
+    state.particle_instances[puid6].position = ldplab::Vec3(0, 1, -5);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
