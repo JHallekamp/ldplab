@@ -11,7 +11,7 @@
 #include "StageBufferReorder.hpp"
 #include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
-#include "StageRayBufferReduce.hpp"
+#include "StageRayStateCounting.hpp"
 
 class JobWrapper : public ldplab::utils::ThreadPool::IJob
 {

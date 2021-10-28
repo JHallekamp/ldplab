@@ -148,7 +148,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/RayTracingStepCUDA.hpp
         RayTracingStep/CUDA/StageBufferSetup.hpp
         RayTracingStep/CUDA/StageGatherOutput.hpp
-        RayTracingStep/CUDA/StageRayBufferReduce.hpp
+        RayTracingStep/CUDA/StageRayStateCounting.hpp
         RayTracingStep/CUDA/StageBufferReorder.hpp
         RayTracingStep/CUDA/StageBufferSort.hpp
     )
@@ -178,7 +178,7 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/RayTracingStepCUDA.cu
         RayTracingStep/CUDA/StageBufferSetup.cu
         RayTracingStep/CUDA/StageGatherOutput.cu
-        RayTracingStep/CUDA/StageRayBufferReduce.cu
+        RayTracingStep/CUDA/StageRayStateCounting.cu
         RayTracingStep/CUDA/StageBufferReorder.cu
         RayTracingStep/CUDA/StageBufferSort.cu
     )

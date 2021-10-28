@@ -19,7 +19,7 @@
 #include "StageBufferReorder.hpp"
 #include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
-#include "StageRayBufferReduce.hpp"
+#include "StageRayStateCounting.hpp"
 #include "RayTracingStepCUDA.hpp"
 
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 
