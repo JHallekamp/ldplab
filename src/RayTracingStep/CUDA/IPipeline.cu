@@ -132,19 +132,19 @@ ldplab::Mat3 ldplab::rtscuda::IPipeline::getRotationMatrix(
 
     rotx[0][0] = 1;
     rotx[1][1] = cos(rx);
-    rotx[1][2] = -sin(rx);
-    rotx[2][1] = sin(rx);
+    rotx[1][2] = sin(rx);
+    rotx[2][1] = -sin(rx);
     rotx[2][2] = cos(rx);
 
     roty[0][0] = cos(ry);
-    roty[0][2] = sin(ry);
+    roty[0][2] = -sin(ry);
     roty[1][1] = 1;
-    roty[2][0] = -sin(ry);
+    roty[2][0] = sin(ry);
     roty[2][2] = cos(ry);
 
     rotz[0][0] = cos(rz);
-    rotz[0][1] = -sin(rz);
-    rotz[1][0] = sin(rz);
+    rotz[0][1] = sin(rz);
+    rotz[1][0] = -sin(rz);
     rotz[1][1] = cos(rz);
     rotz[2][2] = 1;
 
