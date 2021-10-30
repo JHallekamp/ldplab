@@ -99,8 +99,10 @@ namespace ldplab
         /** @brief Information about the simulation. */
         struct SimulationParameter
         {
-            double buffer_reorder_threshold;
-            size_t buffer_min_size;
+            double buffer_sort_abort_threshold;
+            bool buffer_sort_enabled;
+            double buffer_packing_threshold;;
+            size_t buffer_packing_min_size;
             double intensity_cutoff;
             size_t max_branching_depth;
             size_t num_particles;
@@ -110,8 +112,6 @@ namespace ldplab
             int32_t ray_world_space_index;
             int32_t ray_invalid_index = -1;
             bool output_in_particle_space;
-            bool sort_ray_buffer;
-            double sort_abort_threshold;
         };
 
         /** @brief Particle transformations. */

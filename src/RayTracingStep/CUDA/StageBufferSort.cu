@@ -240,7 +240,7 @@ void ldplab::rtscuda::BufferSort::execute(
 
         size_t conflict_threshold = static_cast<size_t>(
             static_cast<double>(num_particles) *
-            stream_context.simulationParameter().sort_abort_threshold);
+            stream_context.simulationParameter().buffer_sort_abort_threshold);
 
         if (conflict_threshold > 0)
         {

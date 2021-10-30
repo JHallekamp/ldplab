@@ -378,11 +378,11 @@ void runSimulation(
             NUM_PARALLEL_STREAMS,
             ldplab::rtscuda::ExecutionModelAutoConstructionInfo::DeviceModel::distribute_equally);
 
-    rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
-    rtscuda_info.buffer_min_size = 0;
+    rtscuda_info.buffer_packing_threshold = REORDER_THRESHOLD;
+    rtscuda_info.buffer_packing_min_buffer_size = 0;
 
-    rtscuda_info.sort_ray_buffer = BUFFER_SORT;
-    rtscuda_info.sort_abort_threshold = BUFFER_SORT_ABORT_THRESHOLD;
+    rtscuda_info.buffer_sort_enabled = BUFFER_SORT;
+    rtscuda_info.buffer_sort_abort_threshold = BUFFER_SORT_ABORT_THRESHOLD;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);

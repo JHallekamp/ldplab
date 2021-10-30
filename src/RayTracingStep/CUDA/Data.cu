@@ -99,10 +99,10 @@ bool ldplab::rtscuda::SharedStepData::allocateResources(
 	simulation_parameter.ray_invalid_index = -1;
 	simulation_parameter.output_in_particle_space = 
 		info.return_force_in_particle_coordinate_system;
-	simulation_parameter.buffer_min_size = info.buffer_min_size;
-	simulation_parameter.buffer_reorder_threshold = info.buffer_reorder_threshold;
-	simulation_parameter.sort_ray_buffer = info.sort_ray_buffer;
-	simulation_parameter.sort_abort_threshold = info.sort_abort_threshold;
+	simulation_parameter.buffer_packing_min_size = info.buffer_packing_min_buffer_size;
+	simulation_parameter.buffer_packing_threshold = info.buffer_packing_threshold;
+	simulation_parameter.buffer_sort_abort_threshold = info.buffer_sort_abort_threshold;
+	simulation_parameter.buffer_sort_enabled = info.buffer_sort_enabled;
 
 	// Create device data
 	for (size_t i = 0; i < per_device_data.size(); ++i)

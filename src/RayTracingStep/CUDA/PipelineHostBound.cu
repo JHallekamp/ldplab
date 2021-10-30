@@ -118,9 +118,9 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
     
     size_t threshold = static_cast<size_t>(
         static_cast<double>(num_rays) * 
-        stream_context.simulationParameter().buffer_reorder_threshold);
+        stream_context.simulationParameter().buffer_packing_threshold);
     if (ray_state_count.num_active_rays < threshold &&
-        num_rays > stream_context.simulationParameter().buffer_min_size)
+        num_rays > stream_context.simulationParameter().buffer_packing_min_size)
     {
         num_rays = BufferPacking::execute(
             stream_context,
@@ -173,9 +173,9 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 
         threshold = static_cast<size_t>(
             static_cast<double>(num_rays) *
-            stream_context.simulationParameter().buffer_reorder_threshold);
+            stream_context.simulationParameter().buffer_packing_threshold);
         if (ray_state_count.num_active_rays < threshold &&
-            num_rays > stream_context.simulationParameter().buffer_min_size)
+            num_rays > stream_context.simulationParameter().buffer_packing_min_size)
         {
             num_rays = BufferPacking::execute(
                 stream_context,
@@ -186,7 +186,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 true);
         }
         
-        if (stream_context.simulationParameter().sort_ray_buffer)
+        if (stream_context.simulationParameter().buffer_sort_enabled)
         {
             BufferSort::execute(
                 stream_context,
