@@ -16,7 +16,7 @@
 #include "PipelineDeviceBound.hpp"
 #include "PipelineHostBound.hpp"
 #include "StageBufferSetup.hpp"
-#include "StageBufferReorder.hpp"
+#include "StageBufferPacking.hpp"
 #include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
 #include "StageRayStateCounting.hpp"
@@ -922,7 +922,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
                 "Failed to allocate buffer setup stage pipeline data.");
             return false;
         }
-        if (!BufferReorder::allocateData(
+        if (!BufferPacking::allocateData(
             *pipeline->m_context,
             pipeline->m_pipeline_data.back()))
         {
@@ -947,6 +947,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
             return false;
         }
         if (!BufferSort::allocateData(
+            i,
             *pipeline->m_context,
             pipeline->m_pipeline_data.back()))
         {

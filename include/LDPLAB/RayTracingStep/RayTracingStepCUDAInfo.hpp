@@ -32,6 +32,19 @@ namespace ldplab
          *          1.0 to always reorder.
          */
         double buffer_reorder_threshold = 0.8;
+        /**
+         * @brief Percentage threshold for early ray_buffer_sort abort.
+         * @details The pipeline does not sort the ray buffers if the number 
+         *          of conflicts (more than one particle per warp) exceeds 
+         *          the given percentage threshold of the number of particles.
+         * @note A threshold of 0 denotes that the pipeline always sorts.
+         */
+        double sort_abort_threshold = 1.0;
+        /** 
+         * @brief Tells the pipeline to sort buffer contents based on the 
+         *        particle index.
+         */
+        bool sort_ray_buffer = true;
         /** @brief Minimum number of rays (valid or invalid) inside the buffers. */
         size_t buffer_min_size = 2048;
         /** @brief Under this cutoff intensity rays are not further traced. */
@@ -54,11 +67,6 @@ namespace ldplab
          *        returned in particle coordinate system.
          */
         bool return_force_in_particle_coordinate_system = false;
-        /** 
-         * @brief Tells the pipeline to sort buffer contents based on the 
-         *        particle index.
-         */
-        bool sort_ray_buffer = true;
     };
 }
 

@@ -23,6 +23,7 @@ namespace ldplab
                 bool isec_or_output_contains_data);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
+                size_t stream_id,
                 const SharedStepData& shared_data,
                 PipelineData& data);
         };

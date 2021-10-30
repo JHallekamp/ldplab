@@ -20,12 +20,14 @@ namespace ldplab
                 size_t num_world_space_rays;
             };
 
-            DeviceBuffer<uint32_t> buffer_reorder_local;
-            DeviceBuffer<uint32_t> buffer_rorder_block_sizes;
-            DeviceBuffer<uint32_t> buffer_reorder_rank_index_range;
+            DeviceBuffer<uint32_t> buffer_packing_local;
+            DeviceBuffer<uint32_t> buffer_packing_block_sizes;
+            DeviceBuffer<uint32_t> buffer_packing_rank_index_range;
             
             //DeviceBufferPinned<size_t> buffer_sort_num_rays_num_pivots;
             struct BufferSortLocalRank { int32_t particle_index; uint32_t rank; };
+            DeviceBufferPinned<size_t> buffer_sort_num_conflicting_buffers;
+            DeviceBuffer<uint32_t> buffer_sort_conflicting_buffer;
             DeviceBuffer<BufferSortLocalRank> buffer_sort_block_local_rank_per_ray;
             DeviceBuffer<size_t> buffer_sort_global_offset_per_particle;
             DeviceBuffer<int32_t> buffer_sort_swap_ray_pi;

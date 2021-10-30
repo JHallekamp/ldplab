@@ -1,9 +1,78 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 #include "StageBufferSort.hpp"
 
+#include "../../Utils/Log.hpp"
+
 namespace
 {
-    constexpr size_t block_size = 2048;
+    constexpr size_t block_size = 256;
+
+    __global__ void checkConflictingWarps(
+        const int32_t* particle_index_buffer,
+        uint32_t* conflicting_warp,
+        size_t num_rays)
+    {
+        extern __shared__ int32_t sbuf[];
+        const uint32_t tid = threadIdx.x;
+        const uint32_t ri = blockIdx.x * blockDim.x + tid;
+        if (ri < num_rays)
+            sbuf[tid] = particle_index_buffer[ri];
+        else
+            sbuf[tid] = -1;
+        __syncthreads();
+
+        if (tid == 0)
+        {
+            uint32_t conflict = 0;
+            int32_t pi = sbuf[0];
+            for (size_t i = 1; i < blockDim.x; ++i)
+            {
+                if (pi != sbuf[i])
+                {
+                    if (pi == -1)
+                        pi = sbuf[i];
+                    else if (sbuf[i] != 0)
+                    {
+                        ++conflict;
+                        break;
+                    }
+                }
+            }
+            conflicting_warp[blockIdx.x] = conflict;
+        }
+    }
+
+    __global__ void countConflictingWarps(
+        const uint32_t* conflicting_warp,
+        size_t* num_conflicing_warps,
+        size_t num_warps)
+    {
+        __shared__ size_t count[block_size];
+
+        const uint32_t tid = threadIdx.x;
+        const size_t num_blocks = 
+            (num_warps / block_size) + (num_warps % block_size ? 1 : 0);
+        count[tid] = 0;
+
+        for (size_t i = 0; i < num_blocks; ++i)
+        {
+            const size_t wi = i * block_size + tid;
+            if (wi < num_warps)
+                count[tid] += conflicting_warp[wi] ? 1 : 0;
+        }
+        __syncthreads();
+
+        for (unsigned int lim = block_size; lim > 1; lim /= 2)
+        {
+            unsigned int ofs = lim / 2;
+            if (tid + ofs < lim)
+                count[tid] += count[tid + ofs];
+            __syncthreads();
+        }
+
+        if (tid == 0)
+            *num_conflicing_warps = count[0];
+    }
 
     __global__ void createGlobalOffsets(
         size_t* global_offset_per_particle,
@@ -165,7 +234,41 @@ void ldplab::rtscuda::BufferSort::execute(
     const size_t num_particles = stream_context.simulationParameter().num_particles;
     if (num_particles > 1)
     {
-        size_t grid_size = 
+        const size_t warp_size = stream_context.deviceProperties().warp_size;
+        const size_t mem_size = warp_size * sizeof(int32_t);
+        size_t grid_size = (active_rays / warp_size) + (active_rays % warp_size ? 1 : 0);
+
+        size_t conflict_threshold = static_cast<size_t>(
+            static_cast<double>(num_particles) *
+            stream_context.simulationParameter().sort_abort_threshold);
+
+        if (conflict_threshold > 0)
+        {
+            if (grid_size <= conflict_threshold)
+                return;
+            checkConflictingWarps << <grid_size, warp_size, mem_size, stream_context.cudaStream() >> > (
+                stream_context.rayDataBuffers().particle_index_buffers.getDeviceBuffer(buffer_index),
+                pipeline_data.buffer_sort_conflicting_buffer.getDeviceBuffer(),
+                active_rays);
+            countConflictingWarps << <1, block_size, 0, stream_context.cudaStream() >> > (
+                pipeline_data.buffer_sort_conflicting_buffer.getDeviceBuffer(),
+                pipeline_data.buffer_sort_num_conflicting_buffers.getDeviceBuffer(),
+                grid_size);
+            if (!pipeline_data.buffer_sort_num_conflicting_buffers.downloadAsync(
+                0, 1, stream_context.cudaStream()))
+            {
+                LDPLAB_LOG_ERROR("RTSCUDA: Ray buffer sort pipeline step "\
+                    "failed to download conflicting warp count from device");
+                return;
+            }
+            stream_context.synchronizeOnStream();
+            size_t num_conflicting_warps =
+                pipeline_data.buffer_sort_num_conflicting_buffers.getHostBuffer()[0];
+            if (num_conflicting_warps <= conflict_threshold)
+                return;
+        }
+
+        grid_size = 
             ((num_particles + 1) / block_size) + 
             ((num_particles + 1) % block_size ? 1 : 0);
         createGlobalOffsets<<<grid_size, block_size, 0, stream_context.cudaStream()>>>(
@@ -221,13 +324,19 @@ void ldplab::rtscuda::BufferSort::execute(
 }
 
 bool ldplab::rtscuda::BufferSort::allocateData(
+    size_t stream_id,
     const SharedStepData& shared_data, 
     PipelineData& data)
 {
-    size_t num_particles = shared_data.simulation_parameter.num_particles;
-    size_t num_rays = shared_data.simulation_parameter.num_rays_per_batch;
+    const size_t num_particles = shared_data.simulation_parameter.num_particles;
+    const size_t num_rays = shared_data.simulation_parameter.num_rays_per_batch;
+    const size_t warp_size = shared_data.execution_model.stream_contexts[stream_id].
+        deviceContext().deviceProperties().warp_size;
+    const size_t num_warps = (num_rays / warp_size) + (num_rays % warp_size ? 1 : 0);
     return
-        data.buffer_sort_block_local_rank_per_ray.allocate(num_rays, true) &&
+        data.buffer_sort_num_conflicting_buffers.allocate(1, true) &&
+        data.buffer_sort_conflicting_buffer.allocate(num_warps, false) &&
+        data.buffer_sort_block_local_rank_per_ray.allocate(num_rays, false) &&
         data.buffer_sort_global_offset_per_particle.allocate(num_particles + 2, false) &&
         data.buffer_sort_swap_ray_pi.allocate(num_rays, false) &&
         data.buffer_sort_swap_ray_origin.allocate(num_rays, false) &&
@@ -237,7 +346,6 @@ bool ldplab::rtscuda::BufferSort::allocateData(
         data.buffer_sort_swap_isec_point.allocate(num_rays, false) &&
         data.buffer_sort_swap_isec_normal.allocate(num_rays, false) &&
         data.buffer_sort_swap_isec_pi.allocate(num_rays, false);
-    //return(data.buffer_sort_num_rays_num_pivots.allocate(2, true));
 }
 
 #endif

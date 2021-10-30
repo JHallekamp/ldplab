@@ -64,15 +64,16 @@ const size_t NUM_RAYS_PER_BLOCK = 128;
 const size_t NUM_PARALLEL_STREAMS = 2; // 2;
 const size_t BUFFER_MULTIPLIER = 32; // / NUM_PARALLEL_STREAMS;
 const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 16 * BUFFER_MULTIPLIER;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 4 * 8192;
-const size_t MAX_RTS_BRANCHING_DEPTH = 6 * 8;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 8 * 8192;
+const size_t MAX_RTS_BRANCHING_DEPTH = 16;
 const double RTS_INTENSITY_CUTOFF = 0.0005 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
 const size_t NUM_SIM_ROTATION_STEPS = 32; // 32; // 314
 
-const double REORDER_THRESHOLD = 0.75;
-const bool BUFFER_SORT = true;
+const double REORDER_THRESHOLD = 0.80;
+const bool BUFFER_SORT = false;
+const double BUFFER_SORT_ABORT_THRESHOLD = 1;
 
 // RK4
 const double RTS_SOLVER_STEP_SIZE = 0.005; //0.005;
@@ -327,10 +328,10 @@ void createExperimentalSetup(
     light_source.intensity_distribution =
         std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
-    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
-    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
-    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
-    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
@@ -381,6 +382,7 @@ void runSimulation(
     rtscuda_info.buffer_min_size = 0;
 
     rtscuda_info.sort_ray_buffer = BUFFER_SORT;
+    rtscuda_info.sort_abort_threshold = BUFFER_SORT_ABORT_THRESHOLD;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);
@@ -433,18 +435,18 @@ void runSimulation(
         OUTPUT_DIRECTORY(), 
         "torque_p1", 
         branching_depth);
-    std::ofstream output_force2 = getFileStream(
-        setup_copy.particles[0],
-        nu,
-        OUTPUT_DIRECTORY(),
-        "force_p2",
-        branching_depth);
-    std::ofstream output_torque2 = getFileStream(
-        setup_copy.particles[0],
-        nu,
-        OUTPUT_DIRECTORY(),
-        "torque_p2",
-        branching_depth);
+    //std::ofstream output_force2 = getFileStream(
+    //    setup_copy.particles[0],
+    //    nu,
+    //    OUTPUT_DIRECTORY(),
+    //    "force_p2",
+    //    branching_depth);
+    //std::ofstream output_torque2 = getFileStream(
+    //    setup_copy.particles[0],
+    //    nu,
+    //    OUTPUT_DIRECTORY(),
+    //    "torque_p2",
+    //    branching_depth);
 
     // Create simulation
     ldplab::SimulationState state{ setup_copy };
@@ -456,16 +458,16 @@ void runSimulation(
 
     ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
     ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
-    ldplab::UID<ldplab::Particle> puid3{ setup_copy.particles[2].uid };
-    ldplab::UID<ldplab::Particle> puid4{ setup_copy.particles[3].uid };
-    ldplab::UID<ldplab::Particle> puid5{ setup_copy.particles[4].uid };
-    ldplab::UID<ldplab::Particle> puid6{ setup_copy.particles[5].uid };
+    //ldplab::UID<ldplab::Particle> puid3{ setup_copy.particles[2].uid };
+    //ldplab::UID<ldplab::Particle> puid4{ setup_copy.particles[3].uid };
+    //ldplab::UID<ldplab::Particle> puid5{ setup_copy.particles[4].uid };
+    //ldplab::UID<ldplab::Particle> puid6{ setup_copy.particles[5].uid };
     
     state.particle_instances[puid2].position = ldplab::Vec3(1, 0, -1);
-    state.particle_instances[puid3].position = ldplab::Vec3(-0.7071, 0.7071, -2);
-    state.particle_instances[puid4].position = ldplab::Vec3(-0.7071, -0.7071, -3);
-    state.particle_instances[puid5].position = ldplab::Vec3(0, -1, -4);
-    state.particle_instances[puid6].position = ldplab::Vec3(0, 1, -5);
+    //state.particle_instances[puid3].position = ldplab::Vec3(-0.7071, 0.7071, -2);
+    //state.particle_instances[puid4].position = ldplab::Vec3(-0.7071, -0.7071, -3);
+    //state.particle_instances[puid5].position = ldplab::Vec3(0, -1, -4);
+    //state.particle_instances[puid6].position = ldplab::Vec3(0, 1, -5);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
@@ -482,16 +484,16 @@ void runSimulation(
             "\t" << output.torque_per_particle[puid1].y <<
             "\t" << output.torque_per_particle[puid1].z <<
             std::endl;
-        output_force2 << rotation_x <<
-            "\t" << output.force_per_particle[puid2].x <<
-            "\t" << output.force_per_particle[puid2].y <<
-            "\t" << output.force_per_particle[puid2].z <<
-            std::endl;
-        output_torque2 << rotation_x <<
-            "\t" << output.torque_per_particle[puid2].x <<
-            "\t" << output.torque_per_particle[puid2].y <<
-            "\t" << output.torque_per_particle[puid2].z <<
-            std::endl;
+        //output_force2 << rotation_x <<
+        //    "\t" << output.force_per_particle[puid2].x <<
+        //    "\t" << output.force_per_particle[puid2].y <<
+        //    "\t" << output.force_per_particle[puid2].z <<
+        //    std::endl;
+        //output_torque2 << rotation_x <<
+        //    "\t" << output.torque_per_particle[puid2].x <<
+        //    "\t" << output.torque_per_particle[puid2].y <<
+        //    "\t" << output.torque_per_particle[puid2].z <<
+        //    std::endl;
         plotProgress((rotation_x - offset + step_size) / (lim - offset + step_size));
     }
 

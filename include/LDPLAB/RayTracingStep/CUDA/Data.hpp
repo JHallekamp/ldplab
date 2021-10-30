@@ -111,6 +111,7 @@ namespace ldplab
             int32_t ray_invalid_index = -1;
             bool output_in_particle_space;
             bool sort_ray_buffer;
+            double sort_abort_threshold;
         };
 
         /** @brief Particle transformations. */
