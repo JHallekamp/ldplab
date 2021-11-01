@@ -9,7 +9,7 @@ namespace ldplab
 	struct IParticleMaterial
 	{
 		enum class Type { homogenous, linear_one_directional };
-		static char* typeToString(Type type)
+		static std::string typeToString(Type type)
 		{
 			switch (type)
 			{
@@ -33,7 +33,7 @@ namespace ldplab
 		/** @brief Returns the type of the instance. */
 		virtual Type type() const = 0;
         /** @brief Returns the type of the instance as string. */
-        const char* typeString() const
+        const std::string typeString() const
         {
 			return typeToString(type());
         }
