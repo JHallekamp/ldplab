@@ -68,9 +68,9 @@ void ldplab::rtscpu::Pipeline::stepSetup(const SimulationState& sim_state)
             particle_instance.position;
         m_particle_transformations[i].w2p_rotation_scale =
             getRotationMatrix(
-                -particle_instance.orientation.x,
-                -particle_instance.orientation.y,
                 -particle_instance.orientation.z,
+                -particle_instance.orientation.y,
+                -particle_instance.orientation.x,
                 invertRotationOrder(particle_instance.rotation_order));
         m_particle_transformations[i].p2w_scale_rotation =
             getRotationMatrix(
@@ -183,47 +183,90 @@ void ldplab::rtscpu::Pipeline::execute(
         m_owner.uid(), job_id);
 }
 
+namespace
+{
+    ldplab::Mat3 rotationX(const double angle)
+    {
+        ldplab::Mat3 rot(0);
+
+        rot[0][0] = 1;
+        rot[1][1] = cos(angle);
+        rot[1][2] = sin(angle);
+        rot[2][1] = -sin(angle);
+        rot[2][2] = cos(angle);
+
+        return rot;
+    }
+    ldplab::Mat3 rotationY(const double angle)
+    {
+        ldplab::Mat3 rot(0);
+
+        rot[0][0] = cos(angle);
+        rot[0][2] = -sin(angle);
+        rot[1][1] = 1;
+        rot[2][0] = sin(angle);
+        rot[2][2] = cos(angle);
+
+        return rot;
+    }
+    ldplab::Mat3 rotationZ(const double angle)
+    {
+        ldplab::Mat3 rot(0);
+
+        rot[0][0] = cos(angle);
+        rot[0][1] = sin(angle);
+        rot[1][0] = -sin(angle);
+        rot[1][1] = cos(angle);
+        rot[2][2] = 1;
+
+        return rot;
+    }
+}
+
 ldplab::Mat3 ldplab::rtscpu::Pipeline::getRotationMatrix(
-    double rx,
-    double ry,
-    double rz,
+    double a,
+    double b,
+    double c,
     RotationOrder order)
 {
-    ldplab::Mat3 rotx(0), roty(0), rotz(0);
+    /*
+        ldplab::Mat3 rotx(0), roty(0), rotz(0);
+    
+        rotx[0][0] = 1;
+        rotx[1][1] = cos(rx);
+        rotx[1][2] = sin(rx);
+        rotx[2][1] = -sin(rx);
+        rotx[2][2] = cos(rx);
 
-    rotx[0][0] = 1;
-    rotx[1][1] = cos(rx);
-    rotx[1][2] = sin(rx);
-    rotx[2][1] = -sin(rx);
-    rotx[2][2] = cos(rx);
+        roty[0][0] = cos(ry);
+        roty[0][2] = -sin(ry);
+        roty[1][1] = 1;
+        roty[2][0] = sin(ry);
+        roty[2][2] = cos(ry);
 
-    roty[0][0] = cos(ry);
-    roty[0][2] = -sin(ry);
-    roty[1][1] = 1;
-    roty[2][0] = sin(ry);
-    roty[2][2] = cos(ry);
-
-    rotz[0][0] = cos(rz);
-    rotz[0][1] = sin(rz);
-    rotz[1][0] = -sin(rz);
-    rotz[1][1] = cos(rz);
-    rotz[2][2] = 1;
+        rotz[0][0] = cos(rz);
+        rotz[0][1] = sin(rz);
+        rotz[1][0] = -sin(rz);
+        rotz[1][1] = cos(rz);
+        rotz[2][2] = 1;
+    */
 
     switch (order)
     {
-    case (RotationOrder::xyz): return rotz * roty * rotx;
-    case (RotationOrder::xzy): return roty * rotz * rotx;
-    case (RotationOrder::yxz): return rotz * rotx * roty;
-    case (RotationOrder::yzx): return rotx * rotz * roty;
-    case (RotationOrder::zxy): return roty * rotx * rotz;
-    case (RotationOrder::zyx): return rotx * roty * rotz;
+    case (RotationOrder::xyz): return rotationZ(c) * rotationY(b) * rotationX(a);
+    case (RotationOrder::xzy): return rotationY(c) * rotationZ(b) * rotationX(a);
+    case (RotationOrder::yxz): return rotationZ(c) * rotationX(b) * rotationY(a);
+    case (RotationOrder::yzx): return rotationX(c) * rotationZ(b) * rotationY(a);
+    case (RotationOrder::zxy): return rotationY(c) * rotationX(b) * rotationZ(a);
+    case (RotationOrder::zyx): return rotationX(c) * rotationY(b) * rotationZ(a);
+    case (RotationOrder::zyz): return rotationZ(c) * rotationY(b) * rotationZ(a);
     }
 
     // To avoid compiler warnings
     LDPLAB_LOG_WARNING("RTSCPU %i: Encountered unknown rotation "\
         "order, assumes xyz instead.",
         m_owner.uid());
-    return rotz * roty * rotx;
+    return rotationZ(c) * rotationY(b) * rotationX(a);
 }
 
 void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& mem_control)
