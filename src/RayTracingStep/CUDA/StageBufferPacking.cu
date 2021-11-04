@@ -6,7 +6,7 @@
 namespace
 {
 	__global__ void buildLocalRank(
-		int32_t* ray_index,
+		const int32_t* ray_index,
 		uint32_t* local_rank,
 		uint32_t* block_size,
 		size_t active_rays,

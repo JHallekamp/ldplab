@@ -129,6 +129,15 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
             ray_state_count.num_active_rays,
             num_rays,
             false);
+        if (stream_context.simulationParameter().buffer_sort_enabled)
+        {
+            BufferSort::execute(
+                stream_context,
+                pipeline_data,
+                ray_buffer_index,
+                num_rays,
+                true);
+        }
     }
 
     // Prepare buffer

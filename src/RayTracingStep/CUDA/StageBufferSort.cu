@@ -5,7 +5,7 @@
 
 namespace
 {
-    constexpr size_t block_size = 256;
+    constexpr size_t block_size = 512;
 
     __global__ void checkConflictingWarps(
         const int32_t* particle_index_buffer,
@@ -81,7 +81,6 @@ namespace
         size_t num_particles,
         size_t num_rays)
     {
-        __shared__ size_t pcount[block_size];
         __shared__ ldplab::rtscuda::PipelineData::BufferSortLocalRank temp[block_size];
         
         const uint32_t tid = threadIdx.x;
@@ -91,7 +90,7 @@ namespace
             (num_rays % block_size ? 1 : 0);
         const ldplab::rtscuda::PipelineData::BufferSortLocalRank invalid{ -1, 0 };
         
-        pcount[tid] = 0;
+        size_t pcount = 0;
         for (size_t i = 0; i < num_blocks; ++i)
         {
             const size_t ro = i * block_size;
@@ -112,8 +111,8 @@ namespace
                 {
                     if (temp[j].particle_index == pi)
                     {
-                        temp[j].rank = pcount[tid];
-                        ++pcount[tid];
+                        temp[j].rank = pcount;
+                        ++pcount;
                     }
                 }
             }
@@ -124,7 +123,7 @@ namespace
         }
 
         if (pi <= num_particles)
-            global_offset_per_particle[pi] = pcount[tid];
+            global_offset_per_particle[pi] = pcount;
     }
 
     __global__ void prepareGlobalOffsetBuffer(
