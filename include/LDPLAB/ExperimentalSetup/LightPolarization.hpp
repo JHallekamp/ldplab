@@ -20,7 +20,7 @@ namespace ldplab
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
         /** @brief Returns the type of the instance as string. */
-        const char* typeString() const
+        const std::string typeString() const
         {
             switch (type())
             {

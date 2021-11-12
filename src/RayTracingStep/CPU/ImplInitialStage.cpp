@@ -71,9 +71,9 @@ void ldplab::rtscpu::InitialStageBoundingSpheresHomogenousLight::stepSetup(
         {
             BoundingVolumeSphere bounding_sphere = *bounding_spheres[j];
             bounding_sphere.center = 
-                particle_transformation[i].p2w_scale_rotation *
+                particle_transformation[j].p2w_scale_rotation *
                 bounding_sphere.center +
-                particle_transformation[i].p2w_translation;
+                particle_transformation[j].p2w_translation;
 
             const double t =
                 glm::dot(light_direction,
