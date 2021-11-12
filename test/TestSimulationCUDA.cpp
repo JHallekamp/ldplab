@@ -9,6 +9,8 @@
 #include <LDPLAB/RayTracingStep/CUDA/DefaultInnerParticlePropagationFactories.hpp>
 #include <LDPLAB/RayTracingStep/CUDA/PipelineConfiguration.hpp>
 
+#include <cuda_runtime.h>
+
 constexpr double const_pi()
 {
     return 3.14159265358979323846264338327950288419716939937510;
@@ -29,15 +31,15 @@ constexpr bool HOST_PIPELINE = true;
 // Folder path
 constexpr const char* OUTPUT_DIRECTORY() {
     if (HOST_PIPELINE)
-        return "results\\cuda_host_";
+        return "/scratch/tmp/a_gerw03/cuda_host_";
     else
-        return "results\\cuda_device_";
+        return "/scratch/tmp/a_gerw03/cuda_device_";
 }
 constexpr const char* LOG_DIRECTORY() {
     if (HOST_PIPELINE)
-        return "logs\\cuda_host_";
+        return "/scratch/tmp/a_gerw03/cuda_host_";
     else
-        return "logs\\cuda_device_";
+        return "/scratch/tmp/a_gerw03/cuda_device_";
 }
 const std::string OBJ_PATH = "sphere.obj";
 
@@ -59,17 +61,19 @@ const double MEDIUM_REFLEXION_INDEX = 1.33;
 
 // Simulation properties
 const size_t NUM_RAYS_PER_BLOCK = 128;
-const size_t NUM_PARALLEL_STREAMS = 6;
-const size_t BUFFER_MULTIPLIER = 16; // / NUM_PARALLEL_STREAMS;
-const size_t NUM_RTS_RAYS_PER_BUFFER = NUM_RAYS_PER_BLOCK * 13 * BUFFER_MULTIPLIER;
-const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 127 * 127;
-const size_t MAX_RTS_BRANCHING_DEPTH = 32;
-const double RTS_INTENSITY_CUTOFF =  0.0001 * LIGHT_INTENSITY /
+const size_t NUM_PARALLEL_STREAMS = 4; // 2;
+const size_t BUFFER_MULTIPLIER = 32; // / NUM_PARALLEL_STREAMS;
+const size_t NUM_RTS_RAYS_PER_BUFFER = 8 * 8192;
+const double NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT = 16 * 8192;
+const size_t MAX_RTS_BRANCHING_DEPTH = 16;
+const double RTS_INTENSITY_CUTOFF = 0.0005 * LIGHT_INTENSITY /
     NUM_RTS_RAYS_PER_WORLD_SPACE_SQUARE_UNIT;
 const size_t OCTREE_DEPTH = 5;
-const size_t NUM_SIM_ROTATION_STEPS = 314;
+const size_t NUM_SIM_ROTATION_STEPS = 32; // 32; // 314
 
-const double REORDER_THRESHOLD = 0.5;
+const double REORDER_THRESHOLD = 0.8;
+const bool BUFFER_SORT = false;
+const double BUFFER_SORT_ABORT_THRESHOLD = 0;
 
 // RK4
 const double RTS_SOLVER_STEP_SIZE = 0.001; //0.005;
@@ -96,7 +100,7 @@ void runSimulation(ldplab::ExperimentalSetup&& experimental_setup,
 int main()
 {
     // Prepare logging
-    ldplab::LogCallbackFileStream flog{ "logs/test_simulation_cuda.log" };
+    ldplab::LogCallbackFileStream flog{ "/scratch/tmp/a_gerw03/test_simulation_cuda.log" };
     ldplab::LogCallbackStdout clog{};
     flog.setLogLevel(ldplab::LOG_LEVEL_TRACE);
     clog.setLogLevel(ldplab::LOG_LEVEL_DEBUG);
@@ -112,7 +116,7 @@ int main()
     std::vector<size_t> vec_branching_depth = { MAX_RTS_BRANCHING_DEPTH };
     for (size_t i = 0; i < vec_kappa.size(); ++i)
     {
-        for (size_t j = 0; j < vec_nu.size(); ++j)
+        for (size_t   j = 0; j < vec_nu.size(); ++j)
         {
             for (size_t k = 0; k < vec_branching_depth.size(); ++k)
             {
@@ -219,6 +223,23 @@ std::ofstream getFileStream(
     return file;
 }
 
+ldplab::Particle createSecondParticle(const ldplab::Particle& original)
+{
+    ldplab::Particle copy;
+
+    double R = static_cast<ldplab::SphericalParticleGeometry*>(original.geometry.get())->radius;
+    copy.bounding_volume =
+        std::make_shared<ldplab::BoundingVolumeSphere>(
+            ldplab::Vec3(0, 0, 0),
+            R + R * 1e-4);
+    copy.centre_of_mass = original.centre_of_mass;
+    copy.material = original.material;
+    copy.geometry = original.geometry;
+    copy.orientation = original.orientation;
+    copy.position = original.position;
+    return copy;
+}
+
 void createExperimentalSetup(
     ldplab::ExperimentalSetup& experimental_setup,
     double kappa,
@@ -237,6 +258,13 @@ void createExperimentalSetup(
             1.0,
             ldplab::Vec3(0.0, 0.0, 0.0),
             ldplab::Vec3(0.0, 0.0, 0.0));
+        auto& mat = *static_cast<ldplab::ParticleMaterialLinearOneDirectional*>(
+            particle.material.get());
+        mat.gradient = 0.1;
+        mat.index_of_refraction = 1.25;
+        mat.direction_times_gradient = mat.direction * mat.gradient;
+        mat.index_of_refraction_minus_partial_dot = mat.index_of_refraction - 
+            glm::dot(mat.direction_times_gradient, mat.origin);
     }
     else if (GEOMETRY_TYPE == GeometryType::rod)
     {
@@ -278,9 +306,9 @@ void createExperimentalSetup(
     }
     ldplab::BoundingVolumeSphere* bs =
         (ldplab::BoundingVolumeSphere*)particle.bounding_volume.get();
-    particle_world_extent = ceil(2.0 * bs->radius);
+    particle_world_extent = ceil(6.0 * bs->radius);
     // Create light source
-    const double LIGHT_GEOMETRY_PLANE_EXTENT = 2.0 * particle_world_extent;
+    const double LIGHT_GEOMETRY_PLANE_EXTENT = 20.0 * particle_world_extent;
     const ldplab::Vec3 LIGHT_GEOMETRY_ORIGIN_CORNER =
         ldplab::Vec3(
             floor(bs->center.x - LIGHT_GEOMETRY_PLANE_EXTENT / 2.0),
@@ -300,7 +328,11 @@ void createExperimentalSetup(
     light_source.intensity_distribution =
         std::make_shared<ldplab::LightDistributionHomogeneous>(
             LIGHT_INTENSITY);
-
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    //experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
+    experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
     experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
@@ -337,11 +369,20 @@ void runSimulation(
     rtscuda_info.maximum_branching_depth = branching_depth;
     rtscuda_info.number_rays_per_batch = NUM_RTS_RAYS_PER_BUFFER;
     //rtscuda_info.number_threads_per_block = NUM_RAYS_PER_BLOCK;
-    rtscuda_info.return_force_in_particle_coordinate_system = false; //true;
-    rtscuda_info.execution_model_info = 
+    rtscuda_info.return_force_in_particle_coordinate_system = false; //true;    
+    
+    ldplab::rtscuda::ExecutionModelExplicitConfigInfo execution_info;    
+    
+    rtscuda_info.execution_model_info =
         std::make_shared<ldplab::rtscuda::ExecutionModelAutoConstructionInfo>(
-            NUM_PARALLEL_STREAMS);
-    rtscuda_info.buffer_reorder_threshold = REORDER_THRESHOLD;
+            NUM_PARALLEL_STREAMS,
+            ldplab::rtscuda::ExecutionModelAutoConstructionInfo::DeviceModel::distribute_equally);
+
+    rtscuda_info.buffer_packing_threshold = REORDER_THRESHOLD;
+    rtscuda_info.buffer_packing_min_buffer_size = 0;
+
+    rtscuda_info.buffer_sort_enabled = BUFFER_SORT;
+    rtscuda_info.buffer_sort_abort_threshold = BUFFER_SORT_ABORT_THRESHOLD;
 
     //rtscuda_info.solver_parameters = std::make_shared<ldplab::RK4Parameter>(
     //    rts_step_size);
@@ -370,6 +411,7 @@ void runSimulation(
         std::make_shared<ldplab::rtscuda::default_factories::InitialStageHomogenousLightBoundingSphereProjectionFactory>(
             rays_per_unit);
     pipeline_config.inner_particle_propagation =
+        //std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4QueueFillFactory>(
         std::make_shared<ldplab::rtscuda::default_factories::InnerParticlePropagationRK4Factory>(
             ldplab::RK4Parameter(rts_step_size));
     std::shared_ptr<ldplab::IRayTracingStep> ray_tracing_step =
@@ -381,18 +423,30 @@ void runSimulation(
 
     // Output file
     ldplab::RayTracingStepOutput output;
-    std::ofstream output_force = getFileStream(
+    std::ofstream output_force1 = getFileStream(
         setup_copy.particles[0],
         nu, 
         OUTPUT_DIRECTORY(), 
-        "force", 
+        "force_p1", 
         branching_depth);
-    std::ofstream output_torque = getFileStream(
+    std::ofstream output_torque1 = getFileStream(
         setup_copy.particles[0],
         nu, 
         OUTPUT_DIRECTORY(), 
-        "torque", 
+        "torque_p1", 
         branching_depth);
+    //std::ofstream output_force2 = getFileStream(
+    //    setup_copy.particles[0],
+    //    nu,
+    //    OUTPUT_DIRECTORY(),
+    //    "force_p2",
+    //    branching_depth);
+    //std::ofstream output_torque2 = getFileStream(
+    //    setup_copy.particles[0],
+    //    nu,
+    //    OUTPUT_DIRECTORY(),
+    //    "torque_p2",
+    //    branching_depth);
 
     // Create simulation
     ldplab::SimulationState state{ setup_copy };
@@ -402,25 +456,45 @@ void runSimulation(
         static_cast<double>(NUM_SIM_ROTATION_STEPS - 1);
     constexpr double half_step_size = step_size / 2.0;
 
-    ldplab::UID<ldplab::Particle> puid{ setup_copy.particles[0].uid };
+    ldplab::UID<ldplab::Particle> puid1{ setup_copy.particles[0].uid };
+    ldplab::UID<ldplab::Particle> puid2{ setup_copy.particles[1].uid };
+    //ldplab::UID<ldplab::Particle> puid3{ setup_copy.particles[2].uid };
+    //ldplab::UID<ldplab::Particle> puid4{ setup_copy.particles[3].uid };
+    //ldplab::UID<ldplab::Particle> puid5{ setup_copy.particles[4].uid };
+    //ldplab::UID<ldplab::Particle> puid6{ setup_copy.particles[5].uid };
     
+    state.particle_instances[puid2].position = ldplab::Vec3(2, 5, -3);
+    //state.particle_instances[puid3].position = ldplab::Vec3(-0.7071, 0.7071, -2);
+    //state.particle_instances[puid4].position = ldplab::Vec3(-0.7071, -0.7071, -3);
+    //state.particle_instances[puid5].position = ldplab::Vec3(0, -1, -4);
+    //state.particle_instances[puid6].position = ldplab::Vec3(0, 1, -5);
     for (double rotation_x = offset;
         rotation_x < lim + half_step_size;
         rotation_x += step_size)
     {
-        state.particle_instances[puid].orientation.x = rotation_x;
+        state.particle_instances[puid1].orientation.x = rotation_x;
         ray_tracing_step->execute(state, output);
-        output_force << rotation_x <<
-            "\t" << output.force_per_particle[puid].x <<
-            "\t" << output.force_per_particle[puid].y <<
-            "\t" << output.force_per_particle[puid].z <<
+        output_force1 << rotation_x <<
+            "\t" << output.force_per_particle[puid1].x <<
+            "\t" << output.force_per_particle[puid1].y <<
+            "\t" << output.force_per_particle[puid1].z <<
             std::endl;
-        output_torque << rotation_x <<
-            "\t" << output.torque_per_particle[puid].x <<
-            "\t" << output.torque_per_particle[puid].y <<
-            "\t" << output.torque_per_particle[puid].z <<
+        output_torque1 << rotation_x <<
+            "\t" << output.torque_per_particle[puid1].x <<
+            "\t" << output.torque_per_particle[puid1].y <<
+            "\t" << output.torque_per_particle[puid1].z <<
             std::endl;
-        plotProgress((rotation_x - offset) / (lim - offset));
+        //output_force2 << rotation_x <<
+        //    "\t" << output.force_per_particle[puid2].x <<
+        //    "\t" << output.force_per_particle[puid2].y <<
+        //    "\t" << output.force_per_particle[puid2].z <<
+        //    std::endl;
+        //output_torque2 << rotation_x <<
+        //    "\t" << output.torque_per_particle[puid2].x <<
+        //    "\t" << output.torque_per_particle[puid2].y <<
+        //    "\t" << output.torque_per_particle[puid2].z <<
+        //    std::endl;
+        plotProgress((rotation_x - offset + step_size) / (lim - offset + step_size));
     }
 
     std::stringstream identificator;

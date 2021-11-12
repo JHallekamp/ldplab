@@ -1,4 +1,4 @@
-#ifndef WWU_LDPLAB_PROFILING_HPPs
+#ifndef WWU_LDPLAB_PROFILING_HPP
 #define WWU_LDPLAB_PROFILING_HPP
 
 #include <string>

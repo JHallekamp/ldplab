@@ -148,7 +148,8 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/RayTracingStepCUDA.hpp
         RayTracingStep/CUDA/StageBufferSetup.hpp
         RayTracingStep/CUDA/StageGatherOutput.hpp
-        RayTracingStep/CUDA/StageRayBufferReduce.hpp
+        RayTracingStep/CUDA/StageRayStateCounting.hpp
+        RayTracingStep/CUDA/StageBufferPacking.hpp
         RayTracingStep/CUDA/StageBufferSort.hpp
     )
     set(SOURCE_RAY_TRACING_STEP_RAY_TRACING_STEP_CUDA
@@ -177,7 +178,8 @@ if (LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA)
         RayTracingStep/CUDA/RayTracingStepCUDA.cu
         RayTracingStep/CUDA/StageBufferSetup.cu
         RayTracingStep/CUDA/StageGatherOutput.cu
-        RayTracingStep/CUDA/StageRayBufferReduce.cu
+        RayTracingStep/CUDA/StageRayStateCounting.cu
+        RayTracingStep/CUDA/StageBufferPacking.cu
         RayTracingStep/CUDA/StageBufferSort.cu
     )
 else()
@@ -314,8 +316,13 @@ if(LDPLAB_BUILD_OPTION_ENABLE_PROFILING)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_ENABLE_PROFILING)
 endif()
 
+
 if(LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
     target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
+endif()
+    
+if (LDPLAB_BUILD_OPTION_ENABLE_DEBUG_LOGGING)
+   target_compile_definitions(ldplab PRIVATE LDPLAB_BUILD_OPTION_DISABLE_LOGGING)
 endif()
 
 if (TINYOBJLOADER_USE_DOUBLE)

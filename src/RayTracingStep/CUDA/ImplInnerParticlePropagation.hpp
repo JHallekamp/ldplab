@@ -13,8 +13,7 @@ namespace ldplab
             public IInnerParticlePropagation
         {
         public:
-            InnerParticlePropagationRK4(
-                const RK4Parameter& parameter);
+            InnerParticlePropagationRK4(const RK4Parameter& parameter);
             void execute(
                 StreamContext& stream_context,
                 size_t ray_buffer_index,
@@ -23,6 +22,24 @@ namespace ldplab
                 size_t num_rays) override;
         private:
             const RK4Parameter m_parameter;
+        };
+
+        class InnerParticlePropagationRK4QueueFill :
+            public IInnerParticlePropagation
+        {
+        public:
+            InnerParticlePropagationRK4QueueFill(
+                const RK4Parameter& parameter,
+                std::vector<DeviceBufferPinned<uint32_t>>&& queue_ctr_per_stream);
+            void execute(
+                StreamContext& stream_context,
+                size_t ray_buffer_index,
+                size_t intersection_buffer_index,
+                size_t output_buffer_index,
+                size_t num_rays) override;
+        private:
+            const RK4Parameter m_parameter;
+            std::vector<DeviceBufferPinned<uint32_t>> m_queue_ctr_per_stream;
         };
     }
 }

@@ -84,11 +84,11 @@ create(
 
 		if (!pdp.bounding_spheres.allocate(num_particles, i == 0))
 			return nullptr;
-		if (!pdp.projection_buffer.allocate(num_particles, false))
+		if (!pdp.projection_buffer.allocate(num_pl, false))
 			return nullptr;
 		if (!pdp.light_source_buffer.allocate(num_lights, i == 0))
 			return nullptr;
-		if (!pdp.num_rays_buffer.allocate(num_pl, false))
+		if (!pdp.num_rays_buffer.allocate(num_pl + 1, false))
 			return nullptr;
 		if (!pdp.temp_num_rays_buffer.allocate(num_pl, false))
 			return nullptr;

@@ -44,8 +44,8 @@ namespace /*helper*/
 			if (error_id != cudaSuccess)
 			{
 				LDPLAB_LOG_ERROR("RTSCUDA execution model: Failed to get "\
-					"properties of cuda device %, cudaGetDeviceProperties "\
-					"returned error code % i: % s",
+					"properties of cuda device %i, cudaGetDeviceProperties "\
+					"returned error code %i: %s",
 					i,
 					error_id,
 					cudaGetErrorString(error_id));
@@ -67,6 +67,10 @@ namespace /*helper*/
 			device_properties.back().shared_mem_per_block = props.sharedMemPerBlock;
 			device_properties.back().shared_mem_per_mp = props.sharedMemPerMultiprocessor;
 			device_properties.back().warp_size = props.warpSize;
+			LDPLAB_LOG_DEBUG("RTSCUDA execution model: Found cuda device "\
+				"\"%s\" (device id %i)",
+				device_properties.back().name.c_str(),
+				device_properties.back().id);
 		}
 		return device_properties;
 	}
@@ -95,8 +99,10 @@ bool ldplab::rtscuda::SharedStepData::allocateResources(
 	simulation_parameter.ray_invalid_index = -1;
 	simulation_parameter.output_in_particle_space = 
 		info.return_force_in_particle_coordinate_system;
-	simulation_parameter.buffer_min_size = info.buffer_min_size;
-	simulation_parameter.buffer_reorder_threshold = info.buffer_reorder_threshold;
+	simulation_parameter.buffer_packing_min_size = info.buffer_packing_min_buffer_size;
+	simulation_parameter.buffer_packing_threshold = info.buffer_packing_threshold;
+	simulation_parameter.buffer_sort_abort_threshold = info.buffer_sort_abort_threshold;
+	simulation_parameter.buffer_sort_enabled = info.buffer_sort_enabled;
 
 	// Create device data
 	for (size_t i = 0; i < per_device_data.size(); ++i)
@@ -440,7 +446,8 @@ bool ldplab::rtscuda::SharedStepData::createExecutionModel(
 		for (size_t j = 0; j < device_data->per_stream_data.size(); ++j)
 		{
 			auto smctx = StreamContext(
-				execution_model.device_contexts.back(),
+				&execution_model.device_contexts,
+				device_data->associated_device_group,
 				*device_data,
 				experimental_setup,
 				interface_mapping,
@@ -450,6 +457,13 @@ bool ldplab::rtscuda::SharedStepData::createExecutionModel(
 			if (!execution_model.stream_contexts.back().allocate())
 				return false;
 		}
+		LDPLAB_LOG_INFO("RTSCUDA execution model: LDPLAB is now using cuda "\
+			"device %i \"%s\" in device group %i with %i streams",
+			device_data->device_properties.id,
+			device_data->device_properties.name.c_str(),
+			device_data->associated_device_group,
+			device_data->per_stream_data.size());
+
 	}
 	return true;
 }

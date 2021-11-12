@@ -54,7 +54,7 @@ create(
         if (!bounding_spheres_per_device.back().allocate(
             shared_data.experimental_setup.particles.size(),
             i == 0))
-            return false;
+            return nullptr;
     }
    return std::make_shared<BoundingSphereIntersectionBruteforce>(
        std::move(bounding_spheres_per_device));

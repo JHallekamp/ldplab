@@ -187,4 +187,3 @@ ldplab::Mat3 ldplab::rtscuda::IPipeline::getRotationMatrix(
 }
 
 #endif
-

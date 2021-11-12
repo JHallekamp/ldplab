@@ -1,5 +1,5 @@
-#ifndef WWU_LDPLAB_RTSCUDA_STAGE_RAY_BUFFER_REDUCE_HPP
-#define WWU_LDPLAB_RTSCUDA_STAGE_RAY_BUFFER_REDUCE_HPP
+#ifndef WWU_LDPLAB_RTSCUDA_STAGE_BUFFER_PACKING_HPP
+#define WWU_LDPLAB_RTSCUDA_STAGE_BUFFER_PACKING_HPP
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
 
 #include <LDPLAB/RayTracingStep/CUDA/Data.hpp>
@@ -10,16 +10,18 @@ namespace ldplab
 {
     namespace rtscuda
     {
-        class RayBufferReduce
+        class BufferPacking
         {
         public:
-            RayBufferReduce() = delete;
+            BufferPacking() = delete;
             /** @brief Reduces the given ray buffers indices. */
-            static PipelineData::RayBufferReductionResult execute(
+            static size_t execute(
                 StreamContext& stream_context,
                 PipelineData& pipeline_data,
-                size_t ray_buffer_index,
-                size_t num_rays);
+                size_t buffer_index,
+                size_t active_rays,
+                size_t prev_active_rays,
+                bool isec_or_output_contains_data);
             /** @brief Creates the neccessary pipeline data. */
             static bool allocateData(
                 const SharedStepData& shared_data,
