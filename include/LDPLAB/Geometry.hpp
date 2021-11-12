@@ -62,7 +62,9 @@ namespace ldplab
         /** @brief Rotates first around z, then y and finally x. */
         zyx,
         /** @brief Rotates first around z, then y and finally z. */
-        zyz
+        zyz,
+        /** @brief Rotates first around z, then x and finally z. */
+        zxz
     };
 
     constexpr RotationOrder invertRotationOrder(RotationOrder order)

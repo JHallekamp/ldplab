@@ -260,6 +260,7 @@ ldplab::Mat3 ldplab::rtscpu::Pipeline::getRotationMatrix(
     case (RotationOrder::zxy): return rotationY(c) * rotationX(b) * rotationZ(a);
     case (RotationOrder::zyx): return rotationX(c) * rotationY(b) * rotationZ(a);
     case (RotationOrder::zyz): return rotationZ(c) * rotationY(b) * rotationZ(a);
+    case (RotationOrder::zxz): return rotationZ(c) * rotationX(b) * rotationZ(a);
     }
 
     // To avoid compiler warnings
