@@ -1,6 +1,8 @@
 #ifndef WWU_LDPLAB_EIKONAL_SOLVER_HPP
 #define WWU_LDPLAB_EIKONAL_SOLVER_HPP
 
+#include <string>
+
 namespace ldplab
 {
     struct IEikonalSolverParameter
@@ -14,7 +16,7 @@ namespace ldplab
         /** @brief Returns the type of the instance. */
         virtual Type type() const = 0;
         /** @brief Returns the type of the instance as string. */
-        const char* typeString() const
+        const std::string typeString() const
         {
             switch (type())
             {

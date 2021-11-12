@@ -48,7 +48,7 @@ namespace ldplab
                 size_t thread_id) override;
         private:
             ldplab::Mat3 getRotationMatrix(
-                double rx, double ry, double rz, RotationOrder order); 
+                double a, double b, double c, RotationOrder order);
             void processBatch(
                 RayBuffer& buffer,
                 MemoryControl& mem_control);

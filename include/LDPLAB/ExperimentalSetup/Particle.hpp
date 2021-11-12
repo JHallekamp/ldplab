@@ -33,7 +33,12 @@ namespace ldplab
         std::shared_ptr<IParticleGeometry> geometry;
         std::shared_ptr<IParticleMaterial> material;
         Vec3 position;
-        /** @brief Rotation around each respective axis in particle space. */
+        /**
+         * @brief Rotation angels in Euler angle representation.
+         *        The vector entries x, y and z corresponding to the first, 
+         *        second and last rotation while the corresponding axes 
+         *        are defined by the rotation_order.
+         */
         Vec3 orientation;
         /** @brief Defines the order of rotation around respective axis. */
         RotationOrder rotation_order;
