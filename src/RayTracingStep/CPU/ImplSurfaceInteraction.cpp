@@ -358,6 +358,43 @@ ldplab::Vec4 ldplab::rtscpu::SurfaceInteractionPolarizedLight::reflactedPolariza
     S_out.x = (rs2 + rp2) * 0.5 * S.x + (rs2 - rp2) * 0.5 * S.y;
     S_out.y = (rs2 - rp2) * 0.5 * S.x + (rs2 + rp2) * 0.5 * S.y;
     // TO D0: this is just in approximation
+    
+    const double cos_ap = n_r / std::sqrt(n_r * n_r + 1);
+    // ap < a
+    if (cos_ap > cos_a)
+    {
+        if (n_r > 1)
+        {
+            const double cos_ac = std::sqrt(1-1/(n_r*n_r));
+            const double sin2_a = std::pow(std::sqrt(1 - cos_a),2);
+            // ac < a
+            if (cos_ac > cos_a)
+            {
+                const double phase_shift = 2 *
+                    std::atan(cos_a * std::sqrt(sin2_a- n_r*n_r)/sin2_a);
+                S_out.z = cos(phase_shift) * r_s * r_p * S.z - 
+                    sin(phase_shift) * r_s * r_p * S.a;
+                S_out.a = sin(phase_shift) * r_s * r_p * S.z + 
+                    cos(phase_shift) * r_s * r_p * S.a;
+            }
+            else
+            {
+                S_out.z = r_s * r_p * S.z;
+                S_out.a = r_s * r_p * S.a;
+            }
+        }
+        else
+        {
+            S_out.z = r_s * r_p * S.z;
+            S_out.a = r_s * r_p * S.a;
+        }
+    }
+    else
+    {
+        S_out.z = - r_s * r_p * S.z;
+        S_out.a = - r_s * r_p * S.a;
+    }
+
     const double cos_phase_shift = n_r < 1 ? 1.0 : -1.0;
     S_out.z = cos_phase_shift * r_s * r_p * S.z;
     S_out.a = cos_phase_shift * r_s * r_p * S.a;
