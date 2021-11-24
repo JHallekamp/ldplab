@@ -90,10 +90,6 @@ void ldplab::rtscpu::PolarizedLightParticleIntersection::execute(
             ray_data.index_data[i] == intersection_data.particle_index[i])
             continue;
 
-        if (i == 0)
-            int stop = 0;
-
-
         Ray& ray = ray_data.ray_data[i];
         Vec3& inter_point = intersection_data.point[i];
         Vec3& inter_normal = intersection_data.normal[i];

@@ -702,6 +702,8 @@ bool ldplab::rtscpu::InitialStageBoundingSpheresHomogenousPolarizedLight::execut
                             = polarization->stokes_parameter * initial_batch_buffer.ray_data[nr].intensity;
                         polarization_data->polarization_buffers[0].polarization_data[nr].direction
                             = light.horizontal_direction;
+                        polarization_data->polarization_buffers[0].polarization_data[nr].is_particle_system
+                            = false;
 
                         // Increase number of rays
                         ++nr;

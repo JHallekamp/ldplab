@@ -216,28 +216,29 @@ void ldplab::rtscpu::SurfaceInteractionPolarizedLight::execute(
             material_data[particle_id]->indexOfRefraction(inter_point);
         const double nr = nx / ny;
         const double cos_a = -glm::dot(ray.direction, inter_normal);
-        
-        if (i == 154)
-            int stop = 1;
+
         if (1.0 - nr * nr * (1.0 - cos_a * cos_a) >= 0)
         {
             const bool reflection_pass =
                 (pass_type == InteractionPassType::reflection);
             const double cos_b = std::sqrt(1.0 - nr * nr * (1.0 - cos_a * cos_a));
-            if (cos_a >= 1.0)
+
+            if (cos_a >= 1.0 - 1e-09)
                 output_polarization.polarization_data[i] = polarization;
             else
                 output_polarization.polarization_data[i] = rotatePolarizaitonInPlane(
                     polarization, inter_normal, ray.direction);
+
             output_polarization.polarization_data[i].stokes_parameter = reflection_pass ?
                 reflactedPolarization(output_polarization.polarization_data[i].stokes_parameter, cos_a, cos_b, nr) :
                 transmittedPolarization(output_polarization.polarization_data[i].stokes_parameter, cos_a, cos_b, nr);
+
+            
+
             const Vec3 r = inter_point - center_of_mass[particle_id];
             Vec3 delta_momentum;
             output_ray.intensity =
                 output_polarization.polarization_data[i].stokes_parameter.x;
-            if (output_ray.intensity != output_ray.intensity)
-                int stop = 1;
             if (output_ray.intensity > intensity_cutoff)
             {
                 ++output_ray_data.active_rays;
@@ -266,6 +267,9 @@ void ldplab::rtscpu::SurfaceInteractionPolarizedLight::execute(
         else if (pass_type == InteractionPassType::reflection) // total reflected ray
         {
             ++output_ray_data.active_rays;
+            output_polarization.polarization_data[i] = rotatePolarizaitonInPlane(
+                polarization, inter_normal, ray.direction);
+            reflactedPolarization(output_polarization.polarization_data[i].stokes_parameter, cos_a, 0, nr);
             output_ray_data.index_data[i] = particle_id;
             output_ray_data.min_bounding_volume_distance_data[i] = 0.0;
             output_ray.origin = inter_point;
@@ -419,10 +423,8 @@ ldplab::Vec4 ldplab::rtscpu::SurfaceInteractionPolarizedLight::transmittedPolari
 
     S_out.x = area_factor * ((ts2 + tp2) * 0.5 * S.x + (ts2 - tp2) * 0.5 * S.y);
     S_out.y = area_factor * ((ts2 - tp2) * 0.5 * S.x + (ts2 + tp2) * 0.5 * S.y);
-    // TODO: this is just in approximation
-    const double cos_phase_shift = n_r < 1 ? 1.0 : -1.0;
-    S_out.z = area_factor * cos_phase_shift * t_s * t_p * S.z;
-    S_out.a = area_factor * cos_phase_shift * t_s * t_p * S.a;
+    S_out.z = area_factor * t_s * t_p * S.z;
+    S_out.a = area_factor * t_s * t_p * S.a;
     return S_out;
 }
 

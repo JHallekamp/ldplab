@@ -38,6 +38,7 @@ namespace ldplab
             {
                 friend class SurfaceInteractionPolarizedLightFactory;
                 friend class ParticleIntersectionPolarizedLightFactory;
+                friend class InnerParticlePropagationRK4PolarizationFactory;
             public:
                 struct Polarization
                 {
