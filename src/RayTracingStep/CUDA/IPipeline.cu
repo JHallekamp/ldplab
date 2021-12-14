@@ -41,16 +41,16 @@ bool ldplab::rtscuda::IPipeline::stepSetup(
                 ptb.p2w_translation_buffer.getHostBuffer()[p] = particle.position;
                 ptb.w2p_transformation_buffer.getHostBuffer()[p] =
                     getRotationMatrix(
-                        -particle_instance.orientation.z,
-                        -particle_instance.orientation.y,
-                        -particle_instance.orientation.x,
-                        invertRotationOrder(particle_instance.rotation_order));
+                        -particle.orientation.z,
+                        -particle.orientation.y,
+                        -particle.orientation.x,
+                        invertRotationOrder(particle.rotation_order));
                 ptb.p2w_transformation_buffer.getHostBuffer()[p] =
                     getRotationMatrix(
-                        particle_instance.orientation.x,
-                        particle_instance.orientation.y,
-                        particle_instance.orientation.z,
-                        particle_instance.rotation_order);
+                        particle.orientation.x,
+                        particle.orientation.y,
+                        particle.orientation.z,
+                        particle.rotation_order);
             }
         }
 
@@ -183,8 +183,7 @@ ldplab::Mat3 ldplab::rtscuda::IPipeline::getRotationMatrix(
     // To avoid compiler warnings
     LDPLAB_LOG_WARNING("RTSCPU context %i: Encountered unknown rotation "\
         "order, assumes xyz instead.", m_context->instance_uid);
-    return rotz * roty * rotx;
+    return rotationZ(c) * rotationY(b) * rotationX(a);
 }
 
 #endif
-

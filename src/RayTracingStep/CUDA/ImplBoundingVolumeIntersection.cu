@@ -45,34 +45,38 @@ void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::stepSetup(
     DeviceContext& device_context)
 {
     const size_t device_id = device_context.groupId();
-    if (device_id > 0)
+    if (device_id != 0)
     {
+        // Reuse data on device 0
         m_bounding_spheres_per_device[device_id].uploadExt(
             m_bounding_spheres_per_device[0].getHostBuffer());
     }
-
-    BoundingSphere* spheres = m_bounding_spheres_per_device[device_id].getHostBuffer();
-    for (size_t i = 0; i < shared_data.experimental_setup.particles.size(); ++i)
+    else
     {
-        // Get the particle instance for particle i using the interface mapping
-        const ParticleInstance& particle_instance =
-            simulation_state.particle_instances.find(
-                shared_data.interface_mapping.particle_index_to_uid.at(i))->second;
-        // Get the bounding sphere in pspace
-        spheres[i] = *static_cast<BoundingVolumeSphere*>(
-            shared_data.experimental_setup.particles[i].bounding_volume.get());
-        // Translate bounding volume center to world space
-        const auto& p2w_transformation =
-            shared_data.per_device_data[device_id].particle_transformation_buffers.
-            p2w_transformation_buffer.getHostBuffer()[i];
-        const auto& p2w_translation =
-            shared_data.per_device_data[device_id].particle_transformation_buffers.
-            p2w_translation_buffer.getHostBuffer()[i];
-        spheres[i].center = p2w_transformation * spheres[i].center + p2w_translation;
-    }
-
-    // Upload
-    m_bounding_spheres_per_device[0].upload();
+        BoundingSphere* spheres = 
+            m_bounding_spheres_per_device[device_id].getHostBuffer();
+        for (size_t i = 0; i < shared_data.experimental_setup.particles.size(); ++i)
+        {
+            // Get the particle instance for particle i using the interface mapping
+            const ParticleInstance& particle_instance =
+                simulation_state.particle_instances.find(
+                    shared_data.interface_mapping.particle_index_to_uid.at(i))->second;
+            // Get the bounding sphere in pspace
+            spheres[i] = *static_cast<BoundingVolumeSphere*>(
+                shared_data.experimental_setup.particles[i].bounding_volume.get());
+            // Translate bounding volume center to world space
+            const auto& p2w_transformation =
+                shared_data.per_device_data[device_id].particle_transformation_buffers.
+                p2w_transformation_buffer.getHostBuffer()[i];
+            const auto& p2w_translation =
+                shared_data.per_device_data[device_id].particle_transformation_buffers.
+                p2w_translation_buffer.getHostBuffer()[i];
+            spheres[i].center = 
+                p2w_transformation * spheres[i].center + p2w_translation;
+        }
+        // Upload
+        m_bounding_spheres_per_device[device_id].upload();
+    }    
 }
 
 void ldplab::rtscuda::BoundingSphereIntersectionBruteforce::execute(

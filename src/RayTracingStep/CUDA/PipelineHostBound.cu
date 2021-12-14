@@ -8,9 +8,10 @@
 #include "../../Utils/Assert.hpp"
 #include "../../Utils/Profiler.hpp"
 #include "StageBufferSetup.hpp"
+#include "StageBufferPacking.hpp"
 #include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
-#include "StageRayBufferReduce.hpp"
+#include "StageRayStateCounting.hpp"
 
 class JobWrapper : public ldplab::utils::ThreadPool::IJob
 {
@@ -20,7 +21,7 @@ public:
         size_t job_id, 
         size_t batch_size, 
         size_t thread_id) override 
-    { m_job(thread_id); }
+    { m_job(job_id); }
 private:
 	std::function<void(size_t)> m_job;
 };
@@ -34,8 +35,8 @@ ldplab::rtscuda::PipelineHostBound::PipelineHostBound(
 void ldplab::rtscuda::PipelineHostBound::execute()
 {
     using namespace std::placeholders;
-    std::atomic_size_t batch_ctr;
-	const static std::shared_ptr<JobWrapper> job = 
+    std::atomic_size_t batch_ctr{ 0 };
+	const std::shared_ptr<JobWrapper> job = 
 		std::make_shared<JobWrapper>(
 			std::bind(&PipelineHostBound::createBatchJob, this, _1, &batch_ctr));
 	m_thread_pool->executeJobBatch(
@@ -44,12 +45,12 @@ void ldplab::rtscuda::PipelineHostBound::execute()
 }
 
 void ldplab::rtscuda::PipelineHostBound::createBatchJob(
-    size_t process_id, 
+    size_t job_id, 
     std::atomic_size_t* batch_no)
 {
 	// Get batch data
-	StreamContext& stream_context = m_context->execution_model.stream_contexts[process_id];
-    PipelineData& pipeline_data = m_pipeline_data[process_id];
+	StreamContext& stream_context = m_context->execution_model.stream_contexts[job_id];
+    PipelineData& pipeline_data = m_pipeline_data[job_id];
 
     // Set device id
     stream_context.deviceContext().activateDevice();
@@ -82,6 +83,7 @@ void ldplab::rtscuda::PipelineHostBound::createBatchJob(
         }
     } while (batches_left);
     stream_context.synchronizeOnStream();
+    stream_context.deviceContext().synchronizeOnDevice();
 }
 
 void ldplab::rtscuda::PipelineHostBound::setupBatch(
@@ -104,28 +106,38 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 	bool inside_particle)
 {
     // Check if buffer contains rays
-    PipelineData::RayBufferReductionResult ray_state_count;
-    ray_state_count = RayBufferReduce::execute(
+    PipelineData::RayStateCountingResult ray_state_count;
+    ray_state_count = RayStateCounting::execute(
         stream_context,
         pipeline_data, 
         ray_buffer_index,
         num_rays);
-
+    
     if (ray_state_count.num_active_rays == 0)
         return;
-
+    
     size_t threshold = static_cast<size_t>(
         static_cast<double>(num_rays) * 
-        stream_context.simulationParameter().buffer_reorder_threshold);
+        stream_context.simulationParameter().buffer_packing_threshold);
     if (ray_state_count.num_active_rays < threshold &&
-        num_rays > stream_context.simulationParameter().buffer_min_size)
+        num_rays > stream_context.simulationParameter().buffer_packing_min_size)
     {
-        num_rays = BufferSort::execute(
+        num_rays = BufferPacking::execute(
             stream_context,
             pipeline_data,
             ray_buffer_index,
             ray_state_count.num_active_rays,
-            num_rays);
+            num_rays,
+            false);
+        if (stream_context.simulationParameter().buffer_sort_enabled)
+        {
+            BufferSort::execute(
+                stream_context,
+                pipeline_data,
+                ray_buffer_index,
+                num_rays,
+                true);
+        }
     }
 
     // Prepare buffer
@@ -133,7 +145,8 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
         stream_context,
         pipeline_data, 
         ray_buffer_index,
-        ray_buffer_index);
+        ray_buffer_index,
+        num_rays);
 
     // Switch between inside and outside particle
     if (inside_particle)
@@ -158,7 +171,7 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
                 ray_buffer_index, 
                 ray_buffer_index,
                 num_rays);
-            ray_state_count = RayBufferReduce::execute(
+            ray_state_count = RayStateCounting::execute(
                 stream_context,
                 pipeline_data,
                 ray_buffer_index,
@@ -169,16 +182,27 @@ void ldplab::rtscuda::PipelineHostBound::executeBatch(
 
         threshold = static_cast<size_t>(
             static_cast<double>(num_rays) *
-            stream_context.simulationParameter().buffer_reorder_threshold);
+            stream_context.simulationParameter().buffer_packing_threshold);
         if (ray_state_count.num_active_rays < threshold &&
-            num_rays > stream_context.simulationParameter().buffer_min_size)
+            num_rays > stream_context.simulationParameter().buffer_packing_min_size)
         {
-            num_rays = BufferSort::execute(
+            num_rays = BufferPacking::execute(
                 stream_context,
                 pipeline_data,
                 ray_buffer_index,
                 ray_state_count.num_active_rays,
-                num_rays);
+                num_rays,
+                true);
+        }
+        
+        if (stream_context.simulationParameter().buffer_sort_enabled)
+        {
+            BufferSort::execute(
+                stream_context,
+                pipeline_data,
+                ray_buffer_index,
+                num_rays,
+                true);
         }
     }
 

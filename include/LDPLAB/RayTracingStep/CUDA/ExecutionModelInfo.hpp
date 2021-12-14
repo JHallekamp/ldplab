@@ -55,7 +55,6 @@ namespace ldplab
             std::map<size_t, size_t> map_stream_to_device_group;
             std::map<size_t, int> map_device_group_to_device_id;
         };
-
     }
 }
 

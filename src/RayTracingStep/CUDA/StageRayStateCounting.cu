@@ -1,5 +1,5 @@
 #ifdef LDPLAB_BUILD_OPTION_ENABLE_RTSCUDA
-#include "StageRayBufferReduce.hpp"
+#include "StageRayStateCounting.hpp"
 
 #include "../../Utils/Log.hpp"
 
@@ -8,7 +8,7 @@ namespace
     constexpr size_t rayBufferReduceKernelBlockSize = 128;
 
     __global__ void rayBufferReduceKernel(
-        ldplab::rtscuda::PipelineData::RayBufferReductionResult* result_buffer,
+        ldplab::rtscuda::PipelineData::RayStateCountingResult* result_buffer,
         int32_t* ray_index_buffer,
         size_t num_rays_per_batch,
         size_t num_particles)
@@ -17,7 +17,7 @@ namespace
         using namespace rtscuda;
 
         // Shared memory
-        extern __shared__ PipelineData::RayBufferReductionResult sbuf[];
+        extern __shared__ PipelineData::RayStateCountingResult sbuf[];
 
         // ====================================================================
         // Preperation step: Prepare shared buffer
@@ -56,14 +56,14 @@ namespace
     }
 
     __global__ void rayBufferReduceKernelStep2(
-        ldplab::rtscuda::PipelineData::RayBufferReductionResult* result_buffer,
+        ldplab::rtscuda::PipelineData::RayStateCountingResult* result_buffer,
         size_t buffer_size)
     {
         using namespace ldplab;
         using namespace rtscuda;
 
         // Shared memory
-        extern __shared__ PipelineData::RayBufferReductionResult sbuf[];
+        extern __shared__ PipelineData::RayStateCountingResult sbuf[];
 
         // ====================================================================
         // Preperation step: Prepare shared buffer
@@ -105,8 +105,8 @@ namespace
     }
 }
 
-ldplab::rtscuda::PipelineData::RayBufferReductionResult 
-	ldplab::rtscuda::RayBufferReduce::execute(
+ldplab::rtscuda::PipelineData::RayStateCountingResult
+	ldplab::rtscuda::RayStateCounting::execute(
         StreamContext& smctx,
         PipelineData& pipeline_data,
 		size_t ray_buffer_index,
@@ -114,7 +114,7 @@ ldplab::rtscuda::PipelineData::RayBufferReductionResult
 {
     constexpr size_t block_size = rayBufferReduceKernelBlockSize;
     const size_t k1_grid_size = num_rays / block_size + (num_rays % block_size ? 1 : 0);
-    const size_t k1_mem_size = block_size * sizeof(PipelineData::RayBufferReductionResult);
+    const size_t k1_mem_size = block_size * sizeof(PipelineData::RayStateCountingResult);
 
     rayBufferReduceKernel<<<k1_grid_size, block_size, k1_mem_size, smctx.cudaStream()>>>(
         pipeline_data.ray_buffer_reduction_result_buffer.getDeviceBuffer(),
@@ -128,7 +128,7 @@ ldplab::rtscuda::PipelineData::RayBufferReductionResult
     if (k2_grid_size < k2_block_size)
     {
         k2_block_size = k2_grid_size;
-        k2_mem_size = k2_block_size * sizeof(PipelineData::RayBufferReductionResult);
+        k2_mem_size = k2_block_size * sizeof(PipelineData::RayStateCountingResult);
     }
     k2_grid_size = 1;
     rayBufferReduceKernelStep2<<<k2_grid_size, k2_block_size, k2_mem_size, smctx.cudaStream() >>>(
@@ -144,7 +144,7 @@ ldplab::rtscuda::PipelineData::RayBufferReductionResult
     return pipeline_data.ray_buffer_reduction_result_buffer.getHostBuffer()[0];
 }
 
-bool ldplab::rtscuda::RayBufferReduce::allocateData(
+bool ldplab::rtscuda::RayStateCounting::allocateData(
     const SharedStepData& shared_data,
     PipelineData& data)
 {

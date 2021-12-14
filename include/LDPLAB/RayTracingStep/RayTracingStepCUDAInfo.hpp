@@ -23,17 +23,37 @@ namespace ldplab
          *       one with the lowest id).
          */
         std::shared_ptr<rtscuda::IExecutionModelInfo> execution_model_info = nullptr;
-        /** 
-         * @brief Threshold for reordering buffers.
-         * @details The pipeline reorders all buffers for performance reasons.
-         *          The reordering is done when the number of active rays 
-         *          sinks below the buffer size times the threshold.
-         *          Use a threshold of 0.0 to never reorder and a threshold of 
-         *          1.0 to always reorder.
+
+        /**
+         * @brief Active to inactive ratio threshold for buffer packing.
+         * @details The threshold is the maximum allowed ratio of active rays 
+         *          to the number of rays inside a buffer. If said ratio sinks
+         *          below the threshold, the pipeline performs buffer packing.
+         *          Therefore a theshold of 0 prevents buffer packing, while
+         *          a threshold of 1 leads to the pipeline immeadiatly 
+         *          performing buffer packing when the number of active rays 
+         *          unequals the number of rays inside a buffer.
          */
-        double buffer_reorder_threshold = 0.8;
-        /** @brief Minimum number of rays (valid or invalid) inside the buffers. */
-        size_t buffer_min_size = 2048;
+        double buffer_packing_threshold = 0.8;
+        /**
+         * @brief The minimum buffer size for buffer packing.
+         * @details Buffer packing is only performed when the number of rays
+         *          inside a buffer is greater or equal to this value.
+         */
+        size_t buffer_packing_min_buffer_size = 2048;
+        /** 
+         * @brief Tells the pipeline to sort buffer contents based on the 
+         *        particle index.
+         */
+        bool buffer_sort_enabled = false;
+        /**
+         * @brief Percentage threshold for early ray_buffer_sort abort.
+         * @details The pipeline does not sort the ray buffers if the number 
+         *          of conflicts (more than one particle per warp) exceeds 
+         *          the given percentage threshold of the number of particles.
+         * @note A threshold of 0 denotes that the pipeline always sorts.
+         */
+        double buffer_sort_abort_threshold = 1.0;
         /** @brief Under this cutoff intensity rays are not further traced. */
         double intensity_cutoff = 0.0;
         /** @brief Maximum number of times a ray can split. */

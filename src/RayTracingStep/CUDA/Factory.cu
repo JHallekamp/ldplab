@@ -16,9 +16,10 @@
 #include "PipelineDeviceBound.hpp"
 #include "PipelineHostBound.hpp"
 #include "StageBufferSetup.hpp"
+#include "StageBufferPacking.hpp"
 #include "StageBufferSort.hpp"
 #include "StageGatherOutput.hpp"
-#include "StageRayBufferReduce.hpp"
+#include "StageRayStateCounting.hpp"
 #include "RayTracingStepCUDA.hpp"
 
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 
@@ -26,7 +27,8 @@ std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA>
         const RayTracingStepCUDAInfo& info, 
         ExperimentalSetup&& setup)
 {
-    return createRTS(info, std::move(setup), PipelineConfiguration{ }, true);
+    PipelineConfiguration tmp_config{ };
+    return createRTS(info, std::move(setup), tmp_config, true);
 }
 
 std::shared_ptr<ldplab::rtscuda::RayTracingStepCUDA> 
@@ -920,7 +922,7 @@ bool ldplab::rtscuda::Factory::createPipeline(
                 "Failed to allocate buffer setup stage pipeline data.");
             return false;
         }
-        if (!BufferSort::allocateData(
+        if (!BufferPacking::allocateData(
             *pipeline->m_context,
             pipeline->m_pipeline_data.back()))
         {
@@ -936,12 +938,21 @@ bool ldplab::rtscuda::Factory::createPipeline(
                 "Failed to allocate gather output stage pipeline data.");
             return false;
         }
-        if (!RayBufferReduce::allocateData(
+        if (!RayStateCounting::allocateData(
             *pipeline->m_context,
             pipeline->m_pipeline_data.back()))
         {
             LDPLAB_LOG_ERROR("RTSCUDA factory: "\
                 "Failed to allocate ray buffer reduction stage pipeline data.");
+            return false;
+        }
+        if (!BufferSort::allocateData(
+            i,
+            *pipeline->m_context,
+            pipeline->m_pipeline_data.back()))
+        {
+            LDPLAB_LOG_ERROR("RTSCUDA factory: "\
+                "Failed to allocate buffer sort stage pipeline data.");
             return false;
         }
     }

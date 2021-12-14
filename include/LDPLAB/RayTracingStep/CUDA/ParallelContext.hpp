@@ -85,10 +85,10 @@ namespace ldplab
             StreamContext(StreamContext&&) = default;
             ~StreamContext() = default;
             size_t streamId() const { return m_stream_id; }
-            size_t deviceGroup() const { return m_device_context.groupId(); }
-            const DeviceContext& deviceContext() const { return m_device_context; }
+            size_t deviceGroup() const { return (*m_device_contexts)[m_device_group_id].groupId(); }
+            const DeviceContext& deviceContext() const { return (*m_device_contexts)[m_device_group_id]; }
 
-            cudaStream_t cudaStream() const { return m_cuda_stream->stream; }
+            const cudaStream_t cudaStream() const { return m_cuda_stream->stream; }
             bool synchronizeOnStream();
 
             RayDataBuffers& rayDataBuffers() const { return m_ray_data_buffers; }
@@ -109,7 +109,8 @@ namespace ldplab
             };
         private:
             StreamContext(
-                const DeviceContext& device_ctx,
+                std::vector<DeviceContext>* device_ctxs,
+                const size_t device_group_id,
                 const DeviceData& device_data,
                 const ExperimentalSetup& experimental_setup,
                 const InterfaceMapping& interface_mapping,
@@ -131,7 +132,8 @@ namespace ldplab
             const ParticleDataBuffers& m_particle_data_buffers;
             const DeviceProperties& m_device_properties;
 
-            const DeviceContext& m_device_context;
+            std::vector<DeviceContext>* m_device_contexts;
+            const size_t m_device_group_id;
         };
     }
 }
