@@ -216,13 +216,11 @@ void ldplab::rtscpu::SurfaceInteractionPolarizedLight::execute(
             material_data[particle_id]->indexOfRefraction(inter_point);
         const double nr = nx / ny;
         const double cos_a = -glm::dot(ray.direction, inter_normal);
-
         if (1.0 - nr * nr * (1.0 - cos_a * cos_a) >= 0)
         {
             const bool reflection_pass =
                 (pass_type == InteractionPassType::reflection);
             const double cos_b = std::sqrt(1.0 - nr * nr * (1.0 - cos_a * cos_a));
-
             if (cos_a >= 1.0 - 1e-09)
                 output_polarization.polarization_data[i] = polarization;
             else
@@ -234,11 +232,11 @@ void ldplab::rtscpu::SurfaceInteractionPolarizedLight::execute(
                 transmittedPolarization(output_polarization.polarization_data[i].stokes_parameter, cos_a, cos_b, nr);
 
             
-
             const Vec3 r = inter_point - center_of_mass[particle_id];
             Vec3 delta_momentum;
             output_ray.intensity =
                 output_polarization.polarization_data[i].stokes_parameter.x;
+            
             if (output_ray.intensity > intensity_cutoff)
             {
                 ++output_ray_data.active_rays;
@@ -335,7 +333,7 @@ ldplab::rtscpu::default_factories::InitialStageHomogenousPolarizedLightBoundingS
     else if (cos_a < -1.0)
         cos_a = -1.0;
     const double cos_2a = 2 * cos_a * cos_a - 1;
-    const double sin_2a = std::sqrt(1 - cos_2a * cos_2a);
+    const double sin_2a = cos_a > 0 ? std::sqrt(1 - cos_2a * cos_2a) : -std::sqrt(1 - cos_2a * cos_2a);
     
     const Vec4 S = {
         polarization.stokes_parameter.x,
@@ -361,7 +359,6 @@ ldplab::Vec4 ldplab::rtscpu::SurfaceInteractionPolarizedLight::reflactedPolariza
 
     S_out.x = (rs2 + rp2) * 0.5 * S.x + (rs2 - rp2) * 0.5 * S.y;
     S_out.y = (rs2 - rp2) * 0.5 * S.x + (rs2 + rp2) * 0.5 * S.y;
-    // TO D0: this is just in approximation
     
     const double cos_ap = n_r / std::sqrt(n_r * n_r + 1);
     // ap < a
@@ -398,10 +395,6 @@ ldplab::Vec4 ldplab::rtscpu::SurfaceInteractionPolarizedLight::reflactedPolariza
         S_out.z = - r_s * r_p * S.z;
         S_out.a = - r_s * r_p * S.a;
     }
-
-    const double cos_phase_shift = n_r < 1 ? 1.0 : -1.0;
-    S_out.z = cos_phase_shift * r_s * r_p * S.z;
-    S_out.a = cos_phase_shift * r_s * r_p * S.a;
     return S_out;
 }
 
