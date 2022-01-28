@@ -1,5 +1,7 @@
 #include "ImplBoundingVolumeIntersection.hpp"
 
+#include <LDPLAB/RayTracingStep/CPU/DefaultInitialStageFactories.hpp>
+
 #include "Factory.hpp"
 #include "RayTracingStepCPU.hpp"
 #include "../../Utils/Log.hpp"

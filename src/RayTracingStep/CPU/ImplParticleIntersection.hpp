@@ -23,6 +23,23 @@ namespace ldplab
                 const SimulationParameter& simulation_parameter, 
                 void* stage_dependent_data) override;
         };
+
+        class PolarizedLightParticleIntersection : public IParticleIntersection
+        {
+        public:
+            virtual void stepSetup(
+                const ExperimentalSetup& setup,
+                const SimulationState& simulation_state,
+                const InterfaceMapping& interface_mapping,
+                const std::vector<ParticleTransformation>& particle_transformation) override { }
+            virtual void execute(
+                RayBuffer& ray_data,
+                IntersectionBuffer& intersection_data,
+                const std::vector<ParticleTransformation>& transformation_data,
+                const std::vector<std::shared_ptr<IGenericGeometry>>& geometry_data,
+                const SimulationParameter& simulation_parameter,
+                void* stage_dependent_data) override;
+        };
     }
 }
 

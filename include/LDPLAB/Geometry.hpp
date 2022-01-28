@@ -2,6 +2,7 @@
 #define WWU_LDPLAB_GEOMETRY_HPP
 
 #include <glm/glm.hpp>
+#include <complex>
 
 namespace ldplab
 {
@@ -9,6 +10,8 @@ namespace ldplab
     typedef glm::dvec2 Vec2;
     /** @brief Structure modeling a 3 dimensional vector. */
     typedef glm::dvec3 Vec3;
+    /** @brief Structure modeling a 3 dimensional complex vector. */
+    typedef glm::vec<3, std::complex<double>, glm::highp> Vec3c;
     /** @brief Structure modeling a 4 dimensional vector. */
     typedef glm::dvec4 Vec4;
     

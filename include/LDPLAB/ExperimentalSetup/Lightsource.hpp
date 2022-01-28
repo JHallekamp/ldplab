@@ -69,7 +69,7 @@ namespace ldplab
         /**
          * @brief Polarization state of the Light source.
          */
-        std::shared_ptr<ILightPolarisation> polarisation;
+        std::shared_ptr<ILightPolarisation> polarization;
         
     };
 }
