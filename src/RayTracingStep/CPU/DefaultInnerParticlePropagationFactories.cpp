@@ -41,6 +41,14 @@ bool ldplab::rtscpu::default_factories::
             return false;
         }
     }
+    for (size_t i = 0; i < setup.light_sources.size(); ++i)
+    {
+        if (setup.light_sources[i].polarization->type() !=
+            ILightPolarisation::Type::unpolarized)
+        {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -60,7 +68,7 @@ ldplab::rtscpu::default_factories::InnerParticlePropagationRK4PolarizationFactor
 {
 }
 
-std::string ldplab::rtscpu::default_factories::InnerParticlePropagationRK4PolarizationFactory::name()
+std::string ldplab::rtscpu::default_factories::InnerParticlePropagationRK4PolarizationFactory::name() 
 {
     return "EikonalSolverRK4LinearIndexGradientPolarization";
 }
@@ -84,6 +92,9 @@ bool ldplab::rtscpu::default_factories::InnerParticlePropagationRK4PolarizationF
         {
             return false;
         }
+    }
+    for (size_t i = 0; i < setup.light_sources.size(); ++i)
+    {
         if (setup.light_sources[i].polarization->type() !=
             ILightPolarisation::Type::polarized)
         {
