@@ -77,7 +77,7 @@ namespace ldplab
                 RayBuffer& output_ray_data,
                 OutputBuffer& output_data,
                 double intensity_cutoff,
-                double medium_reflection_index,
+                double medium_refraction_index,
                 const std::vector<std::shared_ptr<IParticleMaterial>>& material_data,
                 const std::vector<Vec3>& center_of_mass,
                 InteractionPassType pass_type,

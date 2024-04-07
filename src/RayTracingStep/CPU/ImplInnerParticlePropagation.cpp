@@ -435,7 +435,7 @@ void ldplab::rtscpu::EikonalSolverRK4LinearIndexGradientPolarization::rk4(
         const Vec3 r = x.q;
         const Vec3 q = D(x.r);
         const Vec3 dn = D(x.r) / raw_material->indexOfRefraction(x.r);
-        const std::complex a = -x.u.x * dn.x - x.u.y * dn.y - x.u.z * dn.z;
+        const std::complex<double> a = -x.u.x * dn.x - x.u.y * dn.y - x.u.z * dn.z;
         const Vec3c u = static_cast<Vec3c>(x.q) * a;
         return Arg{q, r, u};
     };

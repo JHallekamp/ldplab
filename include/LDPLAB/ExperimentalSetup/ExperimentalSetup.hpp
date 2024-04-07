@@ -18,8 +18,8 @@ namespace ldplab
         std::vector<Particle>  particles;
         /** @brief Light sources */
         std::vector<LightSource> light_sources;
-        /** @brief Index of reflection of the medium. */
-        double medium_reflection_index;
+        /** @brief Index of refraction of the medium. */
+        double medium_refraction_index;
         /** @brief Unique ID of the experimental setup. */
         UID<ExperimentalSetup> uid;
     };

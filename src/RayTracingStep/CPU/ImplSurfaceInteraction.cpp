@@ -11,7 +11,7 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
 	RayBuffer& output_ray_data, 
     OutputBuffer& output_data, 
     double intensity_cutoff, 
-	double medium_reflection_index,
+	double medium_refraction_index,
     const std::vector<std::shared_ptr<IParticleMaterial>>& material_data,
     const std::vector<Vec3>& center_of_mass,
     InteractionPassType pass_type, 
@@ -63,9 +63,9 @@ void ldplab::rtscpu::SurfaceInteraction::execute(
         const Vec3& inter_normal = intersection_data.normal[i];
         const double nx = input_ray_data.inner_particle_rays ?
             material_data[particle_id]->indexOfRefraction(inter_point) :
-            medium_reflection_index;
+            medium_refraction_index;
         const double ny = input_ray_data.inner_particle_rays ?
-            medium_reflection_index :
+            medium_refraction_index :
             material_data[particle_id]->indexOfRefraction(inter_point);
         const double nr = nx / ny;
         const double cos_a = -glm::dot(ray.direction, inter_normal);
@@ -151,7 +151,7 @@ void ldplab::rtscpu::SurfaceInteractionPolarizedLight::execute(
     RayBuffer& output_ray_data,
     OutputBuffer& output_data,
     double intensity_cutoff,
-    double medium_reflection_index,
+    double medium_refraction_index,
     const std::vector<std::shared_ptr<IParticleMaterial>>& material_data,
     const std::vector<Vec3>& center_of_mass,
     InteractionPassType pass_type,
@@ -210,9 +210,9 @@ void ldplab::rtscpu::SurfaceInteractionPolarizedLight::execute(
 
         const double nx = input_ray_data.inner_particle_rays ?
             material_data[particle_id]->indexOfRefraction(inter_point) :
-            medium_reflection_index;
+            medium_refraction_index;
         const double ny = input_ray_data.inner_particle_rays ?
-            medium_reflection_index :
+            medium_refraction_index :
             material_data[particle_id]->indexOfRefraction(inter_point);
         const double nr = nx / ny;
         const double cos_a = -glm::dot(ray.direction, inter_normal);

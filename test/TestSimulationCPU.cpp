@@ -304,7 +304,7 @@ void createExperimentalSetup(
     light_source.horizontal_size = LIGHT_GEOMETRY_PLANE_EXTENT;
     light_source.vertical_size = LIGHT_GEOMETRY_PLANE_EXTENT;
     light_source.origin_corner = LIGHT_GEOMETRY_ORIGIN_CORNER;
-    light_source.polarisation =
+    light_source.polarization =
         std::make_shared<ldplab::LightPolarisationUnpolarized>();
     light_source.direction =
         std::make_shared<ldplab::LightDirectionHomogeneous>();
@@ -318,7 +318,7 @@ void createExperimentalSetup(
     experimental_setup.particles.emplace_back(std::move(createSecondParticle(particle)));
     experimental_setup.particles.emplace_back(std::move(particle));
     experimental_setup.light_sources.emplace_back(std::move(light_source));
-    experimental_setup.medium_reflection_index = MEDIUM_REFLEXION_INDEX;
+    experimental_setup.medium_refraction_index = MEDIUM_REFLEXION_INDEX;
 }
 
 void runSimulation(
