@@ -373,7 +373,7 @@ void ldplab::rtscpu::Pipeline::processBatch(RayBuffer& buffer, MemoryControl& me
                 output_ray_buffer,
                 output_buffer,
                 m_info.intensity_cutoff,
-                m_setup.medium_reflection_index,
+                m_setup.medium_refraction_index,
                 m_particle_materials,
                 m_particle_center_of_mass,
                 si_passes[pass].type,
