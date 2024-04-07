@@ -3,13 +3,13 @@
 A software framework for massively parallel simulations of arbitrary light-driven particle configurations.
 </p>
 
-[Overview](#Overview) -
-[Contribution](#Contribution)- 
-[Features](#Features) -
-[Documentation](#Documentation) -
-[Installation](#Installation) -
-[Usage](#Usage) -
-[License](#License)
+[Overview](#overview) -
+[Contribution](#contribution)- 
+[Features](#features) -
+[Documentation](#documentation) -
+[Installation](#installation) -
+[Usage](#usage) -
+[License](#license)
 
 
 </div>
